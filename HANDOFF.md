@@ -83,6 +83,17 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 7차 요청 (2026-11-23) — 계단이 한 단씩 놓이는 연출·아이템은 탑에서만
+
+- [x] **계단 연출:** 라운드가 끝나면 계단이 꼭대기 문(0번)부터 맨 아래 단까지 한 조각씩 '다라라락' 놓입니다. 조각은 제자리 바로 위(`palette.stairDrop` 18px)에서 내려앉으며 살짝 눌렸다 펴지고, 닿을 때 먼지·빛 부스러기가 일고 효과음 `stairstep`이 납니다(소리 이벤트는 `Combat`이 조각마다 냄). 다 놓이기 전(`rounds.stairsRevealTime` 0.7초)에는 E가 안 됩니다.
+  - 값: `rounds.stairPieces` 6, `stairStepDelay` .09초, `stairSettle` .16초 / `palette.stairScale` .3(그림 px → 캔버스 px), `stairRise` 26(한 단 높이), 계단 위치 `stairsOffset` (170, −30).
+  - 조각에 라운드 컨셉의 바닥 덮개(정화된 층은 정화 밝기)를 입혀 바닥과 같은 색감이 되고, 바닥 빛은 부드러운 스프라이트로 바꿔 "단단한 원판처럼 보임" 문제를 고쳤습니다. 다 놓인 뒤 문 안쪽 빛이 숨 쉬듯 밝아집니다.
+  - 코드: `ArenaRenderer.DrawStairCascade`(`stairPieces`가 비어 있으면 옛 통그림 `stairsSprite`로 그림).
+  - 그림: `tools/codex_prompts/stairs_steps_v2.txt`(바닥 타일을 참고 이미지로 줌, 초록 키) → `art_src/raw/stairs_steps_v2.png` → `python tools/bake_stage2_art.py` → `Assets/sprites/stair_0~5.png`. v1(`stairs_steps.png`)은 검은 외곽선·분홍 바늘땀이라 바닥과 따로 놀아 버렸습니다(굽기는 v2가 없을 때만 v1을 씀).
+- [x] **아이템은 쉬어가기 탑에서만:** `rewards.eliteItemChance` 0, 상인 품목에서 조각(`piece`) 제거(2차 결정 반영). 테스트 `ItemsOnlyComeFromTheTower`.
+- 확인: EditMode 12개 통과. 플레이에서 R1 시간 종료 → 계단이 놓이는 중간·완료 화면 캡처(`Temp/Shots/stairs_v2_*.png`).
+- 남은 것: 실제 속도로 본 '다라라락' 느낌과 `stairstep` 소리는 사람 눈·귀 확인 필요. 정화된 층·다른 컨셉 색에서의 계단 색감은 보지 못했습니다.
+
 ## 6차 요청 (2026-11-23) — 레벨업 아이콘·피해 숫자 그림 글꼴
 
 - [x] **레벨업 아이콘:** 레벨업 때 몸 둘레 여기저기에서 레벨업 아이콘(Codex `levelup_icon` → `Assets/sprites/levelup_icon.png`)이 차례로 톡 튀어나와 떠오르며 사라집니다. 수·크기·퍼짐은 `visual.levelUpIcons / levelUpIconSize / levelUpIconSpread`.

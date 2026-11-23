@@ -1,0 +1,13 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/stairs_steps.png
+Size: portrait 1024x1536.
+Create a game prop sheet: a magical stone staircase going UP into a glowing doorway, but split into SEPARATE PIECES so each step can be animated on its own. Seen from a high three-quarter top-down angle (like an isometric-ish RPG camera looking down at about 35 degrees), staircase facing the viewer. Lay the pieces out vertically in this order from top to bottom, each fully separated from the others by a wide empty gap (at least 60px), nothing touching or overlapping, all horizontally centered:
+(1) the TOP LANDING: a small square stone platform with a tall pointed gothic arched doorway standing on it, the doorway filled with soft glowing ivory-teal light (#E6F2EC to #8CC7BE), about 300px wide
+(2) step 1 (top step, narrowest, about 300px wide)
+(3) step 2 (about 360px wide)
+(4) step 3 (about 420px wide)
+(5) step 4 (about 480px wide)
+(6) step 5 (bottom step, widest, about 540px wide)
+Each step piece shows its flat TOP surface (tread, lighter) and its FRONT face (riser, darker) — same height for every step (about 110px tall per piece), worn dark plum stone blocks (#4A3D50, #2E2430) with a line of dusty-pink cross-stitched thread inlaid along the front edge. Thick rough black outline around every piece.
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline, paper-grain texture inside the shapes, low saturation, eerie but cute.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels. Do not use any green color inside the artwork itself.

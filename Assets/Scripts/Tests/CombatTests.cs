@@ -154,6 +154,23 @@ namespace TOD.Tests
             finally { db.rewards.healChance = chance; }
         }
 
+        // 아이템(재봉 조각)은 쉬어가기 탑에서만: 정예·보스는 조각을 떨어뜨리지 않고, 상인은 조각을 팔지 않는다.
+        [Test]
+        public void ItemsOnlyComeFromTheTower()
+        {
+            Assert.AreEqual(0, db.rewards.eliteItemChance, "정예 조각 드롭 없음");
+            Assert.IsFalse(db.rewards.bossDropsItem, "보스 조각 드롭 없음");
+            Assert.IsFalse(System.Array.Exists(db.shop.wares, w => w.id == "piece"), "상인은 조각을 팔지 않음");
+            RunState r = combat.CreateRun(EmptyProfile(), () => 0f);   // 확률 굴림이 늘 0 이어도
+            r.player.x = 500; r.player.y = 350;
+            Enemy e = Add(r, "charger", 620, 350);
+            e.elite = true;
+            r.strands.Add(new Strand { x = e.x, y = e.y, target = e, state = StrandState.Stuck, element = Element.Plain });
+            e.hp = 1;
+            combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(620, 350) });
+            Assert.IsFalse(r.drops.Exists(d => d.item), "정예를 잡아도 조각이 떨어지지 않는다");
+        }
+
         // 실을 많이 걸어 둘수록 당길 때 한 타의 피해가 커진다 (상한 있음).
         [Test]
         public void MoreStrandsHitHarder()

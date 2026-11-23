@@ -26349,7 +26349,7 @@ MonoBehaviour:
     survivalSeconds:
     - 90
     - 120
-    stairsOffset: {x: 0, y: -120}
+    stairsOffset: {x: 170, y: -30}
     altarOffset: {x: -170, y: -90}
     merchantOffset: {x: 180, y: -80}
     restStairsOffset: {x: 0, y: -260}
@@ -26357,7 +26357,10 @@ MonoBehaviour:
     interactRadius: 80
     merchantChance: 0.5
     artifactChoices: 3
-    stairsRevealTime: 1.2
+    stairsRevealTime: 0.7
+    stairPieces: 6
+    stairStepDelay: 0.09
+    stairSettle: 0.16
     clearFadeTime: 0.6
   concepts:
   - id: ash
@@ -26724,7 +26727,7 @@ MonoBehaviour:
     shardElite: 1
     shardBoss: 5
     shardFloorClear: 2
-    eliteItemChance: 0.64
+    eliteItemChance: 0
     bossDropsItem: 0
     xpBase: 5
     xpStep: 3
@@ -27098,12 +27101,6 @@ MonoBehaviour:
       icon: {fileID: 21300000, guid: 3dac48928ba74bf428135b39a27c1555, type: 3}
       basePrice: 19
       amount: 20
-    - id: piece
-      name: "\uC218\uC0C1\uD55C \uC7AC\uBD09 \uC870\uAC01"
-      text: "\uC7AC\uBD09 \uC0C1\uC790\uC5D0 \uBB34\uC791\uC704 \uC870\uAC01 \uCD94\uAC00"
-      icon: {fileID: 21300000, guid: 7c222c3d2bfc0f945b57a57c81632b01, type: 3}
-      basePrice: 23
-      amount: 0
     - id: buff
       name: "\uB2EC\uBE5B \uCF54\uD305"
       text: "\uC774\uBC88 \uB4F1\uBC18\uC5D0\uC11C \uC2E4 \uD53C\uD574 +4"
@@ -27425,6 +27422,9 @@ MonoBehaviour:
     propLabelPx: 15
     altarHeight: 150
     merchantHeight: 0
+    stairScale: 0.3
+    stairRise: 26
+    stairDrop: 18
   messages:
     awaken: "\uAC01\uC131 \xB7 \uC2E4 \uD53C\uD574 +20%"
     frenzy: "\uD3ED\uC8FC \xB7 \uC774\uB3D9\uACFC \uCDA9\uC804\uC774 \uB290\uB824\uC9D1\uB2C8\uB2E4"
@@ -27666,6 +27666,13 @@ MonoBehaviour:
     duration: 0.3
     volume: 0.16
     wave: 0
+    sample: {fileID: 0}
+  - id: stairstep
+    from: 210
+    to: 120
+    duration: 0.06
+    volume: 0.16
+    wave: 1
     sample: {fileID: 0}
 --- !u!1 &1610423764
 GameObject:
@@ -28294,6 +28301,13 @@ MonoBehaviour:
   altarSprite: {fileID: 21300000, guid: b2df8e71992b8ec47a0f34c8207a973c, type: 3}
   merchantSprite: {fileID: 21300000, guid: 4be0e663ad3112f4e99e3ff55868e514, type: 3}
   archSprite: {fileID: 21300000, guid: 79693c395314e0d44922e4d0e039dc7b, type: 3}
+  stairPieces:
+  - {fileID: 21300000, guid: cc584e3125be92846a908bffc94a8c0c, type: 3}
+  - {fileID: 21300000, guid: 1b4238355c5a46a4ab3041f8f577f6ca, type: 3}
+  - {fileID: 21300000, guid: b5d004eecfbcec543921f7a9a9f24fbd, type: 3}
+  - {fileID: 21300000, guid: f32ea1b30d342b84a8545b79ee0ee831, type: 3}
+  - {fileID: 21300000, guid: fa8557ea691c7c54dabb937988889dd5, type: 3}
+  - {fileID: 21300000, guid: 9245a55220c74ed4a9f3966a700cd950, type: 3}
   fxSprites:
   - id: 1
     sprite: {fileID: 21300000, guid: 151069dcbf27d3f4893e27b212df63b0, type: 3}

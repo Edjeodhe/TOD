@@ -26,6 +26,7 @@ namespace TOD
         public CameraRig cameraRig;
         public Sprite goldIcon, shardIcon, knotIcon, needleSprite, streakSprite, barbSprite, xpOrbSprite, softSprite, heartSprite, levelUpIcon;
         public Sprite stairsSprite, altarSprite, merchantSprite, archSprite;
+        public Sprite[] stairPieces;          // 계단 조각: 0 = 꼭대기 문, 1.. = 위 단 → 아래 단 (Codex stairs_steps)
         public FxSpriteEntry[] fxSprites;
         public FlipbookEntry[] flipbooks;
 
@@ -288,28 +289,82 @@ namespace TOD
         {
             if (r.altar != null) DrawProp(altarSprite, Pal.altarHeight, r.altar, r.artifactTaken ? null : db.ui.promptAltar, nearest == Interactable.Altar, r.artifactTaken ? .55f : 1);
             if (r.merchant != null) DrawProp(merchantSprite, Pal.merchantHeight, r.merchant, db.ui.promptMerchant, nearest == Interactable.Merchant, 1);
-            if (r.stairs == null || stairsSprite == null) return;
+            if (r.stairs == null) return;
+            if (stairPieces != null && stairPieces.Length > 0) { DrawStairCascade(r, nearest, clock, dt); return; }
+            if (stairsSprite == null) return;
             float reveal = db.rounds.stairsRevealTime;
             float k = reveal > 0 ? Mathf.Clamp01(r.stairsAge / reveal) : 1;
             Vector2 at = C(r.stairs);
             Color glow = Pal.stairsGlow;
-            // 등장: 바닥에 빛 고리가 퍼지며 계단이 솟아오른다. 그 뒤로는 은은한 빛 기둥이 남는다.
-            if (k < 1)
-            {
-                float burst = 30 + k * 150;
-                painter.Ellipse(Layer.Ground, at, burst, burst * Space.Proj, Painter.Alpha(glow, (1 - k) * .9f), 3, additive: true);
-                if (dt > 0 && Rand() < .8f)
-                    particles.Emit(ParticleKind.Glint, at + new Vector2((Rand() - .5f) * 160, (Rand() - .5f) * 50), new Vector2(0, -60 - Rand() * 60), .7f, glow, 2.2f);
-            }
             float pulse = .5f + .5f * Mathf.Sin(clock * 2.4f);
             painter.Ellipse(Layer.Ground, at, 120, 120 * Space.Proj, Painter.Alpha(glow, (.16f + .08f * pulse) * k), additive: true);
-            float s = k < 1 ? EaseOutBack(k) : 1;
             Rect rect = stairsSprite.rect;
-            painter.Sprite(Layer.Ground, stairsSprite, at - new Vector2(0, rect.height * .35f * s), 0, rect.width * s, rect.height * s, new Color(1, 1, 1, Mathf.Min(1, k * 2)));
-            painter.Ellipse(Layer.Effects, at - new Vector2(0, rect.height * .9f), 40 + 6 * pulse, rect.height * .9f, Painter.Alpha(glow, .09f * k), additive: true);
-            if (dt > 0 && k >= 1 && Rand() < .25f)
-                particles.Emit(ParticleKind.Glint, at + new Vector2((Rand() - .5f) * 70, -Rand() * 40), new Vector2(0, -40), .9f, glow, 1.8f);
+            painter.Sprite(Layer.Ground, stairsSprite, at - new Vector2(0, rect.height * .35f), 0, rect.width, rect.height, new Color(1, 1, 1, k));
             if (k >= 1) PropLabel(db.ui.promptStairs, at - new Vector2(0, rect.height * .7f + 22), nearest == Interactable.Stairs);
+        }
+
+        // 계단: 꼭대기 문(0번)부터 맨 아래 단까지 한 조각씩 차례로 '다라라락' 놓인다.
+        // 조각은 하늘에서 떨어지지 않고, 제자리 바로 위(stairDrop)에서 살짝 내려앉으며 나타나고, 닿을 때 먼지가 인다.
+        void DrawStairCascade(RunState r, Interactable nearest, float clock, float dt)
+        {
+            RoundConfig rc = db.rounds;
+            Vector2 at = C(r.stairs);
+            Color glow = Pal.stairsGlow;
+            int n = stairPieces.Length;
+            float scale = Pal.stairScale > 0 ? Pal.stairScale : .4f;
+            float rise = Pal.stairRise > 0 ? Pal.stairRise : 22;
+            float drop = Pal.stairDrop;
+            float settle = Mathf.Max(.01f, rc.stairSettle);
+            bool done = r.stairsAge >= rc.stairsRevealTime;
+            float pulse = .5f + .5f * Mathf.Sin(clock * 2.4f);
+            // 바닥 빛: 계단이 놓이는 만큼 은은하게
+            float shown = Mathf.Clamp01(r.stairsAge / Mathf.Max(.01f, rc.stairsRevealTime));
+            if (softSprite != null)   // 바닥 빛: 가장자리가 부드러운 빛 (단단한 원판처럼 보이지 않게)
+                painter.Sprite(Layer.Ground, softSprite, at, 0, 230, 230 * Space.Proj, Painter.Alpha(glow, (.18f + .07f * pulse) * shown), additive: true);
+            float topY = at.y;
+            // 바닥에 붙어 있게: 맨 아래 단 밑에 부드러운 그늘
+            if (stairPieces[n - 1] != null && r.stairsAge >= (n - 1) * rc.stairStepDelay)
+            {
+                float bw = stairPieces[n - 1].rect.width * scale;
+                painter.Ellipse(Layer.Ground, at + new Vector2(0, 2), bw * .55f, bw * .1f, Painter.Alpha(Pal.shadow, .7f * shown));
+            }
+            // 바닥 청크와 같은 색감: 라운드 컨셉 덮개(정화된 층은 정화 밝기)
+            ConceptDef concept = r.concept;
+            PurifyConfig pc = db.purify;
+            // 뒤(꼭대기)부터 그려야 앞 단이 위에 겹친다. 조각 i 의 바닥 = 계단 발밑에서 (n-1-i) 단 위.
+            for (int i = 0; i < n; i++)
+            {
+                Sprite piece = stairPieces[i];
+                if (piece == null) continue;
+                float w = piece.rect.width * scale, h = piece.rect.height * scale;
+                float bottom = at.y - (n - 1 - i) * rise;
+                float t = (r.stairsAge - i * rc.stairStepDelay) / settle;
+                if (i == 0) topY = bottom - h;
+                if (t <= 0) continue;
+                float u = Mathf.Clamp01(t);
+                float ease = 1 - Mathf.Pow(1 - u, 3);
+                float squash = u < 1 ? 1 : 1 - .06f * Mathf.Exp(-(t - 1) * 10) * Mathf.Sin((t - 1) * 30);
+                Vector2 center = new(at.x, bottom - h / 2 - drop * (1 - ease));
+                SpriteRenderer sr = painter.Sprite(Layer.Ground, piece, center, 0, w, h * squash, new Color(1, 1, 1, Mathf.Min(1, u * 2.2f)));
+                if (r.purified) painter.Style(sr, bright: pc.floorBright, sat: pc.floorSat, fill: pc.floorFill, fillAmount: pc.floorFill.a);
+                else if (concept != null) painter.Style(sr, fill: concept.floorFill, fillAmount: concept.floorFill.a);
+                // 자리 잡는 순간 앞 모서리에서 먼지·빛 부스러기
+                if (dt > 0 && t >= 1 && t - dt / settle < 1)
+                {
+                    for (int d = 0; d < 6; d++)
+                        particles.Emit(d % 2 == 0 ? ParticleKind.Spark : ParticleKind.Glint, new Vector2(at.x + (Rand() - .5f) * w * .9f, bottom - 2),
+                            new Vector2((Rand() - .5f) * 80, -10 - Rand() * 30), .35f + Rand() * .2f, d % 2 == 0 ? Pal.dust : glow, 2 + Rand() * 1.5f);
+                }
+            }
+            // 꼭대기 문 빛: 다 놓인 뒤 숨 쉬듯
+            if (stairPieces[0] != null && softSprite != null && done)
+            {
+                float lw = stairPieces[0].rect.width * scale;
+                painter.Sprite(Layer.Effects, softSprite, new Vector2(at.x, topY + (at.y - (n - 1) * rise - topY) * .45f), 0, lw * .9f, lw * 1.2f, Painter.Alpha(glow, (.22f + .1f * pulse)), additive: true);
+            }
+            if (dt > 0 && done && Rand() < .25f)
+                particles.Emit(ParticleKind.Glint, new Vector2(at.x + (Rand() - .5f) * 60, topY + Rand() * 40), new Vector2(0, -40), .9f, glow, 1.8f);
+            if (done) PropLabel(db.ui.promptStairs, new Vector2(at.x, topY - 18), nearest == Interactable.Stairs);
         }
 
         void DrawProp(Sprite sprite, float height, Point p, string label, bool near, float alpha)

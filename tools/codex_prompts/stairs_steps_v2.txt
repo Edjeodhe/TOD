@@ -1,0 +1,13 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/stairs_steps_v2.png
+Size: portrait 1024x1536.
+The attached image is the game's FLOOR TILE. Draw a stone staircase that belongs to THIS SAME FLOOR: exactly the same art style, the same dark muted plum flagstone material and colors (#2A1F27 to #4A3743, never brighter than the lightest stones in the reference), the same thick soft dark grout lines between stones, the same faint thin crack lines, the same flat low-contrast hand-painted texture and the same line weight. NO heavy black cartoon outline around the pieces — edges are dark grout-colored like the floor's stones. Seen from the same camera as the floor: steep top-down view (looking down at about 60 degrees), so each step shows a LARGE top tread (made of 2-4 irregular flagstones like the floor) and only a SHORT front riser in soft shadow.
+The staircase climbs AWAY from the viewer (up the screen) to a doorway. Split it into SEPARATE PIECES so each step can be animated alone, stacked vertically in this order from top to bottom, each fully separated by a wide empty gap (at least 60px), nothing touching, all horizontally centered:
+(1) TOP LANDING: a small flagstone platform with a pointed gothic stone archway made of the same dark plum stone, the opening filled with soft glowing ivory-teal light (#DDEFE7 fading to #6FA89E at the bottom), about 300px wide
+(2) step 1 (top step, about 300px wide)
+(3) step 2 (about 350px wide)
+(4) step 3 (about 400px wide)
+(5) step 4 (about 450px wide)
+(6) step 5 (bottom step, about 500px wide)
+Steps are slightly uneven and worn like old dungeon stairs (chipped corners, a few cracks, one or two tiny stitched pins like in the floor). The light from the doorway should fall faintly on the upper steps (top pieces a little lighter than the bottom ones), and the riser of each step is darker than its tread.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels. Do not use any green color inside the artwork itself.

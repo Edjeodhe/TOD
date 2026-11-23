@@ -7,6 +7,8 @@ python tools/bake_stage2_art.py
 - tower.png      (초록 키, 1개) → prop_tower.png     쉬어가기 라운드의 탑 (창문처럼 안쪽에 갇힌 키 색 구멍은 빛으로 채운다)
 - xp_orb.png     (자홍 키, 1개) → xp_orb.png         경험치 구
 - heart_pickup.png (초록 키, 1개) → heart_pickup.png 체력 회복 하트
+- levelup_icon.png (자홍 키, 1개) → levelup_icon.png 레벨업 아이콘
+- stairs_steps_v2.png (초록 키, 6개) → stair_0~5.png 계단 조각 (0 = 꼭대기 문, 1~5 = 위 단 → 아래 단)
 """
 from pathlib import Path
 
@@ -102,3 +104,10 @@ if (RAW / "heart_pickup.png").exists():
 if (RAW / "levelup_icon.png").exists():
     (col, a), = pieces(RAW / "levelup_icon.png", "magenta", 1, 40)
     save(col, a, "levelup_icon", 128)
+# 계단 조각 (초록 키, 위에서 아래: 꼭대기 문 + 단 5개) — 모두 같은 배율로 둬야 단이 아래로 갈수록 넓어지는 비율이 유지된다
+# v2 = 바닥 타일을 참고로 같은 돌·색·결로 다시 뽑은 시트 (v1 은 검은 외곽선·분홍 바늘땀이라 바닥과 따로 놀았다)
+STAIRS = next((p for p in (RAW / "stairs_steps_v2.png", RAW / "stairs_steps.png") if p.exists()), None)
+if STAIRS is not None:
+    found = pieces(STAIRS, "green", 6, 20)
+    for i, (col, a) in enumerate(found):
+        save(col, a, f"stair_{i}", 4096)

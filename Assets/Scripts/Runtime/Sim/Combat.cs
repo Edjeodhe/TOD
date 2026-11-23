@@ -1011,7 +1011,17 @@ namespace TOD
             p.shotCooldown = Mathf.Max(0, p.shotCooldown - dt);
             r.dry = Mathf.Max(0, r.dry - dt);
             if (r.echo != null && r.echo.until <= r.time) r.echo = null;
-            if (r.stairs != null) r.stairsAge += dt;
+            if (r.stairs != null)
+            {
+                // 계단이 꼭대기부터 한 단씩 '다라라락' 놓인다: 조각이 자리 잡는 순간마다 소리 이벤트.
+                float before = r.stairsAge;
+                r.stairsAge += dt;
+                for (int k = 0; k < R.stairPieces; k++)
+                {
+                    float landed = k * R.stairStepDelay + R.stairSettle;
+                    if (before < landed && r.stairsAge >= landed) Event(r, "stairstep");
+                }
+            }
 
             Vector2 move = Unit(input.x, input.y);
             bool moving = input.x != 0 || input.y != 0;

@@ -48,7 +48,9 @@ namespace TOD
         public float interactRadius;
         public float merchantChance;
         public int artifactChoices;
-        public float stairsRevealTime;       // 계단 등장 연출 시간
+        public float stairsRevealTime;       // 계단 등장 연출 시간 (마지막 단이 자리 잡을 때까지, 그 전에는 E 가 안 된다)
+        public int stairPieces;              // 계단 조각 수 (꼭대기 문 + 단들) — 조각마다 '탁' 소리 이벤트
+        public float stairStepDelay, stairSettle;   // 조각이 차례로 나타나는 간격, 한 조각이 자리 잡는 시간
         public float clearFadeTime;          // 시간 종료 때 남은 적이 흩어지는 연출 시간
     }
 
@@ -355,6 +357,7 @@ namespace TOD
         public Color stairsGlow, promptActive, promptIdle;
         public float propLabelPx;
         public float altarHeight, merchantHeight;   // 쉬어가기 탑·상인을 그릴 높이 (캔버스 px, 0 이면 그림 크기)
+        public float stairScale, stairRise, stairDrop;   // 계단 조각 크기 배율(그림 px → 캔버스 px), 한 단 높이(캔버스 px), 자리 잡기 전 위에서 내려오는 거리
     }
 
     // 전투 중 배너·알림 문구. {0}, {1} 자리에 숫자/이름이 들어간다.
