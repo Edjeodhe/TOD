@@ -1,0 +1,5 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/crit_icon.png
+Size: square 1024x1024.
+Create ONE critical-hit icon for a 2D action game damage number, centered, about 700px: a sharp spiky starburst (an explosive burst with 8 to 10 uneven jagged pointed spikes, like a comic "impact" star), bright yellow-white hot center fading to orange and deep red at the spike tips, with a thick consistent black outline around the whole shape, slight hand-drawn paper-cutout look like Don't Starve Together, a few tiny sharp shards flying off two of the tips. Bold, readable at very small sizes (it will be shown at about 30 pixels next to the top-left corner of a damage number).
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no drop shadow, no text. Do not use any green color inside the artwork itself.

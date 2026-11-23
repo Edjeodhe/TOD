@@ -86,7 +86,7 @@ namespace TOD.Tests
                 r.player.x = 500; r.player.y = 350;
                 Enemy a = Add(r, "boss", 700, 350);
                 for (int i = 0; i < n; i++)
-                    r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Chaos });
+                    r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Fire });
                 bool binding = n >= db.bind.strands;
                 float hit = r.damage * (1 + combat.StrandBonus(n)) * (binding ? 1 + db.bind.damageBonus : 1);
                 combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
@@ -94,7 +94,7 @@ namespace TOD.Tests
                 Assert.AreEqual(binding, r.effects.Any(f => f.kind == FxKind.Bind), $"{n}가닥 결박 폭발");
                 Assert.AreEqual(binding, r.effects.Any(f => f.kind == FxKind.Pull && f.bound), $"{n}가닥 속성 실");
             }
-            Assert.AreEqual(BindStyle.Fire, db.Tone(Element.Chaos).bindStyle, "혼돈 = 화염");
+            Assert.AreEqual(BindStyle.Fire, db.Tone(Element.Fire).bindStyle, "화염 세트 = 화염 리본");
             Assert.IsNotNull(db.Look(BindStyle.Fire));
         }
 
@@ -110,11 +110,11 @@ namespace TOD.Tests
             p.placements.Add(new Placement { id = 2, x = 1, y = 0 });   // (1,0)(2,0) → 골무와 변이 맞닿음
             p.placements.Add(new Placement { id = 3, x = 5, y = 3 });
             GearStats stats = Gear.Stats(db, p);
-            Assert.AreEqual(2, stats.groups["chaos"].size);
-            Assert.AreEqual(1, stats.groups["chaos"].tier);
-            Assert.AreEqual(1, stats.groups["frustration"].tier);
-            Assert.AreEqual(0, stats.groups["despair"].tier);
-            Assert.AreEqual(Element.Chaos, Gear.ThreadElement(stats));
+            Assert.AreEqual(2, stats.groups["fire"].size);
+            Assert.AreEqual(1, stats.groups["fire"].tier);
+            Assert.AreEqual(1, stats.groups["lightning"].tier);
+            Assert.AreEqual(0, stats.groups["ice"].tier);
+            Assert.AreEqual(Element.Fire, Gear.ThreadElement(stats));
             Assert.IsFalse(Gear.CanPlace(db, p, p.items[0], 0, 2, 0), "겹치는 칸에는 놓을 수 없다");
         }
 
@@ -376,6 +376,95 @@ namespace TOD.Tests
             Assert.AreEqual(Phase.Victory, r.phase, $"{r.floor}층 {r.round}라운드에서 멈춤 (steps {steps})");
             Assert.AreEqual(db.arena.finalFloor, r.floor);
             Assert.Greater(r.kills, 0);
+        }
+
+        // 조각 한 종류를 판 (x, y)에 놓은 프로필
+        Profile WithPieces(params (int kind, int x, int y)[] placed)
+        {
+            Profile p = EmptyProfile();
+            foreach (var (kind, x, y) in placed)
+            {
+                int id = p.nextId++;
+                p.items.Add(new OwnedItem { id = id, kind = kind });
+                p.placements.Add(new Placement { id = id, x = x, y = y });
+            }
+            return p;
+        }
+
+        int Kind(string set, int cost) => System.Array.FindIndex(db.gear.pieces, d => d.set == set && d.cost == cost);
+
+        // 12차: 세트가 켜지면 실 속성이 그 세트가 되고, 당길 때 한 타마다 속성 피해(damagePerTier × 단계)가 더해진다 + 부가 효과.
+        [Test]
+        public void SetAddsElementalDamageAndStatus()
+        {
+            SetDef fire = db.gear.sets.First(s => s.id == "fire");
+            int one = Kind("fire", 1), two = Kind("fire", 2);
+            RunState r = combat.CreateRun(WithPieces((one, 0, 0), (two, 1, 0)), () => .5f);   // 화염 2개 맞닿음 → 1단계
+            Assert.AreEqual(Element.Fire, r.element, "실 속성 = 화염");
+            r.player.x = 500; r.player.y = 350;
+            Enemy a = Add(r, "boss", 700, 350);
+            r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Fire });
+            float hit = r.damage * (1 + combat.StrandBonus(1));
+            combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
+            Assert.AreEqual(a.maxHp - Combat.Round(hit) - Combat.Round(fire.damagePerTier), a.hp, "실 피해 + 화염 피해");
+            Assert.Greater(a.burnTime, 0, "화상");
+            Assert.AreEqual(fire.effectPerTier, a.burnDps, 1e-4f, "화상 초당 피해 = 1단계 값");
+            Assert.IsTrue(r.effects.Any(f => f.kind == FxKind.ElementHit && f.element == Element.Fire), "화염 그림");
+        }
+
+        // 12차: 세트가 둘 켜지면 단계 높은 쪽이 주 속성(100%), 나머지는 subSetScale 만큼.
+        [Test]
+        public void SecondSetIsHalf()
+        {
+            int f1 = Kind("fire", 1), f2 = Kind("fire", 2), l1 = Kind("lightning", 1);
+            // 화염 2개 맞닿음(1단계, 연결 2) · 번개 1개(1단계, 연결 1) → 화염이 주 속성
+            RunState r = combat.CreateRun(WithPieces((f1, 0, 0), (f2, 1, 0), (l1, 5, 3)), () => .5f);
+            Assert.AreEqual(2, r.gearStats.sets.Count);
+            Assert.AreEqual(Element.Fire, r.gearStats.sets[0].def.element, "주 속성 = 연결이 큰 화염");
+            Assert.AreEqual(1f, combat.SetScale(r, r.gearStats.sets[0]));
+            Assert.AreEqual(db.gear.subSetScale, combat.SetScale(r, r.gearStats.sets[1]));
+            SetDef bolt = db.gear.sets.First(s => s.id == "lightning");
+            Assert.AreEqual(bolt.effectPerTier * db.gear.subSetScale, combat.SetEffect(r, Element.Lightning), 1e-4f, "보조 번개 튐 = 절반");
+        }
+
+        // 12차: 보스를 쓰러뜨려 정화가 끝나면 계단과 함께 아티팩트 탑이 솟는다 (솟는 동안은 E 불가).
+        [Test]
+        public void TowerRisesAfterBoss()
+        {
+            RunState r = NewRun();
+            combat.BeginFloor(r);   // 층 컨셉 뽑기
+            r.roundIndex = System.Array.IndexOf(db.rounds.sequence, RoundKind.Boss);
+            combat.BeginRound(r);
+            combat.DevKillAll(r);
+            for (int i = 0; i < 4000 && r.phase != Phase.Cleared; i++) combat.Update(r, 1 / 60f, new CombatInput());
+            Assert.AreEqual(Phase.Cleared, r.phase);
+            Assert.IsNotNull(r.altar, "보스 뒤 탑");
+            Assert.AreEqual(db.rounds.artifactChoices, r.artifactOffer.Count, "아티팩트 3택");
+            Assert.IsFalse(combat.TowerReady(r), "솟는 중에는 E 불가");
+            for (int i = 0; i < 200; i++) combat.Update(r, 1 / 60f, new CombatInput());
+            Assert.IsTrue(combat.TowerReady(r));
+        }
+
+        // 12차 고유 효과: '거인 사냥'은 보스·정예에게만, '성급한 결박'은 결박 가닥을 줄인다.
+        [Test]
+        public void ItemEffectsApply()
+        {
+            int giantKind = System.Array.FindIndex(db.gear.pieces, d => d.effect == ItemEffect.Giant);
+            int quickKind = System.Array.FindIndex(db.gear.pieces, d => d.effect == ItemEffect.QuickBind);
+            Assert.GreaterOrEqual(giantKind, 0); Assert.GreaterOrEqual(quickKind, 0);
+            PieceDef giant = db.gear.pieces[giantKind];
+            RunState r = combat.CreateRun(WithPieces((giantKind, 0, 0)), () => .5f);
+            r.player.x = 500; r.player.y = 350;
+            Enemy boss = Add(r, "boss", 700, 350);
+            r.strands.Add(new Strand { x = boss.x, y = boss.y, target = boss, state = StrandState.Stuck, element = Element.Plain });
+            float hit = r.damage * (1 + combat.StrandBonus(1));
+            float elemental = r.gearStats.sets.Sum(s => s.def.damagePerTier * s.tier);
+            combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
+            Assert.AreEqual(boss.maxHp - Combat.Round(hit * (1 + giant.effectValue)) - Combat.Round(elemental * (1 + giant.effectValue)), boss.hp, "보스에게 +30%");
+
+            RunState q = combat.CreateRun(WithPieces((quickKind, 0, 0)), () => .5f);
+            Assert.IsTrue(combat.Bound(q, db.bind.strands - 1), "성급한 결박: 한 가닥 모자라도 결박");
+            Assert.IsFalse(combat.Bound(NewRun(), db.bind.strands - 1), "없으면 결박 아님");
         }
     }
 }

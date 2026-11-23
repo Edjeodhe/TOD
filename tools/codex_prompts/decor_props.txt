@@ -1,0 +1,14 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/decor_props.png
+Size: landscape 1536x1024.
+Create a sheet of 8 separate background decoration props for a top-down three-quarter view (camera looking down at about 45 degrees, like the attached floor tile) 2D game, in a 4 columns x 2 rows grid, each prop about 280px, fully separated with wide empty gaps (at least 90px), nothing touching. They lie on the floor of an abandoned gothic sewing tower. Each is a quiet background object: low contrast, desaturated, slightly darker than the characters would be, so they never compete with gameplay. Read order left to right, top to bottom:
+(1) a broken dressmaker's mannequin (dress form) knocked over on its side, cracked torso, a few pins stuck in it
+(2) a small pile of spilled yarn balls, loose tangled thread and scattered sewing buttons
+(3) a rusty old treadle sewing machine wreck, tipped over, with a cobweb
+(4) an abandoned rag doll slumped sitting, one button eye missing
+(5) shards of a cracked standing mirror lying flat on the floor, faint dull reflection
+(6) an iron candlestick with a burnt-out melted candle, wax drips, no flame, no glow
+(7) a flat floor decal: old dark stain with cracks in the stone and a line of stitched thread marks across it (completely flat, painted on the floor, no thickness)
+(8) a small heap of rusty big scissors and bent sewing needles stuck in a crumbling pincushion
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline, slight paper-grain texture INSIDE the shapes, low saturation, low brightness, muted plum / dusty grey-violet palette (#16131B, #4A3D50, #6B5A70). Match the colors and lighting of the reference floor tile.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows under the objects, no text, no labels. Do not use any green color inside the artwork itself.

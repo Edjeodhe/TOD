@@ -1,0 +1,21 @@
+/* 개발자 모드 패널 (F1). 게임 화면과 섞이지 않게 단색 어두운 판 + 주아 15px. */
+.dev-panel {
+    position: absolute; right: 16px; top: 16px; width: 520px; padding: 12px 14px 10px 14px;
+    background-color: rgba(12, 8, 14, 0.98); border-width: 2px; border-color: #6fd3a8; border-radius: 4px;
+}
+.dev-title { font-size: 15px; color: #6fd3a8; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.dev-status { font-size: 15px; color: #e8dcc8; margin: 4px 0 2px 0; white-space: normal; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.dev-head { font-size: 15px; color: #9a8f86; margin-top: 8px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.dev-row { flex-direction: row; flex-wrap: wrap; margin-top: 4px; }
+.dev-btn {
+    margin: 0 6px 6px 0; padding: 4px 10px; min-height: 0; font-size: 15px; color: #f1e6d6;
+    background-image: none; background-color: #2d2430; border-width: 1px; border-color: #5a4a5e; border-radius: 3px;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.dev-btn:hover { background-color: #43364a; border-color: #8e7a96; }
+.dev-btn:active { background-color: #6fd3a8; color: #12100f; }
+.dev-btn.on { background-color: #2f6b52; border-color: #6fd3a8; }
+.dev-btn:disabled { opacity: 0.35; }
+/* 세트 버튼: 왼쪽에 세트 색 점 (코드가 칠함) */
+.dev-set-dot { width: 10px; height: 10px; border-radius: 5px; margin-right: 6px; border-width: 1px; border-color: #12100f; }
+.dev-set { flex-direction: row; align-items: center; }

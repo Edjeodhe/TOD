@@ -35,6 +35,9 @@ namespace TOD
         public float dashCharge;             // 다음 칸이 차오른 정도 (0~1)
         public Point dashFrom;
         public bool dodged;
+        public float sinceDash = 99;         // 마지막 대쉬 끝난 뒤 지난 시간 (고유 효과 '도약 일격')
+        public bool leapUsed;                // 그 대쉬 뒤 첫 당기기에 이미 썼는지
+        public bool spiteReady;              // 고유 효과 '분풀이': 다음 당기기 강화 대기
     }
 
     public class Cut { public float angle, time, max, side; }
@@ -49,7 +52,11 @@ namespace TOD
         public Vector2 aim = Vector2.right;
         public Timed stretch, jolt, push, yank;
         public Cut cut;
+        // 속성 상태 (세트 부가 효과): 화상·중독 = 초당 피해, 둔화 = 이동 감소 비율, 저주 = 받는 피해 증가 비율
+        public float burnDps, burnTime, slow, slowTime, curse, curseTime, poisonDps, poisonTime, dotTick, dotPending;
+        public int poisonStacks;
         public bool IsBoss => type.id == "boss";
+        public void ClearStatus() { burnDps = burnTime = slow = slowTime = curse = curseTime = poisonDps = poisonTime = dotTick = dotPending = 0; poisonStacks = 0; }
     }
 
     public class Strand : Point
@@ -77,7 +84,8 @@ namespace TOD
 
     public class Echo { public float until; public List<Strand> strands; }
 
-    public enum FxKind { Sprite, Flip, Number, Combo, Burst, Slash, Dust, Pull, Cut, Sliced, Transfer, Afterimage, Bind }
+    // ElementHit = 속성 피해 그림(ElementTone.hit), Chain = 번개가 옆 적에게 튀는 줄기 (x,y → toX,toY)
+    public enum FxKind { Sprite, Flip, Number, Combo, Burst, Slash, Dust, Pull, Cut, Sliced, Transfer, Afterimage, Bind, ElementHit, Chain }
     public enum FxSprite { None, Pull, Dash, Boss, Needle, Stitch, Streak, Launch, Dodge, Shock }
     public enum FlipSheet { Puncture, Slash, Snip, Flash, Muzzle, Thunk }
 
@@ -92,6 +100,7 @@ namespace TOD
         public Color? color;                  // tint 를 색으로 지정할 때
         public bool squash, mirror, burst, rage, elite, useElement, followHero;
         public bool bound;                    // 결박 당기기의 실 (속성 모습으로 그린다)
+        public bool crit;                     // 치명타 피해 숫자 (치명타 글꼴 + 아이콘)
         public Point follow;                  // 이 점을 따라 그린다 (결박 폭발 → 끌려가는 적)
         public string text;
         public int pop;
@@ -119,6 +128,7 @@ namespace TOD
         public readonly Dictionary<SpawnEntry, float> spawnTimers = new();
         public Point stairs, altar, merchant;
         public float stairsAge;
+        public float altarAge;               // 탑이 나타난 뒤 지난 시간 (등장 연출)
         public List<int> artifactOffer = new();
         public bool artifactTaken, desirePending;
         public Point purifyCenter;
@@ -138,6 +148,7 @@ namespace TOD
         public List<Trail> trails = new();
         public List<Fx> effects = new();
         public HashSet<string> rules = new(), desires = new();
+        public bool devGod, devFreeze;        // 개발자 모드: 무적 · 적 멈춤
         public Dictionary<string, int> augmentsTaken = new();
         public bool artifactRerolled;        // 쉬어가기 탑: 층마다 한 번 다시 굴리기
         public BossDeath bossDeath;          // 보스 처치 연출 (BossDying 단계)   // 증강 id → 고른 횟수 (카드에 Lv 로 표시)

@@ -11,7 +11,7 @@
   core = 흰 고열 심(런타임에 look.core 로 가산), rim = 회색 외곽(look.color·look.glow 로 곱해 가산).
   art_src/vfx/bind/bind.blend       마지막 상태의 편집용 씬
 
-style: fire(화염) · lightning(번개) · frost(서리) · plain(금실). 모든 프레임은 위상 t = i/FRAMES 로 고리처럼 이어진다.
+style: fire(화염) · lightning(번개) · frost(얼음) · plain(금실 = 빛) · dark(어둠) · blood(피) · wind(바람) · poison(독). 모든 프레임은 위상 t = i/FRAMES 로 고리처럼 이어진다.
 """
 import math
 import random
@@ -246,6 +246,101 @@ def thread_frost(t, core, rim, rng):
         tiled(x0, lambda x: core.disc(x, y, .04 * tw + .005, tw))
 
 
+def wisp(layer, x, y, length, curl, width, alpha, t, n=14):
+    """연기 한 줄기: (x, y)에서 뒤로 뻗으며 휘감기고, 끝으로 갈수록 가늘고 옅어진다."""
+    pts, ws, als = [], [], []
+    for i in range(n + 1):
+        u = i / n
+        pts.append((x - length * u, y + curl * math.sin(math.pi * u * 1.4 + TAU * t) * u))
+        ws.append(width * (1 - u * .8))
+        als.append(alpha * (1 - u) ** 1.3)
+    layer.ribbon(pts, ws, als, edge=0)
+
+
+def thread_dark(t, core, rim, rng):
+    # 어둠: 굵고 흐린 그림자 줄기 + 실을 휘감는 연기 가닥 + 떠다니는 그림자 덩이
+    wave = lambda x: .03 * math.sin(TAU * (x / 2 + t))
+    pts = line(-2.6, 2.6, 60, wave)
+    rim.ribbon(pts, [.22] * len(pts), [.45] * len(pts), edge=0)
+    rim.ribbon(pts, [.09] * len(pts), [.85] * len(pts), edge=.2)
+    core.ribbon(pts, [.028] * len(pts), [.95] * len(pts), edge=.3)
+    for i in range(12):
+        x0 = -2 + 4 * (i + .5) / 12
+        side = 1 if i % 2 == 0 else -1
+        ph = rng.random()
+        tiled(x0, lambda x: (wisp(rim, x, wave(x), .7 + .25 * ph, side * (.22 + .1 * ph), .1, .85, t + ph),
+                             wisp(core, x, wave(x), .4, side * .1, .022, .8, t + ph)))
+    for i in range(10):
+        x0 = (-2 + 4 * rng.random() - 4 * t + 2) % 4 - 2
+        y = (rng.random() - .5) * .45
+        r = .08 + .07 * rng.random()
+        tiled(x0, lambda x: rim.disc(x, y, r, .6))
+
+
+def thread_blood(t, core, rim, rng):
+    # 피: 두꺼운 핏줄기가 맥박처럼 굵어졌다 가늘어지고, 아래로 핏방울이 맺혀 떨어진다
+    pulse = lambda x: .75 + .25 * math.sin(TAU * (x / 1 - t))
+    pts = line(-2.6, 2.6, 80, lambda x: 0)
+    rim.ribbon(pts, [.18 * pulse(x) for x, _ in pts], [.45] * len(pts), edge=0)
+    rim.ribbon(pts, [.08 * pulse(x) for x, _ in pts], [.95] * len(pts), edge=.35)
+    core.ribbon(pts, [.026 * pulse(x) for x, _ in pts], [1] * len(pts), edge=.3)
+    for i in range(9):
+        x0 = -2 + 4 * (i + .5) / 9 + (rng.random() - .5) * .15
+        ph = rng.random()
+        k = (t + ph) % 1                       # 맺혔다 떨어지는 진행
+        drop = .04 + .22 * k ** 2
+        r = .045 + .035 * min(1, k * 2)
+
+        def bead(x):
+            rim.blade(x, -.01, x, -drop, .035 * (1 - k * .5), .9, edge=.4, bias=.8)   # 늘어진 물줄기
+            rim.disc(x, -drop, r, .95)
+            core.disc(x - r * .3, -drop + r * .3, r * .35, .9)                          # 반사광
+        tiled(x0, bead)
+
+
+def thread_wind(t, core, rim, rng):
+    # 바람: 가는 심 둘레를 세 가닥 나선이 감아 흐르고, 바람 결 줄무늬가 스쳐 간다
+    pts = line(-2.6, 2.6, 60, lambda x: 0)
+    rim.ribbon(pts, [.1] * len(pts), [.25] * len(pts), edge=0)
+    core.ribbon(pts, [.012] * len(pts), [.8] * len(pts), edge=.3)
+    for k in range(3):
+        f = lambda x, p=k / 3: .1 * math.sin(TAU * (x + t + p))
+        sp = line(-2.6, 2.6, 120, f)
+        front = [.5 + .5 * math.cos(TAU * (x + t + k / 3)) for x, _ in sp]        # 앞에 올수록 밝게
+        rim.ribbon(sp, [.022 + .012 * a for a in front], [.35 + .6 * a for a in front], edge=.2)
+        core.ribbon(sp, [.007] * len(sp), [.2 + .8 * a ** 2 for a in front], edge=.4)
+    for i in range(9):
+        x0 = (-2 + 4 * rng.random() + 4 * t + 2) % 4 - 2
+        y = (rng.random() - .5) * .5
+        ln = .25 + .25 * rng.random()
+        tiled(x0, lambda x: rim.blade(x - ln, y, x + ln * .2, y, .012, .7, edge=.2, bias=.75))
+
+
+def thread_poison(t, core, rim, rng):
+    # 독: 걸쭉하게 출렁이는 독액 줄기 + 표면에서 솟는 거품 + 아래로 늘어지는 독 방울
+    wave = lambda x: .035 * math.sin(TAU * (x * .75 + t))
+    pts = line(-2.6, 2.6, 80, wave)
+    rim.ribbon(pts, [.14] * len(pts), [.35] * len(pts), edge=0)
+    rim.ribbon(pts, [.06] * len(pts), [.9] * len(pts), edge=.3)
+    core.ribbon(pts, [.02] * len(pts), [.95] * len(pts), edge=.3)
+    for i in range(14):
+        x0 = -2 + 4 * rng.random()
+        ph = rng.random()
+        k = (t + ph) % 1
+        r = .025 + .035 * rng.random()
+        y = wave(x0) + .03 + .3 * k                                                # 위로 솟는 거품
+        a = math.sin(math.pi * k)
+
+        def bubble(x):
+            rim.disc(x, y, r, .55 * a)
+            core.disc(x + r * .35, y + r * .35, r * .3, .9 * a)                     # 거품 반사광
+        tiled(x0, bubble)
+    for i in range(5):
+        x0 = -2 + 4 * (i + .5) / 5
+        k = (t + rng.random()) % 1
+        tiled(x0, lambda x: rim.blade(x, wave(x), x, wave(x) - .08 - .14 * k, .03, .85, edge=.4, bias=.8))
+
+
 def thread_plain(t, core, rim, rng):
     # 금실 두 가닥이 꼬여 흐른다
     for phase in (0, .5):
@@ -336,6 +431,52 @@ def trail_plain(t, core, rim, rng):
         core.disc(x, (rng.random() - .5) * .4 * (x + 2) / 4, .035 * taper(x) + .006, taper(x) ** .5)
 
 
+def trail_dark(t, core, rim, rng):
+    trail_core_streak(core, rim, lambda x: .06 * math.sin(TAU * (x * .6 - t)) * (x + 2) / 4, .04, glow=.3)
+    for i in range(8):
+        x0 = -1.9 + 2.4 * i / 8
+        k = taper(x0)
+        side = 1 if i % 2 == 0 else -1
+        wisp(rim, x0 + .9, 0, -.9 - .5 * rng.random(), side * (.2 + .2 * (1 - k)), .07 * k + .015, .75 * k, t + rng.random())
+    for _ in range(12):
+        x = -1.6 + 3.4 * rng.random()
+        rim.disc(x + .2 * t, (rng.random() - .5) * .6 * (x + 2) / 4, .07 * taper(x) + .02, .5 * taper(x) ** .5)
+
+
+def trail_blood(t, core, rim, rng):
+    trail_core_streak(core, rim, lambda x: 0, .045, glow=.2)
+    for _ in range(16):
+        x = -1.8 + 3.4 * rng.random()
+        k = taper(x)
+        y = -(rng.random() * .35) * (1 - k) - .02
+        r = .045 * k + .012
+        rim.disc(x + .2 * t, y, r, .95 * k ** .4)
+        core.disc(x + .2 * t - r * .3, y + r * .3, r * .35, .9 * k ** .4)
+
+
+def trail_wind(t, core, rim, rng):
+    for k in range(3):
+        f = lambda x, p=k / 3: .16 * (x + 2) / 4 * math.sin(TAU * (x * .8 - t + p)) + .02 * math.sin(TAU * p)
+        pts = line(-2, 2, 80, f)
+        rim.ribbon(pts, [.03 * taper(x) + .004 for x, _ in pts], [.8 * taper(x) for x, _ in pts], edge=.2)
+        core.ribbon(pts, [.01 * taper(x) + .002 for x, _ in pts], [taper(x) ** .7 for x, _ in pts], edge=.4)
+    for _ in range(10):
+        x = -1.8 + 3.2 * rng.random()
+        y = (rng.random() - .5) * .6 * (x + 2) / 4
+        rim.blade(x, y, x + .4, y, .012 * taper(x) + .004, .7 * taper(x), edge=.2, bias=.75)
+
+
+def trail_poison(t, core, rim, rng):
+    trail_core_streak(core, rim, lambda x: .04 * math.sin(TAU * (x * .5 - t)) * (x + 2) / 4, .045, glow=.24)
+    for _ in range(18):
+        x = -1.8 + 3.4 * rng.random()
+        k = taper(x)
+        y = (rng.random() - .3) * .5 * (1 - k)
+        r = .04 * k + .015
+        rim.disc(x + .15 * t, y, r, .6 * k ** .4)
+        core.disc(x + .15 * t + r * .35, y + r * .35, r * .3, .9 * k ** .4)
+
+
 # ---------------------------------------------------------------- 머리 광구 (128×128, x,y ∈ [-2, 2])
 
 def head(style, core, rim, rng):
@@ -361,6 +502,29 @@ def head(style, core, rim, rng):
             for s in (-1, 1):
                 bx, by = math.cos(a) * 1.0, math.sin(a) * 1.0
                 rim.blade(bx, by, bx + math.cos(a + s * .8) * .5, by + math.sin(a + s * .8) * .5, .1, .85, edge=.4, bias=.2)
+    elif style == "dark":
+        for i in range(5):   # 소용돌이 치는 그림자 팔
+            a0 = TAU * i / 5
+            pts = [(math.cos(a0 + u * 2.2) * (.4 + 1.5 * u), math.sin(a0 + u * 2.2) * (.4 + 1.5 * u)) for u in (j / 16 for j in range(17))]
+            rim.ribbon(pts, [.28 * (1 - j / 17) + .03 for j in range(17)], [.85 * (1 - j / 17) for j in range(17)], edge=0)
+    elif style == "blood":
+        for i in range(8):   # 튀는 핏방울
+            a = TAU * i / 8 + rng.random() * .4
+            r = 1.1 + .6 * rng.random()
+            rim.blade(0, 0, math.cos(a) * r, math.sin(a) * r, .22, .9, edge=.3, bias=.75)
+            rim.disc(math.cos(a) * r, math.sin(a) * r, .16, .95)
+    elif style == "wind":
+        for k in range(3):   # 나선 세 가닥
+            pts = [(math.cos(TAU * k / 3 + u * 4.5) * 1.8 * u, math.sin(TAU * k / 3 + u * 4.5) * 1.8 * u) for u in (j / 24 for j in range(25))]
+            rim.ribbon(pts, [.12] * 25, [.9 * (1 - j / 25) + .1 for j in range(25)], edge=.2)
+            core.ribbon(pts, [.04] * 25, [1 - j / 25 for j in range(25)], edge=.4)
+    elif style == "poison":
+        for i in range(9):   # 거품 덩이
+            a = TAU * rng.random()
+            d = 1.0 + .7 * rng.random()
+            r = .2 + .25 * rng.random()
+            rim.disc(math.cos(a) * d, math.sin(a) * d, r, .8)
+            core.disc(math.cos(a) * d + r * .35, math.sin(a) * d + r * .35, r * .3, 1)
     else:
         for i in range(4):
             a = TAU * i / 4 + TAU / 8
@@ -407,6 +571,10 @@ STYLES = {
     "lightning": (thread_lightning, trail_lightning),
     "frost": (thread_frost, trail_frost),
     "plain": (thread_plain, trail_plain),
+    "dark": (thread_dark, trail_dark),
+    "blood": (thread_blood, trail_blood),
+    "wind": (thread_wind, trail_wind),
+    "poison": (thread_poison, trail_poison),
 }
 
 for style, (thread_fn, trail_fn) in STYLES.items():

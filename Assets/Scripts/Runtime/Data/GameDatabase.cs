@@ -5,7 +5,11 @@ using UnityEngine;
 
 namespace TOD
 {
-    public enum Element { Plain, Chaos, Despair, Frustration, Dodge }
+    // 실의 속성 = 재봉 상자 세트. 직렬화 값(정수)이 데이터에 저장되므로 새 값은 끝에만 붙인다.
+    // Plain = 세트가 없을 때의 기본 실, Dodge = 대쉬 흔적. (12차: 혼돈 → 화염, 절망 → 얼음, 좌절 → 번개로 이름 변경, 빛·어둠·피·바람·독 추가)
+    public enum Element { Plain, Fire, Ice, Lightning, Dodge, Light, Dark, Blood, Wind, Poison }
+    // 재봉 조각 고유 효과 (유니크·레전더리). value·param 의 뜻은 GearConfig.effectTexts 설명 참고.
+    public enum ItemEffect { None, Brink, QuickBind, Spite, HeavyKnot, Leap, Greed, Rewind, Giant }
     // 재봉 조각 능력치. 직렬화 값(정수)이 조각 데이터에 저장되므로 새 값은 끝에만 붙인다.
     // Multishot = 한 번 쏠 때 더 나가는 바늘 수(좌우로 부채꼴), ThreadWidth = 실 굵기 증가 비율(0.6 = +60%)
     public enum StatKind { Damage, Speed, Health, Recharge, Purity, Yarn, Multishot, ThreadWidth }
@@ -48,6 +52,14 @@ namespace TOD
         public Vector2 stairsOffset;         // 라운드가 끝났을 때 플레이어 기준 계단 위치
         public Vector2 altarOffset, merchantOffset, restStairsOffset, bossOffset;
         public float interactRadius;
+        public float stairsRadius;            // 계단 E 판정 반경 (계단 그림이 커서 따로 넓게)
+        [Header("탑 등장 (쉬어가기 · 보스 처치 뒤): 바닥 솔기 꿰매기 → 솟아오름 → 착지·창문 불")]
+        public float towerStitchTime;         // 바닥에 원형 솔기가 한 땀씩 꿰매지는 시간
+        public float towerRiseTime;           // 등장 전체 시간 (이 뒤에 E 가능)
+        public float towerSettleTime;         // 마지막 착지 출렁임 시간
+        public int towerStitches;             // 솔기 땀 수
+        public Vector2 bossTowerOffset;       // 보스 처치 뒤 탑 자리 (주인공 기준, 계단과 겹치지 않게)
+        public Vector2 stairsHitOffset;       // 계단 판정 중심 = 계단 발밑 + 이만큼 (y 음수 = 계단 위쪽 단 방향)
         public float merchantChance;
         public int artifactChoices;
         public float stairsRevealTime;       // 계단 등장 연출 시간 (마지막 단이 자리 잡을 때까지, 그 전에는 E 가 안 된다)
@@ -119,6 +131,7 @@ namespace TOD
     {
         public float baseHp, baseDamage;
         public float strandBonus, strandBonusMax;   // 당길 때 실 한 가닥이 더 걸릴 때마다 피해 +strandBonus (최대 strandBonusMax)
+        public float critChance, critMultiplier;    // 치명타: 당기기로 적 하나에 들어가는 실 피해마다 확률 critChance 로 × critMultiplier (속성 피해는 제외)
         public int baseYarn, minYarn;
         public float moveSpeed, encumbrance, minSpeedFactor, frenzySpeed, initialAngle;
         public float shotInterval, aimDeadZone;
@@ -247,13 +260,23 @@ namespace TOD
         public float warpAmplitude, warpFrequency, warpSpeed;   // 일렁임 진폭(캔버스 px)·주파수·속도
     }
 
+    // 세트 = 속성. 같은 색 조각을 맞대 단계(thresholds)가 켜지면 실이 그 속성 모습이 되고, 당길 때 한 타마다 속성 피해가 더해지며 부가 효과가 붙는다.
+    // 부가 효과(effectPerTier × 단계)의 뜻은 속성마다 다르다:
+    //   화염 = 화상 초당 피해 · 얼음 = 둔화 비율(effectCap 상한) · 번개 = 옆 적에게 튀는 피해(effectRange 안, effectCap 마리)
+    //   빛 = 결박·정예·보스에게 추가 피해 비율 · 어둠 = 저주(받는 피해 증가 비율) · 피 = 흡혈(준 피해 중 회복 비율)
+    //   바람 = 끌어오는 거리 증가 비율(effectRange 안 주변 적도 끌림) · 독 = 중독 한 겹당 초당 피해(effectCap 겹까지)
     [Serializable] public class SetDef
     {
-        public string id, name, bonus;
+        public string id, name, bonus;        // bonus = 속성 피해 이름 (예: "화염 피해")
         public Color color;
+        public Element element;
         public int[] thresholds;
-        public StatKind stat;
-        public float perTier;
+        public float damagePerTier;           // 당기기 한 타마다 더하는 속성 피해 (단계당)
+        public float effectPerTier;           // 부가 효과 세기 (단계당)
+        public float effectTime;              // 부가 효과 지속 (초)
+        public float effectRange;             // 번개 튐·바람 끌림 반경 (전투장 px)
+        public float effectCap;               // 얼음 둔화 상한 · 번개 튀는 마리 수 · 독 최대 겹
+        public string effectText;             // 부가 효과 문구. {0} = 이 단계의 값 (예: "화상 초당 {0}")
     }
 
     [Serializable] public class PieceDef
@@ -266,6 +289,15 @@ namespace TOD
         public Vector2Int[] shape;
         public Sprite icon;
         [TextArea] public string flavor;      // 카드 아래 짧은 설명
+        public ItemEffect effect;             // 고유 효과 (유니크·레전더리)
+        public float effectValue, effectParam;
+    }
+
+    // 고유 효과 이름·설명. text 의 {0} = effectValue, {1} = effectParam
+    [Serializable] public class ItemEffectText
+    {
+        public ItemEffect effect;
+        public string name, text;
     }
 
     [Serializable] public class GearConfig
@@ -279,6 +311,8 @@ namespace TOD
         public Color[] rankColors;            // 코스트 1~4 → 일반 회색·레어 하늘색·유니크 노란색·레전더리 붉은색 (0번 미사용)
         public float[] rankShine;             // 등급별 번쩍임 세기 (0 = 없음)
         public string saveKey;
+        public ItemEffectText[] effectTexts;  // 고유 효과 이름·설명
+        public float subSetScale;             // 세트가 여럿 켜졌을 때 주 속성이 아닌 세트의 피해·부가 효과 배율 (.5)
     }
 
     [Serializable] public class UpgradeDef
@@ -306,17 +340,21 @@ namespace TOD
     {
         public Element element;
         public Color color, glow, core;
-        public BindStyle bindStyle;           // 결박 당기기 때 실이 변하는 모습 (혼돈 → 화염 등, 데이터로 바꿀 수 있음)
+        public BindStyle bindStyle;           // 실 리본 모습 (세트가 켜진 실 · 결박 당기기)
+        public Sprite hit;                    // 속성 피해가 들어갈 때 적 자리에 터지는 그림 (Codex fx_*), 색으로 물들인다
+        public float hitSize;                 // 그 그림 크기 (px)
+        public GlyphFont damageFont;          // 이 속성 피해 숫자 그림 글꼴 (tools/bake_element_fonts.py, 흰색 그대로 그린다)
     }
 
-    // 결박 당기기 때 실·폭발의 모습
-    public enum BindStyle { Plain, Fire, Lightning, Frost }
+    // 실 리본·결박 폭발의 모습 (Plain = 금실 = 빛)
+    public enum BindStyle { Plain, Fire, Lightning, Frost, Dark, Blood, Wind, Poison }
 
     [Serializable] public class BindLook
     {
         public BindStyle style;
         public Color glow, color, core;       // 바깥 빛 · 몸통 · 가운데 심 (가산)
-        public string text;                   // 적 머리 위 글자 (예: "화염 결박!")
+        [Range(0, 1)] public float cover = 1; // 실 덮개 세기 배율 (밝은 색은 다섯 가닥이 겹치면 하얗게 날아가므로 낮춘다)
+        public string text;                // 적 머리 위 글자 (예: "화염 결박!")
     }
 
     // 결박 당기기: 같은 적 하나에 실이 strands 가닥 이상 걸린 채 당기면 그 적에게 추가 피해 + 속성 연출.
@@ -334,6 +372,14 @@ namespace TOD
         public float ribbonFps, flowSpeed;    // 리본 프레임 넘김 속도, 손 쪽으로 흐르는 속도 (타일/초)
         public float trailWidth, trailTime;   // 궤적 꼬리 굵기 (px), 꼬리 길이 = 머리 속도 × trailTime
         public float headSize;                // 머리 광구 지름 (px)
+        [Header("실 덮개: 리본 위에 속성 빛·장식을 굵게 덮어 실이 보이지 않게 (0 = 끔)")]
+        public float coverWidth;              // 덮개 빛 굵기 (캔버스 px, 실 리본보다 넓게)
+        public float coverAlpha;              // 덮개 세기 (0~1)
+        public float coverStep;               // 불길 혀·전류·얼음 결정을 놓는 간격 (px)
+        [Header("세트가 켜진 실: 평소에도 속성 리본으로 (단계마다 굵어짐)")]
+        public float setRibbonWidth;          // 1단계 리본 굵기 (px)
+        public float setRibbonGrowth;         // 단계가 하나 오를 때마다 굵기 배율 증가
+        public float setCoverScale;           // 덮개 굵기 = 리본 굵기 × 이 값
         [Header("가감속: 반동(뒤로 감김) → 가속 → 손 앞에서 감속")]
         public float pullTime;                // 결박 실이 감겨 드는 시간 (보통 당기기 fx.pullStrand.time 대신)
         public float windup, windupTime;      // 처음 windupTime(0~1) 동안 적 쪽으로 windup(실 길이 비율)만큼 뒤로 감긴다
@@ -350,6 +396,27 @@ namespace TOD
         public float stretchPower;            // 끌려올 때 몸이 늘어나는 정도 배율
         public int speedLines;                // 적 둘레 속도선 수
         public BindLook[] looks;
+    }
+
+    // 맵 장식 (12차): 상호작용 없는 코스메틱. 라운드마다 새 맵에 흩어 두고, 캐릭터·몬스터·공격 예고보다 항상 뒤(Ground 층 맨 앞 순서)에 그린다.
+    [Serializable] public class DecorDef
+    {
+        public Sprite sprite;
+        public float height;                  // 그리는 높이 (캔버스 px)
+        public float weight = 1;              // 뽑힐 비중
+        public bool flat;                     // 바닥에 납작하게 붙는 데칼 (그림자 없음, 가운데 기준)
+    }
+
+    [Serializable] public class DecorConfig
+    {
+        public DecorDef[] props;
+        public float density;                 // 맵 100만 px² 당 개수
+        public float spacing;                 // 장식끼리 최소 거리 (전투장 px)
+        public float clearRadius;             // 라운드 시작 자리(주인공) 둘레는 비워 둔다
+        public float margin;                  // 맵 벽에서 떨어뜨리는 거리
+        public Vector2 scaleRange;            // 크기 무작위 배율 (최소, 최대)
+        public float bright, sat;             // 캐릭터보다 눈에 덜 띄게 (1 = 그대로)
+        public float shadowAlpha;             // 서 있는 장식 아래 그림자 진하기
     }
 
     // 이펙트 한 종류의 크기·수명 (웹판 effects.push 의 size/time).
@@ -393,10 +460,22 @@ namespace TOD
         public float levelUpIconSize, levelUpIconSpread;   // 아이콘 크기(캔버스 px), 몸 둘레 퍼짐(캔버스 px)
         [Header("피해 숫자 그림 글꼴")]
         public GlyphFont damageFont;
+        [Header("치명타 숫자: 노란 그림 글꼴 + 왼쪽 위 뾰족한 아이콘 (세피리아 참고)")]
+        public GlyphFont critFont;
+        public Sprite critIcon;
+        public float critScale;               // 숫자 크기 배율
+        public float critIconSize;            // 아이콘 크기 (숫자 높이 대비)
+        public Vector2 critIconOffset;        // 숫자 왼쪽 위 모서리에서 아이콘 가운데까지 (숫자 높이 대비, +x 오른쪽 +y 아래)
         public Color levelUpColor;
         public float dodgeScale, dodgeLaunchEnd, dodgeAirEnd, dodgeHop;
         public float strandSegment, frustrationSegment;
         public Color dodgeColor;
+        [Header("세트 속성 (12차)")]
+        public float elementNumberLift;       // 속성 피해 숫자를 실 피해 숫자 위로 띄우는 높이 (px)
+        public float elementHitTime;          // 속성 그림(ElementTone.hit)이 터지는 시간
+        public float chainTime;               // 번개 튐 줄기가 남는 시간
+        public float dotInterval;             // 화상·중독 숫자를 모아 띄우는 간격 (초)
+        public float statusRate;              // 상태 이상 적 둘레 입자 (초당)
     }
 
     // 전투장 그리기 색 (웹판 render.js 의 Canvas fillStyle/strokeStyle).
@@ -421,12 +500,13 @@ namespace TOD
     [Serializable] public class MessageConfig
     {
         public string awaken, frenzy;
-        public string roundBanner;            // "{0}층 · {1}"
+        public string roundBanner;            // "{0}층  {1}" (게임 글자에 가운뎃점은 쓰지 않는다)
         public string bossRoundName, roundName;   // "층 보스", "{0}라운드"
         public string loot;                   // "{0} 획득"
         public string dodge, emptyYarn, pullEmpty;
-        public string pullHits, pullTransfers, pullNone;   // "실 명중 {0}회", " · 피해 전달 {0}체", "실을 거뒀습니다"
+        public string pullHits, pullTransfers, pullNone;   // "실 명중 {0}회", ", 피해 전달 {0}체", "실을 거뒀습니다"
         public string bossSummon, combo;      // "{0} HIT"
+        public string spite;                  // 고유 효과 '분풀이' 발동 ("분풀이! 털실 회수")
     }
 
     // 화면 문구 중 숫자·이름이 바뀌는 것 (고정 문구는 UXML 에 있다).
@@ -447,6 +527,7 @@ namespace TOD
         public string dashValue, expText, expLevel, augmentLevel, pieceEffect, pieceShape;
         public string reroll, rerollUsed, threadBonus, inventoryHint, inventoryInRun;
         public string pieceCells, tipSet, setProgress, setProgressMax, ownedAll;   // 재봉 상자 정보 창·세트 패널·상점
+        public string setMain, setSub;        // 세트 패널: 주 속성 / 보조 (예: "주 속성", "보조 {0}")
         public string[] statNames;            // StatKind 순서
         public string[] roundNames;           // 첫 번째 라운드, 두 번째 라운드, 층 보스
     }
@@ -483,6 +564,7 @@ namespace TOD
         public NeedleVisual needleVisual;
         public VisualConfig visual;
         public RenderPalette palette;
+        public DecorConfig decor;
         public MessageConfig messages;
         public UiTextConfig ui;
         public SynthSound[] sounds;

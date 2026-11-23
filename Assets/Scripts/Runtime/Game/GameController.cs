@@ -316,6 +316,15 @@ namespace TOD
 
         void RenderInventory() => ui.RenderInventory(Profile, selected, turns);
 
+        // 개발자 모드가 조각·배치를 바꾼 뒤: 저장하고, 등반 중이면 장비 능력치·세트를 바로 반영하고, 재봉 상자가 열려 있으면 다시 그린다.
+        public void DevGearChanged()
+        {
+            Gear.Save(db, Profile);
+            if (Run != null) Combat.RefreshGear(Run);
+            if (screen == UiScreen.Inventory || runInventory) { selected = null; RenderInventory(); }
+            ui.UpdateMeta(Profile);
+        }
+
         public void SelectPiece(int id)
         {
             selected = id;

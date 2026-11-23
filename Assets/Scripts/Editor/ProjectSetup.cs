@@ -48,8 +48,11 @@ namespace TOD.EditorTools
             {
                 SliceFlipbook(AssetDatabase.GUIDToAssetPath(guid));
             }
-            const string fontAtlas = "Assets/Art/Generated/damage_font.png";
-            if (File.Exists(fontAtlas) && File.Exists("art_src/fonts/damage_font.json")) SliceGlyphAtlas(fontAtlas, "art_src/fonts/damage_font.json");
+            // 피해 숫자 아틀라스: 기본 + 속성·치명타별로 구운 것(tools/bake_element_fonts.py)이 모두 같은 글자 배치라 같은 JSON 으로 자른다
+            const string fontJson = "art_src/fonts/damage_font.json";
+            if (File.Exists(fontJson))
+                foreach (string fontAtlas in Directory.GetFiles("Assets/Art/Generated", "damage_font*.png"))
+                    SliceGlyphAtlas(fontAtlas.Replace('\\', '/'), fontJson);
             Debug.Log($"[TOD] Texture imports configured ({changed} changed)");
         }
 
@@ -60,7 +63,7 @@ namespace TOD.EditorTools
             bool tiled = name == "floor" || name == "dash" || (name.StartsWith("bind_") && name.Contains("_thread"));   // 결박 실 몸통 리본은 길이 방향으로 반복
 
             importer.textureType = TextureImporterType.Sprite;
-            importer.spriteImportMode = flip || name == "damage_font" ? SpriteImportMode.Multiple : SpriteImportMode.Single;   // 그림 글꼴 아틀라스는 여러 장(잘라 둔 글자 유지)
+            importer.spriteImportMode = flip || name.StartsWith("damage_font") ? SpriteImportMode.Multiple : SpriteImportMode.Single;   // 그림 글꼴 아틀라스는 여러 장(잘라 둔 글자 유지)
             importer.spritePixelsPerUnit = PixelsPerUnit;
             // 스프라이트는 화면에서 3~7배 줄여 그리므로 밉맵 + 살짝 날카로운 바이어스로 뭉개짐·자글거림을 막는다.
             importer.mipmapEnabled = !flip && name != "dash" && name != "white";

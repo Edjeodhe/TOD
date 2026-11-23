@@ -40,6 +40,9 @@ namespace TOD
         public float StrandBonus(int strands) => Mathf.Min(H.strandBonusMax, H.strandBonus * Mathf.Max(0, strands - 1));
         // 결박: 같은 적 하나에 바늘이 db.bind.strands 개 이상 꽂힌 채 당기면 그 적은 추가 피해 + 속성 연출
         public bool Bound(int strandsOnTarget) => db.bind.strands > 0 && strandsOnTarget >= db.bind.strands;
+        // 고유 효과 '성급한 결박'이 있으면 필요한 가닥이 줄어든다 (최소 2)
+        public bool Bound(RunState r, int strandsOnTarget) =>
+            db.bind.strands > 0 && strandsOnTarget >= Mathf.Max(2, db.bind.strands - Mathf.RoundToInt(r.gearStats?.Effect(ItemEffect.QuickBind) ?? 0));
 
         // 재봉 조각 '여러 갈래 바늘': 한 번 쏠 때 더 나가는 바늘 수 (0 = 한 개만). 줄 강화로 값이 조금 늘어도 정수로 끊는다.
         public int ExtraNeedles(RunState r) => Mathf.Clamp(Mathf.FloorToInt(r.Gear(StatKind.Multishot) + 1e-3f), 0, Mathf.Max(0, H.multishotMax));
@@ -199,21 +202,29 @@ namespace TOD
                     // 쉬어가는 라운드: 아티팩트 제단·확률 상인·보스로 가는 계단
                     r.phase = Phase.Cleared;
                     r.roundLength = 0;
-                    r.altar = Near(r, R.altarOffset);
+                    RaiseTower(r, R.altarOffset);
                     if (r.random() < R.merchantChance) r.merchant = Near(r, R.merchantOffset);
                     r.stairs = Near(r, R.restStairsOffset);
                     r.stairsAge = R.stairsRevealTime;
-                    var kinds = Gear.Unowned(db, r.profile);   // 아이템은 고유: 이미 가진 종류는 탑에 나오지 않는다
-                    while (r.artifactOffer.Count < R.artifactChoices && kinds.Count > 0)
-                    {
-                        int i = Mathf.Min(kinds.Count - 1, Mathf.FloorToInt(r.random() * kinds.Count));
-                        r.artifactOffer.Add(kinds[i]);
-                        kinds.RemoveAt(i);
-                    }
                     name = db.ui.restRoundName;
                     break;
             }
             Event(r, "round", string.Format(M.roundBanner, r.floor, name));
+        }
+
+        // 아티팩트 탑: 쉬어가는 라운드 · 보스 처치(정화) 뒤. 바닥에서 솟아오르는 연출(altarAge)이 끝나야 E.
+        void RaiseTower(RunState r, Vector2 offset)
+        {
+            r.altar = Near(r, offset);
+            r.altarAge = 0;
+            r.artifactOffer.Clear(); r.artifactTaken = false; r.artifactRerolled = false;
+            var kinds = Gear.Unowned(db, r.profile);   // 아이템은 고유: 이미 가진 종류는 탑에 나오지 않는다
+            while (r.artifactOffer.Count < R.artifactChoices && kinds.Count > 0)
+            {
+                int i = Mathf.Min(kinds.Count - 1, Mathf.FloorToInt(r.random() * kinds.Count));
+                r.artifactOffer.Add(kinds[i]);
+                kinds.RemoveAt(i);
+            }
         }
 
         Point Near(RunState r, Vector2 offset) => new(
@@ -236,19 +247,24 @@ namespace TOD
 
         public Interactable Nearest(RunState r)
         {
+            // 판정 반경 안에서 반경 대비 가장 가까운 것 (계단은 그림이 커서 반경이 따로 넓다)
             Interactable best = Interactable.None;
-            float bestGap = R.interactRadius;
-            void Check(Point p, Interactable kind)
+            float bestRatio = 1;
+            void Check(Point p, Interactable kind, float radius, Vector2 offset = default)
             {
-                if (p == null) return;
-                float gap = Distance(p, r.player);
-                if (gap <= bestGap) { bestGap = gap; best = kind; }
+                if (p == null || radius <= 0) return;
+                float ratio = Distance(new Point(p.x + offset.x, p.y + offset.y), r.player) / radius;
+                if (ratio <= bestRatio) { bestRatio = ratio; best = kind; }
             }
-            if (r.phase == Phase.Cleared && r.stairsAge >= R.stairsRevealTime) Check(r.stairs, Interactable.Stairs);
-            if (!r.artifactTaken) Check(r.altar, Interactable.Altar);
-            Check(r.merchant, Interactable.Merchant);
+            if (r.phase == Phase.Cleared && r.stairsAge >= R.stairsRevealTime)
+                Check(r.stairs, Interactable.Stairs, Mathf.Max(R.interactRadius, R.stairsRadius), R.stairsHitOffset);
+            if (!r.artifactTaken && TowerReady(r)) Check(r.altar, Interactable.Altar, R.interactRadius);
+            Check(r.merchant, Interactable.Merchant, R.interactRadius);
             return best;
         }
+
+        // 탑이 다 솟아오른 뒤에만 상호작용 (등장 연출 중에는 E 가 안 된다)
+        public bool TowerReady(RunState r) => r.altar != null && r.altarAge >= R.towerRiseTime;
 
         // 쉬어가기 탑의 조각 3개를 한 번 다시 굴린다 (지금 보이는 조각은 되도록 빼고).
         public bool RerollArtifacts(RunState r)
@@ -408,6 +424,7 @@ namespace TOD
             enemy.speed = def.speed * (1 + E.speedPerFloor * (r.floor - 1)) * (c?.speedScale ?? 1);
             enemy.damage = def.damage * (1 + E.damagePerFloor * (r.floor - 1)) * (elite ? E.eliteDamage : 1);
             enemy.action = EnemyAction.Move; enemy.timer = 0; enemy.facing = 1; enemy.flash = 0; enemy.threshold = 0;
+            enemy.ClearStatus();
             enemy.aim = Vector2.right; enemy.stretch = enemy.jolt = enemy.push = enemy.yank = null; enemy.cut = null;
             enemy.height = EnemyHeight(enemy);
             r.enemies.Add(enemy);
@@ -622,6 +639,7 @@ namespace TOD
         bool DamagePlayer(RunState r, float amount)
         {
             Player p = r.player;
+            if (r.devGod) return false;   // 개발자 모드: 무적
             if (p.dash > 0 || p.dashGrace > 0)
             {
                 if (!p.dodged)
@@ -796,6 +814,7 @@ namespace TOD
                 r.echo = r.rules.Contains("echo") ? new Echo { until = r.time + db.augments.echoWindow, strands = strands.Select(s => s.Copy()).ToList() } : null;
             }
             else r.echo = null;
+            int knotsBefore = r.knots.Count;   // 고유 효과 '무거운 매듭'은 풀리기 전 매듭 수로 센다
             r.knots.Clear();
             r.shotCount = 0;
             Act(p, HeroAction.Pull);
@@ -803,7 +822,7 @@ namespace TOD
             List<Enemy> living = r.enemies.Where(e => e.hp > 0).ToList();
             var pinned = new HashSet<Enemy>(strands.Where(s => s.target != null).Select(s => s.target));
             // 결박: 같은 적에게 꽂힌 바늘 수
-            var bound = new HashSet<Enemy>(strands.Where(s => s.target != null).GroupBy(s => s.target).Where(g => Bound(g.Count())).Select(g => g.Key));
+            var bound = new HashSet<Enemy>(strands.Where(s => s.target != null).GroupBy(s => s.target).Where(g => Bound(r, g.Count())).Select(g => g.Key));
             var direct = new Dictionary<Enemy, int>();
             var order = new List<Enemy>();
             var cutAngle = new Dictionary<Enemy, float>();
@@ -842,9 +861,12 @@ namespace TOD
                 }
             }
             float damage = r.damage * (rage ? db.desire.rageMultiplier : 1) * (r.mood == Mood.Awakened ? db.desire.awakenDamage : 1)
-                * (1 + StrandBonus(strands.Count));   // 실을 많이 걸어 둘수록 한 번에 세게 당긴다
+                * (1 + StrandBonus(strands.Count))   // 실을 많이 걸어 둘수록 한 번에 세게 당긴다
+                * (1 + ItemPullBonus(r, knotsBefore, impacts));   // 장착한 조각의 고유 효과 (벼랑 끝·무거운 매듭·도약 일격·탐욕의 실·분풀이)
             var wounded = new List<Enemy>();
             int transfers = 0;
+            float totalDealt = 0;
+            var elementDealt = new Dictionary<Enemy, List<(Element, float)>>();
             foreach (Enemy e in living)
             {
                 int own = direct.TryGetValue(e, out int n) ? n : 0;
@@ -854,12 +876,30 @@ namespace TOD
                 wounded.Add(e);
                 if (transferred > 0) transfers++;
                 bool binding = bound.Contains(e);
-                float dealt = Round(damage * count * (binding ? 1 + db.bind.damageBonus : 1));
-                e.hp = Mathf.Max(0, e.hp - dealt);
+                float giant = e.IsBoss || e.elite ? r.gearStats.Effect(ItemEffect.Giant) : 0;   // 고유 효과 '거인 사냥'
+                float taken = 1 + (e.curseTime > 0 ? e.curse : 0);                                // 어둠 저주: 받는 피해 증가
+                bool crit = H.critChance > 0 && r.random() < H.critChance;   // 치명타: 실 피해에만
+                float dealt = Round(damage * count * (binding ? 1 + db.bind.damageBonus : 1) * (1 + giant) * taken * (crit ? Mathf.Max(1, H.critMultiplier) : 1));
+                // 세트 속성 피해: 켜진 세트마다 한 타에 damagePerTier × 단계 (빛은 결박·정예·보스에게 더 세게). 숫자는 속성마다 따로.
+                float elemental = 0;
+                var parts = new List<(Element, float)>();
+                foreach (ActiveSet set in r.gearStats.sets)
+                {
+                    float scale = SetScale(r, set);   // 주 속성 100% · 보조 subSetScale
+                    float add = set.def.damagePerTier * set.tier * count * scale;
+                    if (set.def.element == Element.Light && (binding || e.elite || e.IsBoss)) add *= 1 + set.def.effectPerTier * set.tier * scale;
+                    add = Round(add * (1 + giant) * taken);
+                    if (add <= 0) continue;
+                    parts.Add((set.def.element, add));
+                    elemental += add;
+                }
+                if (parts.Count > 0) elementDealt[e] = parts;
+                e.hp = Mathf.Max(0, e.hp - dealt - elemental);
+                totalDealt += dealt + elemental;
                 e.flash = F.pullEnemyFlash;
                 float gap = Hypot(p.x - e.x, (p.y - e.y) * A.projectionY);
                 if (gap == 0) gap = 1;
-                float yank = Mathf.Min(e.IsBoss ? F.yankBoss : F.yankReach, Mathf.Max(0, gap - F.yankMinGap));
+                float yank = Mathf.Min((e.IsBoss ? F.yankBoss : F.yankReach) * (1 + SetEffect(r, Element.Wind)), Mathf.Max(0, gap - F.yankMinGap));   // 바람: 더 멀리 끌어온다
                 var toward = new Vector2((p.x - e.x) / gap, (p.y - e.y) / gap);
                 e.yank = new Timed { x = toward.x * yank, y = toward.y * yank, time = F.yankTime };
                 e.stretch = new Timed { x = toward.x, y = toward.y * A.projectionY, time = F.stretchTime };
@@ -875,6 +915,8 @@ namespace TOD
                 float angle = Mathf.Atan2(toward.y * A.projectionY, toward.x);
                 Fx number = Spawn(r, FxKind.Number, e.x, e.y, X.damageNumber);
                 number.text = dealt.ToString("0"); number.color = transferred > 0 ? X.transferColor : X.damageColor; number.pop = Mathf.Min(count, F.maxPopCount);
+                number.crit = crit;   // 치명타: 노란 글꼴 + 뾰족 아이콘
+                if (crit) Event(r, "crit");
                 if (binding)
                 {
                     // 결박 폭발: 적 자리에서 속성 폭발(뷰가 화염 기둥·낙뢰·얼음 가시로 그림) + 머리 위 글자, 숫자는 최대 크기로 튄다
@@ -884,7 +926,7 @@ namespace TOD
                     burst.angle = angle;   // 주인공 쪽 (속도선 방향)
                     burst.follow = e;      // 끌려가는 적을 따라 터진다
                     burst.size = db.bind.burst.size * (e.IsBoss ? X.bossScale : 1);
-                    BindLook look = db.Look(db.Tone(rage ? Element.Chaos : element).bindStyle);
+                    BindLook look = db.Look(db.Tone(rage ? Element.Fire : element).bindStyle);
                     if (look != null && !string.IsNullOrEmpty(look.text))
                     {
                         Fx title = Spawn(r, FxKind.Combo, e.x, e.y, X.combo);
@@ -916,10 +958,21 @@ namespace TOD
                     }
                 }
             }
+            ApplySetEffects(r, wounded, direct, elementDealt, living, totalDealt);
+            int pullKills = 0;
             foreach (Enemy e in wounded)
             {
-                if (e.hp <= 0) Kill(r, e, strands.Where(s => s.target == e).ToList());
+                if (e.hp <= 0) { Kill(r, e, strands.Where(s => s.target == e).ToList()); pullKills++; }
                 else if (e.IsBoss) BossThresholds(r, e);
+            }
+            // 고유 효과 '실 되감기': 당기기로 처치할 때마다 털실
+            float rewind = r.gearStats.Effect(ItemEffect.Rewind);
+            if (rewind > 0 && pullKills > 0) r.yarn = Mathf.Min(YarnMax(r), r.yarn + rewind * pullKills);
+            // 고유 효과 '분풀이': 하나도 못 맞히면 털실을 전부 돌려받고 다음 당기기 강화
+            if (r.gearStats.Has(ItemEffect.Spite))
+            {
+                if (impacts == 0) { r.yarn = YarnMax(r); p.spiteReady = true; Event(r, "spite", M.spite); }
+                else p.spiteReady = false;
             }
             r.combo = impacts;
             r.freeze = impacts > 0 ? Mathf.Min(F.freezeMax, F.freezeBase + impacts * F.freezePerHit) : 0;
@@ -945,7 +998,7 @@ namespace TOD
                 {
                     Enemy first = wounded.First(bound.Contains);
                     Element boundElement = strands.First(s => s.target == first).element ?? r.element;
-                    BindLook look = db.Look(db.Tone(rage ? Element.Chaos : boundElement).bindStyle);
+                    BindLook look = db.Look(db.Tone(rage ? Element.Fire : boundElement).bindStyle);
                     r.flash += db.bind.flashBonus;
                     if (look != null) r.flashTint = look.glow;   // 화면이 속성 빛으로 번쩍
                     Event(r, "bind");
@@ -961,6 +1014,203 @@ namespace TOD
             }
             string message = impacts > 0 ? string.Format(M.pullHits, impacts) + (transfers > 0 ? string.Format(M.pullTransfers, transfers) : "") : M.pullNone;
             Event(r, "pull", message);
+        }
+
+        // ---------------------------------------------------------------- 개발자 모드 (DevTools 전용)
+
+        public Enemy DevSpawn(RunState r, string type)
+        {
+            Player p = r.player;
+            float angle = r.random() * Mathf.PI * 2;
+            var at = new Point(Mathf.Clamp(p.x + Mathf.Cos(angle) * 260, A.enemyMarginX, A.width - A.enemyMarginX),
+                Mathf.Clamp(p.y + Mathf.Sin(angle) * 180, A.enemyMarginY, A.height - A.enemyMarginY));
+            Enemy e = SpawnEnemy(r, type, at);
+            if (e != null) Spawn(r, FxKind.Burst, e.x, e.y, X.killBurst).color = X.killBurstColor;
+            return e;
+        }
+
+        public void DevKillAll(RunState r)
+        {
+            foreach (Enemy e in r.enemies.Where(e => e.hp > 0).ToList()) { e.hp = 0; Kill(r, e, new List<Strand>()); }
+        }
+
+        // 생존: 남은 시간 0 · 보스: 보스 처치 · 그 밖: 그대로
+        public void DevEndRound(RunState r)
+        {
+            if (r.phase != Phase.Combat) return;
+            if (r.roundKind == RoundKind.Survival) r.elapsed = r.roundLength;
+            else if (r.roundKind == RoundKind.Boss) foreach (Enemy e in r.enemies.Where(e => e.IsBoss && e.hp > 0).ToList()) { e.hp = 0; Kill(r, e, new List<Strand>()); }
+        }
+
+        public void DevLevelUp(RunState r) => GainXp(r, Mathf.Max(1, XpNeeded(r) - r.xp));
+
+        // 가장 가까운 적에게 결박 가닥 수만큼 바늘을 꽂아 둔다 (우클릭으로 바로 결박 당기기)
+        public bool DevBind(RunState r)
+        {
+            Enemy target = r.enemies.Where(e => e.hp > 0).OrderBy(e => Distance(r.player, e)).FirstOrDefault();
+            if (target == null) return false;
+            int need = Mathf.Max(2, db.bind.strands - Mathf.RoundToInt(r.gearStats?.Effect(ItemEffect.QuickBind) ?? 0));
+            for (int i = 0; i < need; i++)
+                r.strands.Add(new Strand { x = target.x, y = target.y, target = target, state = StrandState.Stuck, element = r.element, birth = r.time + i * .37f, landed = r.time });
+            return true;
+        }
+
+        // ---------------------------------------------------------------- 세트 속성 · 고유 효과
+
+        // 켜진 세트 중 이 속성의 부가 효과 값 (effectPerTier × 단계, 없으면 0)
+        public float SetEffect(RunState r, Element element)
+        {
+            if (r.gearStats == null) return 0;
+            foreach (ActiveSet set in r.gearStats.sets) if (set.def.element == element) return set.def.effectPerTier * set.tier * SetScale(r, set);
+            return 0;
+        }
+
+        // 주 속성 + 보조: 단계가 가장 높은 세트(동률이면 연결 조각 수)가 주 속성으로 100%, 나머지는 gear.subSetScale 만큼
+        public float SetScale(RunState r, ActiveSet set) => r.gearStats.sets.Count > 0 && r.gearStats.sets[0] == set ? 1 : db.gear.subSetScale;
+
+        SetDef SetOf(RunState r, Element element) => r.gearStats?.sets.FirstOrDefault(s => s.def.element == element)?.def;
+
+        // 고유 효과로 이번 당기기 피해에 더하는 비율
+        float ItemPullBonus(RunState r, int knots, int impacts)
+        {
+            GearStats g = r.gearStats;
+            if (g == null || g.effects.Count == 0) return 0;
+            Player p = r.player;
+            float bonus = 0;
+            if (g.Has(ItemEffect.Brink) && r.hp <= r.maxHp * g.Param(ItemEffect.Brink)) bonus += g.Effect(ItemEffect.Brink);
+            bonus += g.Effect(ItemEffect.HeavyKnot) * knots;
+            if (g.Has(ItemEffect.Leap) && p.sinceDash <= g.Param(ItemEffect.Leap) && !p.leapUsed) { bonus += g.Effect(ItemEffect.Leap); p.leapUsed = true; }
+            if (g.Has(ItemEffect.Greed) && DesireFraction(r) >= g.Param(ItemEffect.Greed)) bonus += g.Effect(ItemEffect.Greed);
+            if (p.spiteReady && impacts > 0) bonus += g.Effect(ItemEffect.Spite);
+            return bonus;
+        }
+
+        // 당기기 뒤 세트 부가 효과: 화상·둔화·번개 튐·저주·흡혈·바람 끌림·중독 + 속성 피해 숫자·그림
+        void ApplySetEffects(RunState r, List<Enemy> wounded, Dictionary<Enemy, int> direct, Dictionary<Enemy, List<(Element, float)>> elementDealt, List<Enemy> living, float totalDealt)
+        {
+            GearStats g = r.gearStats;
+            if (g == null || g.sets.Count == 0 || wounded.Count == 0) return;
+            Player p = r.player;
+            foreach (Enemy e in wounded)
+            {
+                // 속성 피해 숫자 (가장 높은 세트의 색) + 켜진 속성마다 그림이 터진다
+                // 속성 피해 숫자: 속성마다 따로, 그 속성의 그림 글꼴로 (실 피해 숫자 위로 한 줄씩 쌓는다)
+                if (elementDealt.TryGetValue(e, out List<(Element, float)> parts))
+                {
+                    int line = 0;
+                    foreach (var (element, amount) in parts)
+                    {
+                        Fx number = Spawn(r, FxKind.Number, e.x, e.y, X.damageNumber);
+                        number.text = amount.ToString("0"); number.color = db.Tone(element).color;
+                        number.useElement = true; number.element = element;
+                        number.lift = (float.IsNaN(number.lift) ? 0 : number.lift) + db.visual.elementNumberLift * ++line;
+                    }
+                }
+                int k = 0;
+                foreach (ActiveSet set in g.sets)
+                {
+                    Fx hit = Spawn(r, FxKind.ElementHit, e.x, e.y, new FxSpec { time = db.visual.elementHitTime, alpha = 1 });
+                    hit.element = set.def.element; hit.lift = EnemyHeight(e) * .5f; hit.seed = r.random() * 100 + k++;
+                    hit.size = db.Tone(set.def.element).hitSize * (e.IsBoss ? X.bossScale : 1);
+                }
+                if (e.hp <= 0) continue;
+                foreach (ActiveSet set in g.sets)
+                {
+                    SetDef d = set.def;
+                    float v = d.effectPerTier * set.tier * SetScale(r, set);
+                    switch (d.element)
+                    {
+                        case Element.Fire: e.burnDps = Mathf.Max(e.burnDps, v); e.burnTime = d.effectTime; break;
+                        case Element.Ice: e.slow = Mathf.Min(d.effectCap > 0 ? d.effectCap : .8f, Mathf.Max(e.slow, v)); e.slowTime = d.effectTime; break;
+                        case Element.Dark: e.curse = Mathf.Max(e.curse, v); e.curseTime = d.effectTime; break;
+                        case Element.Poison:
+                            int hits = direct.TryGetValue(e, out int n) ? Mathf.Max(1, n) : 1;
+                            e.poisonStacks = Mathf.Min(Mathf.Max(1, (int)d.effectCap), e.poisonStacks + hits);
+                            e.poisonDps = v; e.poisonTime = d.effectTime;
+                            break;
+                    }
+                }
+            }
+            // 번개: 맞은 적마다 반경 안 다른 적 effectCap 마리에게 튄다
+            SetDef bolt = SetOf(r, Element.Lightning);
+            if (bolt != null)
+            {
+                float chain = Round(SetEffect(r, Element.Lightning));
+                var struck = new HashSet<Enemy>(wounded);
+                foreach (Enemy from in wounded)
+                {
+                    int left = Mathf.Max(1, (int)bolt.effectCap);
+                    foreach (Enemy to in living.Where(o => o.hp > 0 && !struck.Contains(o) && Distance(o, from) <= bolt.effectRange).OrderBy(o => Distance(o, from)))
+                    {
+                        if (left-- <= 0) break;
+                        struck.Add(to);
+                        DamageEnemy(r, to, chain, Element.Lightning);
+                        Fx arc = Spawn(r, FxKind.Chain, from.x, from.y, new FxSpec { time = db.visual.chainTime, alpha = 1 });
+                        arc.toX = to.x; arc.toY = to.y; arc.element = Element.Lightning; arc.seed = r.random() * 100;
+                        arc.lift = EnemyHeight(from) * .5f; arc.angle = EnemyHeight(to) * .5f;   // angle 자리에 도착점 높이
+                    }
+                }
+            }
+            // 바람: 맞은 적 둘레 반경 안의 다른 적도 주인공 쪽으로 조금 끌려온다
+            SetDef wind = SetOf(r, Element.Wind);
+            if (wind != null)
+            {
+                foreach (Enemy o in living.Where(o => o.hp > 0 && !wounded.Contains(o) && wounded.Any(w => Distance(w, o) <= wind.effectRange)))
+                {
+                    float gap = Mathf.Max(1, Hypot(p.x - o.x, (p.y - o.y) * A.projectionY));
+                    float yank = Mathf.Min(F.yankReach * .5f * (1 + SetEffect(r, Element.Wind)), Mathf.Max(0, gap - F.yankMinGap));
+                    o.yank = new Timed { x = (p.x - o.x) / gap * yank, y = (p.y - o.y) / gap * yank, time = F.yankTime };
+                }
+            }
+            // 피: 준 피해의 일부만큼 회복
+            float leech = SetEffect(r, Element.Blood);
+            if (leech > 0 && totalDealt > 0)
+            {
+                float heal = Mathf.Min(r.maxHp - r.hp, Round(totalDealt * leech));
+                if (heal >= 1)
+                {
+                    r.hp += heal;
+                    Fx number = Spawn(r, FxKind.Number, p.x, p.y, X.damageNumber);
+                    number.text = "+" + heal.ToString("0"); number.color = db.Tone(Element.Blood).color;
+                    number.useElement = true; number.element = Element.Blood;
+                }
+            }
+        }
+
+        // 속성·지속 피해 (숫자 한 개). 저주가 걸려 있으면 더 들어간다. 죽으면 처치.
+        void DamageEnemy(RunState r, Enemy e, float amount, Element element)
+        {
+            if (e.hp <= 0 || amount <= 0) return;
+            float dealt = Round(amount * (1 + (e.curseTime > 0 ? e.curse : 0)));
+            e.hp = Mathf.Max(0, e.hp - dealt);
+            e.flash = Mathf.Max(e.flash, F.pullEnemyFlash * .5f);
+            Fx number = Spawn(r, FxKind.Number, e.x, e.y, X.damageNumber);
+            number.text = dealt.ToString("0"); number.color = db.Tone(element).color;
+            number.useElement = true; number.element = element;   // 그 속성의 그림 글꼴
+            if (e.hp <= 0) Kill(r, e, new List<Strand>());
+            else if (e.IsBoss) BossThresholds(r, e);
+        }
+
+        // 화상·중독: 쌓아 두었다가 dotInterval 마다 한 번에 숫자로
+        void UpdateStatus(RunState r, Enemy e, float dt)
+        {
+            e.burnTime = Mathf.Max(0, e.burnTime - dt);
+            e.slowTime = Mathf.Max(0, e.slowTime - dt);
+            e.curseTime = Mathf.Max(0, e.curseTime - dt);
+            e.poisonTime = Mathf.Max(0, e.poisonTime - dt);
+            if (e.burnTime <= 0) e.burnDps = 0;
+            if (e.slowTime <= 0) e.slow = 0;
+            if (e.curseTime <= 0) e.curse = 0;
+            if (e.poisonTime <= 0) { e.poisonStacks = 0; e.poisonDps = 0; }
+            float burn = e.burnDps * dt, poison = e.poisonDps * e.poisonStacks * dt;
+            if (burn <= 0 && poison <= 0) { e.dotTick = 0; return; }
+            e.dotPending += burn + poison;
+            e.dotTick += dt;
+            if (e.dotTick < db.visual.dotInterval) return;
+            e.dotTick = 0;
+            float amount = e.dotPending;
+            e.dotPending = 0;
+            DamageEnemy(r, e, amount, poison > burn ? Element.Poison : Element.Fire);
         }
 
         void BossThresholds(RunState r, Enemy e)
@@ -1018,6 +1268,10 @@ namespace TOD
             if (e.push != null) { Ease(e, e.push, F.stickTime, dt); if (e.push.time <= 0) e.push = null; }
             if (e.cut != null && (e.cut.time -= dt) <= 0) e.cut = null;
             if (e.yank != null) { Ease(e, e.yank, e.yank.max > 0 ? e.yank.max : F.yankTime, dt); if (e.yank.time <= 0) e.yank = null; }
+            UpdateStatus(r, e, dt);
+            if (e.hp <= 0) return;
+            float chill = 1 - e.slow;   // 얼음 둔화: 이동·돌진·행동 대기가 함께 느려진다
+            dt *= Mathf.Max(.1f, chill);
             e.timer -= dt;
             if (e.action == EnemyAction.Move)
             {
@@ -1080,6 +1334,7 @@ namespace TOD
             r.elapsed += dt;
             p.actionTime += dt;
             p.dashCooldown = Mathf.Max(0, p.dashCooldown - dt);
+            if (p.dash > 0) { p.sinceDash = 0; p.leapUsed = false; } else p.sinceDash += dt;   // 고유 효과 '도약 일격'
             p.levelUp = Mathf.Max(0, p.levelUp - dt);
             p.heal = Mathf.Max(0, p.heal - dt);
             p.dashGrace = Mathf.Max(0, p.dashGrace - dt);
@@ -1097,6 +1352,16 @@ namespace TOD
                     float landed = k * R.stairStepDelay + R.stairSettle;
                     if (before < landed && r.stairsAge >= landed) Event(r, "stairstep");
                 }
+            }
+
+            if (r.altar != null && r.altarAge < R.towerRiseTime)
+            {
+                // 탑 등장: 솟아오르기 시작할 때와 착지할 때 '쿵'
+                float before = r.altarAge;
+                r.altarAge += dt;
+                float land = R.towerRiseTime - R.towerSettleTime;
+                if (before < R.towerStitchTime && r.altarAge >= R.towerStitchTime) Event(r, "stairstep");
+                if (before < land && r.altarAge >= land) { Event(r, "stairstep"); r.shake = Mathf.Max(r.shake, F.shakeBase); }
             }
 
             Vector2 move = Unit(input.x, input.y);
@@ -1149,6 +1414,7 @@ namespace TOD
             foreach (Enemy e in r.enemies.ToList())
             {
                 if (r.outcome != Outcome.None) break;
+                if (r.devFreeze) { UpdateStatus(r, e, worldDt); continue; }   // 개발자 모드: 적 멈춤 (화상·중독은 계속)
                 UpdateEnemy(r, e, worldDt);
                 foreach (Trail trail in r.trails)
                 {
@@ -1199,6 +1465,7 @@ namespace TOD
                         r.phase = Phase.Cleared;
                         r.stairs = Near(r, R.stairsOffset);
                         r.stairsAge = 0;
+                        RaiseTower(r, R.bossTowerOffset);   // 12차: 보스 처치 뒤에도 아티팩트 탑
                     }
                     break;
             }

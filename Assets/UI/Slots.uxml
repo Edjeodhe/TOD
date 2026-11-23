@@ -25,6 +25,10 @@
     <ui:VisualElement name="sew-spark" class="sew-spark" picking-mode="Ignore" />
     <!-- 판 위 조각의 아이템 아이콘 (회전 중심 칸에 하나) -->
     <ui:VisualElement name="piece-mark" class="piece-mark" picking-mode="Ignore" />
+    <!-- 판 위 조각의 세트 이름 (예: 화염), 세트 색 글씨 -->
+    <ui:VisualElement name="board-set-tag" class="board-set-row" picking-mode="Ignore">
+        <ui:Label name="tag" class="board-set-tag" picking-mode="Ignore" />
+    </ui:VisualElement>
     <!-- 세트 효과 패널 항목과 단계 줄 -->
     <ui:VisualElement name="set-entry" class="set-entry">
         <ui:VisualElement class="set-head">
@@ -32,6 +36,7 @@
             <ui:Label name="set-name" class="set-name" />
             <ui:Label name="set-count" class="set-count" />
         </ui:VisualElement>
+        <ui:Label name="set-role" class="set-role" />
         <ui:VisualElement name="tiers" class="set-tiers" />
     </ui:VisualElement>
     <ui:VisualElement name="set-tier" class="set-tier">

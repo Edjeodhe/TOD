@@ -1,0 +1,21 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/item_icons_v3.png
+Size: landscape 1536x1024.
+Create a game item icon sheet: 12 separate item icons in a 4 columns x 3 rows grid, each icon about 260px, fully separated with wide empty gaps (at least 90px), nothing touching, each with its own thick black outline, three-quarter view, sewing-themed cursed trinkets. Read order left to right, top to bottom:
+ROW 1 (LIGHT set, ivory and warm gold accents, soft holy glow):
+(1) a small brass thimble with melted white candle wax dripping over its rim and a tiny warm flame on top
+(2) a round gilded sewing button with four holes, light shining out of the holes
+(3) a white satin ribbon bow with gold trim and a tiny brass bell hanging from it
+(4) a small pincushion shaped like a little lantern, several needles stuck in it each with a tiny warm light at its tip
+ROW 2 (DARKNESS set, black and deep violet accents, wisps of violet smoke):
+(5) a black sewing button leaking thin curls of violet smoke from its holes
+(6) a wooden spool wound with pitch-black thread that has a violet sheen
+(7) a long sewing needle made from a black raven feather quill
+(8) a small cracked porcelain doll head with hollow dark eye sockets, violet smoke drifting out of the eyes
+ROW 3 (BLOOD set, deep crimson accents):
+(9) a dressmaker pin whose round head is a glossy blood-red drop
+(10) a brass thimble stained and dripping with dark red
+(11) a ball of red yarn with darker red threads running over it like veins
+(12) an anatomical heart shaped pincushion with several needles stuck in it
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline around every shape, slightly paper-grain texture INSIDE the shapes, low saturation, low brightness, muted palette (#16131B, #4A3D50 plus each set's accent color). Cute but eerie mood. Match the style of the reference image (an existing icon sheet from the same game).
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels, no numbers. Do not use any green color inside the artwork itself.

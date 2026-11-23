@@ -58,7 +58,9 @@ namespace TOD
         // 라운드마다 새 맵: 바닥 청크를 새 시드로 다시 깔고 적 뷰·입자를 비운다.
         public void BeginRound(RunState r)
         {
-            background.BeginRound(UnityEngine.Random.Range(1, 1 << 30));
+            int seed = UnityEngine.Random.Range(1, 1 << 30);
+            background.BeginRound(seed);
+            ScatterDecor(r, seed);
             enemyPool?.ReleaseAll();
             enemyViews.Clear();
             particles.Clear();
@@ -109,7 +111,9 @@ namespace TOD
             particleClock = r.time;
             particles.SetRunning(dt > 0);
 
+            DrawDecor(r);   // 장식이 Ground 층에서 가장 먼저 → 공격 예고·드롭·계단·탑이 위, 캐릭터·몬스터(Actors 층)는 항상 더 위
             DrawDrops(r, clock);
+            // 공격 예고(돌진 길·근접/탄막 고리)는 Ground 층: 캐릭터·몬스터 뒤에 깔린다
             foreach (Enemy e in r.enemies)
             {
                 if (e.action == EnemyAction.WindupDash)
@@ -294,7 +298,11 @@ namespace TOD
         // 쉬어가는 라운드의 제단·상인, 라운드가 끝나면 나타나는 계단과 그 위 안내 문구.
         void DrawProps(RunState r, Interactable nearest, float clock, float dt)
         {
-            if (r.altar != null) DrawProp(altarSprite, Pal.altarHeight, r.altar, r.artifactTaken ? null : db.ui.promptAltar, nearest == Interactable.Altar, r.artifactTaken ? .55f : 1);
+            if (r.altar != null)
+            {
+                if (r.altarAge < db.rounds.towerRiseTime && altarSprite != null) DrawTowerRise(r, dt);
+                else DrawProp(altarSprite, Pal.altarHeight, r.altar, r.artifactTaken ? null : db.ui.promptAltar, nearest == Interactable.Altar, r.artifactTaken ? .55f : 1);
+            }
             if (r.merchant != null) DrawProp(merchantSprite, Pal.merchantHeight, r.merchant, db.ui.promptMerchant, nearest == Interactable.Merchant, 1);
             if (r.stairs == null) return;
             if (stairPieces != null && stairPieces.Length > 0) { DrawStairCascade(r, nearest, clock, dt); return; }
@@ -394,6 +402,76 @@ namespace TOD
             }
             if (near) painter.Ellipse(Layer.Ground, at, 46, 46 * Space.Proj, Painter.Alpha(Pal.promptActive, .7f), 1.5f);
             if (!string.IsNullOrEmpty(label)) PropLabel(label, at - new Vector2(0, h * .85f + 18), near);
+        }
+
+        // 탑 등장 (계단이 한 단씩 놓이듯): ① 바닥에 원형 솔기가 바늘땀으로 한 땀씩 꿰매지며 빛나고
+        // ② 탑이 솔기 안에서 바닥을 뚫고 솟아오르고(바닥 아래는 잘려 안 보임, 살짝 떨림·흙먼지)
+        // ③ 위로 조금 넘쳤다가 내려앉으며 눌렸다 펴지고, 창문에 불이 켜진다. 시간은 db.rounds.tower*.
+        void DrawTowerRise(RunState r, float dt)
+        {
+            RoundConfig rc = db.rounds;
+            float age = r.altarAge, total = Mathf.Max(.05f, rc.towerRiseTime);
+            float stitch = Mathf.Clamp(rc.towerStitchTime, .01f, total * .6f);
+            float settle = Mathf.Clamp(rc.towerSettleTime, .01f, total - stitch - .01f);
+            float riseEnd = total - settle;
+            Vector2 at = C(r.altar);
+            Rect rect = altarSprite.rect;
+            float h = Pal.altarHeight > 0 ? Pal.altarHeight : rect.height, w = h * rect.width / rect.height;
+            Color seam = Pal.stairsGlow;
+
+            // ① 솔기: 탑 둘레 타원을 따라 땀이 차례로 (위쪽부터 시계 방향)
+            float rx = w * .5f, ry = rx * Space.Proj;
+            int stitches = Mathf.Max(6, rc.towerStitches);
+            float sewn = Mathf.Clamp01(age / stitch) * stitches;
+            float seamFade = age < riseEnd ? 1 : 1 - Mathf.Clamp01((age - riseEnd) / settle);
+            for (int i = 0; i < stitches; i++)
+            {
+                float k = Mathf.Clamp01(sewn - i);
+                if (k <= 0) break;
+                float a0 = -Mathf.PI / 2 + (i + .2f) / stitches * Mathf.PI * 2, a1 = -Mathf.PI / 2 + (i + .8f) / stitches * Mathf.PI * 2;
+                Vector2 p0 = at + new Vector2(Mathf.Cos(a0) * rx, Mathf.Sin(a0) * ry), p1 = at + new Vector2(Mathf.Cos(a1) * rx, Mathf.Sin(a1) * ry);
+                Vector2 p = Vector2.Lerp(p0, p1, k);
+                painter.Line(Layer.Ground, p0, p, 5, Painter.Alpha(seam, .35f * seamFade), additive: true);
+                painter.Line(Layer.Ground, p0, p, 2, Painter.Alpha(Pal.promptActive, .9f * seamFade));
+            }
+            if (softSprite != null)   // 솔기 안쪽이 갈라지며 빛이 샌다
+            {
+                float open = Mathf.Clamp01(age / stitch);
+                painter.Sprite(Layer.Ground, softSprite, at, 0, w * 1.3f * open, w * 1.3f * open * Space.Proj, Painter.Alpha(seam, .35f * seamFade), additive: true);
+            }
+            if (age < stitch) return;
+
+            // ② 솟아오름: 바닥 선(at.y) 아래는 잘라 낸다. 끝에서 조금 넘쳤다가(ease-out-back) ③ 눌렸다 펴짐.
+            float u = Mathf.Clamp01((age - stitch) / Mathf.Max(.01f, riseEnd - stitch));
+            float up = EaseOutBack(u);
+            float sx = 1, sy = 1;
+            if (age >= riseEnd)
+            {
+                float s = (age - riseEnd) / settle;
+                float squash = .1f * Mathf.Exp(-5 * s) * Mathf.Cos(s * 14);
+                sy = 1 - squash; sx = 1 + squash * .6f;
+                up = 1;
+            }
+            float shake = age < riseEnd ? (Rand() - .5f) * 3 * (1 - u) : 0;
+            Vector2 center = at - new Vector2(-shake, h * .42f * sy) + new Vector2(0, h * (1 - up));
+            painter.Ellipse(Layer.Ground, at, w * .4f * Mathf.Min(1, up), w * .4f * .34f * Mathf.Min(1, up), Pal.shadow);
+            SpriteRenderer sr = painter.Sprite(Layer.Ground, altarSprite, center, 0, w * sx, h * sy, Color.white);
+            Vector3 ground = Space.Canvas(at);
+            painter.Style(sr, bright: age < riseEnd ? 1.15f : 1, cut: new Vector4(0, 1, ground.y, 1));   // 바닥 선 아래(땅속)는 안 보이게
+            // 흙먼지·실 불티: 솟는 동안 솔기 둘레에서
+            if (dt > 0 && age < riseEnd + settle * .5f)
+                for (int i = 0; i < 3; i++)
+                {
+                    float a = Rand() * Mathf.PI * 2;
+                    Vector2 p = at + new Vector2(Mathf.Cos(a) * rx, Mathf.Sin(a) * ry);
+                    particles.Emit(i == 0 ? ParticleKind.Glint : ParticleKind.Drop, p, new Vector2(Mathf.Cos(a) * 40, -30 - Rand() * 50), .5f, i == 0 ? Pal.promptActive : Pal.dust, i == 0 ? 1.6f : 3.2f);
+                }
+            // 창문 불: 착지하며 켜진다
+            if (age >= riseEnd && softSprite != null)
+            {
+                float on = Mathf.Clamp01((age - riseEnd) / settle);
+                painter.Sprite(Layer.Ground, softSprite, center - new Vector2(0, h * .18f), 0, w * .9f, h * .7f, Painter.Alpha(seam, .3f * Mathf.Sin(Mathf.PI * on)), additive: true);
+            }
         }
 
         void PropLabel(string text, Vector2 at, bool near) =>
@@ -686,6 +764,7 @@ namespace TOD
                 if (!enemyViews.TryGetValue(e, out EnemyView view)) enemyViews[e] = view = enemyPool.Get();
                 pins.TryGetValue(e, out List<Strand> attached);
                 view.Render(e, r.time, attached, db, dt);
+                EmitStatus(e, dt);
                 float y = Space.ProjectY(e.y);
                 if (attached != null && attached.Count > 0)
                     Text?.Label($"×{attached.Count}", new Vector2(e.x, y - e.height - 11), 12, Pal.pinCount, Pal.textStroke, 0, 1, 0, false);
@@ -714,7 +793,7 @@ namespace TOD
             float length = Mathf.Sqrt(dx * dx + dy * dy);
             if (length == 0) length = 1;
             float nx = -dy / length, ny = dx / length;
-            int segments = Mathf.Max(2, Mathf.CeilToInt(length / (element == Element.Frustration ? db.visual.frustrationSegment : db.visual.strandSegment)));
+            int segments = Mathf.Max(2, Mathf.CeilToInt(length / (element == Element.Lightning ? db.visual.frustrationSegment : db.visual.strandSegment)));
             float beat = Mathf.Floor(time * 22);
             var points = new List<Vector2>(segments + 1);
             for (int i = 0; i <= segments; i++)
@@ -723,9 +802,9 @@ namespace TOD
                 float envelope = Mathf.Sin(Mathf.PI * f);
                 float offset = element switch
                 {
-                    Element.Despair => Mathf.Sin(f * length / 11 - time * 7 + seed) * 2.6f * envelope,
-                    Element.Frustration => (Noise(beat * 31 + i + seed) - .5f) * 9 * envelope,
-                    Element.Chaos => (Noise(beat * 17 + i * 3 + seed) - .5f) * 2.4f * envelope,
+                    Element.Ice => Mathf.Sin(f * length / 11 - time * 7 + seed) * 2.6f * envelope,
+                    Element.Lightning => (Noise(beat * 31 + i + seed) - .5f) * 9 * envelope,
+                    Element.Fire => (Noise(beat * 17 + i * 3 + seed) - .5f) * 2.4f * envelope,
                     _ => 0,
                 };
                 if (tension != 0) offset += Mathf.Sin(f * Mathf.PI * 3 + time * 90) * tension * envelope;
@@ -742,7 +821,7 @@ namespace TOD
             painter.Line(layer, points, width * 3.4f, Painter.Alpha(t.glow, (element == Element.Plain ? .2f : .267f) * alpha), additive: true);
             painter.Line(layer, points, flight ? width * .8f : width, Painter.Alpha(t.color, .9f * alpha));
             painter.Line(layer, points, width * .38f, Painter.Alpha(t.core, .667f * alpha));
-            if (element == Element.Chaos)
+            if (element == Element.Fire)
             {
                 // 가시 실: 실을 따라 엇갈린 가시
                 float length = Vector2.Distance(a, b);
@@ -758,6 +837,32 @@ namespace TOD
             return points;
         }
 
+        // 세트가 켜진 실: 속성 리본(rim 빛 · rim 색 · core 심)을 흐르게 그리고 덮개를 얹는다. 리본 그림이 없거나 세트가 없으면 null.
+        List<Vector2> DrawSetStrand(RunState r, Vector2 a, Vector2 b, Element element, float seed, float alpha, float tension, float bend)
+        {
+            if (element == Element.Plain || element == Element.Dodge || r.gearStats == null || r.gearStats.sets.Count == 0 || BD.setRibbonWidth <= 0) return null;
+            ActiveSet set = r.gearStats.sets.Find(x => x.def.element == element);
+            BindLook look = db.Look(Tone(element).bindStyle);
+            BindArt art = look != null ? ArtOf(look.style) : null;
+            if (set == null || art == null || art.threadRim == null || art.threadCore == null) return null;
+            List<Vector2> points = StrandPoints(a, b, Element.Plain, seed, r.time, tension, bend);
+            float len = 0;
+            for (int i = 1; i < points.Count; i++) len += Vector2.Distance(points[i - 1], points[i]);
+            if (len < 1) return points;
+            float width = BD.setRibbonWidth * threadScale * (1 + BD.setRibbonGrowth * (set.tier - 1));
+            int frames = Mathf.Max(1, art.frames);
+            int frame = Mathf.FloorToInt(renderClock * BD.ribbonFps + seed) % frames;
+            Texture rim = art.threadRim.texture;
+            float aspect = rim.width / (rim.height / (float)frames);
+            float flow = renderClock * BD.flowSpeed * .5f + seed;
+            Vector4 St(float w) => new(len / Mathf.Max(1, w * aspect), 1f / frames, flow, (float)frame / frames);
+            painter.Ribbon(Layer.Ground, points, width * 1.6f, Painter.Alpha(look.glow, .4f * alpha), rim, St(width * 1.6f));
+            painter.Ribbon(Layer.Ground, points, width, Painter.Alpha(look.color, .9f * alpha), rim, St(width));
+            painter.Ribbon(Layer.Ground, points, width, Painter.Alpha(look.core, alpha), art.threadCore.texture, St(width));
+            DrawBindCover(look, art, points, width * Mathf.Max(0, BD.setCoverScale), alpha * .6f, seed, Layer.Ground);
+            return points;
+        }
+
         void EmitAlong(List<Vector2> points, Element element, float rate, float dt)
         {
             if (dt <= 0) return;
@@ -769,9 +874,9 @@ namespace TOD
                 Vector2 p = points[Mathf.FloorToInt(Rand() * points.Count) % points.Count];
                 switch (element)
                 {
-                    case Element.Chaos: particles.Emit(ParticleKind.Ember, p, new Vector2((Rand() - .5f) * 18, -24 - Rand() * 30), .5f + Rand() * .3f, t.color, 1.8f); break;
-                    case Element.Despair: particles.Emit(ParticleKind.Drop, p, new Vector2((Rand() - .5f) * 6, 8), .7f, t.core, 1.9f); break;
-                    case Element.Frustration: particles.Emit(ParticleKind.Spark, p, new Vector2((Rand() - .5f) * 150, (Rand() - .5f) * 150), .14f, t.core, 1.4f); break;
+                    case Element.Fire: particles.Emit(ParticleKind.Ember, p, new Vector2((Rand() - .5f) * 18, -24 - Rand() * 30), .5f + Rand() * .3f, t.color, 1.8f); break;
+                    case Element.Ice: particles.Emit(ParticleKind.Drop, p, new Vector2((Rand() - .5f) * 6, 8), .7f, t.core, 1.9f); break;
+                    case Element.Lightning: particles.Emit(ParticleKind.Spark, p, new Vector2((Rand() - .5f) * 150, (Rand() - .5f) * 150), .14f, t.core, 1.4f); break;
                     default: particles.Emit(ParticleKind.Glint, p, new Vector2(0, -8), .4f, t.core, 1.3f); break;
                 }
             }
@@ -853,8 +958,10 @@ namespace TOD
                 bend = NV.flightBend * span * .35f * side * Mathf.Exp(-age * NV.settleDamp) * Mathf.Cos(age * NV.settleFreq);
             }
             // 굵은 실(재봉 조각 ThreadWidth): 당김 판정 반경과 같은 배율로 굵게
-            List<Vector2> points = DrawStrand(Layer.Ground, a, b, element, seed, r.time, (s.anchor != null ? 1.45f : 1.7f) * threadScale, s.anchor != null ? .82f : 1, twang, flight, bend);
-            EmitAlong(points, element, element == Element.Frustration ? .5f : element == Element.Plain ? .06f : .16f, dt);
+            // 12차: 세트가 켜져 있으면 실이 평소에도 그 속성의 Blender 리본 + 덮개로 (단계가 오를수록 굵게)
+            List<Vector2> points = DrawSetStrand(r, a, b, element, seed, s.anchor != null ? .82f : 1, twang, bend)
+                ?? DrawStrand(Layer.Ground, a, b, element, seed, r.time, (s.anchor != null ? 1.45f : 1.7f) * threadScale, s.anchor != null ? .82f : 1, twang, flight, bend);
+            EmitAlong(points, element, element == Element.Lightning ? .5f : element == Element.Plain ? .06f : .16f, dt);
             float bead = (r.time * 2.65f + s.birth) % 1;
             Vector2 p = points[Mathf.FloorToInt(bead * (points.Count - 1))];
             painter.Rect(Layer.Ground, p.x - 1.2f, p.y - 1.2f, 2.6f, 2.6f, Painter.Alpha(t.core, .816f));
@@ -864,7 +971,7 @@ namespace TOD
                 if (planted)
                 {
                     DrawStuckRing(r, s, C(end), t);
-                    if (element == Element.Despair)
+                    if (element == Element.Ice)
                     {
                         float wave = (r.time * .8f + s.birth) % 1;
                         float radius = (NV.ringRadius > 0 ? NV.ringRadius : 7) + wave * 16;
@@ -929,10 +1036,32 @@ namespace TOD
                         int pop = fx.pop > 0 ? fx.pop : 1;
                         float scale = (1 + Mathf.Min(pop, 6) * .07f) * (age < .16f ? .6f + EaseOutBack(age / .16f) * .4f + (1 - age / .16f) * .35f : 1);
                         Color color = fx.color ?? Color.white;
-                        Vector2 spot = new(at.x, at.y - fx.lift - (1 - fade) * 34);
-                        // 숫자는 그림 글꼴(아틀라스)로, 그림에 없는 글자가 섞이면 UI 글꼴로 쓴다.
-                        if (!DrawGlyphs(db.visual.damageFont, fx.text, spot, scale, Painter.Alpha(color, fade)))
-                            Text?.Label(fx.text, spot, 24, Painter.Alpha(color, fade), Painter.Alpha(Pal.textStroke, fade), 4, scale, 0, false);
+                        Vector2 spot = new(at.x, at.y - (float.IsNaN(fx.lift) ? 0 : fx.lift) - (1 - fade) * 34);
+                        // 숫자는 그림 글꼴(아틀라스)로. 치명타 = 노란 치명타 글꼴(크게) + 왼쪽 위 뾰족 아이콘,
+                        // 속성 피해 = 그 속성으로 구운 글꼴(색이 그림에 들어 있어 흰색으로 그림). 그림에 없는 글자가 섞이면 UI 글꼴.
+                        VisualConfig vc = db.visual;
+                        GlyphFont font = vc.damageFont;
+                        Color ink = Painter.Alpha(color, fade);
+                        if (fx.crit && vc.critFont != null && vc.critFont.glyphs != null && vc.critFont.glyphs.Length > 0)
+                        {
+                            font = vc.critFont; ink = Painter.Alpha(Color.white, fade);
+                            scale *= vc.critScale > 0 ? vc.critScale : 1.3f;
+                        }
+                        else if (fx.useElement && Tone(fx.element).damageFont is { glyphs: { Length: > 0 } } elementFont)
+                        {
+                            font = elementFont; ink = Painter.Alpha(Color.white, fade);
+                        }
+                        if (DrawGlyphs(font, fx.text, spot, scale, ink, out float textWidth))
+                        {
+                            if (fx.crit && vc.critIcon != null)
+                            {
+                                float h = font.height * scale;
+                                float size = h * (vc.critIconSize > 0 ? vc.critIconSize : .8f) * (age < .16f ? .5f + EaseOutBack(age / .16f) * .5f : 1);
+                                var corner = new Vector2(spot.x - textWidth / 2, spot.y - h / 2);
+                                painter.Sprite(Layer.Effects, vc.critIcon, corner + vc.critIconOffset * h, -.25f + Mathf.Sin(age * 18) * .08f, size, size, Painter.Alpha(Color.white, fade));
+                            }
+                        }
+                        else Text?.Label(fx.text, spot, 24, Painter.Alpha(color, fade), Painter.Alpha(Pal.textStroke, fade), 4, scale, 0, false);
                         break;
                     }
                     case FxKind.Combo:
@@ -959,6 +1088,8 @@ namespace TOD
                     }
                     case FxKind.Pull: DrawPullSnap(fx, fade); break;
                     case FxKind.Bind: DrawBind(fx, fade); break;
+                    case FxKind.ElementHit: DrawElementHit(fx, fade, at); break;
+                    case FxKind.Chain: DrawChain(fx, fade, at); break;
                     case FxKind.Transfer:
                     {
                         float t = 1 - fade;
@@ -1026,8 +1157,11 @@ namespace TOD
         }
 
         // 그림 글꼴로 한 줄을 가운데 정렬해 그린다. 글자 하나라도 그림에 없으면 false (호출한 쪽이 UI 글꼴로 대신 쓴다).
-        bool DrawGlyphs(GlyphFont font, string text, Vector2 center, float scale, Color color)
+        bool DrawGlyphs(GlyphFont font, string text, Vector2 center, float scale, Color color) => DrawGlyphs(font, text, center, scale, color, out _);
+
+        bool DrawGlyphs(GlyphFont font, string text, Vector2 center, float scale, Color color, out float width)
         {
+            width = 0;
             if (font == null || font.glyphs == null || string.IsNullOrEmpty(font.chars) || string.IsNullOrEmpty(text)) return false;
             float h = font.height * scale;
             float total = 0;
@@ -1039,6 +1173,7 @@ namespace TOD
                 Rect r = font.glyphs[i].rect;
                 total += h * r.width / r.height + (count++ > 0 ? font.spacing * h : 0);
             }
+            width = total;
             float x = center.x - total / 2;
             foreach (char ch in text)
             {
@@ -1069,7 +1204,7 @@ namespace TOD
                 painter.Blade(Layer.Effects, a, b, 9 * k, Painter.Alpha(color, .4f), true);
                 painter.Blade(Layer.Effects, a, b, 3.2f * k + .6f, Color.white, true);
             }
-            if (t > .12f)
+            if (t > .12f && !fx.bound)   // 결박: 가는 선은 실로 읽히므로 그리지 않는다 (속성 덮개가 대신)
             {
                 float k = (t - .12f) / .88f, off = 2 + k * 11;
                 Color line = Painter.Alpha(color, Mathf.Pow(1 - k, 1.5f));
@@ -1196,7 +1331,7 @@ namespace TOD
             // 손에 든 실은 당긴 순간의 자리가 아니라 지금 손 위치로 감겨 든다 (맵에 실이 남지 않게).
             Vector2 a = fx.followHero ? C(handNow.x, handNow.y) : C(fx.x, fx.y) - new Vector2(0, 6);
             Vector2 b = C(fx.toX, fx.toY) - new Vector2(0, 18);
-            ElementTone tone = Tone(fx.rage ? Element.Chaos : fx.element);
+            ElementTone tone = Tone(fx.rage ? Element.Fire : fx.element);
             float delay = Mathf.Clamp(NV.pullSnapDelay, 0, .95f);
             float snap = Mathf.Clamp01((t - delay) / (1 - delay));
             float pulled = Mathf.Pow(snap, NV.pullSnapPower > 0 ? NV.pullSnapPower : 2.4f);
@@ -1230,7 +1365,7 @@ namespace TOD
         BindConfig BD => db.bind;
         float effectsDt;   // 이번 프레임 게임 시간 (히트스톱 중 0) — 입자 뿜기용
 
-        BindLook LookOf(Fx fx) => db.Look(Tone(fx.rage ? Element.Chaos : fx.element).bindStyle);
+        BindLook LookOf(Fx fx) => db.Look(Tone(fx.rage ? Element.Fire : fx.element).bindStyle);
 
         static float Hash(float x) { float v = Mathf.Sin(x * 12.9898f) * 43758.547f; return v - Mathf.Floor(v); }
 
@@ -1249,11 +1384,11 @@ namespace TOD
             return points;
         }
 
-        void DrawBolt(List<Vector2> points, float width, BindLook look, float alpha)
+        void DrawBolt(List<Vector2> points, float width, BindLook look, float alpha, Layer layer = Layer.Effects)
         {
-            painter.Line(Layer.Effects, points, width * 5, Painter.Alpha(look.glow, .35f * alpha), additive: true);
-            painter.Line(Layer.Effects, points, width * 1.8f, Painter.Alpha(look.color, .95f * alpha), additive: true);
-            painter.Line(Layer.Effects, points, width * .7f, Painter.Alpha(look.core, alpha), additive: true);
+            painter.Line(layer, points, width * 5, Painter.Alpha(look.glow, .35f * alpha), additive: true);
+            painter.Line(layer, points, width * 1.8f, Painter.Alpha(look.color, .95f * alpha), additive: true);
+            painter.Line(layer, points, width * .7f, Painter.Alpha(look.core, alpha), additive: true);
         }
 
         // 결박된 실의 예비 그림 (Blender 리본이 없을 때): 선·칼날·입자로 속성 모습을 흉내 낸다
@@ -1357,6 +1492,110 @@ namespace TOD
 
         BindArt ArtOf(BindStyle style) => bindArt == null ? null : Array.Find(bindArt, x => x.style == style);
 
+        // ---------------------------------------------------------------- 맵 장식 (12차)
+
+        struct Decor { public DecorDef def; public Vector2 at; public float scale; public bool flip; }
+        readonly List<Decor> decor = new();
+
+        // 라운드마다 새 맵: 벽 안쪽에 무작위로 흩되, 서로 spacing 만큼 떨어뜨리고 시작 자리 둘레는 비운다.
+        void ScatterDecor(RunState r, int seed)
+        {
+            decor.Clear();
+            DecorConfig d = db.decor;
+            if (d == null || d.props == null || d.props.Length == 0 || d.density <= 0) return;
+            var rng = new System.Random(seed ^ 0x5DEECE);
+            ArenaConfig a = db.arena;
+            float x0 = a.wallLeft + d.margin, x1 = a.wallRight - d.margin, y0 = a.wallTop + d.margin, y1 = a.wallBottom - d.margin;
+            int want = Mathf.RoundToInt((x1 - x0) * (y1 - y0) / 1e6f * d.density);
+            float total = 0;
+            foreach (DecorDef p in d.props) if (p.sprite != null) total += Mathf.Max(0, p.weight);
+            if (total <= 0) return;
+            var start = new Vector2(r.player.x, r.player.y);
+            for (int tries = 0; decor.Count < want && tries < want * 30; tries++)
+            {
+                var at = new Vector2(x0 + (float)rng.NextDouble() * (x1 - x0), y0 + (float)rng.NextDouble() * (y1 - y0));
+                if (Vector2.Distance(at, start) < d.clearRadius) continue;
+                bool crowded = false;
+                foreach (Decor o in decor) if (Vector2.Distance(o.at, at) < d.spacing) { crowded = true; break; }
+                if (crowded) continue;
+                float pick = (float)rng.NextDouble() * total;
+                DecorDef chosen = null;
+                foreach (DecorDef p in d.props) { if (p.sprite == null) continue; pick -= Mathf.Max(0, p.weight); if (pick <= 0) { chosen = p; break; } }
+                if (chosen == null) continue;
+                float scale = Mathf.Lerp(d.scaleRange.x, d.scaleRange.y, (float)rng.NextDouble());
+                decor.Add(new Decor { def = chosen, at = at, scale = scale <= 0 ? 1 : scale, flip = rng.NextDouble() < .5 });
+            }
+        }
+
+        void DrawDecor(RunState r)
+        {
+            DecorConfig d = db.decor;
+            if (d == null || decor.Count == 0) return;
+            PurifyConfig pc = db.purify;
+            ConceptDef concept = r.concept;
+            foreach (Decor o in decor)
+            {
+                Sprite s = o.def.sprite;
+                float h = (o.def.height > 0 ? o.def.height : s.rect.height) * o.scale, w = h * s.rect.width / s.rect.height;
+                Vector2 at = C(o.at.x, o.at.y);
+                if (at.x + w < view.xMin || at.x - w > view.xMax || at.y + h < view.yMin || at.y - h * 1.2f > view.yMax) continue;   // 화면 밖
+                if (!o.def.flat && d.shadowAlpha > 0) painter.Ellipse(Layer.Ground, at, w * .38f, w * .38f * .3f, Painter.Alpha(Pal.shadow, d.shadowAlpha));
+                Vector2 center = o.def.flat ? at : at - new Vector2(0, h * .45f);
+                SpriteRenderer sr = painter.Sprite(Layer.Ground, s, center, 0, o.flip ? -w : w, h, Color.white);
+                // 바닥과 같은 색감 (라운드 컨셉 덮개 · 정화된 층은 정화 밝기) + 캐릭터보다 덜 눈에 띄게
+                if (r.purified) painter.Style(sr, bright: pc.floorBright * d.bright, sat: pc.floorSat * d.sat, fill: pc.floorFill, fillAmount: pc.floorFill.a);
+                else if (concept != null) painter.Style(sr, bright: d.bright, sat: d.sat, fill: concept.floorFill, fillAmount: concept.floorFill.a);
+                else painter.Style(sr, bright: d.bright, sat: d.sat);
+            }
+        }
+
+        // ---------------------------------------------------------------- 세트 속성 (12차)
+
+        // 속성 피해 그림: ElementTone.hit(Codex fx_*)이 적 몸 가운데에서 톡 커졌다가 돌며 사라진다 (가산, 속성 색)
+        void DrawElementHit(Fx fx, float fade, Vector2 at)
+        {
+            ElementTone t = Tone(fx.element);
+            if (t.hit == null) return;
+            float age = 1 - fade;
+            Vector2 c = at - new Vector2(0, float.IsNaN(fx.lift) ? 30 : fx.lift);
+            float s = (fx.size > 0 ? fx.size : 90) * (.45f + .75f * (1 - Mathf.Pow(1 - Mathf.Min(1, age * 3), 3)));
+            float spin = (Hash(fx.seed) - .5f) * 1.2f + age * .8f;
+            painter.Sprite(Layer.Effects, t.hit, c, spin, s * 1.25f, s * 1.25f, Painter.Alpha(t.glow, .45f * fade), additive: true);
+            painter.Sprite(Layer.Effects, t.hit, c, spin, s, s, Painter.Alpha(t.color, fade), additive: true);
+        }
+
+        // 번개 튐: 맞은 적 → 옆 적으로 꺾인 줄기가 깜빡이며 남는다 (fx.lift = 출발 높이, fx.angle = 도착 높이)
+        void DrawChain(Fx fx, float fade, Vector2 at)
+        {
+            BindLook look = db.Look(Tone(fx.element).bindStyle);
+            if (look == null || Rand() < .2f) return;
+            Vector2 a = at - new Vector2(0, float.IsNaN(fx.lift) ? 30 : fx.lift);
+            Vector2 b = C(fx.toX, fx.toY) - new Vector2(0, float.IsNaN(fx.angle) ? 30 : fx.angle);
+            float len = Vector2.Distance(a, b);
+            DrawBolt(Bolt(a, b, 8 + len * .08f, Mathf.Max(5, Mathf.FloorToInt(len / 18))), 2.4f * fade + .6f, look, fade);
+            DrawBolt(Bolt(a, b, 5 + len * .05f, Mathf.Max(5, Mathf.FloorToInt(len / 18))), 1.2f * fade + .4f, look, fade * .6f);
+            painter.Ellipse(Layer.Effects, b, 10 + 14 * (1 - fade), 10 + 14 * (1 - fade), Painter.Alpha(look.glow, .5f * fade), additive: true);
+        }
+
+        // 상태 이상 적 둘레: 화상 불씨 · 둔화 서리 · 저주 연기 · 중독 거품
+        void EmitStatus(Enemy e, float dt)
+        {
+            if (dt <= 0 || db.visual.statusRate <= 0) return;
+            float y = Space.ProjectY(e.y);
+            float h = e.height;
+            void Emit(Element el, ParticleKind kind, Vector2 v, float life, float size)
+            {
+                if (Rand() >= db.visual.statusRate * dt) return;
+                Vector2 p = new(e.x + (Rand() - .5f) * e.radius * 1.4f, y - Rand() * h * .9f);
+                ElementTone t = Tone(el);
+                particles.Emit(kind, p, v, life, Rand() < .5f ? t.color : t.core, size);
+            }
+            if (e.burnTime > 0) Emit(Element.Fire, ParticleKind.Ember, new Vector2((Rand() - .5f) * 20, -40 - Rand() * 40), .6f, 2.2f);
+            if (e.slowTime > 0) Emit(Element.Ice, ParticleKind.Glint, new Vector2((Rand() - .5f) * 10, 12), .7f, 1.8f);
+            if (e.curseTime > 0) Emit(Element.Dark, ParticleKind.Drop, new Vector2((Rand() - .5f) * 12, -18), .9f, 2.6f);
+            if (e.poisonTime > 0) Emit(Element.Poison, ParticleKind.Drop, new Vector2((Rand() - .5f) * 8, -22), .8f, 1.6f + .3f * Mathf.Min(5, e.poisonStacks));
+        }
+
         AnimationCurve trailTaper;
         float renderClock;
 
@@ -1440,6 +1679,8 @@ namespace TOD
                     painter.Ribbon(Layer.Effects, points, width * 1.7f, Painter.Alpha(look.glow, .45f * alpha), threadRim, St(width * 1.7f));
                     painter.Ribbon(Layer.Effects, points, width, Painter.Alpha(look.color, .95f * alpha), threadRim, St(width));
                     painter.Ribbon(Layer.Effects, points, width, Painter.Alpha(look.core, alpha), threadCore, St(width));
+                    // 덮개: 팽팽히 가늘어져도(taut) 줄지 않게 — 실이 아니라 속성 줄기로만 보이게
+                    DrawBindCover(look, art, points, BD.coverWidth * threadScale * (.85f + .3f * fade), alpha, fx.seed);
                     EmitBindParticles(look, points, BD.particleRate * effectsDt);
                 }
             }
@@ -1481,6 +1722,7 @@ namespace TOD
                 {
                     float whipAlpha = Mathf.Max(alpha, .9f) * (1 - follow * .5f);   // 실 몸통이 사라진 뒤라 따로 밝게
                     DrawTrail(points, tw * 1.2f * (1 - .4f * follow), look, whipAlpha, art, trailSt);
+                    DrawBindCover(look, art, points, BD.coverWidth * threadScale * .6f * (1 - follow), whipAlpha, fx.seed + 7);
                 }
                 // 닿는 순간 손에서 퍼지는 고리 두 겹
                 for (int ring = 0; ring < 2; ring++)
@@ -1502,6 +1744,133 @@ namespace TOD
             painter.Sprite(Layer.Effects, art.headCore, head, heading, hw, hh, Painter.Alpha(look.core, alpha), additive: true);
         }
 
+        // 실 덮개: 결박된 실 경로 전체를 속성 빛(바깥 빛 · 색 · 심)으로 굵게 덮고, 그 위에 coverStep 간격으로 속성 장식을 얹는다.
+        // 화염 = 위로 날름거리는 불길 혀 · 번개 = 실을 가로지르며 감싸는 전류 · 서리 = 얼음 결정과 양옆 가시 · 금실 = 반짝임.
+        // 리본의 실 무늬(땋은 결)가 비쳐 '실'로 읽히지 않도록, 덮개 폭은 리본보다 넓다(BD.coverWidth).
+        void DrawBindCover(BindLook look, BindArt art, List<Vector2> points, float w, float alpha, float seed, Layer layer = Layer.Effects)
+        {
+            float a = alpha * BD.coverAlpha * look.cover;
+            if (points.Count < 2 || w <= 1 || a <= 0) return;
+            // 바탕: 같은 Blender 리본을 넓게 한 번 더 (가장자리가 부드러운 그림이라 납작한 띠로 보이지 않는다).
+            // 심(core)은 넣지 않는다 — 다섯 가닥이 겹치면 하얗게 날아간다.
+            if (art != null && art.threadRim != null)
+            {
+                Texture rim = art.threadRim.texture;
+                int frames = Mathf.Max(1, art.frames);
+                int frame = Mathf.FloorToInt(renderClock * BD.ribbonFps + seed * 1.7f) % frames;
+                float aspect = rim.width / (rim.height / (float)frames);
+                float len = 0;
+                for (int i = 1; i < points.Count; i++) len += Vector2.Distance(points[i - 1], points[i]);
+                float flow = renderClock * BD.flowSpeed * 1.3f + seed;
+                Vector4 St(float width) => new(len / Mathf.Max(1, width * aspect), 1f / frames, flow, (float)frame / frames);
+                float flicker = .9f + Rand() * .2f;
+                painter.Ribbon(layer, points, w * 1.6f * flicker, Painter.Alpha(look.glow, .4f * a), rim, St(w * 1.6f));
+                painter.Ribbon(layer, points, w, Painter.Alpha(look.color, .6f * a), rim, St(w));
+            }
+            a *= .75f;   // 장식은 바탕보다 옅게 (겹쳐도 날아가지 않게)
+
+            float step = Mathf.Max(6, BD.coverStep);
+            float next = step * (.3f + .4f * Hash(seed));
+            float walked = 0;
+            int k = 0;
+            for (int i = 1; i < points.Count; i++)
+            {
+                Vector2 p0 = points[i - 1], p1 = points[i];
+                float seg = Vector2.Distance(p0, p1);
+                if (seg <= 0) continue;
+                Vector2 u = (p1 - p0) / seg, n = new(-u.y, u.x);
+                while (next <= walked + seg)
+                {
+                    Vector2 p = p0 + u * (next - walked);
+                    float h = Hash(seed + k * 1.37f);
+                    switch (look.style)
+                    {
+                        case BindStyle.Fire:
+                        {
+                            float tall = w * (.7f + h * .9f) * (.8f + Rand() * .4f);
+                            Vector2 tip = p + new Vector2((Rand() - .5f) * w * .35f, -tall);
+                            Vector2 root = p + (p - tip) * .3f;
+                            painter.Blade(layer, tip, root, w * .26f, Painter.Alpha(look.glow, .5f * a), true);
+                            painter.Blade(layer, p + (tip - p) * .75f, root, w * .15f, Painter.Alpha(look.color, .9f * a), true);
+                            painter.Blade(layer, p + (tip - p) * .4f, p, w * .06f, Painter.Alpha(look.core, a), true);
+                            break;
+                        }
+                        case BindStyle.Lightning:
+                        {
+                            if (Rand() < .55f) break;   // 깜빡임 (빽빽하면 하얀 덩어리가 된다)
+                            float side = Rand() < .5f ? -1 : 1;
+                            Vector2 from = p - n * side * w * .6f, to = p + n * side * w * .6f + u * step * .6f;
+                            DrawBolt(Bolt(from, to, w * .18f, 4), Mathf.Max(1, w * .05f), look, a, layer);
+                            break;
+                        }
+                        case BindStyle.Frost:
+                        {
+                            float angle = Mathf.Atan2(u.y, u.x);
+                            float s = w * (.32f + h * .2f);
+                            painter.Sprite(layer, painter.white, p, angle + Mathf.PI / 4, s, s, Painter.Alpha(look.core, .95f * a), additive: true);
+                            float side = k % 2 == 0 ? 1 : -1;
+                            float spike = w * (.55f + Hash(seed + k * 3.1f) * .45f);
+                            painter.Blade(layer, p, p + (n * side * .85f + u * .3f) * spike, w * .09f, Painter.Alpha(look.color, .9f * a), true);
+                            painter.Blade(layer, p, p + (n * side * .85f + u * .3f) * spike * .6f, w * .035f, Painter.Alpha(look.core, a), true);
+                            break;
+                        }
+                        case BindStyle.Dark:
+                        {
+                            // 어둠: 실을 감싸며 피어오르는 그림자 연기 덩이 (옅은 빛 + 짙은 색 심)
+                            float side = k % 2 == 0 ? 1 : -1;
+                            float r0 = w * (.35f + h * .3f) * (.85f + .15f * Mathf.Sin(renderClock * 6 + k));
+                            Vector2 c = p + n * side * w * .25f + new Vector2(0, -w * .15f * Mathf.Sin(renderClock * 3 + k));
+                            painter.Ellipse(layer, c, r0, r0 * .8f, Painter.Alpha(look.glow, .35f * a), additive: true);
+                            painter.Ellipse(layer, c, r0 * .45f, r0 * .38f, Painter.Alpha(look.color, .7f * a), additive: true);
+                            break;
+                        }
+                        case BindStyle.Blood:
+                        {
+                            // 피: 아래로 맺혀 떨어지는 핏방울
+                            float drip = ((renderClock * .9f + h) % 1);
+                            Vector2 end = p + new Vector2(0, w * (.2f + .7f * drip * drip));
+                            painter.Blade(layer, p, end, w * .07f, Painter.Alpha(look.color, .85f * a), true);
+                            float r0 = w * (.12f + .08f * h);
+                            painter.Ellipse(layer, end, r0, r0 * 1.15f, Painter.Alpha(look.color, a), additive: true);
+                            painter.Ellipse(layer, end - new Vector2(r0 * .3f, r0 * .3f), r0 * .35f, r0 * .35f, Painter.Alpha(look.core, a), additive: true);
+                            break;
+                        }
+                        case BindStyle.Wind:
+                        {
+                            // 바람: 실 둘레를 스치는 바람 결 (진행 방향으로 휘는 가는 칼선)
+                            float side = k % 2 == 0 ? 1 : -1;
+                            float off = w * (.3f + .4f * h) * side;
+                            float run = w * (.9f + .6f * h);
+                            float drift = (renderClock * 2.5f + h) % 1;
+                            Vector2 s0 = p + n * off - u * run * (1 - drift);
+                            painter.Blade(layer, s0, s0 + u * run + n * off * .3f, w * .045f, Painter.Alpha(look.color, .9f * a * Mathf.Sin(Mathf.PI * drift)), true);
+                            break;
+                        }
+                        case BindStyle.Poison:
+                        {
+                            // 독: 실 위로 솟는 거품 (고리 + 반사광)
+                            float rise = (renderClock * .8f + h) % 1;
+                            float r0 = w * (.12f + .14f * h);
+                            Vector2 c = p + new Vector2((h - .5f) * w * .4f, -w * (.1f + .9f * rise));
+                            float fade = Mathf.Sin(Mathf.PI * rise);
+                            painter.Ellipse(layer, c, r0, r0, Painter.Alpha(look.color, .9f * a * fade), Mathf.Max(1, r0 * .25f), additive: true);
+                            painter.Ellipse(layer, c + new Vector2(r0 * .35f, -r0 * .35f), r0 * .25f, r0 * .25f, Painter.Alpha(look.core, a * fade), additive: true);
+                            break;
+                        }
+                        default:
+                        {
+                            float s = w * (.25f + h * .25f) * (.7f + .3f * Mathf.Sin(renderClock * 20 + k));
+                            painter.Sprite(layer, painter.white, p, Mathf.PI / 4, s, s, Painter.Alpha(look.core, .8f * a), additive: true);
+                            break;
+                        }
+                    }
+                    next += step * (.75f + .5f * Hash(seed + k * 2.3f));
+                    k++;
+                }
+                walked += seg;
+            }
+        }
+
         void DrawTrail(List<Vector2> points, float width, BindLook look, float alpha, BindArt art, Vector4 st)
         {
             painter.Ribbon(Layer.Effects, points, width * 1.5f, Painter.Alpha(look.glow, .5f * alpha), art.trailRim.texture, st, trailTaper);
@@ -1520,6 +1889,10 @@ namespace TOD
                     case BindStyle.Fire: particles.Emit(ParticleKind.Ember, p, new Vector2((Rand() - .5f) * 30, -40 - Rand() * 60), .5f + Rand() * .4f, look.color, 2.2f); break;
                     case BindStyle.Lightning: particles.Emit(ParticleKind.Spark, p, new Vector2((Rand() - .5f) * 220, (Rand() - .5f) * 220), .16f, look.core, 1.8f); break;
                     case BindStyle.Frost: particles.Emit(ParticleKind.Glint, p, new Vector2((Rand() - .5f) * 20, 10 + Rand() * 14), .6f, look.core, 1.6f); break;
+                    case BindStyle.Dark: particles.Emit(ParticleKind.Drop, p, new Vector2((Rand() - .5f) * 16, -20 - Rand() * 16), .8f, look.color, 2.6f); break;
+                    case BindStyle.Blood: particles.Emit(ParticleKind.Drop, p, new Vector2((Rand() - .5f) * 10, 30 + Rand() * 30), .6f, look.color, 2f); break;
+                    case BindStyle.Wind: particles.Emit(ParticleKind.Glint, p, new Vector2((Rand() - .5f) * 120, (Rand() - .5f) * 40), .4f, look.core, 1.4f); break;
+                    case BindStyle.Poison: particles.Emit(ParticleKind.Drop, p, new Vector2((Rand() - .5f) * 8, -26 - Rand() * 20), .7f, look.color, 1.8f); break;
                     default: particles.Emit(ParticleKind.Glint, p, new Vector2(0, -20), .5f, look.core, 1.6f); break;
                 }
             }

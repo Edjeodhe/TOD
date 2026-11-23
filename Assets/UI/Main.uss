@@ -5,7 +5,7 @@
    팔레트: 잉크 #1a1013 · 어두운 종이 글자 #eadcc4 / 흐린 #a8968a · 양피지 글자 #2e2120 / 흐린 #5f4a3c
            금 #d6b06e · 포도주 #7d2f3e · 먼지 분홍 #d99aae · 청록 #8fbfb2 */
 :root {
-    -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-12px.asset");
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
     font-size: 24px;
     color: #eadcc4;
 }
@@ -13,9 +13,9 @@
 .root { flex-grow: 1; }
 .layer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
 .hidden { display: none; }
-.serif { -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
-.title-font { -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); }
-.small-font { -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri9-10px.asset"); }
+.serif { -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.title-font { -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.small-font { -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 Label { margin: 0; padding: 0; white-space: normal; }
 
 /* ---------- 종이 조각 (공통) ---------- */
@@ -35,7 +35,7 @@ Label { margin: 0; padding: 0; white-space: normal; }
 /* ---------- 버튼: 찢어진 양피지 띠 ---------- */
 Button {
     margin: 0;
-    -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset");
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
     font-size: 24px;
     border-radius: 0;
     border-width: 0;
@@ -64,12 +64,12 @@ Button:disabled { opacity: 0.5; }
     -unity-slice-left: 0; -unity-slice-right: 0; -unity-slice-top: 0; -unity-slice-bottom: 0;
     -unity-background-scale-mode: scale-to-fit;
     -unity-background-image-tint-color: #d9c4c4;
-    color: #f6dfd0; -unity-text-outline-width: 1px; -unity-text-outline-color: #2a0c12; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-12px.asset");}
+    color: #f6dfd0; -unity-text-outline-width: 1px; -unity-text-outline-color: #2a0c12; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .icon-button:hover { -unity-background-image-tint-color: #ffffff; color: #ffffff; }
 .actions { flex-direction: row; flex-wrap: wrap; align-items: center; margin-top: 26px; }
 .actions > Button { margin-right: 14px; margin-bottom: 6px; }
 
-.eyebrow { color: #d6b06e; font-size: 15px; margin-bottom: 8px; letter-spacing: 3px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.eyebrow { color: #d6b06e; font-size: 15px; margin-bottom: 8px; letter-spacing: 3px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .panel { padding: 30px 34px; }
 
 /* 작은 게이지: 거친 잉크 틀(meter_frame) 안에 종이 결로 물든 채움 */
@@ -100,35 +100,35 @@ Button:disabled { opacity: 0.5; }
 .route { position: absolute; right: 96px; top: 14px; width: 350px; }
 .section-head { flex-direction: row; align-items: center; margin-bottom: 14px; }
 .section-head .mark { color: #d6b06e; margin-right: 8px; }
-.section-head .heading { flex-grow: 1; font-size: 24px; color: #f0e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
+.section-head .heading { flex-grow: 1; font-size: 24px; color: #f0e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
 /* 작은 꼬리표: 양피지 쪽지 */
 .tag {
     color: #2e2120; font-size: 15px; padding: 4px 14px 5px 14px;
-    -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
     background-image: url("project://database/Assets/UI/Paper/button.png");
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
     -unity-slice-scale: 0.28px;
     -unity-background-image-tint-color: #e2cfa8;
 }
 .stat { margin-bottom: 10px; }
-.stat-label { flex-direction: row; align-items: center; margin-bottom: 2px; color: #d8c8b4; font-size: 15px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.stat-label { flex-direction: row; align-items: center; margin-bottom: 2px; color: #d8c8b4; font-size: 15px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .stat-label .icon { width: 30px; height: 30px; margin-right: 8px; -unity-background-scale-mode: scale-to-fit; }
 .stat-label .value { margin-left: auto; color: #f0e2c8; }
 .yarn-pips { flex-direction: row; height: 12px; margin: 2px 4px 0 4px; }
 .yarn-pip { flex-grow: 1; margin-right: 5px; background-color: #241a1e; border-width: 2px; border-color: #120a0d; border-radius: 2px; overflow: hidden; }
 .yarn-pip.full { background-color: #7fb0a5; border-color: #0f1a18; }
 .yarn-wind { height: 100%; background-color: #4c7d76; width: 0; }
-.thread-status { flex-direction: row; justify-content: space-between; margin: 6px 4px 0 4px; color: #a8968a; font-size: 15px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.thread-status { flex-direction: row; justify-content: space-between; margin: 6px 4px 0 4px; color: #a8968a; font-size: 15px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .dash-icon { background-image: url("project://database/Assets/sprites/stat_dash.png"); }
 .dash-pips { flex-direction: row; height: 14px; margin: 2px 4px 0 4px; }
 .dash-pip { flex-grow: 1; margin-right: 6px; background-color: #241a1e; border-radius: 2px; border-width: 2px; border-color: #120a0d; overflow: hidden; }
 .dash-pip.full { background-color: #8fc3d6; border-color: #0e1a20; }
 .dash-fill { height: 100%; width: 0; background-color: #4f7f93; }
 .status-bottom { flex-direction: row; border-top-width: 2px; border-color: rgba(10, 5, 8, 0.6); margin-top: 12px; padding-top: 12px; }
-.status-bottom > VisualElement { flex-grow: 1; flex-direction: row; align-items: center; color: #a8968a; font-size: 15px; margin-right: 12px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.status-bottom > VisualElement { flex-grow: 1; flex-direction: row; align-items: center; color: #a8968a; font-size: 15px; margin-right: 12px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .status-bottom .icon { width: 28px; height: 28px; margin-right: 6px; -unity-background-scale-mode: scale-to-fit; }
 .status-bottom .value { margin-left: auto; color: #d6b06e; }
-.round { flex-direction: row; align-items: center; color: #a8968a; padding: 6px 12px; font-size: 15px; margin-bottom: 4px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.round { flex-direction: row; align-items: center; color: #a8968a; padding: 6px 12px; font-size: 15px; margin-bottom: 4px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .round .num { width: 28px; height: 28px; border-width: 2px; border-color: #120a0d; background-color: #241a1e; border-radius: 3px; -unity-text-align: middle-center; margin-right: 12px; color: #a8968a; }
 .round.current {
     color: #2e2120;
@@ -136,19 +136,19 @@ Button:disabled { opacity: 0.5; }
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
     -unity-slice-scale: 0.36px;
     -unity-background-image-tint-color: #e2cfa8;
-    -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset");
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
 }
 .round.current .num { border-color: #1a1013; background-color: #7d2f3e; color: #fbeedd; }
 .round.done { color: #8fbfb2; }
 .round.done .num { color: #8fbfb2; }
-.route-info { color: #b8a696; margin: 10px 4px 0 4px; font-size: 15px; min-height: 22px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.route-info { color: #b8a696; margin: 10px 4px 0 4px; font-size: 15px; min-height: 22px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .pause-button { position: absolute; right: 22px; top: 18px; }
 
 /* 화면 위 가운데 줄: 생존 타이머 또는 보스 HUD(위) → 라운드 띠(그 아래, top 146). */
 .banner { position: absolute; top: 146px; left: 0; right: 0; align-items: center; }
 .banner > Label {
     padding: 12px 46px 14px 46px; color: #2e2120; font-size: 24px;
-    -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset");
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
     background-image: url("project://database/Assets/UI/Paper/button.png");
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
     -unity-slice-scale: 0.5px;
@@ -157,7 +157,7 @@ Button:disabled { opacity: 0.5; }
 .round-timer { position: absolute; top: 14px; left: 0; right: 0; align-items: center; }
 .round-timer > Label {
     min-width: 190px; padding: 12px 36px 16px 36px; -unity-text-align: middle-center;
-    font-size: 45px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");
+    font-size: 45px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
     -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013;
     background-image: url("project://database/Assets/UI/Paper/panel_dark.png");
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 64; -unity-slice-bottom: 64;
@@ -167,7 +167,7 @@ Button:disabled { opacity: 0.5; }
 .hint-bar { position: absolute; bottom: 100px; left: 0; right: 0; align-items: center; }
 .hint-bar > Label {
     padding: 12px 40px 14px 40px; color: #2e2120; font-size: 24px;
-    -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset");
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
     background-image: url("project://database/Assets/UI/Paper/button.png");
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
     -unity-slice-scale: 0.5px;
@@ -187,9 +187,9 @@ Button:disabled { opacity: 0.5; }
     width: 50px; height: 50px; margin-right: 10px; align-items: center; justify-content: center;
     background-image: url("project://database/Assets/UI/Paper/seal.png"); -unity-background-scale-mode: scale-to-fit;
 }
-.boss-seal > Label { color: #f6dfd0; font-size: 24px; -unity-text-outline-width: 1px; -unity-text-outline-color: #2a0c12; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-12px.asset");}
+.boss-seal > Label { color: #f6dfd0; font-size: 24px; -unity-text-outline-width: 1px; -unity-text-outline-color: #2a0c12; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .boss-name {
-    font-size: 30px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");
+    font-size: 30px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
     -unity-text-outline-width: 2px; -unity-text-outline-color: #1a1013;
     text-shadow: 3px 3px 0px rgba(10, 4, 6, 0.7);
 }
@@ -198,14 +198,14 @@ Button:disabled { opacity: 0.5; }
 .boss-frame .bar-ink { -unity-slice-scale: 0.6px; -unity-background-image-tint-color: #a08a70; }
 .boss-frame .meter-fill { border-right-width: 3px; }
 
-.controls-hint { position: absolute; left: 26px; bottom: 52px; flex-direction: row; color: #cbb9a6; font-size: 15px; text-shadow: 2px 2px 0px rgba(10, 4, 6, 0.85); -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.controls-hint { position: absolute; left: 26px; bottom: 52px; flex-direction: row; color: #cbb9a6; font-size: 15px; text-shadow: 2px 2px 0px rgba(10, 4, 6, 0.85); -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .controls-hint > Label { margin-right: 22px; }
-.kbd { background-color: #e2cfa8; border-width: 2px; border-bottom-width: 4px; border-color: #1a1013; border-radius: 3px; color: #2e2120; padding: 3px 8px; margin-right: 6px; font-size: 15px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); }
+.kbd { background-color: #e2cfa8; border-width: 2px; border-bottom-width: 4px; border-color: #1a1013; border-radius: 3px; color: #2e2120; padding: 3px 8px; margin-right: 6px; font-size: 15px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 
 /* ---------- world labels ---------- */
 .world-label {
     position: absolute;
-    -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset");
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
     -unity-text-align: middle-center;
     white-space: nowrap;
     translate: -50% -50%;
@@ -224,9 +224,9 @@ Button:disabled { opacity: 0.5; }
 .brand { flex-direction: row; align-items: center; flex-grow: 1; }
 .brand-icon { width: 62px; height: 62px; margin-right: 18px; align-items: center; justify-content: center; background-image: url("project://database/Assets/UI/Paper/seal.png"); -unity-background-scale-mode: scale-to-fit; }
 .brand-icon > VisualElement { width: 34px; height: 34px; background-image: url("project://database/Assets/sprites/icon_needle.png"); -unity-background-scale-mode: scale-to-fit; }
-.brand-name { font-size: 30px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
-.brand-sub { color: #d6b06e; font-size: 12px; letter-spacing: 4px; margin-top: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-12px.asset");}
-.shards { flex-direction: row; align-items: center; color: #8fbfb2; margin-right: 22px; font-size: 24px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
+.brand-name { font-size: 30px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
+.brand-sub { color: #d6b06e; font-size: 12px; letter-spacing: 4px; margin-top: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
+.shards { flex-direction: row; align-items: center; color: #8fbfb2; margin-right: 22px; font-size: 24px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 .shards > VisualElement { width: 32px; height: 32px; margin-right: 8px; background-image: url("project://database/Assets/sprites/icon_shard.png"); -unity-background-scale-mode: scale-to-fit; }
 .welcome-copy {
     position: absolute; left: 96px; top: 190px; width: 820px; padding: 52px 64px 50px 64px;
@@ -235,15 +235,15 @@ Button:disabled { opacity: 0.5; }
     -unity-slice-scale: 0.9px;
     -unity-background-image-tint-color: rgba(255, 255, 255, 0.94);
 }
-.chapter { flex-direction: row; align-items: center; color: #d6b06e; letter-spacing: 6px; font-size: 15px; margin-bottom: 14px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.chapter { flex-direction: row; align-items: center; color: #d6b06e; letter-spacing: 6px; font-size: 15px; margin-bottom: 14px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .chapter > VisualElement { width: 26px; height: 2px; background-color: #8a6a48; margin: 0 12px; }
-.welcome-title { font-size: 60px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); -unity-text-outline-width: 3px; -unity-text-outline-color: #1a1013; text-shadow: 5px 5px 0px rgba(10, 4, 6, 0.75); }
-.welcome-text { color: #dccbb6; font-size: 24px; margin: 18px 0 32px 0; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-12px.asset");}
+.welcome-title { font-size: 60px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); -unity-text-outline-width: 3px; -unity-text-outline-color: #1a1013; text-shadow: 5px 5px 0px rgba(10, 4, 6, 0.75); }
+.welcome-text { color: #dccbb6; font-size: 24px; margin: 18px 0 32px 0; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .menu { flex-direction: column; align-items: flex-start; }
 .menu > Button { min-width: 330px; margin-bottom: 10px; -unity-text-align: middle-left; padding-left: 42px; }
-.start-button { font-size: 24px; min-height: 66px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-12px.asset");}
-.hint { color: #b8a696; font-size: 15px; margin-top: 10px; flex-direction: row; align-items: center; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
-.record { color: #b8a696; font-size: 15px; margin-top: 24px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.start-button { font-size: 24px; min-height: 66px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
+.hint { color: #b8a696; font-size: 15px; margin-top: 10px; flex-direction: row; align-items: center; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
+.record { color: #b8a696; font-size: 15px; margin-top: 24px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .record-value { color: #d6b06e; }
 .corner { position: absolute; width: 34px; height: 34px; border-color: rgba(26, 16, 19, 0.85); }
 .corner.tl { left: 18px; top: 122px; border-left-width: 3px; border-top-width: 3px; }
@@ -255,9 +255,9 @@ Button:disabled { opacity: 0.5; }
     background-image: url("project://database/Assets/UI/Paper/button.png");
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
     -unity-slice-scale: 0.5px;
-    -unity-background-image-tint-color: #e2cfa8; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+    -unity-background-image-tint-color: #e2cfa8; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .lobby-controls > Label { margin-right: 24px; }
-.lobby-controls .control-title { color: #7d2f3e; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
+.lobby-controls .control-title { color: #7d2f3e; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 
 /* ---------- rooms (재봉 상자 · 다락 · 결과): 어두운 종이 판 ---------- */
 .room { align-items: center; justify-content: center; background-color: #1c1417; }
@@ -269,7 +269,7 @@ Button:disabled { opacity: 0.5; }
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 64; -unity-slice-bottom: 64;
     -unity-slice-scale: 0.9px;
 }
-.room-title { font-size: 45px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); -unity-text-outline-width: 2px; -unity-text-outline-color: #1a1013; text-shadow: 3px 3px 0px rgba(10, 4, 6, 0.7); }
+.room-title { font-size: 45px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); -unity-text-outline-width: 2px; -unity-text-outline-color: #1a1013; text-shadow: 3px 3px 0px rgba(10, 4, 6, 0.7); }
 .room-text { color: #c9b8a6; margin-top: 10px; }
 /* ---------- 재봉 상자 (8차): 세트 패널 · 판(칸 + 조각 그림 층 + 반투명 미리보기 층) · 목록 · 정보 창 ---------- */
 .sewing-body { width: 1520px; }
@@ -279,7 +279,7 @@ Button:disabled { opacity: 0.5; }
 .board-layer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
 .board-ghost { opacity: 0.55; }
 .board-ghost.invalid { opacity: 0.7; }
-.cell { margin: 2px; padding: 0; min-height: 0; border-radius: 0; border-width: 0; background-image: url("project://database/Assets/UI/Puzzle/slot_empty.png"); -unity-slice-left: 0; -unity-slice-right: 0; -unity-slice-top: 0; -unity-slice-bottom: 0; -unity-background-scale-mode: stretch-to-fill; -unity-background-image-tint-color: #4e3e46; background-color: rgba(0, 0, 0, 0); color: #241624; font-size: 15px; translate: 0 0; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.cell { margin: 2px; padding: 0; min-height: 0; border-radius: 0; border-width: 0; background-image: url("project://database/Assets/UI/Puzzle/slot_empty.png"); -unity-slice-left: 0; -unity-slice-right: 0; -unity-slice-top: 0; -unity-slice-bottom: 0; -unity-background-scale-mode: stretch-to-fill; -unity-background-image-tint-color: #4e3e46; background-color: rgba(0, 0, 0, 0); color: #241624; font-size: 15px; translate: 0 0; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .cell:hover { background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: #7a6470; translate: 0 0; }
 .cell.reinforced { -unity-background-image-tint-color: #5c4636; }
 .cell.reinforced:hover { -unity-background-image-tint-color: #806650; }
@@ -334,32 +334,43 @@ Button:disabled { opacity: 0.5; }
 .piece-row:hover { translate: -4px 0; }
 .piece-row.selected { translate: -10px 0; }
 .piece-item-icon { width: 76px; height: 76px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
-.piece-shape-slot { position: relative; flex-shrink: 0; margin-left: 16px; }
+.piece-shape-col { flex-shrink: 0; margin-left: 16px; align-items: center; justify-content: center; }
+.piece-shape-slot { position: relative; flex-shrink: 0; }
+/* 판 위 조각의 세트 이름 꼬리표 (조각 맨 윗줄 가운데, 코드가 위치·색 지정) */
+.board-set-row { position: absolute; flex-direction: row; justify-content: center; align-items: flex-start; }
+.board-set-tag { font-size: 15px; padding: 0 6px 1px 6px; background-color: rgba(26, 16, 19, 0.82); border-radius: 3px; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .piece-name-box { flex-grow: 1; align-items: flex-end; justify-content: center; }
-.piece-name { font-size: 24px; color: #1a1013; -unity-text-align: middle-right; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
-.piece-row.selected .piece-name { color: #7d2f3e; }
+/* 세트 이름 (이름 위, 세트 색 글씨 + 잉크 외곽선, 코드가 칠함) */
+.set-role { font-size: 15px; margin: 2px 0 0 28px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
+/* 목록 줄의 세트 이름: 어두운 잉크 꼬리표 위 세트 색 글씨 (세트 색 종이와 섞이지 않게) */
+.piece-set { font-size: 15px; -unity-text-align: middle-center; margin-bottom: 4px; padding: 1px 8px 2px 8px; background-color: rgba(26, 16, 19, 0.82); border-radius: 3px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
+.tip-set-name { font-size: 15px; -unity-text-outline-width: 2px; -unity-text-outline-color: #1a1013; margin-top: 2px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
+/* 이름 색 = 등급 색(코드가 칠함). 세트 색 종이 위에서 읽히게 잉크 외곽선 */
+.piece-name { font-size: 24px; color: #1a1013; -unity-text-outline-width: 2px; -unity-text-outline-color: #1a1013; -unity-text-align: middle-right; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 /* 장착 중 꼬리표: 포도주색 띠 + 밝은 글씨, 장착한 줄에서만 */
-.piece-state { display: none; margin-top: 4px; padding: 2px 10px 3px 10px; font-size: 15px; color: #fff4e4; background-color: #7d2f3e; border-width: 2px; border-color: #1a1013; border-radius: 3px; -unity-text-outline-width: 1px; -unity-text-outline-color: #3b1219; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.piece-state { display: none; margin-top: 4px; padding: 2px 10px 3px 10px; font-size: 15px; color: #fff4e4; background-color: #7d2f3e; border-width: 2px; border-color: #1a1013; border-radius: 3px; -unity-text-outline-width: 1px; -unity-text-outline-color: #3b1219; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .piece-row.equipped .piece-state { display: flex; }
 /* 등급 꼬리표: 등급 색 바탕(코드가 칠함), 장착 중 아래 */
-.piece-rank { margin-top: 4px; padding: 2px 10px 3px 10px; font-size: 15px; border-width: 2px; border-color: #1a1013; border-radius: 3px; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.piece-rank { margin-top: 4px; padding: 2px 10px 3px 10px; font-size: 15px; border-width: 2px; border-color: #1a1013; border-radius: 3px; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .piece-dot { position: absolute; -unity-background-scale-mode: stretch-to-fill; border-color: rgba(26, 16, 19, 0.7); }
 /* 세트 효과 패널 (세피리아식): 색 매듭 · 이름 · 연결 수/다음 단계 · 단계별 효과, 켜진 단계는 밝게 */
 .set-panel { width: 330px; flex-shrink: 0; padding: 18px 18px 8px 18px; background-color: rgba(10, 5, 8, 0.5); border-width: 2px; border-color: #3a2a2e; border-radius: 4px; }
-.set-panel-title { font-size: 24px; color: #d6b06e; margin-bottom: 12px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
+.set-panel-title { font-size: 24px; color: #d6b06e; margin-bottom: 12px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+/* 12차: 세트가 8개라 목록은 스크롤 (아래 버튼과 겹치지 않게) */
+.set-list { max-height: 640px; }
 .set-entry { margin-bottom: 12px; padding: 10px 12px; background-color: rgba(255, 255, 255, 0.03); border-left-width: 4px; border-color: #3a2a2e; }
 .set-entry.active { background-color: rgba(255, 236, 210, 0.08); border-color: #d6b06e; }
 .set-head { flex-direction: row; align-items: center; }
 .set-swatch { width: 18px; height: 18px; border-radius: 9px; border-width: 2px; border-color: #1a1013; margin-right: 10px; }
-.set-name { flex-grow: 1; font-size: 24px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
-.set-count { font-size: 24px; color: #eadcc4; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-12px.asset"); }
+.set-name { flex-grow: 1; font-size: 24px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-count { font-size: 24px; color: #eadcc4; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 .set-tiers { margin-top: 6px; }
 .set-tier { flex-direction: row; align-items: center; margin-top: 4px; opacity: 0.42; }
 .set-tier.next { opacity: 0.7; }
 .set-tier.on { opacity: 1; }
-.tier-need { width: 34px; height: 24px; border-width: 2px; border-radius: 3px; margin-right: 10px; font-size: 15px; color: #eadcc4; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.tier-need { width: 34px; height: 24px; border-width: 2px; border-radius: 3px; margin-right: 10px; font-size: 15px; color: #eadcc4; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .set-tier.on .tier-need { color: #1a1013; }
-.tier-effect { font-size: 15px; color: #c9b8a6; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.tier-effect { font-size: 15px; color: #c9b8a6; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .set-tier.on .tier-effect { color: #fff4dc; }
 /* 아이템 정보 창: 양피지(등급 색으로 살짝 물듦), 마우스를 따라다님 */
 .piece-tip {
@@ -371,15 +382,17 @@ Button:disabled { opacity: 0.5; }
 .tip-head { flex-direction: row; align-items: center; }
 .tip-icon { width: 64px; height: 64px; flex-shrink: 0; margin-right: 12px; -unity-background-scale-mode: scale-to-fit; }
 .tip-title { flex-grow: 1; flex-shrink: 1; }
-.tip-name { font-size: 30px; color: #1a1013; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
-.tip-rank { font-size: 15px; margin-top: 2px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.tip-name { font-size: 30px; color: #1a1013; -unity-text-outline-width: 2px; -unity-text-outline-color: #1a1013; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
+.tip-rank { font-size: 15px; margin-top: 2px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .tip-shape { position: relative; flex-shrink: 0; margin-left: 10px; }
-.tip-line { font-size: 15px; color: #4a3a30; margin-top: 10px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
-.tip-effect { font-size: 24px; color: #7d2f3e; margin-top: 8px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
+.tip-line { font-size: 15px; color: #4a3a30; margin-top: 10px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
+/* 고유 효과 (유니크·레전더리): 금빛 띠 위 잉크 글자 */
+.tip-unique { font-size: 15px; color: #2a1608; margin-top: 8px; padding: 4px 8px; background-color: rgba(214, 160, 60, 0.45); border-left-width: 3px; border-color: #8a5a14; white-space: normal; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
+.tip-effect { font-size: 24px; color: #7d2f3e; margin-top: 8px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 .tip-set-row { flex-direction: row; align-items: center; margin-top: 8px; }
 .tip-set-row > .tip-line { margin-top: 0; flex-shrink: 1; }
 .tip-knot { width: 14px; height: 14px; flex-shrink: 0; border-radius: 7px; border-width: 2px; border-color: #1a1013; margin-right: 8px; }
-.tip-flavor { font-size: 15px; color: #4a3a30; margin-top: 12px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.tip-flavor { font-size: 15px; color: #4a3a30; margin-top: 12px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 /* 스크롤 막대: 잉크 홈 + 양피지 손잡이 */
 .unity-scroller--vertical { width: 14px; }
 .unity-scroller .unity-scroller__low-button, .unity-scroller .unity-scroller__high-button { display: none; }
@@ -398,10 +411,10 @@ Button:disabled { opacity: 0.5; }
 }
 .choice:hover { -unity-background-image-tint-color: #ffe9ef; color: #ffffff; }
 .choice .icon { width: 44px; height: 44px; margin-bottom: 8px; -unity-background-scale-mode: scale-to-fit; }
-.choice .tag-line { color: #d6b06e; font-size: 15px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); }
-.choice .name { color: #f3e2c8; font-size: 24px; margin: 4px 0; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-12px.asset");}
-.choice .text { color: #c9b8a6; font-size: 15px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); }
-.choice .foot { color: #d6b06e; font-size: 15px; margin-top: 8px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); }
+.choice .tag-line { color: #d6b06e; font-size: 15px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.choice .name { color: #f3e2c8; font-size: 24px; margin: 4px 0; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
+.choice .text { color: #c9b8a6; font-size: 15px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.choice .foot { color: #d6b06e; font-size: 15px; margin-top: 8px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 .shop-grid .choice { width: 440px; min-height: 140px; }
 .ui-vfx { position: absolute; right: 40px; top: 40px; width: 300px; height: 300px; opacity: 0.5; -unity-background-scale-mode: scale-to-fit; }
 
@@ -414,13 +427,13 @@ Button:disabled { opacity: 0.5; }
     -unity-slice-scale: 0.9px;
 }
 #dialog-augment, #dialog-artifact, #dialog-shop { width: 1200px; }
-.dialog .eyebrow { font-size: 15px; color: #7d2f3e; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); }
-.dialog-title { font-size: 45px; color: #1f1416; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); }
+.dialog .eyebrow { font-size: 15px; color: #7d2f3e; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.dialog-title { font-size: 45px; color: #1f1416; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 .dialog-text { color: #4e3b31; margin-top: 10px; }
 .notice { position: absolute; bottom: 58px; left: 0; right: 0; align-items: center; }
 .notice > Label {
     padding: 12px 40px 14px 40px; color: #2e2120;
-    -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset");
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
     background-image: url("project://database/Assets/UI/Paper/button.png");
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
     -unity-slice-scale: 0.5px;
@@ -438,7 +451,7 @@ Button:disabled { opacity: 0.5; }
 }
 .exp-level {
     width: 96px; padding: 3px 0 4px 0; -unity-text-align: middle-center; color: #2e2120; font-size: 15px; margin-right: 6px;
-    -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
     background-image: url("project://database/Assets/UI/Paper/button.png");
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
     -unity-slice-scale: 0.28px;
@@ -457,7 +470,7 @@ Button:disabled { opacity: 0.5; }
 }
 .exp-shine { position: absolute; left: 0; right: 0; top: 0; height: 35%; background-color: rgba(255, 255, 255, 0.2); }
 .exp-tick { position: absolute; top: 0; bottom: 0; width: 2px; background-color: rgba(10, 5, 8, 0.55); }
-.exp-text { position: absolute; left: 0; right: 0; top: -2px; bottom: 0; -unity-text-align: middle-center; color: #ffffff; font-size: 12px; -unity-text-outline-width: 1px; -unity-text-outline-color: #120c10; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
+.exp-text { position: absolute; left: 0; right: 0; top: -2px; bottom: 0; -unity-text-align: middle-center; color: #ffffff; font-size: 12px; -unity-text-outline-width: 1px; -unity-text-outline-color: #120c10; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 
 /* ---------- 퍼즐 카드 (증강·아이템 선택): 바느질 종이 카드를 등급 색으로 물들임 ---------- */
 .puzzle-grid { flex-direction: row; justify-content: center; margin-top: 34px; }
@@ -481,14 +494,14 @@ Button:disabled { opacity: 0.5; }
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
     -unity-slice-scale: 0.36px;
 }
-.puzzle-tag { color: #1f1416; font-size: 15px; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); }
+.puzzle-tag { color: #1f1416; font-size: 15px; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 .puzzle-body { align-items: center; padding: 14px 32px 20px 32px; }
 .puzzle-frame { width: 108px; height: 108px; border-radius: 54px; background-color: #1a1115; border-width: 4px; border-color: #e6a8bf; align-items: center; justify-content: center; margin-bottom: 10px; }
 .puzzle-icon { width: 86px; height: 86px; -unity-background-scale-mode: scale-to-fit; }
-.puzzle-name { color: #f6e8d2; font-size: 24px; margin-bottom: 4px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-12px.asset"); -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
-.puzzle-effect { color: #f2d27e; font-size: 15px; -unity-text-align: upper-center; margin-bottom: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); white-space: normal; }
+.puzzle-name { color: #f6e8d2; font-size: 24px; margin-bottom: 4px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
+.puzzle-effect { color: #f2d27e; font-size: 15px; -unity-text-align: upper-center; margin-bottom: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); white-space: normal; }
 .puzzle-shape { width: 56px; height: 30px; margin: 4px 0 6px 0; }
-.puzzle-text { color: #cdbcaa; font-size: 15px; white-space: normal; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); }
+.puzzle-text { color: #cdbcaa; font-size: 15px; white-space: normal; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 
 /* ---------- 다시 굴리기 · 등급 번쩍임 · 등반 중 재봉 상자 ---------- */
 .reroll-row { justify-content: center; margin-top: 22px; }
@@ -498,7 +511,7 @@ Button:disabled { opacity: 0.5; }
 .shine { position: absolute; top: -40%; bottom: -40%; width: 70px; left: -30%; rotate: 18deg; background-color: rgba(255, 246, 214, 0.22); }
 .puzzle.rank-3 .shine { background-color: rgba(255, 236, 160, 0.20); }
 .puzzle.rank-4 .shine { width: 90px; background-color: rgba(255, 226, 170, 0.34); }
-.room-note { color: #e2c48a; font-size: 15px; margin-top: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.room-note { color: #e2c48a; font-size: 15px; margin-top: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 
 /* 체력 회복: 새로 찰 몫이 밝게 먼저 보이고, 체력 게이지가 그 위로 차오른다 */
 .meter-fill.heal { position: absolute; left: 0; top: 0; bottom: 0; -unity-background-image-tint-color: #dcfbb8; border-right-width: 0; }

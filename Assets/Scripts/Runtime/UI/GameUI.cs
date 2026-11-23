@@ -372,6 +372,16 @@ namespace TOD
 
         static Color PaperTint(Color c) => Color.Lerp(Color.white, c, .38f);
 
+        // 재봉 상자 목록 줄: 세트 색이 또렷하도록 진하게 물들이고 조금 어둡게 (밝은 등급 색 이름이 읽히게)
+        static Color SetPaperTint(Color c) => Color.Lerp(c, Color.black, .2f);
+
+        // 등급 색 글자: 어두운 진한 색(레전더리 붉은색)은 같은 색조로 밝혀 종이 위에서 읽히게. 회색처럼 채도가 낮은 색은 그대로.
+        static Color NameColor(Color c)
+        {
+            Color.RGBToHSV(c, out float h, out float s, out float v);
+            return s > .3f && v < .85f ? Color.HSVToRGB(h, s, .97f) : c;
+        }
+
         static void SetBorder(VisualElement e, Color c)
         {
             e.style.borderTopColor = c; e.style.borderBottomColor = c; e.style.borderLeftColor = c; e.style.borderRightColor = c;
@@ -446,11 +456,15 @@ namespace TOD
                 SetDef set = db.Set(def.set);
                 string value = def.value < 1 ? $"{Mathf.RoundToInt(def.value * 100)}%" : def.value.ToString("0.##");
                 string effect = string.Format(T.pieceEffect, T.statNames[(int)def.stat], value);
+                string unique = UniqueText(def);
+                if (unique != null) effect += "\n" + unique;
                 string text = string.Format(T.pieceShape, def.shape.Length, set.name, set.bonus) + (string.IsNullOrEmpty(def.flavor) ? "" : "\n" + def.flavor);
                 // 카드 색은 등급(코스트) 색: 일반 회색 · 레어 하늘색 · 유니크 노란색 · 레전더리 붉은색. 세트 색은 조각 모양에 남긴다.
                 Color[] ranks = db.gear.rankColors;
                 Color rankColor = ranks != null && def.cost < ranks.Length ? ranks[def.cost] : set.color;
-                Button card = PuzzleCard(container, rankColor, def.icon, $"{db.gear.rankNames[def.cost]} · {set.name}", def.name, effect, text, () => pick(kind));
+                // 띠: 등급 + 세트 이름(세트 색 글씨, 리치 텍스트)
+                string setTag = $"<color=#{ColorUtility.ToHtmlStringRGB(Color.Lerp(set.color, Color.black, .35f))}>{set.name}</color>";
+                Button card = PuzzleCard(container, rankColor, def.icon, $"{db.gear.rankNames[def.cost]}  {setTag}", def.name, effect, text, () => pick(kind));
                 card.AddToClassList($"rank-{def.cost}");
                 float shine = db.gear.rankShine != null && def.cost < db.gear.rankShine.Length ? db.gear.rankShine[def.cost] : 0;
                 VisualElement band = card.Q("shine");
@@ -565,6 +579,15 @@ namespace TOD
 
         static string Amount(float value) => value < 1 ? $"{Mathf.RoundToInt(value * 100)}%" : value.ToString("0.##");
 
+        // 고유 효과 한 줄: "★ 벼랑 끝 — 체력 30% 이하일 때 당기기 피해 +60%" (없으면 null)
+        string UniqueText(PieceDef def)
+        {
+            if (def.effect == ItemEffect.None || db.gear.effectTexts == null) return null;
+            ItemEffectText text = System.Array.Find(db.gear.effectTexts, t => t.effect == def.effect);
+            if (text == null) return null;
+            return $"★ {text.name} — " + string.Format(text.text, Amount(def.effectValue), Amount(def.effectParam));
+        }
+
         public void RenderInventory(Profile profile, int? selected, int turns)
         {
             var (width, height, limit) = Gear.Dimensions(db, profile);
@@ -616,7 +639,7 @@ namespace TOD
             VisualElement layer = inventory.Q("board-pieces");
             layer.Clear();
             boardArt.Clear();
-            // 같은 등급 조각이 맞닿으면 종이 명암을 달리해 서로 다른 영역으로 보이게 한다 (이웃과 겹치지 않는 명암 고르기)
+            // 같은 세트(같은 색) 조각이 맞닿으면 종이 명암을 달리해 서로 다른 영역으로 보이게 한다 (이웃과 겹치지 않는 명암 고르기)
             var tone = new Dictionary<int, int>();
             foreach (PlacedPiece piece in placed)
             {
@@ -624,7 +647,7 @@ namespace TOD
                 foreach (Vector2Int c in piece.cells)
                     for (int d = 0; d < 4; d++)
                         if (boardIds.TryGetValue(c + Normal[d], out int other) && other != piece.Id && tone.TryGetValue(other, out int t)
-                            && placed.First(p => p.Id == other).def.cost == piece.def.cost) used.Add(t);
+                            && placed.First(p => p.Id == other).def.set == piece.def.set) used.Add(t);
                 tone[piece.Id] = Enumerable.Range(0, 3).First(t => !used.Contains(t) || t == 2);
             }
             foreach (PlacedPiece piece in placed)
@@ -678,11 +701,16 @@ namespace TOD
                 button.EnableInClassList("selected", item.id == selected);
                 button.EnableInClassList("equipped", placement != null);
                 button.style.height = rowHeight;
-                button.style.unityBackgroundImageTintColor = PaperTint(RankColor(def));
+                // 줄 바탕 종이와 퍼즐 모양 = 세트 색, 이름 = 등급 색(잉크 외곽선)
+                Color setColor = db.Set(def.set).color;
+                button.style.unityBackgroundImageTintColor = SetPaperTint(setColor);
                 Icon(button.Q("icon"), def.icon);
                 List<Vector2Int> shape = Gear.Shape(db, item, item.id == selected ? turns : placement?.placement.turns ?? 0);
-                MiniShape(button.Q("shape"), shape, RankColor(def), 16);
+                MiniShape(button.Q("shape"), shape, Color.Lerp(setColor, Color.white, .25f), 16);   // 바탕보다 밝게
                 Text(button, "name", def.name);
+                button.Q<Label>("name").style.color = NameColor(RankColor(def));
+                Text(button, "set", db.Set(def.set).name);   // 이름 위 세트 이름 (세트 색)
+                button.Q<Label>("set").style.color = Color.Lerp(setColor, Color.white, .3f);
                 Text(button, "state", placement != null ? T.equipped : "");
                 // 등급 꼬리표: 등급 색 바탕 + 같은 색의 어두운 글씨
                 Label rankTag = button.Q<Label>("rank");
@@ -719,19 +747,31 @@ namespace TOD
                 VisualElement entry = Slot(slots, "set-entry");
                 entry.EnableInClassList("active", group.tier > 0);
                 entry.Q("swatch").style.backgroundColor = set.color;
+                // 주 속성 / 보조 (12차: 단계가 가장 높은 세트가 100%, 나머지는 subSetScale)
+                int rank = stats.sets.FindIndex(s => s.def == set);
+                string role = rank < 0 ? "" : rank == 0 ? T.setMain : string.Format(T.setSub, Amount(db.gear.subSetScale));
                 Text(entry, "set-name", set.name);
+                Text(entry, "set-role", role);   // 이름 아래 한 줄 (이름 옆에 두면 연결 수와 겹친다)
+                entry.Q("set-role").style.display = string.IsNullOrEmpty(role) ? DisplayStyle.None : DisplayStyle.Flex;
+                entry.Q<Label>("set-role").style.color = rank == 0 ? Color.Lerp(set.color, Color.white, .35f) : new Color(.72f, .65f, .6f);
                 int next = set.thresholds.FirstOrDefault(t => t > group.size);
                 Text(entry, "set-count", next > 0 ? string.Format(T.setProgress, group.size, next) : string.Format(T.setProgressMax, group.size));
                 entry.Q<Label>("set-name").style.color = group.tier > 0 ? Color.Lerp(set.color, Color.white, .25f) : new Color(.66f, .59f, .54f);
                 VisualElement tiers = entry.Q("tiers");
+                // 12차: 세트가 8개라 켜진 단계 + 다음 단계 하나만 보인다. 판에 하나도 없는 세트는 이름 줄만.
+                tiers.style.display = group.size > 0 ? DisplayStyle.Flex : DisplayStyle.None;
                 for (int i = 0; i < set.thresholds.Length; i++)
                 {
+                    if (i > group.tier) break;
                     VisualElement tier = Slot(slots, "set-tier");
                     bool on = i < group.tier;
                     tier.EnableInClassList("on", on);
                     tier.EnableInClassList("next", i == group.tier);
                     Text(tier, "need", set.thresholds[i].ToString());
-                    Text(tier, "effect", string.Format(T.pieceEffect, set.bonus, Amount(set.perTier * (i + 1))));
+                    // 단계 효과: "화염 피해 +2, 화상 초당 2"
+                    string effect = string.Format(T.pieceEffect, set.bonus, Amount(set.damagePerTier * (i + 1)));
+                    if (!string.IsNullOrEmpty(set.effectText)) effect += ", " + string.Format(set.effectText, Amount(set.effectPerTier * (i + 1)));
+                    Text(tier, "effect", effect);
                     VisualElement need = tier.Q("need");
                     need.style.backgroundColor = on ? set.color : new Color(0, 0, 0, 0);
                     SetBorder(need, on ? set.color : new Color(.42f, .36f, .33f));
@@ -743,14 +783,14 @@ namespace TOD
 
         // 조각 그림 한 벌을 판 좌표(칸 목록)로 만든다.
         // pivot = 회전 중심 칸의 판 좌표 (아이콘이 이 칸 슬롯 가운데에 놓인다)
-        // tone: 0 그대로 · 1 밝게 · 2 어둡게 (맞닿은 같은 등급 조각끼리 구분)
+        // tone: 0 그대로 · 1 밝게 · 2 어둡게 (맞닿은 같은 세트 조각끼리 구분)
         PieceArt BuildPiece(VisualElement layer, PieceDef def, List<Vector2Int> cellList, int id, Vector2Int pivot, int tone = 0)
         {
             var art = new PieceArt { id = id };
             var set = new HashSet<Vector2Int>(cellList);
             float inset = Mathf.Round(pitch * .14f);   // 바늘땀: 찢긴 가장자리와 칸 슬롯(slot_frame) 사이
             float thick = Mathf.Max(3, Mathf.Round(pitch * .055f));
-            Color fill = RankColor(def);
+            Color fill = db.Set(def.set).color;   // 11차: 판 위 조각 종이 = 세트 색 (등급은 테두리·실·장식이 맡는다)
             if (tone == 1) fill = Color.Lerp(fill, Color.white, .2f);
             else if (tone == 2) fill = Color.Lerp(fill, Color.black, .16f);
             int minX = cellList.Min(c => c.x), maxX = cellList.Max(c => c.x);
@@ -805,7 +845,7 @@ namespace TOD
                 }
                 VisualElement knot = tile.Q("knot");
                 knot.style.display = c == knotCell ? DisplayStyle.Flex : DisplayStyle.None;
-                knot.style.backgroundColor = db.Set(def.set).color;
+                knot.style.backgroundColor = RankColor(def);   // 종이가 세트 색이므로 매듭은 등급 색
                 tile.Q("ornament").style.display = def.cost >= 3 && c == lastCell ? DisplayStyle.Flex : DisplayStyle.None;
                 VisualElement sparkle = tile.Q("sparkle");
                 bool sparkles = def.cost >= 4 && (c == knotCell || c == lastCell);
@@ -831,6 +871,22 @@ namespace TOD
                 art.mark.style.transformOrigin = new TransformOrigin(art.center.x - (center.x - size * .5f), art.center.y - (center.y - size * .5f));
                 art.parts.Add(art.mark);
                 layer.Add(art.mark);
+            }
+            // 세트 이름 꼬리표: 조각 맨 윗줄 칸들의 가운데 위 (세트 색 글씨)
+            {
+                SetDef setDef = db.Set(def.set);
+                VisualElement tag = Slot(slots, "board-set-tag");   // 맨 윗줄 폭의 줄 안에 꼬리표를 가운데 정렬
+                Label label = tag.Q<Label>("tag");
+                label.text = setDef.name;
+                label.style.color = Color.Lerp(setDef.color, Color.white, .3f);
+                var top = cellList.Where(c => c.y == minY).ToList();
+                float left = top.Min(c => c.x) * pitch, topY = minY * pitch + pitch * .04f;
+                tag.style.left = left;
+                tag.style.top = topY;
+                tag.style.width = (top.Max(c => c.x) - top.Min(c => c.x) + 1) * pitch;
+                tag.style.transformOrigin = new TransformOrigin(art.center.x - left, art.center.y - topY);
+                art.parts.Add(tag);
+                layer.Add(tag);
             }
             // 둘레 순서: 격자 꼭짓점을 따라 시계 방향으로 잇는다 (맨 위 왼쪽 윗변에서 시작)
             var remaining = seams.OrderBy(s => s.edgeFrom.y).ThenBy(s => s.edgeFrom.x).ToList();
@@ -1224,9 +1280,11 @@ namespace TOD
                 dot.style.width = cellPx;
                 dot.style.height = cellPx;
                 dot.style.unityBackgroundImageTintColor = color;
-                // 칸 나눔 선 (판과 같이 몇 칸인지 보이게)
-                dot.style.borderRightWidth = set.Contains(c + Vector2Int.right) ? 1 : 0;
-                dot.style.borderBottomWidth = set.Contains(c + new Vector2Int(0, 1)) ? 1 : 0;
+                // 칸 나눔 선(1px) + 바깥 잉크 테두리(2px): 같은 세트 색 종이 위에서도 모양이 보이게
+                dot.style.borderRightWidth = set.Contains(c + Vector2Int.right) ? 1 : 2;
+                dot.style.borderBottomWidth = set.Contains(c + new Vector2Int(0, 1)) ? 1 : 2;
+                dot.style.borderLeftWidth = set.Contains(c + Vector2Int.left) ? 0 : 2;
+                dot.style.borderTopWidth = set.Contains(c + new Vector2Int(0, -1)) ? 0 : 2;
                 box.Add(dot);
             }
         }
@@ -1259,13 +1317,19 @@ namespace TOD
             Color rank = RankColor(def);
             Icon(tip.Q("tip-icon"), def.icon);
             Text(tip, "tip-name", def.name);
+            tip.Q<Label>("tip-name").style.color = NameColor(rank);
+            Text(tip, "tip-set-name", set.name);
+            tip.Q<Label>("tip-set-name").style.color = NameColor(Color.Lerp(set.color, Color.white, .25f));
             Text(tip, "tip-rank", db.gear.rankNames[def.cost]);
             tip.Q<Label>("tip-rank").style.color = Color.Lerp(rank, Color.black, .4f);
-            MiniShape(tip.Q("tip-shape"), Gear.Rotate(def.shape, 0), rank, 14);
+            MiniShape(tip.Q("tip-shape"), Gear.Rotate(def.shape, 0), set.color, 14);
             Text(tip, "tip-cells", string.Format(T.pieceCells, def.shape.Length));
             Text(tip, "tip-effect", string.Format(T.pieceEffect, T.statNames[(int)def.stat], Amount(def.value)));
+            string unique = UniqueText(def);
+            Text(tip, "tip-unique", unique ?? "");
+            tip.Q("tip-unique").style.display = unique == null ? DisplayStyle.None : DisplayStyle.Flex;
             tip.Q("tip-knot").style.backgroundColor = set.color;
-            Text(tip, "tip-set", string.Format(T.tipSet, set.name, set.bonus, string.Join("·", set.thresholds)));
+            Text(tip, "tip-set", string.Format(T.tipSet, set.name, set.bonus, string.Join(", ", set.thresholds)));
             Text(tip, "tip-flavor", def.flavor ?? "");
             tip.Q("tip-flavor").style.display = string.IsNullOrEmpty(def.flavor) ? DisplayStyle.None : DisplayStyle.Flex;
             tip.style.unityBackgroundImageTintColor = Color.Lerp(Color.white, rank, .22f);

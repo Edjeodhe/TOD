@@ -1,0 +1,16 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/item_icons_v4.png
+Size: landscape 1536x1024.
+Create a game item icon sheet: 8 separate item icons in a 4 columns x 2 rows grid, each icon about 280px, fully separated with wide empty gaps (at least 100px), nothing touching, each with its own thick black outline, three-quarter view, sewing-themed cursed trinkets. Read order left to right, top to bottom:
+ROW 1 (WIND set, pale mint and white accents, little swirls of wind):
+(1) a sewing needle with a small white feather tied to its eye, fluttering
+(2) a brass sewing button shaped like a tiny weathervane arrow
+(3) a strip of torn white lace fluttering in the wind, curling
+(4) a wooden spool with a small paper pinwheel stuck on top of it
+ROW 2 (POISON set, sickly acid green and dull purple accents):
+(5) a dressmaker pin whose head is a small glass bulb filled with glowing green venom
+(6) a sewing button covered in fuzzy green mold with tiny spore dots
+(7) a ball of sickly green yarn wrapped with a thorny purple vine
+(8) a brass thimble turned into a small poison vial, green liquid inside and a tiny skull-shaped cork
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline around every shape, slightly paper-grain texture INSIDE the shapes, low saturation, low brightness, muted palette (#16131B, #4A3D50 plus each set's accent color). Cute but eerie mood. Match the style of the reference image (an existing icon sheet from the same game).
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key MAGENTA (#FF00FF) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels, no numbers. Do not use any magenta or pink color inside the artwork itself.

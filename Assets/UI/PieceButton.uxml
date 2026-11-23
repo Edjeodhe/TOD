@@ -1,8 +1,11 @@
-<!-- 재봉 상자 목록 한 줄: 왼쪽 아이템 아이콘 · 퍼즐 모양 슬롯 · 오른쪽 끝 이름(아래에 장착 중 · 등급 색 꼬리표). 높이 = 판 한 칸의 1.3배. -->
+<!-- 재봉 상자 목록 한 줄: 왼쪽 아이템 아이콘 · 퍼즐 모양(위에 세트 이름 꼬리표) · 오른쪽 끝 이름(아래에 장착 중 · 등급 색 꼬리표). 높이 = 판 한 칸의 1.3배. -->
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <ui:Button name="piece" class="piece-row">
         <ui:VisualElement name="icon" class="piece-item-icon" picking-mode="Ignore" />
-        <ui:VisualElement name="shape" class="piece-shape-slot" picking-mode="Ignore" />
+        <ui:VisualElement class="piece-shape-col" picking-mode="Ignore">
+            <ui:Label name="set" class="piece-set" picking-mode="Ignore" />
+            <ui:VisualElement name="shape" class="piece-shape-slot" picking-mode="Ignore" />
+        </ui:VisualElement>
         <ui:VisualElement class="piece-name-box" picking-mode="Ignore">
             <ui:Label name="name" class="piece-name" picking-mode="Ignore" />
             <ui:Label name="state" class="piece-state" picking-mode="Ignore" />

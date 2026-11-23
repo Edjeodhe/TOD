@@ -11534,6 +11534,7 @@ GameObject:
   - component: {fileID: 842790037}
   - component: {fileID: 842790036}
   - component: {fileID: 842790035}
+  - component: {fileID: 842790039}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -11708,6 +11709,24 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &842790039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 842790033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9186b7141fbd7ba4db1a4991a58c4a34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TOD.Runtime::TOD.DevTools
+  game: {fileID: 842790036}
+  document: {fileID: 902190457}
+  setButton: {fileID: 9197481963319205126, guid: fbcc6f42e978a934aa5015252bd27c6a, type: 3}
+  goldAmount: 100
+  shardAmount: 50
+  desireStep: 10
 --- !u!1 &891216852
 GameObject:
   m_ObjectHideFlags: 0
@@ -26355,6 +26374,13 @@ MonoBehaviour:
     restStairsOffset: {x: 0, y: -260}
     bossOffset: {x: 0, y: -300}
     interactRadius: 80
+    stairsRadius: 150
+    towerStitchTime: 0.45
+    towerRiseTime: 1.5
+    towerSettleTime: 0.35
+    towerStitches: 16
+    bossTowerOffset: {x: -230, y: -10}
+    stairsHitOffset: {x: 0, y: -60}
     merchantChance: 0.5
     artifactChoices: 3
     stairsRevealTime: 0.79
@@ -26546,6 +26572,8 @@ MonoBehaviour:
     baseDamage: 14
     strandBonus: 0.12
     strandBonusMax: 0.6
+    critChance: 0.1
+    critMultiplier: 1.5
     baseYarn: 6
     minYarn: 2
     moveSpeed: 232
@@ -26856,7 +26884,7 @@ MonoBehaviour:
     - id: hunger
       name: "\uAC08\uB9DD"
       text: "\uC801\uC744 \uCC98\uCE58\uD560 \uB54C \uCCB4\uB825\uC744 1 \uD68C\uBCF5\uD569\uB2C8\uB2E4."
-      penalty: "\uD68C\uBCF5\xB7\uC815\uD654 \uD3EC\uC158 \uD6A8\uACFC \u221250%"
+      penalty: "\uD68C\uBCF5, \uC815\uD654 \uD3EC\uC158 \uD6A8\uACFC \u221250%"
     refine:
       id: refine
       name: "\uC2E4\uC5D0 \uC2A4\uBBFC \uC794\uD5A5"
@@ -26886,30 +26914,105 @@ MonoBehaviour:
     warpSpeed: 2.2
   gear:
     sets:
-    - id: chaos
-      name: "\uD63C\uB3C8"
-      bonus: "\uC2E4 \uD53C\uD574"
-      color: {r: 0.9098, g: 0.6078, b: 0.7176, a: 1}
+    - id: fire
+      name: "\uD654\uC5FC"
+      bonus: "\uD654\uC5FC \uD53C\uD574"
+      color: {r: 0.9098039, g: 0.5294118, b: 0.3529412, a: 1}
+      element: 1
       thresholds: 020000000400000006000000080000000a000000
-      stat: 0
-      perTier: 2
-    - id: despair
-      name: "\uC808\uB9DD"
-      bonus: "\uD138\uC2E4 \uCD5C\uB300"
-      color: {r: 0.549, g: 0.7804, b: 0.7451, a: 1}
+      damagePerTier: 2
+      effectPerTier: 2
+      effectTime: 3
+      effectRange: 0
+      effectCap: 0
+      effectText: "\uD654\uC0C1 \uCD08\uB2F9 {0}"
+    - id: ice
+      name: "\uC5BC\uC74C"
+      bonus: "\uC5BC\uC74C \uD53C\uD574"
+      color: {r: 0.54901963, g: 0.78039217, b: 0.8784314, a: 1}
+      element: 2
       thresholds: 030000000600000009000000
-      stat: 5
-      perTier: 1
-    - id: frustration
-      name: "\uC88C\uC808"
-      bonus: "\uC774\uB3D9 \uC18D\uB3C4"
-      color: {r: 0.8902, g: 0.7686, b: 0.4196, a: 1}
+      damagePerTier: 3
+      effectPerTier: 0.15
+      effectTime: 2
+      effectRange: 0
+      effectCap: 0.6
+      effectText: "\uB454\uD654 {0}"
+    - id: lightning
+      name: "\uBC88\uAC1C"
+      bonus: "\uBC88\uAC1C \uD53C\uD574"
+      color: {r: 0.8901961, g: 0.76862746, b: 0.41960785, a: 1}
+      element: 3
       thresholds: 010000000300000005000000
-      stat: 1
-      perTier: 0.05
+      damagePerTier: 2
+      effectPerTier: 6
+      effectTime: 0
+      effectRange: 220
+      effectCap: 1
+      effectText: "\uC606 \uC801\uC5D0 {0} \uD290"
+    - id: light
+      name: "\uBE5B"
+      bonus: "\uBE5B \uD53C\uD574"
+      color: {r: 0.9372549, g: 0.8901961, b: 0.7607843, a: 1}
+      element: 5
+      thresholds: 0200000004000000
+      damagePerTier: 2
+      effectPerTier: 0.2
+      effectTime: 0
+      effectRange: 0
+      effectCap: 0
+      effectText: "\uACB0\uBC15, \uC815\uC608 +{0}"
+    - id: dark
+      name: "\uC5B4\uB460"
+      bonus: "\uC5B4\uB460 \uD53C\uD574"
+      color: {r: 0.5568628, g: 0.43529412, b: 0.6901961, a: 1}
+      element: 6
+      thresholds: 0200000004000000
+      damagePerTier: 2
+      effectPerTier: 0.1
+      effectTime: 4
+      effectRange: 0
+      effectCap: 0
+      effectText: "\uC800\uC8FC +{0}"
+    - id: blood
+      name: "\uD53C"
+      bonus: "\uD53C \uD53C\uD574"
+      color: {r: 0.72156864, g: 0.2901961, b: 0.33333334, a: 1}
+      element: 7
+      thresholds: 0100000003000000
+      damagePerTier: 1
+      effectPerTier: 0.04
+      effectTime: 0
+      effectRange: 0
+      effectCap: 0
+      effectText: "\uD761\uD608 {0}"
+    - id: wind
+      name: "\uBC14\uB78C"
+      bonus: "\uBC14\uB78C \uD53C\uD574"
+      color: {r: 0.65882355, g: 0.8627451, b: 0.76862746, a: 1}
+      element: 8
+      thresholds: 0100000003000000
+      damagePerTier: 1
+      effectPerTier: 0.3
+      effectTime: 0
+      effectRange: 160
+      effectCap: 0
+      effectText: "\uB04C\uC5B4\uC624\uAE30 +{0}"
+    - id: poison
+      name: "\uB3C5"
+      bonus: "\uB3C5 \uD53C\uD574"
+      color: {r: 0.6117647, g: 0.7529412, b: 0.33333334, a: 1}
+      element: 9
+      thresholds: 0200000004000000
+      damagePerTier: 1
+      effectPerTier: 1
+      effectTime: 4
+      effectRange: 0
+      effectCap: 6
+      effectText: "\uC911\uB3C5 \uACB9\uB2F9 \uCD08\uB2F9 {0}"
     pieces:
     - name: "\uBD88\uC528 \uACE8\uBB34"
-      set: chaos
+      set: fire
       cost: 1
       stat: 0
       value: 2
@@ -26917,8 +27020,11 @@ MonoBehaviour:
       - {x: 0, y: 0}
       icon: {fileID: 21300000, guid: 95a294f2fa1e43f4b8c330823ffd82ae, type: 3}
       flavor: "\uC190\uB05D\uC5D0 \uC544\uC9C1 \uBD88\uC528\uAC00 \uB0A8\uC544 \uC788\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
     - name: "\uCC22\uC5B4\uC9C4 \uB9AC\uBCF8"
-      set: chaos
+      set: fire
       cost: 2
       stat: 0
       value: 3
@@ -26927,8 +27033,11 @@ MonoBehaviour:
       - {x: 1, y: 0}
       icon: {fileID: 21300000, guid: 15c2812e99453da47b2048abfc836dd6, type: 3}
       flavor: "\uBB36\uC744 \uB54C\uB9C8\uB2E4 \uC870\uAE08\uC529 \uB354 \uCC22\uC5B4\uC9C4\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
     - name: "\uB179\uC2A8 \uC548\uC804\uD540"
-      set: frustration
+      set: lightning
       cost: 1
       stat: 1
       value: 0.04
@@ -26936,8 +27045,11 @@ MonoBehaviour:
       - {x: 0, y: 0}
       icon: {fileID: 21300000, guid: 75a73dc32b4cad84683dd5362ada6f64, type: 3}
       flavor: "\uD480\uB9AC\uC9C0 \uC54A\uC73C\uB824\uACE0 \uB05D\uAE4C\uC9C0 \uBC84\uD2F4\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
     - name: "\uB208\uBB3C \uB2E8\uCD94"
-      set: despair
+      set: ice
       cost: 1
       stat: 3
       value: 0.12
@@ -26945,8 +27057,11 @@ MonoBehaviour:
       - {x: 0, y: 0}
       icon: {fileID: 21300000, guid: f8a4d2000b5b61e4abe4f4f5541a43ed, type: 3}
       flavor: "\uAD6C\uBA4D\uB9C8\uB2E4 \uBB3C\uAE30\uAC00 \uB9FA\uD600 \uC788\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
     - name: "\uC816\uC740 \uC2E4\uD0C0\uB798"
-      set: despair
+      set: ice
       cost: 2
       stat: 5
       value: 1
@@ -26955,8 +27070,11 @@ MonoBehaviour:
       - {x: 0, y: 1}
       icon: {fileID: 21300000, guid: 1e58e3d44f64517478aa3c57cc7be555, type: 3}
       flavor: "\uBB34\uAC81\uC9C0\uB9CC \uB04A\uC5B4\uC9C0\uC9C0 \uC54A\uB294\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
     - name: "\uC5C9\uD0A8 \uC904\uC790"
-      set: frustration
+      set: lightning
       cost: 2
       stat: 1
       value: 0.06
@@ -26965,8 +27083,11 @@ MonoBehaviour:
       - {x: 1, y: 0}
       icon: {fileID: 21300000, guid: 7ef4891c138137040b4df920db2eae6a, type: 3}
       flavor: "\uC7B4 \uB54C\uB9C8\uB2E4 \uAE38\uC774\uAC00 \uB2EC\uB77C\uC9C4\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
     - name: "\uAD11\uAE30\uC758 \uC2E4\uD328"
-      set: chaos
+      set: fire
       cost: 4
       stat: 0
       value: 6
@@ -26977,8 +27098,11 @@ MonoBehaviour:
       - {x: 2, y: 1}
       icon: {fileID: 21300000, guid: 0c729f4ac3091084ca0bd8f09b1b7ccc, type: 3}
       flavor: "\uBA48\uCD94\uC9C0 \uC54A\uACE0 \uC2E4\uC744 \uD1A0\uD574 \uB0B8\uB2E4."
+      effect: 6
+      effectValue: 0.25
+      effectParam: 0.5
     - name: "\uD53C \uBB3B\uC740 \uAC00\uC704"
-      set: chaos
+      set: fire
       cost: 3
       stat: 0
       value: 4
@@ -26988,8 +27112,11 @@ MonoBehaviour:
       - {x: 0, y: 1}
       icon: {fileID: 21300000, guid: 4421bb8ead2b7164cb4eec1a7a416b49, type: 3}
       flavor: "\uC790\uB978 \uAC83\uC744 \uAE30\uC5B5\uD55C\uB2E4."
+      effect: 1
+      effectValue: 0.6
+      effectParam: 0.3
     - name: "\uC5BC\uC5B4\uBD99\uC740 \uD540\uCFE0\uC158"
-      set: despair
+      set: ice
       cost: 3
       stat: 2
       value: 20
@@ -26999,8 +27126,11 @@ MonoBehaviour:
       - {x: 1, y: 1}
       icon: {fileID: 21300000, guid: 1de7b08e0df321148adf644be7e34956, type: 3}
       flavor: "\uCC0C\uB974\uB294 \uCABD\uC774 \uBA3C\uC800 \uC5BC\uC5B4\uBD99\uB294\uB2E4."
+      effect: 4
+      effectValue: 0.1
+      effectParam: 0
     - name: "\uAE68\uC9C4 \uD68C\uC911\uC2DC\uACC4"
-      set: frustration
+      set: lightning
       cost: 3
       stat: 3
       value: 0.18
@@ -27010,8 +27140,11 @@ MonoBehaviour:
       - {x: 2, y: 0}
       icon: {fileID: 21300000, guid: 7643bd9ea827f524e863e557481bb25f, type: 3}
       flavor: "\uBC14\uB298\uC774 \uAC70\uAFB8\uB85C \uB3C8\uB2E4."
+      effect: 5
+      effectValue: 0.5
+      effectParam: 1
     - name: "\uC7A0\uB4E0 \uC778\uD615 \uB208"
-      set: despair
+      set: ice
       cost: 4
       stat: 4
       value: 4
@@ -27022,8 +27155,11 @@ MonoBehaviour:
       - {x: 1, y: 2}
       icon: {fileID: 21300000, guid: a82ed477a58cc104db0652ccc6ca16ff, type: 3}
       flavor: "\uAC10\uAE34 \uB208\uC740 \uC695\uB9DD\uC744 \uBCF4\uC9C0 \uC54A\uB294\uB2E4."
+      effect: 8
+      effectValue: 0.3
+      effectParam: 0
     - name: "\uBC88\uAC1C \uB9DE\uC740 \uC7AC\uBD09\uD2C0"
-      set: frustration
+      set: lightning
       cost: 4
       stat: 1
       value: 0.1
@@ -27035,8 +27171,11 @@ MonoBehaviour:
       icon: {fileID: 21300000, guid: 03f142865b0d7364d94f81d6ee898ee6, type: 3}
       flavor: "\uD55C \uBC88 \uB3CC\uAE30 \uC2DC\uC791\uD558\uBA74 \uBA48\uCD9C \uC218
         \uC5C6\uB2E4."
+      effect: 3
+      effectValue: 0.6
+      effectParam: 0
     - name: "\uC138 \uAC08\uB798 \uACE8\uBB34"
-      set: frustration
+      set: lightning
       cost: 4
       stat: 6
       value: 2
@@ -27047,8 +27186,11 @@ MonoBehaviour:
       - {x: 3, y: 0}
       icon: {fileID: 21300000, guid: a3c8eef7b6b062f4bb1fba5748c5497d, type: 3}
       flavor: "\uD55C \uBC88 \uCC0C\uB974\uBA74 \uC138 \uAD70\uB370\uAC00 \uC544\uD504\uB2E4."
+      effect: 2
+      effectValue: 1
+      effectParam: 0
     - name: "\uAD75\uC740 \uBC27\uC904 \uC2E4\uD328"
-      set: despair
+      set: ice
       cost: 3
       stat: 7
       value: 0.9
@@ -27059,6 +27201,265 @@ MonoBehaviour:
       icon: {fileID: 21300000, guid: da081a78fb5e92f42b2c32642cc6d78c, type: 3}
       flavor: "\uB04A\uC5B4\uC9C0\uC9C0 \uC54A\uB294 \uB300\uC2E0, \uC9C0\uB098\uAC00\uB294
         \uAC83\uC744 \uBAA8\uB450 \uC4F8\uC5B4 \uAC04\uB2E4."
+      effect: 7
+      effectValue: 1
+      effectParam: 0
+    - name: "\uCD1B\uB18D \uACE8\uBB34"
+      set: light
+      cost: 1
+      stat: 0
+      value: 2
+      shape:
+      - {x: 0, y: 0}
+      icon: {fileID: 21300000, guid: c8c7d1877de84c540a5aa5de4cc82157, type: 3}
+      flavor: "\uC2DD\uC740 \uCD1B\uB18D\uC774 \uC544\uC9C1 \uB530\uB73B\uD558\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uAE08\uBC15 \uB2E8\uCD94"
+      set: light
+      cost: 1
+      stat: 4
+      value: 2
+      shape:
+      - {x: 0, y: 0}
+      icon: {fileID: 21300000, guid: 858b87716aa03f749ab981d3ac6c428d, type: 3}
+      flavor: "\uAD6C\uBA4D\uB9C8\uB2E4 \uBE5B\uC774 \uC0C8\uC5B4 \uB098\uC628\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uC131\uAC00\uB300 \uB9AC\uBCF8"
+      set: light
+      cost: 2
+      stat: 2
+      value: 12
+      shape:
+      - {x: 0, y: 0}
+      - {x: 1, y: 0}
+      icon: {fileID: 21300000, guid: 2631466bc0ddecc409217ddfc3057375, type: 3}
+      flavor: "\uB178\uB798\uAC00 \uB05D\uB098\uB3C4 \uBC29\uC6B8\uC740 \uD754\uB4E4\uB9B0\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uB4F1\uBD88 \uBC14\uB298\uAF42\uC774"
+      set: light
+      cost: 3
+      stat: 3
+      value: 0.15
+      shape:
+      - {x: 0, y: 0}
+      - {x: 0, y: 1}
+      - {x: 0, y: 2}
+      icon: {fileID: 21300000, guid: 8c9a88f74498fd9429cbcc15263d0c96, type: 3}
+      flavor: "\uBC14\uB298\uB9C8\uB2E4 \uC791\uC740 \uBD88\uC774 \uCF1C\uC838 \uC788\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uADF8\uB9BC\uC790 \uB2E8\uCD94"
+      set: dark
+      cost: 1
+      stat: 1
+      value: 0.04
+      shape:
+      - {x: 0, y: 0}
+      icon: {fileID: 21300000, guid: c72beddf3a3952a4dbfce565f4895f1d, type: 3}
+      flavor: "\uBE44\uCDB0 \uBD10\uB3C4 \uADF8\uB9BC\uC790\uB9CC \uB0A8\uB294\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uAC80\uC740 \uC2E4\uD328"
+      set: dark
+      cost: 1
+      stat: 0
+      value: 2
+      shape:
+      - {x: 0, y: 0}
+      icon: {fileID: 21300000, guid: 74ece668df2ded24f9f9850fbfa183d0, type: 3}
+      flavor: "\uAC10\uC744\uC218\uB85D \uBC29\uC774 \uC5B4\uB450\uC6CC\uC9C4\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uAE4C\uB9C8\uADC0 \uAE43 \uBC14\uB298"
+      set: dark
+      cost: 2
+      stat: 0
+      value: 3
+      shape:
+      - {x: 0, y: 0}
+      - {x: 1, y: 0}
+      icon: {fileID: 21300000, guid: 90541d35c9e2e134e94285e894e8aa56, type: 3}
+      flavor: "\uCC0C\uB978 \uC790\uB9AC\uB97C \uBA3C\uC800 \uCABC\uC544 \uBCF8\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uB208 \uC5C6\uB294 \uC778\uD615 \uBA38\uB9AC"
+      set: dark
+      cost: 3
+      stat: 2
+      value: 20
+      shape:
+      - {x: 0, y: 0}
+      - {x: 0, y: 1}
+      - {x: 0, y: 2}
+      icon: {fileID: 21300000, guid: 90a98da439704394cb4b42a1de9c8ad4, type: 3}
+      flavor: "\uBCF4\uC9C0 \uBABB\uD558\uB294 \uB300\uC2E0 \uBAA8\uB4E0 \uAC83\uC744
+        \uAE30\uC5B5\uD55C\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uD54F\uBC29\uC6B8 \uD540"
+      set: blood
+      cost: 1
+      stat: 0
+      value: 2
+      shape:
+      - {x: 0, y: 0}
+      icon: {fileID: 21300000, guid: 72dff9639a3c47a40b22457bf1d11db5, type: 3}
+      flavor: "\uAF42\uC744 \uB54C\uB9C8\uB2E4 \uC870\uAE08\uC529 \uBD89\uC5B4\uC9C4\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uD53C \uD758\uB9AC\uB294 \uACE8\uBB34"
+      set: blood
+      cost: 1
+      stat: 2
+      value: 10
+      shape:
+      - {x: 0, y: 0}
+      icon: {fileID: 21300000, guid: b8ff91ac1f5cba646a90d9b11fceae4d, type: 3}
+      flavor: "\uB204\uAD6C\uC758 \uC190\uAC00\uB77D\uC774\uC5C8\uC744\uAE4C."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uD54F\uC904 \uC2E4\uD0C0\uB798"
+      set: blood
+      cost: 2
+      stat: 3
+      value: 0.1
+      shape:
+      - {x: 0, y: 0}
+      - {x: 1, y: 0}
+      icon: {fileID: 21300000, guid: e96bcff744281644f86395322717f9db, type: 3}
+      flavor: "\uC190\uC5D0 \uC950\uBA74 \uB9E5\uBC15\uC774 \uB290\uAEF4\uC9C4\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uC2EC\uC7A5 \uBC14\uB298\uAF42\uC774"
+      set: blood
+      cost: 3
+      stat: 2
+      value: 24
+      shape:
+      - {x: 0, y: 0}
+      - {x: 0, y: 1}
+      - {x: 0, y: 2}
+      icon: {fileID: 21300000, guid: 73d5a6b62e3956048a5a2198cd754c9c, type: 3}
+      flavor: "\uBC14\uB298\uC744 \uBF51\uC544\uB3C4 \uACC4\uC18D \uB6F4\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uAE43\uD138 \uBC14\uB298"
+      set: wind
+      cost: 1
+      stat: 1
+      value: 0.04
+      shape:
+      - {x: 0, y: 0}
+      icon: {fileID: 21300000, guid: 06e02eff0cc491c4cb7b5b7a8251a64f, type: 3}
+      flavor: "\uB358\uC9C0\uAE30\uB3C4 \uC804\uC5D0 \uB0A0\uC544\uAC04\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uD48D\uD5A5 \uB2E8\uCD94"
+      set: wind
+      cost: 1
+      stat: 3
+      value: 0.08
+      shape:
+      - {x: 0, y: 0}
+      icon: {fileID: 21300000, guid: 09ced9ce4de93cd419d28d871cb2afa7, type: 3}
+      flavor: "\uB298 \uBC14\uB78C \uBD80\uB294 \uCABD\uC744 \uAC00\uB9AC\uD0A8\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uB0A0\uB9AC\uB294 \uB808\uC774\uC2A4"
+      set: wind
+      cost: 2
+      stat: 1
+      value: 0.06
+      shape:
+      - {x: 0, y: 0}
+      - {x: 1, y: 0}
+      icon: {fileID: 21300000, guid: 8a04b04eeb4d8f44d9a5f4be0982a482, type: 3}
+      flavor: "\uD55C \uBC88\uB3C4 \uB545\uC5D0 \uB2FF\uC740 \uC801\uC774 \uC5C6\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uBC14\uB78C\uAC1C\uBE44 \uC2E4\uD328"
+      set: wind
+      cost: 3
+      stat: 1
+      value: 0.08
+      shape:
+      - {x: 0, y: 0}
+      - {x: 0, y: 1}
+      - {x: 0, y: 2}
+      icon: {fileID: 21300000, guid: e12bf9119c4ec9c488bdfe2208c562e3, type: 3}
+      flavor: "\uC2E4\uC744 \uD480\uBA74 \uBC14\uB78C\uC774 \uC778\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uB3C5\uCE68 \uD540"
+      set: poison
+      cost: 1
+      stat: 0
+      value: 2
+      shape:
+      - {x: 0, y: 0}
+      icon: {fileID: 21300000, guid: 625b1a8a6fb65a547a0e30039c9f3f12, type: 3}
+      flavor: "\uC720\uB9AC\uC54C \uC18D \uB3C5\uC774 \uCD9C\uB801\uC778\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uACF0\uD321\uC774 \uB2E8\uCD94"
+      set: poison
+      cost: 1
+      stat: 5
+      value: 1
+      shape:
+      - {x: 0, y: 0}
+      icon: {fileID: 21300000, guid: 7127e317643a5e949849cbce0403ac4f, type: 3}
+      flavor: "\uD3EC\uC790\uAC00 \uC2E4\uC744 \uB530\uB77C \uBC88\uC9C4\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uB3C5\uCD08 \uC2E4\uD0C0\uB798"
+      set: poison
+      cost: 2
+      stat: 0
+      value: 3
+      shape:
+      - {x: 0, y: 0}
+      - {x: 1, y: 0}
+      icon: {fileID: 21300000, guid: a3c4d18bafbc01145b424789b87148b7, type: 3}
+      flavor: "\uB9CC\uC9C0\uBA74 \uC190\uB05D\uC774 \uC800\uB9AC\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
+    - name: "\uC57D\uBCD1 \uACE8\uBB34"
+      set: poison
+      cost: 3
+      stat: 3
+      value: 0.15
+      shape:
+      - {x: 0, y: 0}
+      - {x: 0, y: 1}
+      - {x: 0, y: 2}
+      icon: {fileID: 21300000, guid: 4573d435b66e74d42b6f4ba8ccef1717, type: 3}
+      flavor: "\uD574\uACE8 \uB9C8\uAC1C\uB294 \uC5F4\uC9C0 \uC54A\uB294 \uAC8C \uC88B\uB2E4."
+      effect: 0
+      effectValue: 0
+      effectParam: 0
     rankNames:
     - 
     - "\uC77C\uBC18"
@@ -27084,18 +27485,51 @@ MonoBehaviour:
     - 0.55
     - 1
     saveKey: tower-of-desire.profile.v1
+    effectTexts:
+    - effect: 1
+      name: "\uBCBC\uB791 \uB05D"
+      text: "\uCCB4\uB825 {1} \uC774\uD558\uC77C \uB54C \uB2F9\uAE30\uAE30 \uD53C\uD574
+        +{0}"
+    - effect: 2
+      name: "\uC131\uAE09\uD55C \uACB0\uBC15"
+      text: "\uACB0\uBC15\uC5D0 \uD544\uC694\uD55C \uAC00\uB2E5 \u2212{0}"
+    - effect: 3
+      name: "\uBD84\uD480\uC774"
+      text: "\uB2F9\uACA8\uC11C \uD558\uB098\uB3C4 \uBABB \uB9DE\uD788\uBA74 \uD138\uC2E4\uC744
+        \uC804\uBD80 \uB3CC\uB824\uBC1B\uACE0, \uB2E4\uC74C \uB2F9\uAE30\uAE30 \uD53C\uD574
+        +{0}"
+    - effect: 4
+      name: "\uBB34\uAC70\uC6B4 \uB9E4\uB4ED"
+      text: "\uAE54\uB9B0 \uB9E4\uB4ED \uD558\uB098\uB9C8\uB2E4 \uB2F9\uAE30\uAE30
+        \uD53C\uD574 +{0}"
+    - effect: 5
+      name: "\uB3C4\uC57D \uC77C\uACA9"
+      text: "\uB300\uC26C \uD6C4 {1}\uCD08 \uC548 \uCCAB \uB2F9\uAE30\uAE30 \uD53C\uD574
+        +{0}"
+    - effect: 6
+      name: "\uD0D0\uC695\uC758 \uC2E4"
+      text: "\uC695\uB9DD {1} \uC774\uC0C1\uC77C \uB54C \uB2F9\uAE30\uAE30 \uD53C\uD574
+        +{0}"
+    - effect: 7
+      name: "\uC2E4 \uB418\uAC10\uAE30"
+      text: "\uB2F9\uAE30\uAE30\uB85C \uCC98\uCE58\uD560 \uB54C\uB9C8\uB2E4 \uD138\uC2E4
+        +{0}"
+    - effect: 8
+      name: "\uAC70\uC778 \uC0AC\uB0E5"
+      text: "\uBCF4\uC2A4, \uC815\uC608\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574 +{0}"
+    subSetScale: 0.5
   upgrades:
   - key: expansion
     name: "\uC7AC\uBD09 \uC0C1\uC790 \uD655\uC7A5"
-    text: "\uAC00\uB85C\xB7\uC138\uB85C 1\uCE78\uC529 \uCD94\uAC00 \xB7 \uB4F1\uAE09
-      \uD55C\uB3C4 +2"
+    text: "\uAC00\uB85C, \uC138\uB85C 1\uCE78\uC529 \uCD94\uAC00, \uB4F1\uAE09 \uD55C\uB3C4
+      +2"
     icon: {fileID: 21300000, guid: 7c222c3d2bfc0f945b57a57c81632b01, type: 3}
     price: 8
     priceStep: 5
     max: 2
   - key: rows
     name: "\uAC00\uB85C \uC904 \uAC15\uD654"
-    text: "\uB450 \uC904\uC529 \uAC15\uD654 \xB7 \uD574\uB2F9 \uCE78\uC758 \uC7A5\uBE44
+    text: "\uB450 \uC904\uC529 \uAC15\uD654, \uD574\uB2F9 \uCE78\uC758 \uC7A5\uBE44
       \uB2A5\uB825\uCE58 +10%"
     icon: {fileID: 21300000, guid: 2bea34997259a9442aa9ff216af5a819, type: 3}
     price: 6
@@ -27348,6 +27782,12 @@ MonoBehaviour:
     trailWidth: 34
     trailTime: 0.09
     headSize: 46
+    coverWidth: 44
+    coverAlpha: 0.85
+    coverStep: 16
+    setRibbonWidth: 14
+    setRibbonGrowth: 0.2
+    setCoverScale: 1.3
     pullTime: 0.7
     windup: 0.06
     windupTime: 0.18
@@ -27374,22 +27814,50 @@ MonoBehaviour:
       glow: {r: 1, g: 0.85, b: 0.4, a: 1}
       color: {r: 1, g: 0.82, b: 0.35, a: 1}
       core: {r: 1, g: 0.98, b: 0.85, a: 1}
-      text: "\uACB0\uBC15!"
+      cover: 0.55
+      text: "\uBE5B\uC758 \uACB0\uBC15!"
     - style: 1
       glow: {r: 1, g: 0.35, b: 0.05, a: 1}
       color: {r: 1, g: 0.55, b: 0.12, a: 1}
       core: {r: 1, g: 0.93, b: 0.6, a: 1}
+      cover: 1
       text: "\uD654\uC5FC \uACB0\uBC15!"
     - style: 2
       glow: {r: 1, g: 0.8, b: 0.2, a: 1}
       color: {r: 1, g: 0.96, b: 0.6, a: 1}
       core: {r: 1, g: 1, b: 1, a: 1}
+      cover: 0.45
       text: "\uBC88\uAC1C \uACB0\uBC15!"
     - style: 3
       glow: {r: 0.35, g: 0.8, b: 1, a: 1}
       color: {r: 0.7, g: 0.95, b: 1, a: 1}
       core: {r: 0.95, g: 1, b: 1, a: 1}
-      text: "\uC11C\uB9AC \uACB0\uBC15!"
+      cover: 0.45
+      text: "\uC5BC\uC74C \uACB0\uBC15!"
+    - style: 4
+      glow: {r: 0.4509804, g: 0.14901961, b: 0.7490196, a: 1}
+      color: {r: 0.61960787, g: 0.3019608, b: 0.9490196, a: 1}
+      core: {r: 0.9019608, g: 0.7490196, b: 1, a: 1}
+      cover: 0.75
+      text: "\uC5B4\uB460 \uACB0\uBC15!"
+    - style: 5
+      glow: {r: 0.8, g: 0.050980393, b: 0.101960786, a: 1}
+      color: {r: 0.9490196, g: 0.14901961, b: 0.18039216, a: 1}
+      core: {r: 1, g: 0.7019608, b: 0.7019608, a: 1}
+      cover: 0.8
+      text: "\uD53C\uC758 \uACB0\uBC15!"
+    - style: 6
+      glow: {r: 0.54901963, g: 0.9490196, b: 0.8, a: 1}
+      color: {r: 0.8, g: 1, b: 0.92156863, a: 1}
+      core: {r: 1, g: 1, b: 1, a: 1}
+      cover: 0.45
+      text: "\uBC14\uB78C \uACB0\uBC15!"
+    - style: 7
+      glow: {r: 0.4509804, g: 0.9019608, b: 0.14901961, a: 1}
+      color: {r: 0.6509804, g: 1, b: 0.3019608, a: 1}
+      core: {r: 0.92156863, g: 1, b: 0.7490196, a: 1}
+      cover: 0.6
+      text: "\uB3C5 \uACB0\uBC15!"
   needleVisual:
     flightLift: 15
     diveTime: 0.09
@@ -27415,26 +27883,225 @@ MonoBehaviour:
       glow: {r: 1, g: 0.5255, b: 0.7216, a: 1}
       core: {r: 1, g: 0.9412, b: 0.9647, a: 1}
       bindStyle: 0
+      hit: {fileID: 0}
+      hitSize: 0
+      damageFont:
+        chars: 
+        glyphs: []
+        height: 24
+        spacing: 0
     - element: 1
-      color: {r: 1, g: 0.3725, b: 0.6353, a: 1}
-      glow: {r: 1, g: 0.1647, b: 0.498, a: 1}
-      core: {r: 1, g: 0.8824, b: 0.9373, a: 1}
+      color: {r: 1, g: 0.47843137, b: 0.18039216, a: 1}
+      glow: {r: 1, g: 0.2901961, b: 0.0627451, a: 1}
+      core: {r: 1, g: 0.8862745, b: 0.72156864, a: 1}
       bindStyle: 1
+      hit: {fileID: 21300000, guid: cd4cea756b78d914a9886c5815d1eeb2, type: 3}
+      hitSize: 96
+      damageFont:
+        chars: 0123456789+-!
+        glyphs:
+        - {fileID: 212445489, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: -488375096, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: 2118500491, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: -928153000, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: 2000932332, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: -1279534019, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: -1502469554, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: -1757561155, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: 1531401492, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: 1403549556, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: 308666629, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: 893239462, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        - {fileID: -61711856, guid: e17066c3f13b35b4b99dc57fe239e2bf, type: 3}
+        height: 30
+        spacing: -0.08
     - element: 2
-      color: {r: 0.3098, g: 0.8784, b: 0.8157, a: 1}
-      glow: {r: 0.098, g: 0.7373, b: 0.8392, a: 1}
-      core: {r: 0.8863, g: 1, b: 0.9843, a: 1}
+      color: {r: 0.49803922, g: 0.84705883, b: 1, a: 1}
+      glow: {r: 0.18431373, g: 0.65882355, b: 0.9098039, a: 1}
+      core: {r: 0.9019608, g: 0.98039216, b: 1, a: 1}
       bindStyle: 3
+      hit: {fileID: 21300000, guid: e8e9a62ac87b125448598817d91ad4ee, type: 3}
+      hitSize: 96
+      damageFont:
+        chars: 0123456789+-!
+        glyphs:
+        - {fileID: -1369426090, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: 1037116223, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: -274490105, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: -1158939038, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: -364908280, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: 1219154532, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: -852919490, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: 1724919519, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: -1253884952, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: -1704663965, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: -20992540, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: 801019049, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        - {fileID: -1894975320, guid: 5adafa997779d0f43b241d5b2570113e, type: 3}
+        height: 30
+        spacing: -0.08
     - element: 3
-      color: {r: 1, g: 0.8235, b: 0.2471, a: 1}
-      glow: {r: 1, g: 0.651, b: 0, a: 1}
-      core: {r: 1, g: 0.9725, b: 0.8392, a: 1}
+      color: {r: 1, g: 0.8235294, b: 0.24705882, a: 1}
+      glow: {r: 1, g: 0.6509804, b: 0, a: 1}
+      core: {r: 1, g: 0.972549, b: 0.8392157, a: 1}
       bindStyle: 2
+      hit: {fileID: 21300000, guid: 5afc4093929ea4f45a0e0cdbba0041b1, type: 3}
+      hitSize: 96
+      damageFont:
+        chars: 0123456789+-!
+        glyphs:
+        - {fileID: -247205829, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: 1832393796, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: 429310371, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: 411002645, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: -267109793, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: 85460044, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: 1835136241, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: -590947683, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: 364712336, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: -635969181, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: 734861225, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: -1260816675, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        - {fileID: 981287919, guid: 97202a5d2367d2040bad4529d3aca7e5, type: 3}
+        height: 30
+        spacing: -0.08
     - element: 4
       color: {r: 0.498, g: 0.8157, b: 1, a: 1}
       glow: {r: 0.2471, g: 0.6627, b: 1, a: 1}
       core: {r: 0.9098, g: 0.9686, b: 1, a: 1}
       bindStyle: 0
+      hit: {fileID: 0}
+      hitSize: 0
+      damageFont:
+        chars: 
+        glyphs: []
+        height: 24
+        spacing: 0
+    - element: 5
+      color: {r: 1, g: 0.90588236, b: 0.627451, a: 1}
+      glow: {r: 1, g: 0.78431374, b: 0.3137255, a: 1}
+      core: {r: 1, g: 0.972549, b: 0.8862745, a: 1}
+      bindStyle: 0
+      hit: {fileID: 21300000, guid: e295e1e5d3bcf084985611c9bff83728, type: 3}
+      hitSize: 96
+      damageFont:
+        chars: 0123456789+-!
+        glyphs:
+        - {fileID: 897244517, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: -695018274, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: 1168609176, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: 227339401, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: -1485951912, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: 1204942622, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: 632159055, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: 1538537930, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: -287333437, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: 1561747598, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: 22780817, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: -1896791050, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        - {fileID: -915161341, guid: 035cb1275459fd44cbde73ed32fc3a95, type: 3}
+        height: 30
+        spacing: -0.08
+    - element: 6
+      color: {r: 0.6627451, g: 0.4392157, b: 1, a: 1}
+      glow: {r: 0.41568628, g: 0.18431373, b: 0.8156863, a: 1}
+      core: {r: 0.91764706, g: 0.84705883, b: 1, a: 1}
+      bindStyle: 4
+      hit: {fileID: 21300000, guid: 916f60f44aeec654985391f89e6c0a04, type: 3}
+      hitSize: 96
+      damageFont:
+        chars: 0123456789+-!
+        glyphs:
+        - {fileID: 1575377414, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: -383888395, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: -936679249, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: 639811509, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: 1717830261, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: -2140450280, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: 199339044, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: -1365179297, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: 467164115, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: -813741900, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: 1029572445, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: 2014671309, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        - {fileID: -207709760, guid: 668ee5338bcfd1443947f71abb87610e, type: 3}
+        height: 30
+        spacing: -0.08
+    - element: 7
+      color: {r: 1, g: 0.22745098, b: 0.2901961, a: 1}
+      glow: {r: 0.7529412, g: 0.0627451, b: 0.11764706, a: 1}
+      core: {r: 1, g: 0.8156863, b: 0.8156863, a: 1}
+      bindStyle: 5
+      hit: {fileID: 21300000, guid: cd4cea756b78d914a9886c5815d1eeb2, type: 3}
+      hitSize: 96
+      damageFont:
+        chars: 0123456789+-!
+        glyphs:
+        - {fileID: -584717832, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: 1526474234, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: -1260240882, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: -987255802, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: 356307049, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: -1144230839, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: 905089576, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: -995766876, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: -1178840569, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: -1346454818, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: -1955987124, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: -525854873, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        - {fileID: -1266145671, guid: df40014418c896a44af39dcf31eb0439, type: 3}
+        height: 30
+        spacing: -0.08
+    - element: 8
+      color: {r: 0.72156864, g: 1, b: 0.8784314, a: 1}
+      glow: {r: 0.3764706, g: 0.8784314, b: 0.6901961, a: 1}
+      core: {r: 1, g: 1, b: 1, a: 1}
+      bindStyle: 6
+      hit: {fileID: 21300000, guid: 6d2e314af548c994db8f0263a470f8dc, type: 3}
+      hitSize: 96
+      damageFont:
+        chars: 0123456789+-!
+        glyphs:
+        - {fileID: 1809046078, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: -966279016, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: 1053685412, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: 87977921, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: -1526770174, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: -1894711824, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: 1846770547, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: -1686079186, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: -464112960, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: -444007440, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: -995347375, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: 845906101, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        - {fileID: -742966493, guid: 163ad88eeac0534449b143f31b2b06b4, type: 3}
+        height: 30
+        spacing: -0.08
+    - element: 9
+      color: {r: 0.6117647, g: 1, b: 0.2509804, a: 1}
+      glow: {r: 0.3137255, g: 0.7529412, b: 0.0627451, a: 1}
+      core: {r: 0.91764706, g: 1, b: 0.8156863, a: 1}
+      bindStyle: 7
+      hit: {fileID: 21300000, guid: e8e9a62ac87b125448598817d91ad4ee, type: 3}
+      hitSize: 96
+      damageFont:
+        chars: 0123456789+-!
+        glyphs:
+        - {fileID: -1767330354, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: -1508305428, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: 521162932, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: -1917617693, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: -151045463, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: 414293222, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: -1485053785, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: 174444762, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: 391259237, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: -1788747408, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: -874390917, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: -550397729, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        - {fileID: -590590674, guid: d1021a8a3362d464db3c744b2d98831c, type: 3}
+        height: 30
+        spacing: -0.08
     floorPalette:
     - {r: 0.8471, g: 0.549, b: 0.6627, a: 1}
     - {r: 0.6824, g: 0.5961, b: 0.8078, a: 1}
@@ -27473,6 +28140,28 @@ MonoBehaviour:
       - {fileID: -437180801, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
       height: 30
       spacing: -0.08
+    critFont:
+      chars: 0123456789+-!
+      glyphs:
+      - {fileID: 581514386, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: -732895043, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: 416000039, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: -1981412078, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: 1380030390, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: 1711702286, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: 1452560967, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: 396902813, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: 1476059578, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: -305235555, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: 1096123961, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: -379993709, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      - {fileID: 209756370, guid: a3afc1459788a9b4abd291704a59756f, type: 3}
+      height: 30
+      spacing: -0.08
+    critIcon: {fileID: 21300000, guid: 27c1ba7254f138a4291da15e2aab27ca, type: 3}
+    critScale: 1.3
+    critIconSize: 0.8
+    critIconOffset: {x: 0, y: 0}
     levelUpColor: {r: 0.38, g: 1, b: 0.5, a: 1}
     dodgeScale: 0.178
     dodgeLaunchEnd: 0.055
@@ -27481,6 +28170,11 @@ MonoBehaviour:
     strandSegment: 16
     frustrationSegment: 13
     dodgeColor: {r: 0.4235, g: 0.7843, b: 1, a: 1}
+    elementNumberLift: 34
+    elementHitTime: 0.45
+    chainTime: 0.25
+    dotInterval: 0.5
+    statusRate: 6
   palette:
     clear: {r: 0.0706, g: 0.0549, b: 0.0863, a: 1}
     floorBase: {r: 0.0627, g: 0.0471, b: 0.0784, a: 1}
@@ -27522,10 +28216,52 @@ MonoBehaviour:
     stairScale: 0.28
     stairRise: 25
     stairDrop: 18
+  decor:
+    props:
+    - sprite: {fileID: 21300000, guid: 916539ac8311bb143bf9a267313a5d01, type: 3}
+      height: 52
+      weight: 1
+      flat: 0
+    - sprite: {fileID: 21300000, guid: 131693935a0ab7c4bb19a6f1b308097a, type: 3}
+      height: 40
+      weight: 1.2
+      flat: 0
+    - sprite: {fileID: 21300000, guid: 90d44fad64c20f24db000d0c5d827c74, type: 3}
+      height: 72
+      weight: 0.8
+      flat: 0
+    - sprite: {fileID: 21300000, guid: 3199b172a6b907247912b7f0411c3c06, type: 3}
+      height: 48
+      weight: 1
+      flat: 0
+    - sprite: {fileID: 21300000, guid: 6f93b0cf9c5f17846859a3ed951a84ae, type: 3}
+      height: 50
+      weight: 1
+      flat: 0
+    - sprite: {fileID: 21300000, guid: 8fb0ffe399ed0dd41a2c50d867953513, type: 3}
+      height: 60
+      weight: 1
+      flat: 0
+    - sprite: {fileID: 21300000, guid: 12b475a33ece4ba4e9a273f77e1868be, type: 3}
+      height: 110
+      weight: 1.5
+      flat: 1
+    - sprite: {fileID: 21300000, guid: c51660fd5903da148b6729387f8d970d, type: 3}
+      height: 44
+      weight: 1
+      flat: 0
+    density: 4
+    spacing: 220
+    clearRadius: 260
+    margin: 80
+    scaleRange: {x: 0.85, y: 1.15}
+    bright: 0.8
+    sat: 0.75
+    shadowAlpha: 0.5
   messages:
-    awaken: "\uAC01\uC131 \xB7 \uC2E4 \uD53C\uD574 +20%"
-    frenzy: "\uD3ED\uC8FC \xB7 \uC774\uB3D9\uACFC \uCDA9\uC804\uC774 \uB290\uB824\uC9D1\uB2C8\uB2E4"
-    roundBanner: "{0}\uCE35 \xB7 {1}"
+    awaken: "\uAC01\uC131! \uC2E4 \uD53C\uD574 +20%"
+    frenzy: "\uD3ED\uC8FC! \uC774\uB3D9\uACFC \uCDA9\uC804\uC774 \uB290\uB824\uC9D1\uB2C8\uB2E4"
+    roundBanner: "{0}\uCE35  {1}"
     bossRoundName: "\uCE35 \uBCF4\uC2A4"
     roundName: "{0}\uB77C\uC6B4\uB4DC"
     loot: "{0} \uD68D\uB4DD"
@@ -27533,25 +28269,26 @@ MonoBehaviour:
     emptyYarn: "\uD138\uC2E4\uC774 \uBC14\uB2E5\uB0AC\uC5B4\uC694."
     pullEmpty: "\uBA3C\uC800 \uBC14\uB298\uB85C \uC2E4\uC744 \uAFF0\uB9E4\uC138\uC694."
     pullHits: "\uC2E4 \uBA85\uC911 {0}\uD68C"
-    pullTransfers: " \xB7 \uD53C\uD574 \uC804\uB2EC {0}\uCCB4"
+    pullTransfers: ", \uD53C\uD574 \uC804\uB2EC {0}\uCCB4"
     pullNone: "\uC2E4\uC744 \uAC70\uB480\uC2B5\uB2C8\uB2E4"
     bossSummon: "\uC2E4\uD0C0\uB798\uC758 \uC9C0\uBC30\uC790\uAC00 \uD558\uC218\uC778\uC744
       \uBD88\uB7EC\uB0C5\uB2C8\uB2E4"
     combo: '{0} HIT'
+    spite: "\uBD84\uD480\uC774! \uD138\uC2E4 \uD68C\uC218"
   ui:
     level: LV. {0}
     ratio: '{0} / {1}'
     threadCount: "\uC2E4 {0}\uAC00\uB2E5"
     knotReady: "\uB9E4\uB4ED\uAE4C\uC9C0 {0}\uBC1C"
     desireValue: '{0} / {1}{2}'
-    frenzySuffix: " \xB7 \uD3ED\uC8FC"
-    awakenSuffix: " \xB7 \uAC01\uC131"
+    frenzySuffix: " (\uD3ED\uC8FC)"
+    awakenSuffix: " (\uAC01\uC131)"
     floorLabel: '{0:00}F'
     bestRecord: "{0}\uCE35 \uB3CC\uD30C"
     bestNone: "\uBBF8\uAE30\uB85D"
     routeDefault: "\uCE35\uB9C8\uB2E4 \uC138 \uB77C\uC6B4\uB4DC\uB97C \uB3CC\uD30C\uD558\uC138\uC694."
     routeShop: "\uB5A0\uB3CC\uC774 \uC0C1\uC778 \uB2E8\uCD94\uB97C \uB9CC\uB0AC\uC2B5\uB2C8\uB2E4."
-    routeCleared: "{0}\uCE35 \xB7 {1}\uB77C\uC6B4\uB4DC \uB3CC\uD30C"
+    routeCleared: "{0}\uCE35 {1}\uB77C\uC6B4\uB4DC \uB3CC\uD30C"
     routeBoss: "\uACF5\uACA9 \uC608\uACE0\uB97C \uBCF4\uACE0 \uB300\uC26C\uB85C \uD53C\uD558\uC138\uC694."
     routeTimer: "\uC801 \uB4F1\uC7A5 \uC885\uB8CC\uAE4C\uC9C0 {0}\uCD08"
     routeRemaining: "\uB0A8\uC740 \uC801 {0}\uCCB4"
@@ -27559,20 +28296,20 @@ MonoBehaviour:
     summaryDead: "\uB04A\uC5B4\uC9C4 \uC2E4"
     summaryAbsorbed: "\uD0D1\uC5D0 \uB3D9\uD654\uB418\uC5C8\uB2E4"
     summaryRetreat: "\uC7AC\uBD09\uC0AC\uC758 \uADC0\uD658"
-    summaryBody: "{0}\uCE35 \uB3C4\uB2EC \xB7 \uC801 {1}\uCCB4 \uCC98\uCE58 \xB7
-      \uAE30\uC5B5\uC758 \uD30C\uD3B8 {2}\uAC1C \uBCF4\uC720"
+    summaryBody: "{0}\uCE35 \uB3C4\uB2EC, \uC801 {1}\uCCB4 \uCC98\uCE58, \uAE30\uC5B5\uC758
+      \uD30C\uD3B8 {2}\uAC1C \uBCF4\uC720"
     augmentTitle: "\uB808\uBCA8 {0}"
     augmentRule: "\uADDC\uCE59\uD615"
     augmentStat: "\uC218\uCE58\uD615"
     desireEyebrow: "{0}\uCE35 \uBCF4\uC2A4 \uACA9\uD30C"
-    desirePenalty: "\uC695\uB9DD +20 \xB7 {0}"
-    saleActive: "\uD0C0\uC784 \uC138\uC77C {0}\uCD08 \xB7 {1} 50% \uD560\uC778"
+    desirePenalty: "\uC695\uB9DD +20, {0}"
+    saleActive: "\uD0C0\uC784 \uC138\uC77C {0}\uCD08, {1} 50% \uD560\uC778"
     saleOver: "\uD0C0\uC784 \uC138\uC77C \uC885\uB8CC"
     saleSold: "\uD560\uC778 \uC0C1\uD488 \uD310\uB9E4 \uC644\uB8CC"
     price: "{0} \uACE8\uB4DC"
     soldOut: "\uD310\uB9E4 \uC644\uB8CC"
     nextFloor: "{0}\uCE35\uC73C\uB85C \u2192"
-    restEyebrow: "{0}\uCE35 \xB7 {1}\uB77C\uC6B4\uB4DC \uB3CC\uD30C"
+    restEyebrow: "{0}\uCE35 {1}\uB77C\uC6B4\uB4DC \uB3CC\uD30C"
     restBodyBoss: "\uB2E4\uC74C \uB77C\uC6B4\uB4DC\uC5D0\uC11C\uB294 \uCE35 \uBCF4\uC2A4\uAC00
       \uB098\uD0C0\uB0A9\uB2C8\uB2E4."
     restBodyNext: "\uB2E4\uC74C \uB77C\uC6B4\uB4DC\uC5D0\uC11C \uB2E4\uC2DC \uD138\uC2E4\uC744
@@ -27581,18 +28318,17 @@ MonoBehaviour:
     restButtonNext: "\uB2E4\uC74C \uB77C\uC6B4\uB4DC \u2192"
     upgradeBody: "\uAE30\uC5B5\uC758 \uD30C\uD3B8 {0}\uAC1C\uB97C \uC368\uC11C {1}\uC744
       \uAC15\uD654\uD569\uB2C8\uB2E4."
-    upgradeCost: "\uD30C\uD3B8 {0}\uAC1C \xB7 \uD604\uC7AC {1}\uB2E8\uACC4"
+    upgradeCost: "\uD30C\uD3B8 {0}\uAC1C, \uD604\uC7AC {1}\uB2E8\uACC4"
     upgradeMax: "\uCD5C\uB300 \uB2E8\uACC4"
-    upgradeDone: "{0} \xB7 {1}\uB2E8\uACC4"
-    inventoryHeader: "\u2727  {0} \xD7 {1}  \xB7  \uB4F1\uAE09 \uD569\uACC4 {2} /
-      {3}"
-    setLine: "{0} {1}\uAC1C \xB7 {2} \xB7 {3}"
+    upgradeDone: "{0} {1}\uB2E8\uACC4"
+    inventoryHeader: "\u2727  {0} \xD7 {1}    \uB4F1\uAE09 \uD569\uACC4 {2} / {3}"
+    setLine: "{0} {1}\uAC1C, {2}, {3}"
     setOff: "\uBBF8\uD65C\uC131"
     setOn: "{0}\uC138\uD2B8"
     equipped: "\uC7A5\uCC29 \uC911"
-    invalidPlacement: "\uC870\uAC01\uC774 \uACB9\uCE58\uAC70\uB098 \uD310\uC758 \uACBD\uACC4\xB7\uB4F1\uAE09
-      \uD55C\uB3C4\uB97C \uB118\uC2B5\uB2C8\uB2E4."
-    pieceTooltip: "{0} \xB7 {1} +{2}"
+    invalidPlacement: "\uC870\uAC01\uC774 \uACB9\uCE58\uAC70\uB098 \uD310\uC758 \uACBD\uACC4,
+      \uB4F1\uAE09 \uD55C\uB3C4\uB97C \uB118\uC2B5\uB2C8\uB2E4."
+    pieceTooltip: '{0}: {1} +{2}'
     soundOn: "\uC18C\uB9AC \uCF1C\uC9D0"
     soundOff: "\uC18C\uB9AC \uAEBC\uC9D0"
     timer: '{0}:{1:00}'
@@ -27602,28 +28338,30 @@ MonoBehaviour:
     promptMerchant: "E  \uC0C1\uC778 \uB2E8\uCD94"
     augmentHint: "E  \uC99D\uAC15 \uACE0\uB974\uAE30 ({0})"
     restRoundName: "\uC26C\uC5B4\uAC00\uAE30"
-    bossRoundLabel: "\uBCF4\uC2A4 \xB7 {0}"
+    bossRoundLabel: "\uBCF4\uC2A4  {0}"
     survivalLabel: "\uC0DD\uC874"
     purified: "\uC815\uD654 \u2014 \uD0D1\uC774 \uC228\uC744 \uB3CC\uB9BD\uB2C8\uB2E4"
-    artifactEyebrow: "{0}\uCE35 \xB7 \uC26C\uC5B4\uAC00\uB294 \uB77C\uC6B4\uB4DC"
+    artifactEyebrow: "{0}\uCE35 \uC26C\uC5B4\uAC00\uB294 \uB77C\uC6B4\uB4DC"
     artifactTaken: "\uC544\uD2F0\uD329\uD2B8\uB97C \uCC59\uACBC\uC2B5\uB2C8\uB2E4"
     dashValue: '{0} / {1}'
     expText: 'EXP  {0} / {1}  [{2:0.00}%]'
     expLevel: LV. {0}
     augmentLevel: Lv.{0}
     pieceEffect: '{0} +{1}'
-    pieceShape: "{0}\uCE78 \uC870\uAC01 \xB7 {1} \uC138\uD2B8: {2}"
+    pieceShape: "{0}\uCE78 \uC870\uAC01, {1} \uC138\uD2B8: {2}"
     reroll: "\uB2E4\uC2DC \uAD74\uB9AC\uAE30 (1\uD68C)"
     rerollUsed: "\uB2E4\uC2DC \uAD74\uB9AC\uAE30 (\uC0AC\uC6A9\uD568)"
-    threadBonus: "\uC2E4 {0}\uAC00\uB2E5 \xB7 \uB2F9\uAE40 \uD53C\uD574 +{1}%"
+    threadBonus: "\uC2E4 {0}\uAC00\uB2E5, \uB2F9\uAE40 \uD53C\uD574 +{1}%"
     inventoryHint: "I  \uC7AC\uBD09 \uC0C1\uC790 \uC5F4\uAE30"
     inventoryInRun: "\uB4F1\uBC18 \uC911 \u2014 \uBC14\uAFBC \uBC30\uCE58\uB294 \uB2EB\uC744
       \uB54C \uBC14\uB85C \uC801\uC6A9\uB429\uB2C8\uB2E4 (I / Esc \uB85C \uB2EB\uAE30)"
     pieceCells: "{0}\uCE78 \uD37C\uC990"
-    tipSet: "{0} \uC138\uD2B8 \xB7 {1} ({2})"
+    tipSet: "{0} \uC138\uD2B8: {1} ({2})"
     setProgress: '{0} / {1}'
-    setProgressMax: "{0} \xB7 \uCD5C\uB300"
+    setProgressMax: "{0} (\uCD5C\uB300)"
     ownedAll: "\uBAA8\uB4E0 \uC870\uAC01\uC744 \uC774\uBBF8 \uAC00\uC9C0\uACE0 \uC788\uC2B5\uB2C8\uB2E4."
+    setMain: "\uC8FC \uC18D\uC131 (\uC2E4 \uBAA8\uC2B5, \uD6A8\uACFC 100%)"
+    setSub: "\uBCF4\uC870 (\uD53C\uD574\uC640 \uD6A8\uACFC {0})"
     statNames:
     - "\uC2E4 \uD53C\uD574"
     - "\uC774\uB3D9 \uC18D\uB3C4"
@@ -28428,6 +29166,38 @@ MonoBehaviour:
     trailRim: {fileID: 21300000, guid: 7a1c646a23fe6e64196a3de561e66527, type: 3}
     headCore: {fileID: 21300000, guid: 5715f1259e3c62243bb5d860a994d6e9, type: 3}
     headRim: {fileID: 21300000, guid: 075100f3fba8ed34baf84a3a4f780609, type: 3}
+    frames: 8
+  - style: 4
+    threadCore: {fileID: 21300000, guid: ffa8caaff4637f843ac51c9da60ca340, type: 3}
+    threadRim: {fileID: 21300000, guid: b5cf18dcd9280ca4980a99ad1697362b, type: 3}
+    trailCore: {fileID: 21300000, guid: 99ff214582e80ae448304cc41b7925e1, type: 3}
+    trailRim: {fileID: 21300000, guid: 468f068271b1aae418421f87ef6a1655, type: 3}
+    headCore: {fileID: 21300000, guid: 76010d6575e426146b9578d4d4012a4b, type: 3}
+    headRim: {fileID: 21300000, guid: ad70c11bc9330994b8c120b8179521e7, type: 3}
+    frames: 8
+  - style: 5
+    threadCore: {fileID: 21300000, guid: ccac893888ce6de4d9817d4bca31af05, type: 3}
+    threadRim: {fileID: 21300000, guid: 23aa4eb3783a28a48a67c3dfc87f82b3, type: 3}
+    trailCore: {fileID: 21300000, guid: 89919785b8770ac4bb84c16bfedde84a, type: 3}
+    trailRim: {fileID: 21300000, guid: f3f163b8118bf894789b42c2d80bb310, type: 3}
+    headCore: {fileID: 21300000, guid: 9b9b21985943cf848b5ea7e11bcdd671, type: 3}
+    headRim: {fileID: 21300000, guid: 9215e00adb36a924e93cdbc6f19bebce, type: 3}
+    frames: 8
+  - style: 6
+    threadCore: {fileID: 21300000, guid: 77c6e2a223a122a42a55f7ab3b2b42a5, type: 3}
+    threadRim: {fileID: 21300000, guid: be67bd47263eae74db00f0111124f1d0, type: 3}
+    trailCore: {fileID: 21300000, guid: 087b9755e4d665542824a967632b285e, type: 3}
+    trailRim: {fileID: 21300000, guid: 15e72ef0b6c62354085437421a8fa143, type: 3}
+    headCore: {fileID: 21300000, guid: f34a567f4803fb247a57fe51ea1df32f, type: 3}
+    headRim: {fileID: 21300000, guid: d857fd8e8810cd74c83a2582c1e88f30, type: 3}
+    frames: 8
+  - style: 7
+    threadCore: {fileID: 21300000, guid: af1693a337e68fc4bba8313bb95b0218, type: 3}
+    threadRim: {fileID: 21300000, guid: dede6f2366323154484b3d46fe395919, type: 3}
+    trailCore: {fileID: 21300000, guid: 649392d1e6c9e1b4b8e37564b7791abe, type: 3}
+    trailRim: {fileID: 21300000, guid: e30ba8c589d9d0a43a94d873df8cdcf9, type: 3}
+    headCore: {fileID: 21300000, guid: aa4193ca4e701b248810a9a15e43010a, type: 3}
+    headRim: {fileID: 21300000, guid: c800723e56db40a4fb6cee3094a31cf1, type: 3}
     frames: 8
   background: {fileID: 922448547}
   cameraRig: {fileID: 1203403049}

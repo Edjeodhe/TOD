@@ -29,10 +29,18 @@ namespace TOD
 
     public class SetGroup { public int size, threshold, tier; }
 
+    // 켜진 세트 (단계 1 이상). 단계 높은 순.
+    public class ActiveSet { public SetDef def; public int tier, size; }
+
     public class GearStats
     {
         public readonly Dictionary<StatKind, float> stats = new();
         public readonly Dictionary<string, SetGroup> groups = new();
+        public readonly List<ActiveSet> sets = new();
+        public readonly List<PieceDef> effects = new();   // 장착한 조각의 고유 효과
+        public float Effect(ItemEffect kind) { float v = 0; foreach (PieceDef d in effects) if (d.effect == kind) v += d.effectValue; return v; }
+        public float Param(ItemEffect kind) { foreach (PieceDef d in effects) if (d.effect == kind) return d.effectParam; return 0; }
+        public bool Has(ItemEffect kind) { foreach (PieceDef d in effects) if (d.effect == kind) return true; return false; }
         public float this[StatKind kind] => stats.TryGetValue(kind, out float v) ? v : 0;
     }
 
@@ -197,23 +205,17 @@ namespace TOD
                 }
                 int[] tiers = set.thresholds.Where(t => t <= size).ToArray();
                 result.groups[set.id] = new SetGroup { size = size, threshold = tiers.Length > 0 ? tiers[^1] : 0, tier = tiers.Length };
-                result.stats[set.stat] += tiers.Length * set.perTier;
+                // 12차: 세트는 능력치 대신 속성(피해 + 부가 효과)을 준다 → Combat 이 r.sets 로 읽는다
+                if (tiers.Length > 0) result.sets.Add(new ActiveSet { def = set, tier = tiers.Length, size = size });
             }
+            // 장착한 조각의 고유 효과 (같은 효과가 여럿이면 값을 더한다)
+            foreach (PlacedPiece piece in pieces)
+                if (piece.def.effect != ItemEffect.None) result.effects.Add(piece.def);
+            result.sets.Sort((a, b) => (b.tier * 100 + b.size).CompareTo(a.tier * 100 + a.size));
             return result;
         }
 
-        // 재봉 상자에서 가장 높은 단계의 세트가 실의 속성이 된다 (동률이면 연결 크기).
-        public static Element ThreadElement(GearStats gear)
-        {
-            Element best = Element.Plain;
-            int score = 0;
-            foreach ((string id, Element element) in new[] { ("chaos", Element.Chaos), ("despair", Element.Despair), ("frustration", Element.Frustration) })
-            {
-                if (!gear.groups.TryGetValue(id, out SetGroup group) || group.tier == 0) continue;
-                int value = group.tier * 100 + group.size;
-                if (value > score) { best = element; score = value; }
-            }
-            return best;
-        }
+        // 재봉 상자에서 가장 높은 단계의 세트가 실의 속성(모습)이 된다 (동률이면 연결 크기). 속성 피해는 켜진 세트 모두가 준다.
+        public static Element ThreadElement(GearStats gear) => gear.sets.Count > 0 ? gear.sets[0].def.element : Element.Plain;
     }
 }

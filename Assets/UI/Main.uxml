@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/Main.uss" />
     <Style src="project://database/Assets/UI/Puzzle.uss" />
+    <Style src="project://database/Assets/UI/DevTools.uss" />
     <ui:VisualElement name="root" class="root" picking-mode="Ignore">
 
         <!-- 전투 중 글자 (피해 숫자, N HIT, ×N) -->
@@ -173,7 +174,7 @@
                     <!-- 세트 효과 패널: 세트마다 색 매듭·이름·연결 수/다음 단계·단계별 효과 (GameUI 가 Slots.uxml set-entry 를 복제) -->
                     <ui:VisualElement name="sets" class="set-panel">
                         <ui:Label text="세트 효과" class="set-panel-title" />
-                        <ui:VisualElement name="set-list" class="set-list" />
+                        <ui:ScrollView name="set-list" class="set-list" mode="Vertical" horizontal-scroller-visibility="Hidden" />
                     </ui:VisualElement>
                     <!-- 판: 칸(누르기) 위에 조각 그림 층과 반투명 미리보기 층을 겹친다 -->
                     <ui:VisualElement name="board-wrap" class="board-wrap">
@@ -197,6 +198,7 @@
                 <ui:VisualElement class="tip-head" picking-mode="Ignore">
                     <ui:VisualElement name="tip-icon" class="tip-icon" picking-mode="Ignore" />
                     <ui:VisualElement class="tip-title" picking-mode="Ignore">
+                        <ui:Label name="tip-set-name" class="tip-set-name" picking-mode="Ignore" />
                         <ui:Label name="tip-name" class="tip-name" picking-mode="Ignore" />
                         <ui:Label name="tip-rank" class="tip-rank" picking-mode="Ignore" />
                     </ui:VisualElement>
@@ -204,6 +206,7 @@
                 </ui:VisualElement>
                 <ui:Label name="tip-cells" class="tip-line" picking-mode="Ignore" />
                 <ui:Label name="tip-effect" class="tip-effect" picking-mode="Ignore" />
+                <ui:Label name="tip-unique" class="tip-unique" picking-mode="Ignore" />
                 <ui:VisualElement class="tip-set-row" picking-mode="Ignore">
                     <ui:VisualElement name="tip-knot" class="tip-knot" picking-mode="Ignore" />
                     <ui:Label name="tip-set" class="tip-line" picking-mode="Ignore" />
@@ -309,5 +312,44 @@
 
         <ui:VisualElement name="room-flash" class="room-flash hidden" picking-mode="Ignore"><ui:VisualElement picking-mode="Ignore" /></ui:VisualElement>
         <ui:VisualElement name="notice" class="notice hidden" picking-mode="Ignore"><ui:Label name="notice-text" /></ui:VisualElement>
+
+        <!-- 개발자 모드 (F1, 에디터·개발 빌드만). DevTools 가 버튼을 연결하고, 세트 버튼은 DevSetButton.uxml 을 복제한다. -->
+        <ui:VisualElement name="dev-panel" class="dev-panel hidden">
+            <ui:Label text="개발자 모드 (F1)" class="dev-title" />
+            <ui:Label name="dev-status" class="dev-status" />
+            <ui:Label text="주인공" class="dev-head" />
+            <ui:VisualElement class="dev-row">
+                <ui:Button name="dev-god" text="무적" class="dev-btn" />
+                <ui:Button name="dev-heal" text="체력 회복" class="dev-btn" />
+                <ui:Button name="dev-level" text="레벨 +1" class="dev-btn" />
+                <ui:Button name="dev-yarn" text="털실 채우기" class="dev-btn" />
+            </ui:VisualElement>
+            <ui:VisualElement class="dev-row">
+                <ui:Button name="dev-gold" text="골드 +" class="dev-btn" />
+                <ui:Button name="dev-shards" text="파편 +" class="dev-btn" />
+                <ui:Button name="dev-desire-up" text="욕망 +" class="dev-btn" />
+                <ui:Button name="dev-desire-down" text="욕망 −" class="dev-btn" />
+            </ui:VisualElement>
+            <ui:Label text="전투" class="dev-head" />
+            <ui:VisualElement class="dev-row">
+                <ui:Button name="dev-spawn-stalker" text="스토커" class="dev-btn" />
+                <ui:Button name="dev-spawn-charger" text="차저" class="dev-btn" />
+                <ui:Button name="dev-spawn-shooter" text="슈터" class="dev-btn" />
+                <ui:Button name="dev-spawn-boss" text="보스" class="dev-btn" />
+            </ui:VisualElement>
+            <ui:VisualElement class="dev-row">
+                <ui:Button name="dev-bind" text="결박 실 걸기" class="dev-btn" />
+                <ui:Button name="dev-kill" text="적 전부 처치" class="dev-btn" />
+                <ui:Button name="dev-end-round" text="라운드 끝내기" class="dev-btn" />
+                <ui:Button name="dev-freeze" text="적 멈춤" class="dev-btn" />
+            </ui:VisualElement>
+            <ui:Label text="재봉 상자 (세트 조각을 판에 바로 붙임)" class="dev-head" />
+            <ui:VisualElement name="dev-sets" class="dev-row" />
+            <ui:VisualElement class="dev-row">
+                <ui:Button name="dev-all-items" text="모든 조각 지급" class="dev-btn" />
+                <ui:Button name="dev-clear-board" text="판 비우기" class="dev-btn" />
+                <ui:Button name="dev-clear-items" text="조각 전부 버리기" class="dev-btn" />
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

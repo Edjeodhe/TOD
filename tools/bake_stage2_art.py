@@ -133,3 +133,46 @@ if STAIRS is not None:
             c[:] = (f * (1 - w) + f * gain * w).clip(0, 255).astype(np.uint8)
     for i, (col, a) in enumerate(found):
         save(col, a, f"stair_{i}", 4096)
+# 12차 새 세트 아이템 (Codex CLI): v3 = 빛·어둠·피 (초록 키, 4×3) · v4 = 바람·독 (자홍 키, 4×2, 초록 색이 그림 안에 있어서)
+ITEMS_V3 = ["candle_thimble", "gilded_button", "choir_ribbon", "lantern_cushion",
+            "shadow_button", "black_spool", "raven_quill", "hollow_doll",
+            "blood_pin", "bleeding_thimble", "vein_yarn", "heart_cushion"]
+ITEMS_V4 = ["feather_needle", "vane_button", "drifting_lace", "pinwheel_spool",
+            "venom_pin", "mold_button", "thorn_yarn", "vial_thimble"]
+if (RAW / "item_icons_v3.png").exists():
+    for (col, a), name in zip(pieces(RAW / "item_icons_v3.png", "green", 12, 30), ITEMS_V3):
+        save(col, a, f"item_{name}", 256)
+if (RAW / "item_icons_v4.png").exists():
+    found = pieces(RAW / "item_icons_v4.png", "magenta", 8, 30)
+    found[6], found[7] = found[7], found[6]   # 약병 골무가 위로 솟아 줄 묶음에서 앞 순서로 잡힌다 → 시트 순서대로 바로잡기
+    for (col, a), name in zip(found, ITEMS_V4):
+        save(col, a, f"item_{name}", 256)
+# 12차 맵 장식 (Codex CLI, 초록 키, 4×2): 상호작용 없음, 캐릭터·몬스터보다 항상 뒤(Ground 층)에 그린다
+DECOR = ["mannequin", "yarn_pile", "sewing_machine", "rag_doll", "mirror_shards", "candlestick", "stain_decal", "scissors_heap"]
+def grid_pieces(path, key, cols, rows):
+    """칸(cols×rows)마다 그 안의 그림 전부를 한 장으로 (거울 조각처럼 흩어진 그림도 한 덩어리로)."""
+    rgb = np.asarray(Image.open(path).convert("RGB"))
+    col, a = key_alpha(rgb, key)
+    a = np.where(a > .16, a, 0)
+    h, w = a.shape
+    out = []
+    for r in range(rows):
+        for c in range(cols):
+            y0, y1, x0, x1 = r * h // rows, (r + 1) * h // rows, c * w // cols, (c + 1) * w // cols
+            sub = a[y0:y1, x0:x1]
+            ys, xs = np.nonzero(sub > .16)
+            if len(ys) == 0:
+                continue
+            by0, by1 = max(0, ys.min() - 4), min(sub.shape[0], ys.max() + 5)
+            bx0, bx1 = max(0, xs.min() - 4), min(sub.shape[1], xs.max() + 5)
+            out.append((col[y0 + by0:y0 + by1, x0 + bx0:x0 + bx1].copy(), sub[by0:by1, bx0:bx1].copy()))
+    return out
+
+
+if (RAW / "decor_props.png").exists():
+    for (col, a), name in zip(grid_pieces(RAW / "decor_props.png", "green", 4, 2), DECOR):
+        save(col, a, f"decor_{name}", 320)
+# 14차 치명타 아이콘 (Codex CLI, 초록 키, 1개): 피해 숫자 왼쪽 위 뾰족한 폭발 별
+if (RAW / "crit_icon.png").exists():
+    (col, a), = pieces(RAW / "crit_icon.png", "green", 1, 30)
+    save(col, a, "crit_icon", 256)

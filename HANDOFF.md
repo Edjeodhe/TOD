@@ -11,6 +11,8 @@
 - **게임 데이터도 코드에 두지 않습니다.** 적 스탯, 증강, 퍼즐 조각, 상점 품목, 타격감 수치가 대상입니다. 코드에는 빈 필드만 선언하고, 실제 값은 데이터 프리팹이나 씬 컴포넌트에 MCP `update_component`로 넣습니다.
 - **UI는 UXML/USS 에셋 파일로 작성합니다.** UIDocument GameObject는 MCP로 만듭니다. 목록형 UI는 UXML 템플릿을 복제합니다.
 - **MCP 도구로 할 수 없는 작업**(파이프라인 에셋, Input Actions, Project Settings, 에셋 이동)은 먼저 `execute_menu_item`으로 시도합니다. 안 되면 설정 파일이나 에셋 파일을 직접 편집하고, 그 내용을 보고합니다.
+- **실에 붙는 이펙트는 실을 완전히 덮게 만듭니다.** 이펙트가 도는 동안 맨 실(가는 선·땋은 결)이 보이면 안 됩니다. 실보다 넓은 속성 빛과 장식으로 감싸 화려함을 강조합니다. 밝은 색은 여러 가닥이 겹치면 하얗게 날아가므로 세기를 낮춥니다. (2026-11-23 사용자 요청, 11차 참고)
+- **이미지 도구:** 실·이펙트처럼 움직이는 VFX는 **Blender 5.3** CLI 스크립트로 만듭니다(`C:/Program Files/Blender Foundation/Blender 5.3/blender.exe -b -P tools/render_*.py -- C:/Project/TOD`). 아이콘·조각 같은 그림 한 장짜리는 **Codex CLI**로 만듭니다(`%LOCALAPPDATA%\OpenAI\Codex\bin\<해시>\codex.exe exec -s workspace-write --skip-git-repo-check -i <참고 그림> - < tools/codex_prompts/<이름>.txt`). Unity↔Blender 실시간 연결은 MCP `blender_bridge`입니다(아래 "Blender 연결").
 - 작업 전 이 규칙을 먼저 확인합니다. 판단이 애매하면 사용자에게 질문한 뒤 진행합니다.
 
 ## Unity 포팅 결정 사항 (2026-11-23)
@@ -21,7 +23,7 @@
 | 렌더 파이프라인 | URP 2D 렌더러, Linear 색공간 |
 | 주인공 리그 | **(2026-11-23 변경)** Unity 뼈대 계층(`Arena/Hero/Rig`) + C# 동작(`HeroRig`). 웹 `rig.html`·rig json 은 더 이상 Unity 에서 읽지 않습니다. |
 | 웹판 | 동결하고 `web/`로 옮깁니다. Unity Assets에는 런타임 아트만 두고, 원본 시트와 .blend는 `art_src/`로 옮깁니다. |
-| UI | UI Toolkit, 갈무리(Galmuri) 폰트 |
+| UI | UI Toolkit, **주아(Jua) 폰트** (14차에 갈무리에서 바꿈. 갈무리는 주아에 없는 기호 전용 대체 글꼴로만 남음) |
 | 플랫폼·입력 | PC 키보드·마우스, New Input System |
 | 사운드 | 웹판 오실레이터 효과음을 C#에서 AudioClip으로 생성합니다. |
 | 그리기 | GameObject 기반: SpriteRenderer, LineRenderer, ParticleSystem과 커스텀 셰이더 |
@@ -82,6 +84,127 @@
   - `AugmentChoicesAreUniqueStatOnly`로 교체(규칙형 없음 + fire·reach 적용 확인). EditMode 5개 통과.
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
+
+## 예약 작업: 15차 — 재봉실 허브 + 이야기 해금 (2026-11-24 00:30 자동 시작)
+
+> 사용자는 자는 중입니다. **질문 없이 임의로 판단해 끝까지 진행**하고, 결정한 내용은 이 절에 적습니다. 끝나면 "15차 완료"로 바꿉니다.
+
+- **목표:** 지금 메뉴뿐인 로비를 탑 아래 '재봉실' 방으로 바꿉니다. 주인공이 걸어 다니며 시설과 상호작용합니다.
+- **재봉실 허브:**
+  - 로비 화면에 재봉실 배경(방 바닥, 벽)을 깔고, 주인공이 WASD로 걸어 다닙니다. 전투장과 같은 렌더러와 주인공 리그를 쓰고, 적과 전투는 없습니다.
+  - 시설(E로 상호작용): 재봉 상자(재봉 상자 화면), 예견의 다락(다락 화면), 상인 단추(조각 판매 상점: 파편으로 아직 없는 조각 구매), 탑 입구(등반 시작, 기존 Enter도 유지), 일기 게시판(이야기).
+  - 시설 그림은 Codex CLI로 뽑습니다(초록 키 시트 → `bake_stage2_art.py`). 위치·문구·가격은 GameDatabase 데이터로 넣습니다.
+- **등반과 연결:**
+  - 처음 돌파한 층(`profile.best`)에 따라 세트가 열립니다. 예: 1층부터 화염·얼음·번개, 2층 돌파 시 빛·바람, 3층 돌파 시 어둠·피, 4층 돌파 시 독.
+  - 잠긴 세트 조각은 탑 보상·상점·지급에서 빠집니다. 해금 표는 데이터 `gear.setUnlockFloor`입니다.
+  - 해금될 때 재봉실에서 알림과 연출을 보여 줍니다.
+- **이야기 해금:**
+  - 층을 처음 돌파할 때마다 아버지의 일기 조각(층당 1개, 5개)이 풀려 재봉실 게시판에 붙습니다. 내용은 기획서 톤으로 쓴 임시 문구입니다(수인 재봉사 생쥐가 아버지를 찾아 욕망의 탑을 오름).
+  - 보스 욕망을 흡수했는지(`profile`에 기록)에 따라 일기 마지막 줄이 달라집니다.
+  - 게시판 UI는 UXML 템플릿 복제로 만들고, 저장은 `Profile`에 필드를 추가합니다.
+- **반복 동기:** 다락 강화에 '시작 조각 선택'(등반 시작 때 가진 조각 중 1개가 판에 미리 놓임) 또는 '시작 세트 1단계' 같은 강화를 하나 추가합니다.
+- **지킬 것:** 이 문서 맨 위 작업 규칙, 게임 문구에 가운뎃점 금지, 사용자에게 보이는 글은 한국어, 아이콘·그림은 Codex CLI, 움직이는 이펙트는 Blender 5.3, 단계마다 이 절 갱신, 커밋하지 않음, EditMode 테스트 통과, 플레이 캡처로 확인.
+
+## 14차 요청 (2026-11-23) — 게임 글꼴 주아, 속성별·치명타 피해 숫자, 치명타
+
+- [x] **게임 글꼴 전체 주아:**
+  - 사용자가 검토한 뒤 "폰트가 별로"라며 바꾸기로 했습니다.
+  - 글꼴은 Google Fonts에서 받은 `Assets/Fonts/Jua/Jua-Regular.ttf`(우아한형제들 BM JUA)이고, 라이선스는 OFL(`OFL.txt`)이라 게임에 넣어도 됩니다.
+  - UI 글꼴 에셋: `Assets/Fonts/Jua/Jua_SDF.asset`(TextCore SDF, 동적, 2048 아틀라스 여러 장). `Temp/galmuri_charset.txt`의 게임 문구와 KS X 1001 한글 2350자를 미리 구워 넣었습니다(2450자).
+  - 주아에 없는 기호(×, ★, ✧, ◇, ↑, 「」 등 45개)는 대체 글꼴 `Galmuri14-15px`에서 가져옵니다.
+  - `Main.uss`와 `DevTools.uss`의 `-unity-font-definition`을 모두 `Jua_SDF.asset`으로 바꿨습니다. SDF라서 **글자 크기 배수 규칙(4차의 10/12/15 배수)은 이제 필요 없습니다.**
+- [x] **피해 숫자 그림 글꼴 (주아):**
+  - `python tools/bake_damage_font_jua.py`가 기본 아틀라스(흰 글자 + 검은 외곽선 9px, 크기 116)와 JSON을 주아로 다시 굽습니다. 옛 Codex 손글씨는 `bake_damage_font.py`에 남아 있습니다.
+  - `python tools/bake_element_fonts.py`가 속성 8종과 치명타 아틀라스 `damage_font_<이름>.png`를 굽습니다. 위→아래 3색 그라디언트, 위쪽 광택 띠, 속성 색 잉크 외곽선, 바깥 빛으로 구성됩니다.
+  - `TOD/Setup/1`은 `damage_font*.png`를 모두 같은 JSON으로 자릅니다.
+  - 데이터: `visual.tones[].damageFont`는 속성마다, `visual.critFont`은 치명타입니다.
+- [x] **속성 피해 숫자:** 세트 속성 피해는 속성마다 숫자를 따로 띄웁니다. 그 속성 글꼴을 흰색 그대로 쓰고, 실 피해 숫자 위로 `elementNumberLift`(34) 간격으로 쌓습니다. 화상·중독·번개 튐(`DamageEnemy(r, e, amount, Element)`)과 흡혈 회복 숫자도 속성 글꼴입니다.
+- [x] **치명타 (새 기능):**
+  - 당기기 실 피해마다 `hero.critChance`(.1) 확률로 × `critMultiplier`(1.5)가 됩니다. 속성 피해는 제외하고, 이벤트 `crit`이 납니다.
+  - 숫자는 치명타 글꼴(흰빛 → 노랑, 붉은 외곽선)로 `critScale` 1.3배입니다.
+  - 숫자 왼쪽 위에 세피리아식 뾰족 폭발 아이콘을 붙입니다(`Assets/sprites/crit_icon.png`, Codex `tools/codex_prompts/crit_icon.txt`). 아이콘은 톡 튀어나와 살짝 흔들리고, 크기는 숫자 높이 × `critIconSize` .8입니다.
+- 확인: EditMode 20개 통과. 플레이 캡처(`Temp/Shots/jua_numbers_crop.png`)에서 치명타 274와 아이콘, 화염 12(붉은 글꼴), 번개 6(노란 글꼴)이 쌓인 모습, 주아 UI(`jua_numbers.png`)를 확인했습니다. 검토 이미지는 `art_src/fonts/jua_review.png`입니다.
+- 남은 것: 치명타 효과음(`crit` 이벤트에 소리 없음). 맞은 적과 이펙트 위에서 숫자가 여전히 겹쳐 보일 수 있습니다. 전체 화면을 주아로 사람 눈으로 훑어보는 확인(글자 넘침).
+
+## 13차 요청 (2026-11-23) — 세트 이름 표시, 주/보조 속성, 계단 판정, 가운뎃점 제거, 맵 장식, 보스 뒤 탑과 등장 연출
+
+- [x] **세트 이름 꼬리표:** 판 위 조각의 맨 윗줄 가운데에 세트 이름(예: 화염)을 세트 색 글씨로 띄웁니다. 템플릿은 `Slots.uxml board-set-tag`이고, 끌기·바느질 때 조각과 함께 움직입니다. 목록 줄에서는 퍼즐 모양 위에(`PieceButton.uxml piece-shape-col`), 정보 창에서는 이름 위(`tip-set-name`)에 둡니다. 탑 카드 띠는 "등급  세트"이며, 세트 이름이 세트 색 리치 텍스트로 나옵니다.
+- [x] **주 속성 + 보조:** 단계가 가장 높은 세트(동률이면 연결 조각 수)가 주 속성입니다. 주 속성은 실 모습과 피해·효과를 100%로 내고, 나머지 세트는 `gear.subSetScale`(.5)만큼 냅니다(`Combat.SetScale`). 세트 패널 이름 아래 한 줄에 `ui.setMain / setSub`를 표시합니다.
+- [x] **계단 판정:** 계단만 반경을 따로 둡니다(`rounds.stairsRadius` 150, 중심 `stairsHitOffset` (0, −60) = 발밑보다 위쪽 단). 상호작용은 "반경 대비 가장 가까운 것"으로 고릅니다(`Combat.Nearest`).
+- [x] **가운뎃점 제거:** 게임에 나오는 글자의 `·`를 모두 뺐습니다. GameDatabase 문자열 28개는 목록이면 쉼표로, 머리글이면 띄어쓰기·괄호·쌍점으로 바꿨습니다. 코드 문자열(세트 단계 효과, 정보 창, 개발자 모드)도 고쳤습니다. **앞으로 게임 문구에 가운뎃점을 쓰지 않습니다.** 주석과 인스펙터 머리글은 그대로입니다.
+- [x] **공격 예고:** 돌진 길과 근접·탄막 고리는 Ground 정렬 층이라 캐릭터·몬스터(Actors 층)보다 항상 뒤에 그려집니다(확인함, 주석 추가).
+- [x] **맵 장식 8종 (Codex CLI):** 마네킹, 실타래·단추 더미, 재봉틀 잔해, 버려진 인형, 거울 조각, 촛대, 바닥 얼룩 데칼, 가위·바늘 무더기입니다.
+  - 그림 흐름: `tools/codex_prompts/decor_props.txt`(참고 그림은 바닥 타일) → `art_src/raw/decor_props.png` → `bake_stage2_art.py`(4×2 칸으로 자르기) → `Assets/sprites/decor_*.png`.
+  - 배치: `ArenaRenderer.ScatterDecor`가 라운드마다 무작위로 흩습니다. 데이터는 `db.decor`: 100만 px²당 4개, 간격 220, 시작 자리 반경 260은 비움, 크기 .85~1.15, 밝기 .8, 채도 .75. 라운드 컨셉 바닥 색을 입힙니다.
+  - 그리는 순서: Ground 층 맨 앞입니다. 그래서 장식 < 공격 예고·드롭·계단·탑 < 캐릭터·몬스터 순입니다.
+- [x] **보스 처치 뒤 탑:** 정화가 끝나면 계단과 함께 아티팩트 탑이 솟습니다(`rounds.bossTowerOffset` (−230, −10)). 아티팩트 3택이고, 다시 굴리기는 한 번입니다(`Combat.RaiseTower`).
+- [x] **탑 등장 연출 (쉬어가기·보스 뒤 공통, `ArenaRenderer.DrawTowerRise`):**
+  1. 바닥에 원형 솔기가 바늘땀으로 한 땀씩 꿰매지며 빛이 샙니다(`towerStitchTime` .45, `towerStitches` 16).
+  2. 탑이 솔기 안에서 바닥을 뚫고 솟아오릅니다. 바닥 선 아래는 절단면으로 잘리고, 떨림·흙먼지·실 불티가 납니다.
+  3. 조금 넘쳤다가 착지하며 눌렸다 펴지고, 화면이 흔들리고, 창문에 불이 켜집니다(`towerSettleTime` .35). 전체 시간은 `towerRiseTime` 1.5초이며, 그 전에는 E가 안 됩니다(`Combat.TowerReady`). 솟기 시작과 착지 때 효과음 `stairstep`이 납니다.
+- 확인: EditMode 20개 통과(`SecondSetIsHalf`, `TowerRisesAfterBoss` 추가). 캡처: 장식과 예고 고리 겹침(`Temp/Shots/decor_ingame.png`), 탑 등장 단계별(`tower_rise_sheet.png`), 재봉 상자 꼬리표(`inv_setname3-1.png`).
+- 남은 것: 실제 속도로 보는 탑 연출. 장식 밀도·밝기는 사람 눈으로 다듬어야 합니다. 원소 반응(화염+얼음 등)은 하지 않았습니다(주/보조만).
+
+## 개발자 모드 (2026-11-23)
+
+- **F1**로 여닫습니다. 에디터와 개발 빌드(`Debug.isDebugBuild`)에서만 켜지고, 릴리스 빌드에서는 컴포넌트가 스스로 꺼집니다.
+- 구성:
+  - UI: `Main.uxml`의 `dev-panel`, 스타일 `Assets/UI/DevTools.uss`, 세트 버튼 템플릿 `Assets/UI/DevSetButton.uxml`.
+  - 코드: `Runtime/Debug/DevTools.cs`. `Game/GameController` 오브젝트에 MCP로 붙였습니다. 지급량은 인스펙터 값입니다: 골드 100, 파편 50, 욕망 ±10.
+  - 전투 쪽 함수: `Combat.DevSpawn / DevKillAll / DevEndRound / DevLevelUp / DevBind`, `RunState.devGod / devFreeze`, `GameController.DevGearChanged`.
+- 버튼:
+  - 주인공: 무적(토글), 체력 회복, 레벨 +1, 털실 채우기, 골드 +, 파편 +, 욕망 ±.
+  - 전투: 적 4종 소환(주인공 둘레), 결박 실 걸기(가장 가까운 적에게 결박 가닥 수만큼 → 우클릭으로 바로 결박 당기기), 적 전부 처치, 라운드 끝내기(생존은 시간 0, 보스는 처치), 적 멈춤(토글, 화상·중독은 계속).
+  - 재봉 상자: 세트마다 "+1"을 누르면 그 세트 조각 하나를 지급하고, 같은 세트와 가장 많이 맞닿는 자리에 바로 놓습니다(세트 단계 확인용). 모든 조각 지급, 판 비우기, 조각 전부 버리기도 있습니다.
+- 위쪽 줄에 층·체력·욕망·적 수, 켜진 세트와 단계, 조각 수가 실시간으로 보입니다.
+- **주의:** 재봉 상자 버튼은 실제 프로필(`tower-of-desire.profile.v1`)에 저장됩니다. 원래 상태로 되돌리려면 `TOD/Debug/Reset Profile`을 씁니다.
+- 확인: 버튼을 눌러 화염·번개 세트 켜기, 무적, 적 멈춤, 소환, 결박 실 5가닥까지 동작을 확인했습니다(`Temp/Shots/devtools.png`). EditMode 18개 통과.
+
+## 12차 요청 (2026-11-23) — 세트 = 속성 8종 · 조각 고유 효과 8종 · 새 조각 20개
+
+- [x] **세트 이름과 속성:** 혼돈 → **화염**, 절망 → **얼음**, 좌절 → **번개**로 바꾸고 **빛·어둠·피·바람·독**을 더해 8세트가 되었습니다. 세트 id도 `fire/ice/lightning/light/dark/blood/wind/poison`로 바꿨고 조각 데이터를 함께 고쳤습니다. 코드 열거형은 `Element { Plain, Fire, Ice, Lightning, Dodge, Light, Dark, Blood, Wind, Poison }`이고 정수 값은 그대로 유지합니다.
+- [x] **세트 효과 = 속성 (능력치 보너스 없앰):** `SetDef`에서 `stat/perTier`를 빼고 `element, damagePerTier, effectPerTier, effectTime, effectRange, effectCap, effectText`를 넣었습니다. 켜진 세트(`GearStats.sets`, 단계 높은 순)마다 당기기 한 타에 속성 피해가 붙고(`Combat.Pull`), 속성 색 숫자가 실 피해 숫자 위에 뜹니다. 부가 효과는 `Combat.ApplySetEffects`가 겁니다.
+  | 세트 | 단계 | 단계당 피해 | 부가 효과(단계당) |
+  |---|---|---|---|
+  | 화염 | 2·4·6·8·10 | 2 | 화상 초당 2 (3초) |
+  | 얼음 | 3·6·9 | 3 | 둔화 15% (2초, 최대 60%) — 이동·행동 대기가 함께 느려짐 |
+  | 번개 | 1·3·5 | 2 | 반경 220 안 옆 적 1마리에게 6 튐 (`FxKind.Chain`) |
+  | 빛 | 2·4 | 2 | 결박·정예·보스에게 속성 피해 +20% |
+  | 어둠 | 2·4 | 2 | 저주 4초: 받는 모든 피해 +10% |
+  | 피 | 1·3 | 1 | 흡혈: 준 피해의 4% 회복 |
+  | 바람 | 1·3 | 1 | 끌어오는 거리 +30%, 맞은 적 반경 160 안 적도 끌림 |
+  | 독 | 2·4 | 1 | 중독: 맞은 타수만큼 겹(최대 6), 한 겹당 초당 1 (4초) |
+  - 화상·중독은 `visual.dotInterval`(0.5초)마다 모아서 숫자로 띄웁니다. 적 둘레에는 상태 입자(불씨·서리·연기·거품, `visual.statusRate`)가 생깁니다. 상태 값은 `Enemy.ClearStatus`로 풀에서 꺼낼 때 지웁니다.
+- [x] **세트가 켜진 실:** 평소에도 그 속성의 Blender 리본과 덮개로 그립니다(`ArenaRenderer.DrawSetStrand`). 굵기는 `bind.setRibbonWidth` 14 × (1 + `setRibbonGrowth` .2 × (단계−1))이고, 덮개는 × `setCoverScale` 1.3입니다. 속성 피해가 들어가면 적 자리에 Codex 속성 그림(`ElementTone.hit`)이 터집니다: 화염·피 = `fx_chaos`, 얼음·독 = `fx_despair`, 번개 = `fx_frustration`, 빛 = `fx_sigil`, 어둠 = `fx_snip`, 바람 = `fx_yank`. 전에는 쓰지 않던 그림입니다.
+- [x] **새 리본 4종 (Blender 5.3):** `tools/render_bind_ribbons.py`에 `dark`(휘감는 연기), `blood`(맥박 치는 핏줄기 + 떨어지는 방울), `wind`(나선 세 가닥 + 바람 결), `poison`(출렁이는 독액 + 거품)을 추가했습니다. 결박 글자, 덮개 장식, 입자도 4종을 넣었습니다(`bind.looks[].cover`: 어둠 .75, 피 .8, 바람 .45, 독 .6). 결박 폭발(`DrawBind`)은 새 4종이 아직 기본(빛살) 모양입니다.
+- [x] **조각 고유 효과 8종** (`PieceDef.effect/effectValue/effectParam`, 문구는 `gear.effectTexts`, 정보 창·탑 카드에 ★ 줄):
+  | 조각 | 효과 |
+  |---|---|
+  | 광기의 실패 (레전더리) | 탐욕의 실: 욕망 50% 이상일 때 당기기 피해 +25% |
+  | 피 묻은 가위 (유니크) | 벼랑 끝: 체력 30% 이하일 때 당기기 피해 +60% |
+  | 얼어붙은 핀쿠션 (유니크) | 무거운 매듭: 깔린 매듭 하나마다 당기기 피해 +10% |
+  | 깨진 회중시계 (유니크) | 도약 일격: 대쉬 후 1초 안 첫 당기기 피해 +50% |
+  | 잠든 인형 눈 (레전더리) | 거인 사냥: 보스·정예에게 주는 피해 +30% |
+  | 번개 맞은 재봉틀 (레전더리) | 분풀이: 하나도 못 맞히면 털실을 전부 돌려받고 다음 당기기 +60% |
+  | 세 갈래 골무 (레전더리) | 성급한 결박: 결박 가닥 −1 (`Combat.Bound(r, n)`) |
+  | 굵은 밧줄 실패 (유니크) | 실 되감기: 당기기로 처치할 때마다 털실 +1 |
+- [x] **새 조각 20개 (Codex CLI):** 빛·어둠·피·바람·독 세트마다 4개씩입니다(일반 2, 레어 1, 유니크 1). 아이콘은 `tools/codex_prompts/item_icons_v3.txt`(빛·어둠·피, 초록 키)와 `item_icons_v4.txt`(바람·독, 그림에 초록이 있어 자홍 키) → `art_src/raw/item_icons_v3/v4.png` → `python tools/bake_stage2_art.py` → `Assets/sprites/item_*.png`입니다. 조각 번호는 14~33입니다.
+- [x] **재봉 상자:** 세트 패널은 스크롤(`ScrollView set-list`, 최대 640px)되고, 켜진 단계 + 다음 단계만 보입니다. 판에 없는 세트는 이름 줄만 보입니다.
+- 확인: EditMode 18개 통과(`SetAddsElementalDamageAndStatus`, `ItemEffectsApply` 추가). 플레이에서 속성 7종의 평소 실과 맞는 순간을 캡처했습니다(`Temp/Shots/sets_sheet.png`). 번개 튐, 어둠 저주, 피 회복, 독 2겹이 값으로 들어가는 것을 확인했습니다. 얼음은 3개가 있어야 켜져서 캡처하지 않았습니다. 재봉 상자는 `Temp/Shots/inv_12b.png`입니다. 테스트 중 저장된 프로필은 지웠습니다.
+- 남은 것: 수치 균형(전부 임시값). 새 4종의 결박 폭발 모양. 빛 세트 종이(상아색) 위 일반 등급 회색 이름이 흐림. 사람이 직접 한 플레이.
+
+## 11차 요청 (2026-11-23) — 재봉 상자 목록 색·이름 등급 색·실을 덮는 결박 이펙트
+
+- [x] **목록 줄 = 세트 색:** 재봉 상자 오른쪽 목록에서 줄 바탕 종이를 세트 색으로 칠합니다(`GameUI.SetPaperTint`: 세트 색을 20% 어둡게). 퍼즐 모양도 세트 색(25% 밝게)이고, 바탕과 같은 색이어도 보이도록 바깥에 2px 잉크 테두리를 넣었습니다(`MiniShape`, 정보 창 모양에도 적용). 정보 창의 퍼즐 모양도 세트 색입니다.
+- [x] **판 위 조각 = 세트 색:** `BuildPiece`의 종이 색을 세트 색으로 바꿨습니다. 맞닿은 조각의 명암 구분(tone)은 같은 등급이 아니라 같은 세트끼리 합니다. 등급은 왼쪽 위 매듭(이제 등급 색), 테두리, 바늘땀 실 색, 장식, 레전더리 반짝임으로 보입니다.
+- [x] **이름 = 등급 색:** 목록 이름과 정보 창 이름을 등급 색으로 바꾸고, USS에 잉크 외곽선 2px(`.piece-name`, `.tip-name`)을 넣었습니다. 어두운 진한 색(레전더리 `#B83338`)은 같은 색조로 밝혀 씁니다(`GameUI.NameColor`: 채도 > .3이고 명도 < .85이면 명도를 .97로). 회색은 그대로입니다. 선택한 줄의 이름을 포도주색으로 바꾸던 USS 규칙은 지웠습니다.
+- [x] **결박 실 덮개:** `ArenaRenderer.DrawBindCover`가 결박 실 몸통과 팔로우 스루 채찍 위에 덮개를 그립니다.
+  - 바탕은 같은 Blender 리본을 더 넓게 한 번 더 그린 것입니다(가산, 심 없음). 몸통처럼 팽팽할 때 가늘어지지(taut) 않습니다.
+  - 그 위에 `coverStep` 간격으로 속성 장식을 얹습니다. 화염은 불길 혀, 번개는 실을 가로지르는 전류(45%만), 서리는 얼음 결정과 양옆 가시, 금실은 반짝임입니다.
+  - 결박일 때는 `DrawCut`의 가는 두 선을 그리지 않습니다.
+  - 값(MCP 입력): `bind.coverWidth` 44(리본 30보다 넓게), `coverAlpha` .85, `coverStep` 16, 속성별 `looks[].cover`는 화염 1, 번개 .45, 서리 .45, 금실 .55입니다. 밝은 색은 5가닥이 겹치면 하얗게 날아가서 낮췄습니다.
+- 확인: EditMode 16개 통과. 재봉 상자는 임시 아이템을 넣어 등급 4종과 세트 3종을 캡처했습니다(`Temp/Shots/inv_after3*.png`). 결박은 속성 4종을 당기기 진행 25·55·70% 시점에 캡처했습니다(`Temp/Shots/bind_cover_final.png`). 테스트 중 저장된 프로필은 지워서 원래 상태(저장 없음)로 되돌렸습니다.
+- 남은 것: 실제 속도로 보는 느낌. 머리 뒤 궤적 꼬리(가늘어지는 혜성 꼬리)는 덮지 않았습니다. 판 캡처는 `Temp/Shots/board_set-1.png`입니다.
 
 ## 10차 요청 (2026-11-23) — 결박 당기기(같은 적에 실 5가닥)·속성 리본·실 움직임 원칙
 
@@ -240,6 +363,12 @@
 
 ### MCP 관련 주의
 - MCP 서버는 CoplayDev **MCP for Unity**(`UnityMCP`, Window > MCP for Unity에서 서버 시작)입니다. 옛 gamelovers 패키지의 `[TOD patch]`(배열 채우기, `"scene:경로"` 참조)는 없습니다.
+- **서버가 안 켜질 때 (2026-11-23):** Start Server는 `uvx`로 서버를 띄웁니다. `uvx.exe`는 `%APPDATA%\Python\Python313\Scripts`에 있고, 이 폴더를 사용자 PATH에 추가했습니다. 에디터는 Unity Hub의 환경 변수를 물려받으므로 **Hub까지 완전히 껐다 켜야** 새 PATH가 적용됩니다. 서버를 밖에서 띄운 경우(`uvx --from "mcpforunityserver==10.3.0" mcp-for-unity --transport http --http-url http://127.0.0.1:8080 --project-scoped-tools`)에는 Start Server(이때는 "Stop Server"로 보임)가 아니라 **Connect** 버튼으로 붙습니다. 실패 기록은 `Library/MCPForUnity/Logs/server-launch-8080.log`에 남습니다.
+- **Blender 연결 (2026-11-23):**
+  - Blender 5.3에 BlenderMCP 애드온("MCP for Blender" 2.0)을 넣었습니다. 원본은 `C:\Users\MinSung\blender-mcp`(github.com/ahujasid/blender-mcp, 커밋 a5a8acf, 검토 완료)입니다. 이 애드온은 localhost에서만 듣고, 원격 수집과 외부 연동(Poly Haven·Sketchfab 등)은 기본으로 꺼져 있습니다.
+  - Unity 쪽 설정(EditorPrefs `BlenderBridgePrefs`): 원본 경로 = 위 폴더, 애드온 폴더 = `%APPDATA%\Blender Foundation\Blender\5.3\scripts\addons`.
+  - 쓰는 법: Blender를 켜면 애드온이 127.0.0.1:9876 서버를 자동으로 엽니다. 그다음 `blender_bridge status / run_python / screenshot / import_model`을 씁니다. 애드온을 새로 받으면 원본 폴더에서 `git pull`을 한 뒤 `blender_bridge sync_addon`을 실행합니다.
+  - **주의:** Claude 데스크톱 앱은 MSIX 패키지라서, 그 셸이 `%APPDATA%`·`%LOCALAPPDATA%`에 쓴 파일은 앱 전용 사본으로 빠집니다. Unity와 평소 켜는 Blender에서는 보이지 않습니다. 사용자 폴더의 다른 위치나 프로젝트에 두거나, Unity(`execute_code`, `sync_addon`)를 통해 씁니다. 같은 이유로, 위의 uvx PATH 설정이 Claude 셸에서 한 것이었다면 실제 환경에는 없을 수 있습니다.
 - 컴포넌트 값·배열·오브젝트 참조는 `execute_code`에서 `SerializedObject`/`FindProperty`로 넣는 방식이 가장 확실합니다(직렬화 이름 사용, `Undo.RecordObject` 후 `ApplyModifiedProperties`, 씬 저장은 `manage_scene save`). 2026-11-23 데이터 입력과 배경 정리는 이렇게 했습니다.
 - `execute_code`는 CodeDom(C# 6)으로 돕니다: `Object`는 `UnityEngine.Object`로 적고, 로컬 함수 대신 `System.Func/Action`을 씁니다. `AssetDatabase.DeleteAsset` 같은 패턴은 안전 검사에 막힙니다.
 - 스크립트를 고친 뒤에는 `refresh_unity(compile=request)` → `read_console`로 오류를 확인합니다.
