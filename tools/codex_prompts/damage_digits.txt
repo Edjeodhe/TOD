@@ -1,0 +1,8 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/damage_digits.png
+Size: landscape 1536x1024.
+Create a game DAMAGE NUMBER font sheet: exactly these 13 separate characters, drawn as big chunky bold hand-drawn numerals, in two rows, each character fully separated from the others by a wide empty gap (at least 60px), nothing touching:
+Row 1 (left to right): 0 1 2 3 4 5 6
+Row 2 (left to right): 7 8 9 + - !
+Every character the SAME height (about 260px tall), upright, no tilt, no decoration around them. Fill of every character: plain flat WHITE (#FFFFFF) so it can be tinted in game, with a very thick rough black ink outline (about 16px) all around, and a subtle paper grain inside the white. Don't Starve Together-like hand-drawn comic style, slightly uneven jittery ink edges, still perfectly readable.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no text other than what is asked. Do not use any green color inside the artwork.

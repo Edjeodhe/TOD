@@ -48,6 +48,8 @@ namespace TOD.EditorTools
             {
                 SliceFlipbook(AssetDatabase.GUIDToAssetPath(guid));
             }
+            const string fontAtlas = "Assets/Art/Generated/damage_font.png";
+            if (File.Exists(fontAtlas) && File.Exists("art_src/fonts/damage_font.json")) SliceGlyphAtlas(fontAtlas, "art_src/fonts/damage_font.json");
             Debug.Log($"[TOD] Texture imports configured ({changed} changed)");
         }
 
@@ -58,7 +60,7 @@ namespace TOD.EditorTools
             bool tiled = name == "floor" || name == "dash";
 
             importer.textureType = TextureImporterType.Sprite;
-            importer.spriteImportMode = flip ? SpriteImportMode.Multiple : SpriteImportMode.Single;
+            importer.spriteImportMode = flip || name == "damage_font" ? SpriteImportMode.Multiple : SpriteImportMode.Single;   // 그림 글꼴 아틀라스는 여러 장(잘라 둔 글자 유지)
             importer.spritePixelsPerUnit = PixelsPerUnit;
             // 스프라이트는 화면에서 3~7배 줄여 그리므로 밉맵 + 살짝 날카로운 바이어스로 뭉개짐·자글거림을 막는다.
             importer.mipmapEnabled = !flip && name != "dash" && name != "white";
@@ -86,6 +88,40 @@ namespace TOD.EditorTools
             }
             importer.SetTextureSettings(settings);
             return true;
+        }
+
+        // 그림 글꼴 아틀라스(tools/bake_damage_font.py 가 만든 png + json)를 글자 스프라이트(name_<코드>)로 자른다. 피벗은 가운데.
+        [System.Serializable] class GlyphRect { public string ch; public int x, y, w, h; }
+        [System.Serializable] class GlyphAtlas { public int width, height; public GlyphRect[] glyphs; }
+
+        static void SliceGlyphAtlas(string path, string jsonPath)
+        {
+            var atlas = JsonUtility.FromJson<GlyphAtlas>(File.ReadAllText(jsonPath));
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            importer.spriteImportMode = SpriteImportMode.Multiple;
+            importer.SaveAndReimport();
+            var factory = new SpriteDataProviderFactories();
+            factory.Init();
+            ISpriteEditorDataProvider provider = factory.GetSpriteEditorDataProviderFromObject(importer);
+            provider.InitSpriteEditorDataProvider();
+            string baseName = Path.GetFileNameWithoutExtension(path);
+            SpriteRect[] existing = provider.GetSpriteRects();
+            var rects = new SpriteRect[atlas.glyphs.Length];
+            for (int i = 0; i < atlas.glyphs.Length; i++)
+            {
+                GlyphRect g = atlas.glyphs[i];
+                string name = $"{baseName}_{(int)g.ch[0]:x}";
+                SpriteRect rect = existing.FirstOrDefault(r => r.name == name) ?? new SpriteRect { name = name, spriteID = GUID.Generate() };
+                rect.rect = new Rect(g.x, atlas.height - g.y - g.h, g.w, g.h);   // json 은 위에서 아래, Unity 는 아래에서 위
+                rect.alignment = SpriteAlignment.Center;
+                rect.pivot = new Vector2(.5f, .5f);
+                rects[i] = rect;
+            }
+            provider.SetSpriteRects(rects);
+            if (provider.GetDataProvider<ISpriteNameFileIdDataProvider>() is { } names)
+                names.SetNameFileIdPairs(rects.Select(r => new SpriteNameFileIdPair(r.name, r.spriteID)));
+            provider.Apply();
+            importer.SaveAndReimport();
         }
 
         // 플립북 가로 스트립(정사각 프레임 N장)을 name_0..name_N-1 스프라이트로 자른다.

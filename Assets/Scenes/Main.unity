@@ -27358,6 +27358,27 @@ MonoBehaviour:
     levelUpBeam: 200
     levelUpFlash: 0.3
     levelUpChevrons: 3
+    levelUpIcons: 7
+    levelUpIconSize: 26
+    levelUpIconSpread: 62
+    damageFont:
+      chars: 0123456789+-!
+      glyphs:
+      - {fileID: -1000309423, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: 728528378, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: 381945955, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: -992644858, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: 1649597979, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: -540704561, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: 1827669959, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: 895442870, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: -445746860, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: 504231460, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: -1104163113, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: 609328533, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      - {fileID: -437180801, guid: b114967c03d9f534dad08cfc5e32c751, type: 3}
+      height: 30
+      spacing: -0.08
     levelUpColor: {r: 0.38, g: 1, b: 0.5, a: 1}
     dodgeScale: 0.178
     dodgeLaunchEnd: 0.055
@@ -28268,6 +28289,7 @@ MonoBehaviour:
   xpOrbSprite: {fileID: 21300000, guid: 49667b4b8385da342a2031ee9c56bd75, type: 3}
   softSprite: {fileID: 21300000, guid: 95332e2c7566b1c4697d39490e6af24d, type: 3}
   heartSprite: {fileID: 21300000, guid: 7a502f8ab56dbf946bd3c9f34e4a49b0, type: 3}
+  levelUpIcon: {fileID: 21300000, guid: f5460d7ce915e534ba512602ec9f0ae7, type: 3}
   stairsSprite: {fileID: 21300000, guid: 6b6018c3af409414ea0e8dac4df93234, type: 3}
   altarSprite: {fileID: 21300000, guid: b2df8e71992b8ec47a0f34c8207a973c, type: 3}
   merchantSprite: {fileID: 21300000, guid: 4be0e663ad3112f4e99e3ff55868e514, type: 3}

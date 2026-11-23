@@ -83,6 +83,13 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 6차 요청 (2026-11-23) — 레벨업 아이콘·피해 숫자 그림 글꼴
+
+- [x] **레벨업 아이콘:** 레벨업 때 몸 둘레 여기저기에서 레벨업 아이콘(Codex `levelup_icon` → `Assets/sprites/levelup_icon.png`)이 차례로 톡 튀어나와 떠오르며 사라집니다. 수·크기·퍼짐은 `visual.levelUpIcons / levelUpIconSize / levelUpIconSpread`.
+- [x] **피해 숫자 그림 글꼴:** 숫자를 Codex 로 그린 글자(흰색 + 굵은 검은 외곽선, `0~9 + - !`)로 바꿨습니다.
+  - 굽기: `art_src/raw/damage_digits.png` → `python tools/bake_damage_font.py` → 아틀라스 `Assets/Art/Generated/damage_font.png` + 글자 위치 `art_src/fonts/damage_font.json` → 메뉴 `TOD/Setup/1. Texture Imports` 가 JSON 대로 글자 스프라이트(`damage_font_<글자 코드>`)를 잘라 냄(스프라이트 ID 유지).
+  - 쓰기: `visual.damageFont` (`chars` ↔ `glyphs`, 높이·간격). `ArenaRenderer.DrawGlyphs` 가 한 줄을 가운데 정렬해 그리고 색은 곱해 물들입니다(피해·전달·피격·회복 색 그대로). 그림에 없는 글자가 섞인 문구(예: 회피!)는 UI 글꼴로 씁니다.
+
 ## 5차 요청 (2026-11-23) — 레벨업 연출 강화·체력 회복 하트
 
 - [x] **레벨업:** 흐려서 안 보이던 연출을 바꿨습니다. 발밑에서 초록 빛 기둥이 솟고(`visual.levelUpBeam` 200px), 충격파 고리 두 겹이 퍼지며, 굵은 ▲ 화살표 3개(`levelUpChevrons`)가 몸을 타고 머리 위로 올라갑니다. 몸은 처음 0.3초(`levelUpFlash`) 밝은 초록으로 번쩍였다가 은은한 기운이 남고, 빛 알갱이가 둘레를 돌며 올라갑니다. 글자는 넣지 않았습니다.

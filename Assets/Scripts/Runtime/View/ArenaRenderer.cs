@@ -24,7 +24,7 @@ namespace TOD
         public ParticleFx particles;
         public BackgroundView background;
         public CameraRig cameraRig;
-        public Sprite goldIcon, shardIcon, knotIcon, needleSprite, streakSprite, barbSprite, xpOrbSprite, softSprite, heartSprite;
+        public Sprite goldIcon, shardIcon, knotIcon, needleSprite, streakSprite, barbSprite, xpOrbSprite, softSprite, heartSprite, levelUpIcon;
         public Sprite stairsSprite, altarSprite, merchantSprite, archSprite;
         public FxSpriteEntry[] fxSprites;
         public FlipbookEntry[] flipbooks;
@@ -525,6 +525,28 @@ namespace TOD
                 painter.Line(Layer.Effects, pts, 14, Painter.Alpha(c, .55f * a), additive: true);
                 painter.Line(Layer.Effects, pts, 5.5f, Painter.Alpha(Color.Lerp(c, Color.white, .2f), a));
             }
+            // 레벨업 아이콘: 몸 둘레 여기저기에서 차례로 톡 튀어나와 살짝 떠오르며 사라진다.
+            if (levelUpIcon != null)
+            {
+                int icons = Mathf.Max(0, v.levelUpIcons);
+                float size = v.levelUpIconSize > 0 ? v.levelUpIconSize : 18;
+                float spread = v.levelUpIconSpread > 0 ? v.levelUpIconSpread : 36;
+                for (int i = 0; i < icons; i++)
+                {
+                    float start = i * .11f + Noise(i * 7.3f + p.x * .01f) * .08f;
+                    float t = (elapsed - start) / .75f;
+                    if (t <= 0 || t >= 1) continue;
+                    float ang = (i / (float)icons + Noise(i * 3.1f) * .4f) * Mathf.PI * 2;
+                    float dist = spread * (.55f + Noise(i * 5.7f) * .45f);
+                    Vector2 home = foot + new Vector2(Mathf.Cos(ang) * dist, -body * .55f + Mathf.Sin(ang) * dist * .75f);
+                    float popIn = t < .2f ? EaseOutBack(t / .2f) : 1;
+                    float alpha = t < .7f ? 1 : 1 - (t - .7f) / .3f;
+                    Vector2 at = home - new Vector2(0, t * 18);
+                    float sz = size * popIn * (.85f + Noise(i * 9.1f) * .3f);
+                    if (softSprite != null) painter.Sprite(Layer.Effects, softSprite, at, 0, sz * 2.2f, sz * 2.2f, Painter.Alpha(c, .35f * alpha), additive: true);
+                    painter.Sprite(Layer.Effects, levelUpIcon, at, 0, sz, sz, new Color(1, 1, 1, alpha));
+                }
+            }
             // 은은하게 남는 기운
             if (softSprite != null)
             {
@@ -823,7 +845,10 @@ namespace TOD
                         int pop = fx.pop > 0 ? fx.pop : 1;
                         float scale = (1 + Mathf.Min(pop, 6) * .07f) * (age < .16f ? .6f + EaseOutBack(age / .16f) * .4f + (1 - age / .16f) * .35f : 1);
                         Color color = fx.color ?? Color.white;
-                        Text?.Label(fx.text, new Vector2(at.x, at.y - fx.lift - (1 - fade) * 34), 24, Painter.Alpha(color, fade), Painter.Alpha(Pal.textStroke, fade), 4, scale, 0, false);
+                        Vector2 spot = new(at.x, at.y - fx.lift - (1 - fade) * 34);
+                        // 숫자는 그림 글꼴(아틀라스)로, 그림에 없는 글자가 섞이면 UI 글꼴로 쓴다.
+                        if (!DrawGlyphs(db.visual.damageFont, fx.text, spot, scale, Painter.Alpha(color, fade)))
+                            Text?.Label(fx.text, spot, 24, Painter.Alpha(color, fade), Painter.Alpha(Pal.textStroke, fade), 4, scale, 0, false);
                         break;
                     }
                     case FxKind.Combo:
@@ -913,6 +938,31 @@ namespace TOD
             Color tint = ToneColor(fx);
             if (book.rim.Length > frame) painter.Sprite(Layer.Effects, book.rim[frame], center, angle, w, h, new Color(tint.r, tint.g, tint.b, fx.alpha), additive: true);
             painter.Sprite(Layer.Effects, book.core[frame], center, angle, w, h, new Color(1, 1, 1, fx.alpha), additive: true);
+        }
+
+        // 그림 글꼴로 한 줄을 가운데 정렬해 그린다. 글자 하나라도 그림에 없으면 false (호출한 쪽이 UI 글꼴로 대신 쓴다).
+        bool DrawGlyphs(GlyphFont font, string text, Vector2 center, float scale, Color color)
+        {
+            if (font == null || font.glyphs == null || string.IsNullOrEmpty(font.chars) || string.IsNullOrEmpty(text)) return false;
+            float h = font.height * scale;
+            float total = 0;
+            int count = 0;
+            foreach (char ch in text)
+            {
+                int i = font.chars.IndexOf(ch);
+                if (i < 0 || i >= font.glyphs.Length || font.glyphs[i] == null) return false;
+                Rect r = font.glyphs[i].rect;
+                total += h * r.width / r.height + (count++ > 0 ? font.spacing * h : 0);
+            }
+            float x = center.x - total / 2;
+            foreach (char ch in text)
+            {
+                Sprite g = font.glyphs[font.chars.IndexOf(ch)];
+                float w = h * g.rect.width / g.rect.height;
+                painter.Sprite(Layer.Effects, g, new Vector2(x + w / 2, center.y), 0, w, h, color);
+                x += w + font.spacing * h;
+            }
+            return true;
         }
 
         // 실이 칼날이 된다: 닻에서 대상을 지나 뻗는 빛의 칼날 → 두 가닥 머리카락 선으로 갈라지며 흩어진다.

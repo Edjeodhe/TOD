@@ -98,3 +98,7 @@ save(col, a, "xp_orb", 128)
 if (RAW / "heart_pickup.png").exists():
     (col, a), = pieces(RAW / "heart_pickup.png", "green", 1, 8)
     save(col, a, "heart_pickup", 128)
+# 레벨업 아이콘 (자홍 키, 반짝이 별까지 한 장으로) — 6차 추가
+if (RAW / "levelup_icon.png").exists():
+    (col, a), = pieces(RAW / "levelup_icon.png", "magenta", 1, 40)
+    save(col, a, "levelup_icon", 128)

@@ -310,6 +310,16 @@ namespace TOD
         public Color killBurstColor, bossBurstColor, meleeSlashColor, pullFlashColor;
     }
 
+    // 그림 글꼴: 아틀라스(Assets/Art/Generated/damage_font.png)에서 잘라 낸 글자 스프라이트. chars[i] ↔ glyphs[i].
+    // 글자는 흰색 + 검은 외곽선이라 색을 곱해 물들인다.
+    [Serializable] public class GlyphFont
+    {
+        public string chars;
+        public Sprite[] glyphs;
+        public float height = 24;             // 기본 글자 높이 (캔버스 px)
+        public float spacing;                 // 글자 사이 (글자 높이 대비, 음수면 겹침)
+    }
+
     [Serializable] public class VisualConfig
     {
         public ElementTone[] tones;
@@ -320,6 +330,10 @@ namespace TOD
         public float levelUpTime, levelUpFill, levelUpGlow, levelUpRate;
         public float levelUpBeam, levelUpFlash;   // 발밑에서 솟는 빛 기둥 높이(캔버스 px), 처음 번쩍이는 시간
         public int levelUpChevrons;               // 위로 솟는 화살표(▲) 수
+        public int levelUpIcons;                  // 몸 둘레 여기저기 튀어나오는 레벨업 아이콘 수
+        public float levelUpIconSize, levelUpIconSpread;   // 아이콘 크기(캔버스 px), 몸 둘레 퍼짐(캔버스 px)
+        [Header("피해 숫자 그림 글꼴")]
+        public GlyphFont damageFont;
         public Color levelUpColor;
         public float dodgeScale, dodgeLaunchEnd, dodgeAirEnd, dodgeHop;
         public float strandSegment, frustrationSegment;

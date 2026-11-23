@@ -1,0 +1,5 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/levelup_icon.png
+Size: square 1024x1024.
+Create ONE small game icon centered, about 520px wide: a "level up" badge — a bold upward-pointing arrow made of bright mint-to-emerald glowing stitched cloth (#5BE38A to #22A85E is NOT allowed because of the key, so use a bright TEAL-MINT #4FE0C8 to #1FA88F), with cream cross-stitches along its edges and a small sparkle star next to its tip, thick rough black outline. Simple, bold, readable at tiny sizes. Don't Starve Together-like hand-drawn 2D look with paper grain inside.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure magenta (#FF00FF) everywhere, no gradient, no texture, no glow onto the background, no shadow, no text. Do not use any magenta or pink inside the artwork.
