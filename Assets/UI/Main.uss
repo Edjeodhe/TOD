@@ -271,33 +271,110 @@ Button:disabled { opacity: 0.5; }
 }
 .room-title { font-size: 45px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); -unity-text-outline-width: 2px; -unity-text-outline-color: #1a1013; text-shadow: 3px 3px 0px rgba(10, 4, 6, 0.7); }
 .room-text { color: #c9b8a6; margin-top: 10px; }
-.inventory-layout { flex-direction: row; margin-top: 20px; }
-.board { flex-direction: row; flex-wrap: wrap; width: 560px; background-color: #160e11; }
-.cell { margin: 2px; padding: 0; min-height: 0; border-radius: 2px; border-width: 2px; border-color: #0d0709; background-image: none; background-color: #2a1f25; color: #241624; font-size: 15px; translate: 0 0; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
-.cell:hover { border-color: #e2cfa8; translate: 0 0; }
-.cell.reinforced { border-color: #8a6a48; }
-.cell.filled { border-color: rgba(10, 5, 8, 0.9); }
-.cell.preview { border-color: #f3e2c8; }
-.cell.invalid { background-color: #7a3445; }
-.stash { flex-grow: 1; margin-left: 22px; max-height: 360px; }
+/* ---------- 재봉 상자 (8차): 세트 패널 · 판(칸 + 조각 그림 층 + 반투명 미리보기 층) · 목록 · 정보 창 ---------- */
+.sewing-body { width: 1520px; }
+.inventory-layout { flex-direction: row; align-items: flex-start; margin-top: 20px; }
+.board-wrap { position: relative; margin: 0 26px; flex-shrink: 0; }
+.board { flex-direction: row; flex-wrap: wrap; background-color: #160e11; padding: 0; }
+.board-layer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.board-ghost { opacity: 0.55; }
+.board-ghost.invalid { opacity: 0.7; }
+.cell { margin: 2px; padding: 0; min-height: 0; border-radius: 0; border-width: 0; background-image: url("project://database/Assets/UI/Puzzle/slot_empty.png"); -unity-slice-left: 0; -unity-slice-right: 0; -unity-slice-top: 0; -unity-slice-bottom: 0; -unity-background-scale-mode: stretch-to-fill; -unity-background-image-tint-color: #4e3e46; background-color: rgba(0, 0, 0, 0); color: #241624; font-size: 15px; translate: 0 0; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.cell:hover { background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: #7a6470; translate: 0 0; }
+.cell.reinforced { -unity-background-image-tint-color: #5c4636; }
+.cell.reinforced:hover { -unity-background-image-tint-color: #806650; }
+.cell.filled { -unity-background-image-tint-color: #2c2228; }
+.cell.preview { -unity-background-image-tint-color: #8a7480; }
+/* 조각 한 칸: 종이(등급 색 tint) 위에 잉크 테두리, 바깥 변을 따라 바늘땀. 마스크 그림은 Puzzle.uss 의 .k{n} */
+.piece-tile { position: absolute; }
+.tile-paper, .tile-edge { position: absolute; left: 0; top: 0; right: 0; bottom: 0; -unity-background-scale-mode: stretch-to-fill; }
+.tile-paper { overflow: hidden; }
+.tile-edge { -unity-background-image-tint-color: #1a1013; }
+.piece-tile.rank-3 .tile-edge { -unity-background-image-tint-color: #4a2e0c; }
+.piece-tile.rank-4 .tile-edge { -unity-background-image-tint-color: #f1d27a; }
+.piece-tile.selected .tile-edge { -unity-background-image-tint-color: #fff4dc; }
+.seam { position: absolute; overflow: hidden; }
+.thread { position: absolute; left: 0; top: 0; -unity-background-image-tint-color: #6b5446; }
+.thread-h { background-image: url("project://database/Assets/UI/Puzzle/stitch_h.png"); background-repeat: repeat-x; background-size: 18px 100%; }
+.thread-v { background-image: url("project://database/Assets/UI/Puzzle/stitch_v.png"); background-repeat: repeat-y; background-size: 100% 18px; }
+.rank-2 .thread { -unity-background-image-tint-color: #24527d; }
+.rank-3 .thread { -unity-background-image-tint-color: #7e5208; }
+.rank-4 .thread { -unity-background-image-tint-color: #f6dc8a; }
+/* 아이템 슬롯: 조각의 칸마다 종이에 눌린 네모 홈(slot_frame) + 모서리 십자 땀(slot_corners, 등급 실 색). tools/bake_puzzle_tiles.py */
+.tile-slot { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-image: url("project://database/Assets/UI/Puzzle/slot_frame.png"); -unity-background-scale-mode: stretch-to-fill; }
+.slot-corners { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-image: url("project://database/Assets/UI/Puzzle/slot_corners.png"); -unity-background-scale-mode: stretch-to-fill; -unity-background-image-tint-color: #6b5446; }
+.rank-2 .slot-corners { -unity-background-image-tint-color: #24527d; }
+.rank-3 .slot-corners { -unity-background-image-tint-color: #7e5208; }
+.rank-4 .slot-corners { -unity-background-image-tint-color: #f6dc8a; }
+.tile-knot { position: absolute; left: 7%; top: 7%; width: 14%; height: 14%; border-radius: 50%; border-width: 2px; border-color: #1a1013; }
+.tile-ornament { position: absolute; right: 12%; bottom: 10%; width: 30%; height: 30%; background-image: url("project://database/Assets/UI/Puzzle/ornament.png"); -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: #b8862b; }
+.rank-4 .tile-ornament { -unity-background-image-tint-color: #f6e3a1; }
+/* 조각 무게 중심의 아이템 아이콘 (코드가 위치·크기 지정) */
+.piece-mark { position: absolute; -unity-background-scale-mode: scale-to-fit; }
+.tile-sparkle { position: absolute; right: 4%; top: 4%; width: 30%; height: 30%; background-image: url("project://database/Assets/UI/Puzzle/sparkle.png"); -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: #fff7d6; }
+.tile-shine { position: absolute; top: 0; bottom: 0; width: 60%; background-image: url("project://database/Assets/UI/Puzzle/shine.png"); -unity-background-scale-mode: stretch-to-fill; opacity: 0.55; }
+.sew-needle { position: absolute; width: 84px; height: 21px; translate: -84px -10px; transform-origin: 100% 50%; background-image: url("project://database/Assets/UI/Puzzle/needle.png"); -unity-background-scale-mode: stretch-to-fill; }
+/* 목록: 왼쪽 아이콘 · 퍼즐 모양 · 오른쪽 끝 이름. 한 줄 높이 = 판 한 칸 (코드가 맞춤) */
+.stash { flex-grow: 0; flex-shrink: 0; width: 440px; }
+.piece-row {
+    flex-direction: row; align-items: center; min-height: 0; padding: 4px 26px 4px 14px; margin-bottom: 4px;
+    -unity-slice-scale: 0.5px; -unity-background-image-tint-color: #d9c7a8; color: #2e2120;
+}
+.piece-row:hover { translate: -4px 0; }
+.piece-row.selected { translate: -10px 0; }
+.piece-item-icon { width: 76px; height: 76px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.piece-shape-slot { position: relative; flex-shrink: 0; margin-left: 16px; }
+.piece-name-box { flex-grow: 1; align-items: flex-end; justify-content: center; }
+.piece-name { font-size: 24px; color: #1a1013; -unity-text-align: middle-right; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
+.piece-row.selected .piece-name { color: #7d2f3e; }
+/* 장착 중 꼬리표: 포도주색 띠 + 밝은 글씨, 장착한 줄에서만 */
+.piece-state { display: none; margin-top: 4px; padding: 2px 10px 3px 10px; font-size: 15px; color: #fff4e4; background-color: #7d2f3e; border-width: 2px; border-color: #1a1013; border-radius: 3px; -unity-text-outline-width: 1px; -unity-text-outline-color: #3b1219; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.piece-row.equipped .piece-state { display: flex; }
+/* 등급 꼬리표: 등급 색 바탕(코드가 칠함), 장착 중 아래 */
+.piece-rank { margin-top: 4px; padding: 2px 10px 3px 10px; font-size: 15px; border-width: 2px; border-color: #1a1013; border-radius: 3px; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.piece-dot { position: absolute; -unity-background-scale-mode: stretch-to-fill; border-color: rgba(26, 16, 19, 0.7); }
+/* 세트 효과 패널 (세피리아식): 색 매듭 · 이름 · 연결 수/다음 단계 · 단계별 효과, 켜진 단계는 밝게 */
+.set-panel { width: 330px; flex-shrink: 0; padding: 18px 18px 8px 18px; background-color: rgba(10, 5, 8, 0.5); border-width: 2px; border-color: #3a2a2e; border-radius: 4px; }
+.set-panel-title { font-size: 24px; color: #d6b06e; margin-bottom: 12px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
+.set-entry { margin-bottom: 12px; padding: 10px 12px; background-color: rgba(255, 255, 255, 0.03); border-left-width: 4px; border-color: #3a2a2e; }
+.set-entry.active { background-color: rgba(255, 236, 210, 0.08); border-color: #d6b06e; }
+.set-head { flex-direction: row; align-items: center; }
+.set-swatch { width: 18px; height: 18px; border-radius: 9px; border-width: 2px; border-color: #1a1013; margin-right: 10px; }
+.set-name { flex-grow: 1; font-size: 24px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
+.set-count { font-size: 24px; color: #eadcc4; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-12px.asset"); }
+.set-tiers { margin-top: 6px; }
+.set-tier { flex-direction: row; align-items: center; margin-top: 4px; opacity: 0.42; }
+.set-tier.next { opacity: 0.7; }
+.set-tier.on { opacity: 1; }
+.tier-need { width: 34px; height: 24px; border-width: 2px; border-radius: 3px; margin-right: 10px; font-size: 15px; color: #eadcc4; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.set-tier.on .tier-need { color: #1a1013; }
+.tier-effect { font-size: 15px; color: #c9b8a6; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.set-tier.on .tier-effect { color: #fff4dc; }
+/* 아이템 정보 창: 양피지(등급 색으로 살짝 물듦), 마우스를 따라다님 */
+.piece-tip {
+    position: absolute; width: 380px; padding: 24px 28px;
+    background-image: url("project://database/Assets/UI/Paper/panel_light.png");
+    -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72; -unity-slice-scale: 0.6px;
+    color: #2e2120;
+}
+.tip-head { flex-direction: row; align-items: center; }
+.tip-icon { width: 64px; height: 64px; flex-shrink: 0; margin-right: 12px; -unity-background-scale-mode: scale-to-fit; }
+.tip-title { flex-grow: 1; flex-shrink: 1; }
+.tip-name { font-size: 30px; color: #1a1013; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.tip-rank { font-size: 15px; margin-top: 2px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.tip-shape { position: relative; flex-shrink: 0; margin-left: 10px; }
+.tip-line { font-size: 15px; color: #4a3a30; margin-top: 10px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+.tip-effect { font-size: 24px; color: #7d2f3e; margin-top: 8px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
+.tip-set-row { flex-direction: row; align-items: center; margin-top: 8px; }
+.tip-set-row > .tip-line { margin-top: 0; flex-shrink: 1; }
+.tip-knot { width: 14px; height: 14px; flex-shrink: 0; border-radius: 7px; border-width: 2px; border-color: #1a1013; margin-right: 8px; }
+.tip-flavor { font-size: 15px; color: #4a3a30; margin-top: 12px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
 /* 스크롤 막대: 잉크 홈 + 양피지 손잡이 */
 .unity-scroller--vertical { width: 14px; }
 .unity-scroller .unity-scroller__low-button, .unity-scroller .unity-scroller__high-button { display: none; }
 .unity-scroller .unity-base-slider__tracker { background-color: #1e1418; border-width: 2px; border-color: #0d0709; border-radius: 2px; }
 .unity-scroller .unity-base-slider__dragger { background-color: #cdb892; border-width: 2px; border-color: #1a1013; border-radius: 2px; }
 .unity-scroller .unity-base-slider__dragger-border { display: none; }
-.piece-button {
-    flex-direction: row; align-items: center; min-height: 44px; padding: 6px 26px; margin-bottom: 6px; font-size: 15px;
-    -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset"); -unity-text-align: middle-left;
-    -unity-slice-scale: 0.36px; -unity-background-image-tint-color: #b9a688; color: #2e2120;
-}
-.piece-button.selected { -unity-background-image-tint-color: #ffffff; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
-.piece-icon { width: 30px; height: 22px; margin-right: 10px; }
-.piece-dot { position: absolute; width: 6px; height: 6px; border-radius: 1px; border-width: 1px; border-color: rgba(10, 5, 8, 0.7); }
-.piece-name { flex-grow: 1; }
-.piece-cost { color: #7d2f3e; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri11-Bold-12px.asset"); }
-.sets { flex-direction: row; flex-wrap: wrap; color: #a8968a; font-size: 15px; margin-top: 14px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
-.sets > Label { margin-right: 22px; }
 .choice-grid { flex-direction: row; flex-wrap: wrap; margin-top: 20px; }
 /* 일반 선택 카드(다락 강화·상점): 바느질 테두리 종이 카드 */
 .choice {
@@ -413,5 +490,5 @@ Button:disabled { opacity: 0.5; }
 .room-note { color: #e2c48a; font-size: 15px; margin-top: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
 
 /* 체력 회복: 새로 찰 몫이 밝게 먼저 보이고, 체력 게이지가 그 위로 차오른다 */
-.meter-fill.heal { position: absolute; left: 0; top: 0; bottom: 0; -unity-background-image-tint-color: #ffb3c0; border-right-width: 0; }
+.meter-fill.heal { position: absolute; left: 0; top: 0; bottom: 0; -unity-background-image-tint-color: #dcfbb8; border-right-width: 0; }
 .meter-fill.health { position: absolute; left: 0; top: 0; bottom: 0; }

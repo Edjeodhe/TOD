@@ -6,7 +6,9 @@ using UnityEngine;
 namespace TOD
 {
     public enum Element { Plain, Chaos, Despair, Frustration, Dodge }
-    public enum StatKind { Damage, Speed, Health, Recharge, Purity, Yarn }
+    // 재봉 조각 능력치. 직렬화 값(정수)이 조각 데이터에 저장되므로 새 값은 끝에만 붙인다.
+    // Multishot = 한 번 쏠 때 더 나가는 바늘 수(좌우로 부채꼴), ThreadWidth = 실 굵기 증가 비율(0.6 = +60%)
+    public enum StatKind { Damage, Speed, Health, Recharge, Purity, Yarn, Multishot, ThreadWidth }
     public enum WaveShape { Sine, Triangle, Sawtooth, Square }
     public enum RoundKind { Survival, Rest, Boss }
     // 증강이 바꾸는 등반 능력치
@@ -121,6 +123,11 @@ namespace TOD
         public float strideBase, strideFactor, motionLerp;
         public float shootHold, pullHold, hurtHold, dashHold;
         public float pickupRadius, magnetRadius, magnetSpeed, bulletHitRadius;
+        [Header("재봉 조각: 여러 갈래 바늘 · 굵은 실")]
+        public float multishotSpread;         // 갈래 바늘 사이 각도 (라디안, 화면 기준)
+        public int multishotMax;              // 한 번에 더 나가는 바늘 수 상한 (2 = 3갈래)
+        public float threadWidthMax;          // 실 굵기 배율 상한 (그리기 두께에 곱한다)
+        public float threadHitWidth;          // 굵기 +100% 마다 당김 판정 반경이 넓어지는 양 (전투장 px)
     }
 
     [Serializable] public class NeedleConfig
@@ -184,7 +191,8 @@ namespace TOD
         public float healChance, healEliteChance;   // 처치 한 번에 하트가 떨어질 확률 (일반·정예)
         public float healAmount;              // 최대 체력 대비 회복량 (0.15 = 15%)
         public float heartSize, healTime;     // 하트 그리기 크기(캔버스 px), 몸에 피가 차오르는 연출 시간
-        public Color healColor;
+        public Color healColor;               // 회복 연출(몸이 차오르는 색·거품·+N 숫자) — 연두
+        public Color heartGlowColor;          // 바닥에 떨어진 하트가 두르는 빛·빨려 들 때 꼬리 — 빨강
         [Header("떨어지는 경험치 구·골드")]
         public int maxXpOrbs, maxCoins;       // 처치 한 번에 나오는 최대 개수 (값은 나눠 담는다)
         public float dropPopSpeed, dropPopTime, dropHop;          // 튀어나오는 속도·시간·높이(캔버스 px)
@@ -389,6 +397,7 @@ namespace TOD
         public string restRoundName, bossRoundLabel, survivalLabel, purified, artifactEyebrow, artifactTaken;
         public string dashValue, expText, expLevel, augmentLevel, pieceEffect, pieceShape;
         public string reroll, rerollUsed, threadBonus, inventoryHint, inventoryInRun;
+        public string pieceCells, tipSet, setProgress, setProgressMax, ownedAll;   // 재봉 상자 정보 창·세트 패널·상점
         public string[] statNames;            // StatKind 순서
         public string[] roundNames;           // 첫 번째 라운드, 두 번째 라운드, 층 보스
     }

@@ -59,6 +59,7 @@ namespace TOD
         public Enemy target;
         public StrandState state;
         public bool bounce;
+        public bool extra;                    // 여러 갈래 바늘(Multishot)로 덤으로 나간 바늘 — 털실을 쓰지 않았으므로 당길 때 돌려받지 않는다
         public Element? element;              // 대쉬 흔적이 만든 실은 속성이 없다 → 등반의 속성을 쓴다
         public Vector2 bite;
         public Strand Copy() => (Strand)MemberwiseClone();

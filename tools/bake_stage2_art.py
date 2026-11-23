@@ -8,7 +8,8 @@ python tools/bake_stage2_art.py
 - xp_orb.png     (자홍 키, 1개) → xp_orb.png         경험치 구
 - heart_pickup.png (초록 키, 1개) → heart_pickup.png 체력 회복 하트
 - levelup_icon.png (자홍 키, 1개) → levelup_icon.png 레벨업 아이콘
-- stairs_steps_v2.png (초록 키, 6개) → stair_0~5.png 계단 조각 (0 = 꼭대기 문, 1~5 = 위 단 → 아래 단)
+- stairs_steps_v3.png (초록 키, 7개) → stair_0~6.png 계단 조각 (0 = 꼭대기 문, 1~6 = 위 단 → 아래 단, 6 = 바닥에 붙은 첫 단)
+  (v3 가 없으면 v2/v1 시트, 6개 → stair_0~5.png)
 """
 from pathlib import Path
 
@@ -41,7 +42,7 @@ def key_alpha(rgb, key):
     return col, a
 
 
-def pieces(path, key, count, merge):
+def pieces(path, key, count, merge, by_y=False):
     rgb = np.asarray(Image.open(path).convert("RGB"))
     col, a = key_alpha(rgb, key)
     mask = a > .16
@@ -53,10 +54,16 @@ def pieces(path, key, count, merge):
     found = sorted(found, reverse=True)[:count]
     # 읽기 순서: 줄(중심 y 를 120px 단위로 묶음) → x
     found.sort(key=lambda f: (round(((f[2][0].start + f[2][0].stop) / 2) / 160), f[2][1].start))
+    if by_y:   # 세로로 쌓인 시트(계단): 위에서 아래 순서만 본다 (가운데 정렬이라 줄 묶음 + x 로는 순서가 뒤집힐 수 있다)
+        found.sort(key=lambda f: (f[2][0].start + f[2][0].stop) / 2)
     result = []
     for _, li, sl in found:
         y0, y1 = max(0, sl[0].start - 6), sl[0].stop + 6
         x0, x1 = max(0, sl[1].start - 6), sl[1].stop + 6
+        if by_y:   # 계단: 그림에 딱 맞게 자른다(그림 아래 끝 = 스프라이트 아래 끝이라야 조각을 바닥·앞 단에 정확히 붙일 수 있다)
+            ys, xs = np.nonzero(mask[sl] & (lab[sl] == li))
+            y0, y1 = max(0, sl[0].start + ys.min() - 2), sl[0].start + ys.max() + 3
+            x0, x1 = max(0, sl[1].start + xs.min() - 2), sl[1].start + xs.max() + 3
         sub_a = a[y0:y1, x0:x1].copy()
         sub_a[lab[y0:y1, x0:x1] != li] = 0
         result.append((col[y0:y1, x0:x1].copy(), sub_a))
@@ -104,10 +111,25 @@ if (RAW / "heart_pickup.png").exists():
 if (RAW / "levelup_icon.png").exists():
     (col, a), = pieces(RAW / "levelup_icon.png", "magenta", 1, 40)
     save(col, a, "levelup_icon", 128)
-# 계단 조각 (초록 키, 위에서 아래: 꼭대기 문 + 단 5개) — 모두 같은 배율로 둬야 단이 아래로 갈수록 넓어지는 비율이 유지된다
+# 8차 새 아이템 2종 (초록 키, 왼쪽 → 오른쪽): 세 갈래 바늘 골무(Multishot) · 굵은 밧줄 실패(ThreadWidth). 바늘 끝 불티가 떨어져 있어 merge 를 크게
+if (RAW / "item_icons_v2.png").exists():
+    for (col, a), name in zip(pieces(RAW / "item_icons_v2.png", "green", 2, 60), ["triple_thimble", "rope_spool"]):
+        save(col, a, f"item_{name}", 256)
+# 계단 조각 (초록 키, 위에서 아래: 꼭대기 문 + 단들) — 모두 같은 배율로 둬야 단이 아래로 갈수록 넓어지는 비율이 유지된다
 # v2 = 바닥 타일을 참고로 같은 돌·색·결로 다시 뽑은 시트 (v1 은 검은 외곽선·분홍 바늘땀이라 바닥과 따로 놀았다)
-STAIRS = next((p for p in (RAW / "stairs_steps_v2.png", RAW / "stairs_steps.png") if p.exists()), None)
+# v3 = 종이 질감(찢어진 종이 가장자리·종이 결·잉크 선) + 맨 아래에 바닥에 납작하게 붙은 첫 단을 더한 7조각 (8차)
+STAIRS = next(((p, c) for p, c in ((RAW / "stairs_steps_v3.png", 7), (RAW / "stairs_steps_v2.png", 6), (RAW / "stairs_steps.png", 6)) if p.exists()), None)
 if STAIRS is not None:
-    found = pieces(STAIRS, "green", 6, 20)
+    STAIRS, count = STAIRS
+    found = pieces(STAIRS, "green", count, 20, by_y=True)
+    if count == 7:   # v3 는 바닥보다 밝고 붉게 나온다 → 돌(붉은 쪽) 부분만 바닥 평균 색 × 1.25 로 맞춘다. 문 안쪽 상아·청록 빛(g ≥ r)은 그대로.
+        floor = np.asarray(Image.open(OUT / "floor.png").convert("RGB")).reshape(-1, 3).astype(np.float32).mean(0)
+        stone = np.concatenate([c[(al > .5) & (c[..., 0] > c[..., 1])] for c, al in found]).astype(np.float32)
+        gain = floor * 1.25 / stone.mean(0)
+        print("stairs tone gain", gain.round(3))
+        for c, al in found:
+            f = c.astype(np.float32)
+            w = np.clip((f[..., 0] - f[..., 1]) / 20, 0, 1)[..., None]
+            c[:] = (f * (1 - w) + f * gain * w).clip(0, 255).astype(np.uint8)
     for i, (col, a) in enumerate(found):
         save(col, a, f"stair_{i}", 4096)

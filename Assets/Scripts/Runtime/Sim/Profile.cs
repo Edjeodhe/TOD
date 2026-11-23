@@ -46,12 +46,12 @@ namespace TOD
                 if (!string.IsNullOrEmpty(json))
                 {
                     Profile saved = JsonUtility.FromJson<Profile>(json);
-                    if (saved is { version: 1 } && saved.items != null && saved.placements != null) return saved;
+                    if (saved is { version: 1 } && saved.items != null && saved.placements != null) return DropInvalidPlacements(db, Dedupe(db, saved));
                 }
             }
             catch (Exception error) { Debug.LogWarning($"[TOD] profile reset: {error.Message}"); }
             var profile = new Profile();
-            foreach (int kind in db.gear.startingKinds) profile.items.Add(new OwnedItem { id = ++profile.nextId, kind = kind });
+            foreach (int kind in db.gear.startingKinds.Distinct()) profile.items.Add(new OwnedItem { id = ++profile.nextId, kind = kind });
             profile.nextId++;
             return profile;
         }
@@ -67,23 +67,73 @@ namespace TOD
         public static (int width, int height, int limit) Dimensions(GameDatabase db, Profile p) =>
             (db.gear.baseColumns + p.expansion, db.gear.baseRows + p.expansion, db.gear.baseCostLimit + p.expansion * db.gear.costLimitStep);
 
+        // 아이템은 모두 고유하다: 같은 종류는 한 번만 가진다 (개수 표시 없음).
+        public static bool Owns(Profile profile, int kind) => profile != null && profile.items.Any(i => i.kind == kind);
+
+        // 아직 갖지 않은 종류 (쉬어가기 탑 선택지·상점 조각이 여기서 뽑는다).
+        public static List<int> Unowned(GameDatabase db, Profile profile) =>
+            Enumerable.Range(0, db.gear.pieces.Length).Where(k => !Owns(profile, k)).ToList();
+
+        // 저장된 프로필에 같은 종류가 여럿이면 처음 것만 남긴다 (빠진 것의 배치도 지움).
+        static Profile Dedupe(GameDatabase db, Profile profile)
+        {
+            var seen = new HashSet<int>();
+            var removed = new HashSet<int>();
+            profile.items.RemoveAll(i =>
+            {
+                bool drop = i.kind < 0 || i.kind >= db.gear.pieces.Length || !seen.Add(i.kind);
+                if (drop) removed.Add(i.id);
+                return drop;
+            });
+            profile.placements.RemoveAll(p => removed.Contains(p.id));
+            return profile;
+        }
+
+        // 종류를 주면 그 종류(이미 가졌으면 그대로 그 정의만 돌려줌), 안 주면 아직 없는 종류 중 하나. 모두 가졌으면 null.
         public static PieceDef AddItem(GameDatabase db, Profile profile, int kind = -1)
         {
-            if (kind < 0) kind = UnityEngine.Random.Range(0, db.gear.pieces.Length);
+            if (kind < 0)
+            {
+                List<int> left = Unowned(db, profile);
+                if (left.Count == 0) return null;
+                kind = left[UnityEngine.Random.Range(0, left.Count)];
+            }
+            if (Owns(profile, kind)) return db.gear.pieces[kind];
             var item = new OwnedItem { id = profile.nextId++, kind = kind };
             profile.items.Add(item);
             return Def(db, item);
         }
 
-        public static List<Vector2Int> Shape(GameDatabase db, OwnedItem item, int turns)
+        // 회전 중심 = 데이터의 첫 칸(shape[0]). 돌려도 이 칸은 제자리에 있고(배치 x,y = 이 칸의 판 좌표),
+        // 나머지 칸은 이 칸 기준 상대 좌표로 시계 방향 90°씩 돈다. 판 위 아이콘도 이 칸 슬롯 가운데에 놓인다.
+        public static List<Vector2Int> Shape(GameDatabase db, OwnedItem item, int turns) => Rotate(Def(db, item).shape, turns);
+
+        public static List<Vector2Int> Rotate(Vector2Int[] shape, int turns)
         {
-            List<Vector2Int> shape = Def(db, item).shape.ToList();
-            for (int step = 0; step < turns; step++)
+            Vector2Int pivot = shape[0];
+            List<Vector2Int> cells = shape.Select(c => c - pivot).ToList();
+            for (int step = 0; step < ((turns % 4) + 4) % 4; step++) cells = cells.Select(c => new Vector2Int(-c.y, c.x)).ToList();
+            return cells;
+        }
+
+        // 불러온 배치 중 판 밖·겹침·등급 합 초과인 것은 뺀다 (조각 모양·회전 기준이 바뀐 옛 저장 대비).
+        static Profile DropInvalidPlacements(GameDatabase db, Profile profile)
+        {
+            var (width, height, limit) = Dimensions(db, profile);
+            var used = new HashSet<Vector2Int>();
+            int cost = 0;
+            profile.placements.RemoveAll(p =>
             {
-                int bottom = shape.Max(c => c.y);
-                shape = shape.Select(c => new Vector2Int(bottom - c.y, c.x)).ToList();
-            }
-            return shape;
+                OwnedItem item = profile.items.Find(i => i.id == p.id);
+                if (item == null) return true;
+                List<Vector2Int> cells = Shape(db, item, p.turns).Select(c => c + new Vector2Int(p.x, p.y)).ToList();
+                bool bad = cost + Def(db, item).cost > limit || cells.Any(c => c.x < 0 || c.y < 0 || c.x >= width || c.y >= height || used.Contains(c));
+                if (bad) return true;
+                cost += Def(db, item).cost;
+                foreach (Vector2Int c in cells) used.Add(c);
+                return false;
+            });
+            return profile;
         }
 
         public static List<PlacedPiece> Placed(GameDatabase db, Profile profile)

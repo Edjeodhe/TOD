@@ -142,6 +142,7 @@ namespace TOD
                 SetBorder(card.Q("frame"), edge);
                 foreach (string knob in new[] { "knob-top", "knob-right" }) card.Q(knob).style.backgroundColor = edge;
             }
+            TickInventory();
             if (Now >= noticeUntil) Show(notice, false);
             if (Now >= bannerUntil) Show(banner, false);
             if (Now >= flashUntil) Show(roomFlash, false);
@@ -493,100 +494,450 @@ namespace TOD
             }
         }
 
+        // ---------------------------------------------------------------- 재봉 상자
+        // 판 = 칸 버튼(누르기·호버) 위에 조각 그림 층(board-pieces)과 반투명 미리보기 층(board-ghost)을 겹친다.
+        // 조각 한 칸 = Slots.uxml piece-tile 복제: 종이·테두리 마스크(k{n}, MaskKey) · 바깥 변 바늘땀 · 매듭 · 아이콘.
+
+        const float SewDuration = .9f;   // 장착 바느질: 바늘이 둘레를 한 바퀴 도는 시간
+        static readonly Vector2Int[] Normal = { new(0, -1), new(1, 0), new(0, 1), new(-1, 0) };   // 위·오른·아래·왼 (판 아래로 y 증가)
+        static readonly Vector2Int[] Tangent = { new(1, 0), new(0, 1), new(-1, 0), new(0, -1) };  // 시계 방향으로 도는 방향
+        static readonly string[] SeamNames = { "seam-t", "seam-r", "seam-b", "seam-l" };
+
+        class Seam
+        {
+            public VisualElement box, thread;
+            public Vector2 origin, from, to;          // 칸의 판 좌표, 바늘땀 시작·끝(판 좌표 px, 바늘 진행 방향)
+            public float length, thick;
+            public bool horizontal;
+            public Vector2Int edgeFrom, edgeTo;       // 격자 꼭짓점 (둘레 순서 잇기용)
+        }
+
+        class PieceArt
+        {
+            public int id;
+            public readonly List<VisualElement> tiles = new();
+            public readonly List<Seam> seams = new();    // 둘레를 도는 순서
+            public readonly List<(VisualElement shine, float x)> shines = new();
+            public readonly List<VisualElement> sparkles = new();
+            public VisualElement mark;   // 무게 중심의 아이템 아이콘
+            public float width;
+        }
+
+        readonly List<PieceArt> boardArt = new();
+        int sewId = -1;
+        float sewStart, pitch;
+        bool holdingPiece;
+
+        Color RankColor(PieceDef def)
+        {
+            Color[] ranks = db.gear.rankColors;
+            return ranks != null && def.cost < ranks.Length ? ranks[def.cost] : db.Set(def.set).color;
+        }
+
+        static string Amount(float value) => value < 1 ? $"{Mathf.RoundToInt(value * 100)}%" : value.ToString("0.##");
+
         public void RenderInventory(Profile profile, int? selected, int turns)
         {
             var (width, height, limit) = Gear.Dimensions(db, profile);
             List<PlacedPiece> placed = Gear.Placed(db, profile);
             Text(inventory, "inventory-header", string.Format(T.inventoryHeader, width, height, placed.Sum(p => p.def.cost), limit));
+            OwnedItem holding = profile.items.FirstOrDefault(i => i.id == selected);
+            holdingPiece = holding != null;
+            HideTip();
+
+            // 칸: 누르기·호버만 맡는 바탕 (조각 그림은 위 층)
             VisualElement board = inventory.Q("board");
             board.Clear();
             cells.Clear();
-            float size = Mathf.Floor(560f / width) - 4;
+            pitch = Mathf.Floor(560f / width);
+            board.style.width = pitch * width;
+            board.style.height = pitch * height;
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
                     var cell = (Button)Slot(slots, "cell");
                     var at = new Vector2Int(x, y);
-                    cell.style.width = size;
-                    cell.style.height = size;
+                    cell.style.width = pitch - 4;
+                    cell.style.height = pitch - 4;
                     PlacedPiece occupying = placed.FirstOrDefault(p => p.cells.Contains(at));
                     cell.EnableInClassList("filled", occupying != null);
                     cell.EnableInClassList("reinforced", y < profile.rows * 2);
-                    Color color = occupying != null ? db.Set(occupying.def.set).color : new Color32(0x30, 0x24, 0x3a, 255);
-                    cell.style.backgroundColor = color;
-                    cell.userData = color;
-                    cell.text = occupying != null && occupying.placement.x == x && occupying.placement.y == y ? "✦" : "";
+                    cell.text = "";
                     cell.clicked += () => game.ClickCell(at.x, at.y);
-                    cell.RegisterCallback<PointerEnterEvent>(_ => game.HoverCell(at));
+                    cell.RegisterCallback<PointerEnterEvent>(e =>
+                    {
+                        game.HoverCell(at);
+                        if (occupying != null && !holdingPiece) ShowTip(occupying.def, e.position);
+                    });
+                    cell.RegisterCallback<PointerMoveEvent>(e => MoveTip(e.position));
+                    cell.RegisterCallback<PointerLeaveEvent>(_ => HideTip());
                     board.Add(cell);
                     cells[at] = cell;
                 }
             }
+
+            // 판 위 조각 그림
+            VisualElement layer = inventory.Q("board-pieces");
+            layer.Clear();
+            boardArt.Clear();
+            foreach (PlacedPiece piece in placed)
+            {
+                PieceArt art = BuildPiece(layer, piece.def, piece.cells, piece.Id, new Vector2Int(piece.placement.x, piece.placement.y));
+                if (piece.Id == selected) foreach (VisualElement tile in art.tiles) tile.AddToClassList("selected");
+                boardArt.Add(art);
+            }
+            if (boardArt.All(a => a.id != sewId)) sewId = -1;
+            ApplySew();
+            inventory.Q("board-ghost").Clear();
+
+            // 목록: 아이콘 · 퍼즐 모양 슬롯 · 이름(오른쪽 끝). 아이템은 모두 고유해서 개수는 없다. 장착한 것 먼저, 등급 높은 순.
             var stash = inventory.Q<ScrollView>("stash");
             stash.Clear();
-            OwnedItem holding = profile.items.FirstOrDefault(i => i.id == selected);
-            foreach (OwnedItem item in profile.items)
+            float rowHeight = Mathf.Round(pitch * 1.3f);
+            stash.style.maxHeight = Mathf.Max(pitch * height, (rowHeight + 4) * 4);   // 최소 4줄은 보이게
+            foreach (OwnedItem item in profile.items.OrderBy(i => placed.Any(p => p.Id == i.id) ? 0 : 1).ThenByDescending(i => Gear.Def(db, i).cost))
             {
                 PieceDef def = Gear.Def(db, item);
                 PlacedPiece placement = placed.FirstOrDefault(p => p.Id == item.id);
                 var button = (Button)Slot(pieceButton, "piece");
+                button.AddToClassList($"rank-{def.cost}");
                 button.EnableInClassList("selected", item.id == selected);
-                PieceIcon(button.Q("icon"), Gear.Shape(db, item, item.id == selected ? turns : placement?.placement.turns ?? 0), db.Set(def.set).color);
+                button.EnableInClassList("equipped", placement != null);
+                button.style.height = rowHeight;
+                button.style.unityBackgroundImageTintColor = PaperTint(RankColor(def));
+                Icon(button.Q("icon"), def.icon);
+                List<Vector2Int> shape = Gear.Shape(db, item, item.id == selected ? turns : placement?.placement.turns ?? 0);
+                MiniShape(button.Q("shape"), shape, RankColor(def), 16);
                 Text(button, "name", def.name);
-                Text(button, "cost", (placement != null ? T.equipped : "") + def.cost);
-                string value = def.value < 1 ? $"{Mathf.RoundToInt(def.value * 100)}%" : def.value.ToString("0.##");
-                button.tooltip = string.Format(T.pieceTooltip, db.gear.rankNames[def.cost], T.statNames[(int)def.stat], value);
+                Text(button, "state", placement != null ? T.equipped : "");
+                // 등급 꼬리표: 등급 색 바탕 + 같은 색의 어두운 글씨
+                Label rankTag = button.Q<Label>("rank");
+                rankTag.text = db.gear.rankNames[def.cost];
+                rankTag.style.backgroundColor = RankColor(def);
+                rankTag.style.color = def.cost >= 4 ? new Color(1f, .95f, .88f) : Color.Lerp(RankColor(def), Color.black, .72f);
                 int id = item.id;
                 button.clicked += () => game.SelectPiece(id);
+                button.RegisterCallback<PointerEnterEvent>(e => ShowTip(def, e.position));
+                button.RegisterCallback<PointerMoveEvent>(e => MoveTip(e.position));
+                button.RegisterCallback<PointerLeaveEvent>(_ => HideTip());
                 stash.Add(button);
             }
-            VisualElement sets = inventory.Q("sets");
-            sets.Clear();
-            GearStats stats = Gear.Stats(db, profile);
-            foreach (SetDef set in db.gear.sets)
-            {
-                SetGroup group = stats.groups[set.id];
-                var line = (Label)Slot(slots, "set-line");
-                line.text = string.Format(T.setLine, set.name, group.size, group.threshold > 0 ? string.Format(T.setOn, group.threshold) : T.setOff, set.bonus);
-                line.style.color = Color.Lerp(set.color, Color.white, .1f);
-                sets.Add(line);
-            }
+
+            RenderSets(Gear.Stats(db, profile));
             inventory.Q<Button>("rotate").SetEnabled(holding != null);
             inventory.Q<Button>("unequip").SetEnabled(placed.Any(p => p.Id == selected));
         }
 
-        void PieceIcon(VisualElement icon, List<Vector2Int> shape, Color color)
+        // 세피리아식 세트 목록: 색 매듭 · 이름 · 연결 수 / 다음 단계 · 단계별 효과(켜진 단계는 밝게). 켜진 세트가 위로.
+        void RenderSets(GearStats stats)
         {
-            icon.Clear();
-            foreach (Vector2Int c in shape)
+            VisualElement list = inventory.Q("set-list");
+            list.Clear();
+            foreach (SetDef set in db.gear.sets.OrderByDescending(s => stats.groups[s.id].tier).ThenByDescending(s => stats.groups[s.id].size))
             {
-                VisualElement dot = Slot(slots, "piece-dot");
-                dot.style.left = c.x * 7;
-                dot.style.top = c.y * 7;
-                dot.style.backgroundColor = color;
-                icon.Add(dot);
+                SetGroup group = stats.groups[set.id];
+                VisualElement entry = Slot(slots, "set-entry");
+                entry.EnableInClassList("active", group.tier > 0);
+                entry.Q("swatch").style.backgroundColor = set.color;
+                Text(entry, "set-name", set.name);
+                int next = set.thresholds.FirstOrDefault(t => t > group.size);
+                Text(entry, "set-count", next > 0 ? string.Format(T.setProgress, group.size, next) : string.Format(T.setProgressMax, group.size));
+                entry.Q<Label>("set-name").style.color = group.tier > 0 ? Color.Lerp(set.color, Color.white, .25f) : new Color(.66f, .59f, .54f);
+                VisualElement tiers = entry.Q("tiers");
+                for (int i = 0; i < set.thresholds.Length; i++)
+                {
+                    VisualElement tier = Slot(slots, "set-tier");
+                    bool on = i < group.tier;
+                    tier.EnableInClassList("on", on);
+                    tier.EnableInClassList("next", i == group.tier);
+                    Text(tier, "need", set.thresholds[i].ToString());
+                    Text(tier, "effect", string.Format(T.pieceEffect, set.bonus, Amount(set.perTier * (i + 1))));
+                    VisualElement need = tier.Q("need");
+                    need.style.backgroundColor = on ? set.color : new Color(0, 0, 0, 0);
+                    SetBorder(need, on ? set.color : new Color(.42f, .36f, .33f));
+                    tiers.Add(tier);
+                }
+                list.Add(entry);
             }
         }
 
-        public void PreviewPiece(Profile profile, OwnedItem item, int turns, Vector2Int? at)
+        // 조각 그림 한 벌을 판 좌표(칸 목록)로 만든다.
+        // pivot = 회전 중심 칸의 판 좌표 (아이콘이 이 칸 슬롯 가운데에 놓인다)
+        PieceArt BuildPiece(VisualElement layer, PieceDef def, List<Vector2Int> cellList, int id, Vector2Int pivot)
         {
-            foreach (Button cell in cells.Values)
+            var art = new PieceArt { id = id };
+            var set = new HashSet<Vector2Int>(cellList);
+            float inset = Mathf.Round(pitch * .14f);   // 바늘땀: 찢긴 가장자리와 칸 슬롯(slot_frame) 사이
+            float thick = Mathf.Max(3, Mathf.Round(pitch * .055f));
+            Color fill = RankColor(def);
+            int minX = cellList.Min(c => c.x), maxX = cellList.Max(c => c.x);
+            art.width = (maxX - minX + 1) * pitch;
+            // 매듭은 맨 위·왼쪽 칸, 아이콘은 회전 중심 칸 슬롯의 정사각형 가운데
+            Vector2Int knotCell = cellList.OrderBy(c => c.y).ThenBy(c => c.x).First();
+            Vector2 center = new((pivot.x + .5f) * pitch, (pivot.y + .5f) * pitch);
+            Vector2Int lastCell = cellList.OrderByDescending(c => c.y).ThenByDescending(c => c.x).First();
+            var seams = new List<Seam>();
+            foreach (Vector2Int c in cellList)
             {
-                cell.RemoveFromClassList("preview");
-                cell.RemoveFromClassList("invalid");
-                cell.style.backgroundColor = (Color)cell.userData;
+                VisualElement tile = Slot(slots, "piece-tile");
+                tile.AddToClassList($"rank-{def.cost}");
+                Vector2 origin = new(c.x * pitch, c.y * pitch);
+                tile.style.left = origin.x;
+                tile.style.top = origin.y;
+                tile.style.width = pitch;
+                tile.style.height = pitch;
+                int bits = MaskKey(set, c) & 15;
+                tile.Q("paper").AddToClassList($"k{MaskKey(set, c)}");
+                tile.Q("edge").AddToClassList($"k{MaskKey(set, c)}");
+                tile.Q("paper").style.unityBackgroundImageTintColor = fill;
+                for (int d = 0; d < 4; d++)
+                {
+                    VisualElement box = tile.Q(SeamNames[d]);
+                    if ((bits & (1 << d)) == 0) { box.style.display = DisplayStyle.None; continue; }
+                    Vector2Int n = Normal[d], t = Tangent[d];
+                    // 모서리: 이웃이 없으면 안쪽에서 꺾이고(볼록), 이웃과 대각선이 다 있으면 바깥으로 이어진다(오목)
+                    float startExt = set.Contains(c - t) ? (set.Contains(c - t + n) ? -inset : 0) : inset;
+                    float endExt = set.Contains(c + t) ? (set.Contains(c + t + n) ? -inset : 0) : inset;
+                    Vector2 a, b;
+                    switch (d)
+                    {
+                        case 0: a = new(startExt, inset); b = new(pitch - endExt, inset); break;
+                        case 1: a = new(pitch - inset, startExt); b = new(pitch - inset, pitch - endExt); break;
+                        case 2: a = new(pitch - startExt, pitch - inset); b = new(endExt, pitch - inset); break;
+                        default: a = new(inset, pitch - startExt); b = new(inset, endExt); break;
+                    }
+                    var seam = new Seam
+                    {
+                        box = box, thread = box.Q("thread"), origin = origin, from = origin + a, to = origin + b,
+                        length = Vector2.Distance(a, b), thick = thick, horizontal = d % 2 == 0,
+                    };
+                    seam.edgeFrom = d switch { 0 => c, 1 => c + new Vector2Int(1, 0), 2 => c + Vector2Int.one, _ => c + new Vector2Int(0, 1) };
+                    seam.edgeTo = seam.edgeFrom + t;
+                    seam.thread.style.width = seam.horizontal ? seam.length : thick;
+                    seam.thread.style.height = seam.horizontal ? thick : seam.length;
+                    seams.Add(seam);
+                    SetSeam(seam, 1);
+                }
+                VisualElement knot = tile.Q("knot");
+                knot.style.display = c == knotCell ? DisplayStyle.Flex : DisplayStyle.None;
+                knot.style.backgroundColor = db.Set(def.set).color;
+                tile.Q("ornament").style.display = def.cost >= 3 && c == lastCell ? DisplayStyle.Flex : DisplayStyle.None;
+                VisualElement sparkle = tile.Q("sparkle");
+                bool sparkles = def.cost >= 4 && (c == knotCell || c == lastCell);
+                sparkle.style.display = sparkles ? DisplayStyle.Flex : DisplayStyle.None;
+                if (sparkles) art.sparkles.Add(sparkle);
+                VisualElement shine = tile.Q("shine");
+                shine.style.display = def.cost >= 4 ? DisplayStyle.Flex : DisplayStyle.None;
+                if (def.cost >= 4) art.shines.Add((shine, (c.x - minX) * pitch));
+                art.tiles.Add(tile);
+                layer.Add(tile);
             }
-            if (at == null || item == null) return;
-            bool valid = Gear.CanPlace(db, profile, item, turns, at.Value.x, at.Value.y);
-            Color color = db.Set(Gear.Def(db, item).set).color;
-            foreach (Vector2Int c in Gear.Shape(db, item, turns))
+            if (def.icon != null)
             {
-                if (!cells.TryGetValue(at.Value + c, out Button cell)) continue;
-                cell.AddToClassList(valid ? "preview" : "invalid");
-                if (valid) cell.style.backgroundColor = Color.Lerp(color, new Color32(0x25, 0x20, 0x2c, 255), .48f);
-                else cell.style.backgroundColor = StyleKeyword.Null;
+                art.mark = Slot(slots, "piece-mark");
+                float size = pitch * .5f;   // 슬롯 홈(칸의 56%) 안에 들어가는 크기
+                art.mark.style.width = size;
+                art.mark.style.height = size;
+                art.mark.style.left = center.x - size * .5f;
+                art.mark.style.top = center.y - size * .5f;
+                Icon(art.mark, def.icon);
+                layer.Add(art.mark);
+            }
+            // 둘레 순서: 격자 꼭짓점을 따라 시계 방향으로 잇는다 (맨 위 왼쪽 윗변에서 시작)
+            var remaining = seams.OrderBy(s => s.edgeFrom.y).ThenBy(s => s.edgeFrom.x).ToList();
+            while (remaining.Count > 0)
+            {
+                Seam current = remaining[0];
+                remaining.RemoveAt(0);
+                art.seams.Add(current);
+                while (true)
+                {
+                    Vector2Int end = current.edgeTo;
+                    int next = remaining.FindIndex(s => s.edgeFrom == end);
+                    if (next < 0) break;
+                    current = remaining[next];
+                    remaining.RemoveAt(next);
+                    art.seams.Add(current);
+                }
+            }
+            return art;
+        }
+
+        // 바늘땀 한 변을 진행 방향으로 f(0~1)만큼 드러낸다. 실 무늬는 제자리에 둔다.
+        static void SetSeam(Seam seam, float f)
+        {
+            float shown = seam.length * Mathf.Clamp01(f);
+            Vector2 local = Vector2.Min(seam.from, seam.to) - seam.origin;
+            bool forward = seam.horizontal ? seam.to.x >= seam.from.x : seam.to.y >= seam.from.y;
+            float offset = forward ? 0 : seam.length - shown;
+            seam.box.style.display = shown > .5f ? DisplayStyle.Flex : DisplayStyle.None;
+            if (seam.horizontal)
+            {
+                seam.box.style.left = local.x + offset;
+                seam.box.style.top = local.y - seam.thick * .5f;
+                seam.box.style.width = shown;
+                seam.box.style.height = seam.thick;
+                seam.thread.style.left = -offset;
+            }
+            else
+            {
+                seam.box.style.left = local.x - seam.thick * .5f;
+                seam.box.style.top = local.y + offset;
+                seam.box.style.width = seam.thick;
+                seam.box.style.height = shown;
+                seam.thread.style.top = -offset;
             }
         }
+
+        // 조각을 판에 놓은 직후: 바늘이 둘레를 땀땀이 한 바퀴 돈다.
+        public void Sew(int id)
+        {
+            sewId = id;
+            sewStart = Now;
+            ApplySew();
+        }
+
+        void ApplySew()
+        {
+            VisualElement needle = inventory.Q("needle");
+            PieceArt art = sewId >= 0 ? boardArt.FirstOrDefault(a => a.id == sewId) : null;
+            if (art == null || art.seams.Count == 0) { Show(needle, false); sewId = -1; return; }
+            float t = (Now - sewStart) / SewDuration;
+            int n = art.seams.Count;
+            for (int i = 0; i < n; i++) SetSeam(art.seams[i], t * n - i);
+            // 다 꿰매면 조각이 살짝 부풀었다 돌아온다
+            float pop = t < 1 ? 1 : 1 + .06f * Mathf.Sin(Mathf.Clamp01((t - 1) / .25f) * Mathf.PI);
+            foreach (VisualElement tile in art.tiles) tile.style.scale = new Scale(new Vector2(pop, pop));
+            if (art.mark != null) art.mark.style.scale = new Scale(new Vector2(pop, pop));
+            Show(needle, t < 1);
+            if (t >= 1.25f) { sewId = -1; return; }
+            if (t >= 1) return;
+            int index = Mathf.Clamp(Mathf.FloorToInt(t * n), 0, n - 1);
+            Seam seam = art.seams[index];
+            Vector2 tip = Vector2.Lerp(seam.from, seam.to, Mathf.Clamp01(t * n - index));
+            Vector2 dir = seam.to - seam.from;
+            needle.style.left = tip.x;
+            needle.style.top = tip.y;
+            needle.style.rotate = new Rotate(Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
+        }
+
+        // 재봉 상자가 열려 있을 때 매 프레임: 바느질 · 레전더리 빛 줄기와 반짝임
+        void TickInventory()
+        {
+            if (inventory == null || inventory.ClassListContains("hidden")) return;
+            if (sewId >= 0) ApplySew();
+            for (int p = 0; p < boardArt.Count; p++)
+            {
+                PieceArt art = boardArt[p];
+                if (art.shines.Count == 0) continue;
+                float u = Mathf.Repeat(Now * .55f + p * .37f, 1.8f) / 1.8f;
+                float band = -pitch + u * (art.width + pitch * 2);
+                foreach (var (shine, x) in art.shines) shine.style.left = band - x;
+                for (int i = 0; i < art.sparkles.Count; i++)
+                {
+                    float s = Mathf.Max(0, Mathf.Sin(Now * 3.1f + i * 2.3f + p));
+                    art.sparkles[i].style.opacity = s * s;
+                    art.sparkles[i].style.scale = new Scale(new Vector2(.6f + s * .5f, .6f + s * .5f));
+                }
+            }
+        }
+
+        // 종이 마스크 번호 (tools/bake_puzzle_tiles.py, Puzzle.uss): 바깥 변 비트(위1·오른2·아래4·왼8)
+        // + 16 × 오목 모서리 비트(왼위1·오른위2·오른아래4·왼아래8: 두 변은 이웃이 있는데 대각선 칸이 빈 곳)
+        static int MaskKey(HashSet<Vector2Int> set, Vector2Int c)
+        {
+            int bits = 0, concave = 0;
+            for (int d = 0; d < 4; d++) if (!set.Contains(c + Normal[d])) bits |= 1 << d;
+            int[,] corners = { { 0, 3 }, { 0, 1 }, { 2, 1 }, { 2, 3 } };
+            for (int i = 0; i < 4; i++)
+            {
+                int a = corners[i, 0], b = corners[i, 1];
+                if ((bits & (1 << a)) == 0 && (bits & (1 << b)) == 0 && !set.Contains(c + Normal[a] + Normal[b])) concave |= 1 << i;
+            }
+            return bits + 16 * concave;
+        }
+
+        // 목록·정보 창·카드의 작은 퍼즐 모양 (판과 같은 종이 마스크를 작게)
+        void MiniShape(VisualElement box, List<Vector2Int> shape, Color color, float cellPx)
+        {
+            box.Clear();
+            // 회전 중심 기준 상대 좌표(음수 가능)를 왼쪽 위 0,0 으로 옮긴다
+            Vector2Int min = new(shape.Min(c => c.x), shape.Min(c => c.y));
+            shape = shape.Select(c => c - min).ToList();
+            var set = new HashSet<Vector2Int>(shape);
+            box.style.width = (shape.Max(c => c.x) + 1) * cellPx;
+            box.style.height = (shape.Max(c => c.y) + 1) * cellPx;
+            foreach (Vector2Int c in shape)
+            {
+                VisualElement dot = Slot(slots, "piece-dot");
+                dot.AddToClassList($"k{MaskKey(set, c)}");
+                dot.style.left = c.x * cellPx;
+                dot.style.top = c.y * cellPx;
+                dot.style.width = cellPx;
+                dot.style.height = cellPx;
+                dot.style.unityBackgroundImageTintColor = color;
+                // 칸 나눔 선 (판과 같이 몇 칸인지 보이게)
+                dot.style.borderRightWidth = set.Contains(c + Vector2Int.right) ? 1 : 0;
+                dot.style.borderBottomWidth = set.Contains(c + new Vector2Int(0, 1)) ? 1 : 0;
+                box.Add(dot);
+            }
+        }
+
+        void PieceIcon(VisualElement icon, List<Vector2Int> shape, Color color) => MiniShape(icon, shape, color, 12);
+
+        // 반투명 미리보기: 놓일 자리에 조각 모양 그대로, 못 놓으면 붉게.
+        public void PreviewPiece(Profile profile, OwnedItem item, int turns, Vector2Int? at)
+        {
+            VisualElement ghost = inventory.Q("board-ghost");
+            ghost.Clear();
+            foreach (Button cell in cells.Values) cell.RemoveFromClassList("preview");
+            if (at == null || item == null) return;
+            bool valid = Gear.CanPlace(db, profile, item, turns, at.Value.x, at.Value.y);
+            ghost.EnableInClassList("invalid", !valid);
+            List<Vector2Int> shape = Gear.Shape(db, item, turns).Select(c => c + at.Value).ToList();
+            PieceArt art = BuildPiece(ghost, Gear.Def(db, item), shape, -1, at.Value);
+            if (!valid) foreach (VisualElement tile in art.tiles) tile.Q("paper").style.unityBackgroundImageTintColor = new Color(.86f, .24f, .26f);
+            foreach (Vector2Int c in shape) if (cells.TryGetValue(c, out Button cell)) cell.AddToClassList("preview");
+        }
+
+        // ---------------------------------------------------------------- 아이템 정보 창
+
+        void ShowTip(PieceDef def, Vector2 panelPos)
+        {
+            VisualElement tip = inventory.Q("piece-tip");
+            SetDef set = db.Set(def.set);
+            Color rank = RankColor(def);
+            Icon(tip.Q("tip-icon"), def.icon);
+            Text(tip, "tip-name", def.name);
+            Text(tip, "tip-rank", db.gear.rankNames[def.cost]);
+            tip.Q<Label>("tip-rank").style.color = Color.Lerp(rank, Color.black, .4f);
+            MiniShape(tip.Q("tip-shape"), Gear.Rotate(def.shape, 0), rank, 14);
+            Text(tip, "tip-cells", string.Format(T.pieceCells, def.shape.Length));
+            Text(tip, "tip-effect", string.Format(T.pieceEffect, T.statNames[(int)def.stat], Amount(def.value)));
+            tip.Q("tip-knot").style.backgroundColor = set.color;
+            Text(tip, "tip-set", string.Format(T.tipSet, set.name, set.bonus, string.Join("·", set.thresholds)));
+            Text(tip, "tip-flavor", def.flavor ?? "");
+            tip.Q("tip-flavor").style.display = string.IsNullOrEmpty(def.flavor) ? DisplayStyle.None : DisplayStyle.Flex;
+            tip.style.unityBackgroundImageTintColor = Color.Lerp(Color.white, rank, .22f);
+            Show(tip, true);
+            MoveTip(panelPos);
+        }
+
+        void MoveTip(Vector2 panelPos)
+        {
+            VisualElement tip = inventory.Q("piece-tip");
+            if (tip.ClassListContains("hidden")) return;
+            Vector2 p = inventory.WorldToLocal(panelPos);
+            float w = float.IsNaN(tip.layout.width) || tip.layout.width < 1 ? 380 : tip.layout.width;
+            float h = float.IsNaN(tip.layout.height) || tip.layout.height < 1 ? 220 : tip.layout.height;
+            float x = p.x + 28, y = p.y + 20;
+            if (x + w > inventory.layout.width - 8) x = p.x - w - 20;
+            if (y + h > inventory.layout.height - 8) y = inventory.layout.height - h - 8;
+            tip.style.left = Mathf.Max(8, x);
+            tip.style.top = Mathf.Max(8, y);
+        }
+
+        void HideTip() => Show(inventory.Q("piece-tip"), false);
     }
 }

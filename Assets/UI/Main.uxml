@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/Main.uss" />
+    <Style src="project://database/Assets/UI/Puzzle.uss" />
     <ui:VisualElement name="root" class="root" picking-mode="Ignore">
 
         <!-- 전투 중 글자 (피해 숫자, N HIT, ×N) -->
@@ -163,21 +164,49 @@
 
         <!-- 재봉 상자 -->
         <ui:VisualElement name="inventory" class="layer room hidden">
-            <ui:VisualElement class="room-body">
+            <ui:VisualElement class="room-body sewing-body">
                 <ui:Label name="inventory-header" class="eyebrow" />
                 <ui:Label text="재봉 상자" class="room-title" />
                 <ui:Label name="inventory-run-note" class="room-note hidden" />
                 <ui:Label text="조각을 고르고(R로 회전) 판의 칸을 누르세요. 같은 색의 변을 맞대면 세트 효과가 켜집니다." class="room-text" />
                 <ui:VisualElement class="inventory-layout">
-                    <ui:VisualElement name="board" class="board" />
-                    <ui:ScrollView name="stash" class="stash" />
+                    <!-- 세트 효과 패널: 세트마다 색 매듭·이름·연결 수/다음 단계·단계별 효과 (GameUI 가 Slots.uxml set-entry 를 복제) -->
+                    <ui:VisualElement name="sets" class="set-panel">
+                        <ui:Label text="세트 효과" class="set-panel-title" />
+                        <ui:VisualElement name="set-list" class="set-list" />
+                    </ui:VisualElement>
+                    <!-- 판: 칸(누르기) 위에 조각 그림 층과 반투명 미리보기 층을 겹친다 -->
+                    <ui:VisualElement name="board-wrap" class="board-wrap">
+                        <ui:VisualElement name="board" class="board" />
+                        <ui:VisualElement name="board-pieces" class="board-layer" picking-mode="Ignore" />
+                        <ui:VisualElement name="board-ghost" class="board-layer board-ghost" picking-mode="Ignore" />
+                        <ui:VisualElement name="needle" class="sew-needle hidden" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:ScrollView name="stash" class="stash" mode="Vertical" horizontal-scroller-visibility="Hidden" />
                 </ui:VisualElement>
-                <ui:VisualElement name="sets" class="sets" />
                 <ui:VisualElement class="actions">
                     <ui:Button name="rotate" text="회전 (R)" />
                     <ui:Button name="unequip" text="판에서 빼기" />
                     <ui:Button name="inventory-back" text="돌아가기" class="primary" />
                 </ui:VisualElement>
+            </ui:VisualElement>
+            <!-- 아이템 정보 창 (목록·판의 조각에 마우스를 올리면 따라다니고, 떼면 사라짐) -->
+            <ui:VisualElement name="piece-tip" class="piece-tip hidden" picking-mode="Ignore">
+                <ui:VisualElement class="tip-head" picking-mode="Ignore">
+                    <ui:VisualElement name="tip-icon" class="tip-icon" picking-mode="Ignore" />
+                    <ui:VisualElement class="tip-title" picking-mode="Ignore">
+                        <ui:Label name="tip-name" class="tip-name" picking-mode="Ignore" />
+                        <ui:Label name="tip-rank" class="tip-rank" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="tip-shape" class="tip-shape" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="tip-cells" class="tip-line" picking-mode="Ignore" />
+                <ui:Label name="tip-effect" class="tip-effect" picking-mode="Ignore" />
+                <ui:VisualElement class="tip-set-row" picking-mode="Ignore">
+                    <ui:VisualElement name="tip-knot" class="tip-knot" picking-mode="Ignore" />
+                    <ui:Label name="tip-set" class="tip-line" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="tip-flavor" class="tip-flavor" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
 

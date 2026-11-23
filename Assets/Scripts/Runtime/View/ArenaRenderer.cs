@@ -130,6 +130,8 @@ namespace TOD
 
             DrawProps(r, nearest, clock, dt);
             DrawPurifyRing(r, dt);
+            CaptureDeaths(r);
+            threadScale = combat != null ? combat.ThreadScale(r) : 1;
             DrawBossDeath(r, dt);
 
             Player player = r.player;
@@ -212,14 +214,14 @@ namespace TOD
                     float size = rw.heartSize > 0 ? rw.heartSize : 18;
                     float beat = 1 + .12f * Mathf.Pow(Mathf.Max(0, Mathf.Sin(clock * 7 + d.x)), 8);
                     if (softSprite != null)
-                        painter.Sprite(Layer.Effects, softSprite, at, 0, size * rw.dropGlow, size * rw.dropGlow, Painter.Alpha(rw.healColor, .55f), additive: true);
+                        painter.Sprite(Layer.Effects, softSprite, at, 0, size * rw.dropGlow, size * rw.dropGlow, Painter.Alpha(rw.heartGlowColor, .55f), additive: true);
                     painter.Sprite(Layer.Effects, heartSprite != null ? heartSprite : goldIcon, at + new Vector2(0, bob), 0, size * beat, size * beat, Color.white);
                 }
                 else painter.Sprite(Layer.Effects, shardIcon, at, 0, 20, 20, Color.white);
                 if (flying)
                 {
                     Vector2 dir = (hero - ground).normalized;
-                    Color tail = d.xp > 0 ? rw.xpColor : d.heal > 0 ? rw.healColor : rw.goldColor;
+                    Color tail = d.xp > 0 ? rw.xpColor : d.heal > 0 ? rw.heartGlowColor : rw.goldColor;
                     painter.Line(Layer.Effects, at, at - dir * 14, 2, Painter.Alpha(tail, .5f), additive: true);
                 }
             }
@@ -322,22 +324,28 @@ namespace TOD
             if (softSprite != null)   // 바닥 빛: 가장자리가 부드러운 빛 (단단한 원판처럼 보이지 않게)
                 painter.Sprite(Layer.Ground, softSprite, at, 0, 230, 230 * Space.Proj, Painter.Alpha(glow, (.18f + .07f * pulse) * shown), additive: true);
             float topY = at.y;
-            // 바닥에 붙어 있게: 맨 아래 단 밑에 부드러운 그늘
-            if (stairPieces[n - 1] != null && r.stairsAge >= (n - 1) * rc.stairStepDelay)
-            {
-                float bw = stairPieces[n - 1].rect.width * scale;
-                painter.Ellipse(Layer.Ground, at + new Vector2(0, 2), bw * .55f, bw * .1f, Painter.Alpha(Pal.shadow, .7f * shown));
-            }
+            // 그늘 타원은 두지 않는다(계단이 떠 보였다). 맨 아래 조각은 앞면이 거의 없는 '바닥에 붙은 첫 단'이라 발밑(at.y)에 납작하게 닿는다.
             // 바닥 청크와 같은 색감: 라운드 컨셉 덮개(정화된 층은 정화 밝기)
             ConceptDef concept = r.concept;
             PurifyConfig pc = db.purify;
-            // 뒤(꼭대기)부터 그려야 앞 단이 위에 겹친다. 조각 i 의 바닥 = 계단 발밑에서 (n-1-i) 단 위.
+            // 조각 i 의 바닥(그림 아래 끝): 맨 아래 단(바닥에 붙은 첫 단)이 발밑 at.y, 그 위로 한 단씩 올라간다.
+            // 그림은 아래 단일수록 조금씩 크게 그려져 있어, 한 단 높이(rise, 맨 위 단 기준)를 바로 아래 조각의 그림 높이에 비례해 늘린다
+            // (일정하게 두면 아래쪽 단이 윗단 앞면을 점점 더 가린다).
+            float unit = n > 1 && stairPieces[1] != null ? stairPieces[1].rect.height : 0;
+            float[] bottoms = new float[n];
+            bottoms[n - 1] = at.y;
+            for (int i = n - 2; i >= 0; i--)
+            {
+                Sprite below = stairPieces[i + 1];
+                bottoms[i] = bottoms[i + 1] - (unit > 0 && below != null ? rise * below.rect.height / unit : rise);
+            }
+            // 뒤(꼭대기)부터 그려야 앞 단이 위에 겹친다.
             for (int i = 0; i < n; i++)
             {
                 Sprite piece = stairPieces[i];
                 if (piece == null) continue;
                 float w = piece.rect.width * scale, h = piece.rect.height * scale;
-                float bottom = at.y - (n - 1 - i) * rise;
+                float bottom = bottoms[i];
                 float t = (r.stairsAge - i * rc.stairStepDelay) / settle;
                 if (i == 0) topY = bottom - h;
                 if (t <= 0) continue;
@@ -360,7 +368,7 @@ namespace TOD
             if (stairPieces[0] != null && softSprite != null && done)
             {
                 float lw = stairPieces[0].rect.width * scale;
-                painter.Sprite(Layer.Effects, softSprite, new Vector2(at.x, topY + (at.y - (n - 1) * rise - topY) * .45f), 0, lw * .9f, lw * 1.2f, Painter.Alpha(glow, (.22f + .1f * pulse)), additive: true);
+                painter.Sprite(Layer.Effects, softSprite, new Vector2(at.x, topY + (bottoms[0] - topY) * .45f), 0, lw * .9f, lw * 1.2f, Painter.Alpha(glow, (.22f + .1f * pulse)), additive: true);
             }
             if (dt > 0 && done && Rand() < .25f)
                 particles.Emit(ParticleKind.Glint, new Vector2(at.x + (Rand() - .5f) * 60, topY + Rand() * 40), new Vector2(0, -40), .9f, glow, 1.8f);
@@ -449,9 +457,9 @@ namespace TOD
             {
                 // 묶이는 동안: 떨며 어두워지고, 실이 위에서 아래로 차례로 감기며 조인다.
                 float shake = Mathf.Sin(t * 70) * 2.2f * wrapK;
-                SpriteRenderer body = painter.Sprite(Layer.Ground, art, anchor + new Vector2(shake, 0), 0, w * b.facing, h, Color.white);
                 bool flash = cutT >= 0;
-                painter.Style(body, bright: flash ? 2.2f : 1 - .25f * wrapK, sat: flash ? .2f : 1 - .4f * wrapK);
+                DrawBody(Layer.Ground, bossParts, art, foot, anchor, new Vector2(shake, 0), 0, w * b.facing, h, Color.white,
+                    flash ? 2.2f : 1 - .25f * wrapK, flash ? .2f : 1 - .4f * wrapK, null, null);
                 int loops = Mathf.Max(1, bd.loops);
                 float tighten = 1 - Mathf.Pow(1 - wrapK, 2);
                 for (int i = 0; i < loops; i++)
@@ -498,10 +506,10 @@ namespace TOD
                 float drop = 60 * fk * fk * (1 + Mathf.Abs(side) * .3f);
                 float rot = side * .18f * fk;
                 Vector2 offset = n * drift + new Vector2(0, drop);
-                SpriteRenderer sr = painter.Sprite(Layer.Ground, art, anchor + offset, rot, w * b.facing, h, new Color(1, 1, 1, alpha));
                 Vector4? lower = piece > 0 ? Plane(anchor, center, offset, rot, n, Offset(piece - 1), 1) : null;
                 Vector4? upper = piece < cuts ? Plane(anchor, center, offset, rot, n, Offset(piece), -1) : null;
-                painter.Style(sr, bright: fk < .08f ? 1.8f : .9f, sat: .8f, cut: lower ?? upper, cut2: lower != null ? upper : null);
+                DrawBody(Layer.Ground, bossParts, art, foot, anchor, offset, rot, w * b.facing, h, new Color(1, 1, 1, alpha),
+                    fk < .08f ? 1.8f : .9f, .8f, lower ?? upper, lower != null ? upper : null);
                 // 잘린 종이 가장자리: 밝은 종이색 선
                 if (upper != null)
                 {
@@ -619,7 +627,7 @@ namespace TOD
             }
         }
 
-        // 하트를 먹으면: 몸 실루엣이 발끝부터 머리까지 붉게 차오르고(피가 차는 듯), 차오르는 선이 빛나며 거품이 떠오른다.
+        // 하트를 먹으면: 몸 실루엣이 발끝부터 머리까지 회복 색(rewards.healColor, 연두)으로 차오르고, 차오르는 선이 빛나며 거품이 떠오른다.
         void DrawHeal(Player p, float dt)
         {
             RewardConfig rw = db.rewards;
@@ -827,7 +835,8 @@ namespace TOD
             float seed = s.birth * 13;
             // 막 꽂힌 실은 퉁긴 현처럼 떨리다가 팽팽해진다.
             float twang = s.state == StrandState.Stuck ? 7 * Mathf.Exp(-(r.time - s.landed) * 9) : 0;
-            List<Vector2> points = DrawStrand(Layer.Ground, a, b, element, seed, r.time, s.anchor != null ? 1.45f : 1.7f, s.anchor != null ? .82f : 1, twang, flight);
+            // 굵은 실(재봉 조각 ThreadWidth): 당김 판정 반경과 같은 배율로 굵게
+            List<Vector2> points = DrawStrand(Layer.Ground, a, b, element, seed, r.time, (s.anchor != null ? 1.45f : 1.7f) * threadScale, s.anchor != null ? .82f : 1, twang, flight);
             EmitAlong(points, element, element == Element.Frustration ? .5f : element == Element.Plain ? .06f : .16f, dt);
             float bead = (r.time * 2.65f + s.birth) % 1;
             Vector2 p = points[Mathf.FloorToInt(bead * (points.Count - 1))];
@@ -1047,9 +1056,61 @@ namespace TOD
             }
         }
 
+        // 처치된 적의 마지막 리그 모습(파츠)을 잡아 둔다 → 처치 조각·보스 처치 연출이 살아 있을 때와 같은 크기·발 위치·자세로 그린다.
+        // (8차: 예전에는 통그림 type.sprite 를 키 h 로 그려, 리그보다 몸집이 커 보였다.) 뷰가 풀로 돌아가기 전에 불러야 한다.
+        float threadScale = 1;   // 이번 프레임 실 굵기 배율 (Combat.ThreadScale)
+        readonly Dictionary<Fx, List<EnemyPart>> sliceParts = new();
+        readonly List<Fx> sliceStale = new();
+        List<EnemyPart> bossParts;
+        BossDeath bossPartsOwner;
+
+        void CaptureDeaths(RunState r)
+        {
+            sliceStale.Clear();
+            foreach (Fx fx in sliceParts.Keys) if (!r.effects.Contains(fx)) sliceStale.Add(fx);
+            foreach (Fx fx in sliceStale) sliceParts.Remove(fx);
+            if (r.bossDeath == null) { bossParts = null; bossPartsOwner = null; }
+            foreach (KeyValuePair<Enemy, EnemyView> pair in enemyViews)
+            {
+                Enemy e = pair.Key;
+                if (r.enemies.Contains(e)) continue;
+                if (r.bossDeath != null && bossPartsOwner != r.bossDeath && e.type == r.bossDeath.type)
+                {
+                    bossParts = pair.Value.Snapshot();
+                    bossPartsOwner = r.bossDeath;
+                }
+                foreach (Fx fx in r.effects)
+                {
+                    if (fx.kind != FxKind.Sliced || fx.type != e.type || sliceParts.ContainsKey(fx)) continue;
+                    if (Mathf.Abs(fx.x - e.x) + Mathf.Abs(fx.y - e.y) > 40) continue;
+                    sliceParts[fx] = pair.Value.Snapshot();
+                    break;
+                }
+            }
+        }
+
+        // 적 몸 한 벌: 파츠 모습이 있으면 파츠마다, 없으면 통그림 한 장. anchor(통그림 피벗) 기준으로 rot 만큼 돌리고 offset 만큼 옮긴다.
+        void DrawBody(Layer layer, List<EnemyPart> parts, Sprite art, Vector2 foot, Vector2 anchor, Vector2 offset, float rot,
+            float w, float h, Color color, float bright, float sat, Vector4? cut, Vector4? cut2)
+        {
+            if (parts == null || parts.Count == 0)
+            {
+                SpriteRenderer sr = painter.Sprite(layer, art, anchor + offset, rot, w, h, color);
+                painter.Style(sr, bright: bright, sat: sat, cut: cut, cut2: cut2);
+                return;
+            }
+            foreach (EnemyPart part in parts)
+            {
+                Vector2 at = anchor + offset + Rotate(foot + part.at - anchor, rot);
+                SpriteRenderer sr = painter.Sprite(layer, part.sprite, at, part.angle + rot, part.w, part.h, color);
+                painter.Style(sr, bright: bright, sat: sat, fill: part.shade, fillAmount: part.shade.a, cut: cut, cut2: cut2);
+            }
+        }
+
         // 처치된 적이 절단선을 따라 두 조각으로 떨어진다.
         void DrawSliced(Fx fx, float fade)
         {
+            if (sliceParts.TryGetValue(fx, out List<EnemyPart> parts) && parts.Count > 0) { DrawSlicedParts(fx, fade, parts); return; }
             Sprite im = fx.type.sprite;
             float t = 1 - fade;
             float h = fx.type.height * (fx.elite ? db.enemies.eliteHeight : 1);
@@ -1069,6 +1130,30 @@ namespace TOD
                 Vector3 cw = Space.Canvas(c);
                 Vector2 nw = new Vector2(normal.x, -normal.y).normalized;
                 painter.Style(sr, bright: t < .12f ? 2.4f : .85f, sat: t < .12f ? .3f : .7f, cut: new Vector4(nw.x, nw.y, Vector2.Dot(nw, cw), 1));
+            }
+        }
+
+        // DrawSliced 와 같은 움직임을 캔버스 공간에서 (파츠 모습은 좌우 뒤집힘이 이미 들어 있으므로 법선·회전 방향에 facing 을 곱한다).
+        void DrawSlicedParts(Fx fx, float fade, List<EnemyPart> parts)
+        {
+            float t = 1 - fade;
+            float h = fx.type.height * (fx.elite ? db.enemies.eliteHeight : 1);
+            Vector2 d = new(Mathf.Cos(fx.angle), Mathf.Sin(fx.angle));
+            Vector2 n = new Vector2(-d.y, d.x) * fx.facing;
+            Vector2 foot = new(fx.x, Space.ProjectY(fx.y));
+            Color color = new(1, 1, 1, fade < .35f ? fade / .35f : 1);
+            foreach (float s in new[] { 1f, -1f })
+            {
+                float spread = 8 + 26 * (1 - Mathf.Pow(1 - t, 2.5f)) * (s == fx.side ? 1.3f : .8f);
+                float drop = 30 * t * t;
+                Vector2 offset = n * s * spread + new Vector2(d.x * s * spread * .5f, drop);
+                float rot = fx.facing * s * t * .35f;
+                Vector2 c = foot + offset + Rotate(new Vector2(0, -h / 2), rot);
+                Vector2 normal = Rotate(n * s, rot);
+                Vector3 cw = Space.Canvas(c);
+                Vector2 nw = new Vector2(normal.x, -normal.y).normalized;
+                DrawBody(Layer.Effects, parts, null, foot, foot, offset, rot, 0, 0, color,
+                    t < .12f ? 2.4f : .85f, t < .12f ? .3f : .7f, new Vector4(nw.x, nw.y, Vector2.Dot(nw, cw), 1), null);
             }
         }
 
@@ -1095,7 +1180,7 @@ namespace TOD
             float pulled = Mathf.Pow(snap, NV.pullSnapPower > 0 ? NV.pullSnapPower : 2.4f);
             Vector2 lead = b + (a - b) * pulled;
             float tension = (1 - snap) * 3.2f;
-            DrawStrand(Layer.Effects, a, lead, fx.element, fx.seed, fx.time * 3 + fx.seed, 2.6f + 2.8f * fade, Mathf.Min(1, fade * 1.6f), tension, false);
+            DrawStrand(Layer.Effects, a, lead, fx.element, fx.seed, fx.time * 3 + fx.seed, (2.6f + 2.8f * fade) * threadScale, Mathf.Min(1, fade * 1.6f), tension, false);
             if (snap > 0 && snap < 1)
             {
                 float radius = 3 + 4 * (1 - snap);

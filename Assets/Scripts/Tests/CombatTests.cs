@@ -79,11 +79,12 @@ namespace TOD.Tests
         public void SetGroupsUseLargestConnectedCluster()
         {
             Profile p = EmptyProfile();
-            p.items.Add(new OwnedItem { id = 1, kind = 0 });   // 붉은 골무 (혼돈 2칸)
-            p.items.Add(new OwnedItem { id = 2, kind = 1 });   // 잊힌 매듭 (혼돈 3칸)
-            p.items.Add(new OwnedItem { id = 3, kind = 2 });   // 낡은 단추 (좌절 1칸)
+            // 8차: 칸 수 = 등급 (일반 1 · 레어 2 · 유니크 3 · 레전더리 4)
+            p.items.Add(new OwnedItem { id = 1, kind = 0 });   // 불씨 골무 (혼돈 일반 1칸)
+            p.items.Add(new OwnedItem { id = 2, kind = 1 });   // 찢어진 리본 (혼돈 레어 2칸, 가로)
+            p.items.Add(new OwnedItem { id = 3, kind = 2 });   // 녹슨 안전핀 (좌절 일반 1칸)
             p.placements.Add(new Placement { id = 1, x = 0, y = 0 });
-            p.placements.Add(new Placement { id = 2, x = 2, y = 0 });
+            p.placements.Add(new Placement { id = 2, x = 1, y = 0 });   // (1,0)(2,0) → 골무와 변이 맞닿음
             p.placements.Add(new Placement { id = 3, x = 5, y = 3 });
             GearStats stats = Gear.Stats(db, p);
             Assert.AreEqual(2, stats.groups["chaos"].size);
@@ -92,6 +93,19 @@ namespace TOD.Tests
             Assert.AreEqual(0, stats.groups["despair"].tier);
             Assert.AreEqual(Element.Chaos, Gear.ThreadElement(stats));
             Assert.IsFalse(Gear.CanPlace(db, p, p.items[0], 0, 2, 0), "겹치는 칸에는 놓을 수 없다");
+        }
+
+        [Test]
+        public void ItemsAreUnique()
+        {
+            Profile p = EmptyProfile();
+            Gear.AddItem(db, p, 0);
+            Gear.AddItem(db, p, 0);
+            Assert.AreEqual(1, p.items.Count, "같은 종류는 한 번만 가진다");
+            while (Gear.AddItem(db, p) != null) { }
+            Assert.AreEqual(db.gear.pieces.Length, p.items.Count, "무작위 지급은 아직 없는 종류에서만");
+            Assert.AreEqual(p.items.Count, p.items.Select(i => i.kind).Distinct().Count());
+            Assert.AreEqual(0, Gear.Unowned(db, p).Count);
         }
 
         [Test]
@@ -242,6 +256,70 @@ namespace TOD.Tests
             Assert.AreEqual(0, r.drops.Count, "모두 몸으로 빨려 들어 회수된다");
             Assert.Greater(r.gold, gold, "골드가 오른다");
             Assert.Greater(r.xp + r.level * 1000, xp, "경험치가 오른다");
+        }
+
+        // 조각 하나(능력치 kind)를 재봉 상자 (0,0)에 끼운 프로필
+        Profile WithPiece(StatKind stat)
+        {
+            int kind = System.Array.FindIndex(db.gear.pieces, d => d.stat == stat);
+            Assert.GreaterOrEqual(kind, 0, $"{stat} 조각이 데이터에 없습니다");
+            Profile p = EmptyProfile();
+            p.items.Add(new OwnedItem { id = 1, kind = kind });
+            p.placements.Add(new Placement { id = 1, x = 0, y = 0 });
+            Assert.IsTrue(Gear.Placed(db, p).Count == 1, "조각이 상자에 놓인다");
+            return p;
+        }
+
+        // '세 갈래 바늘' 조각: 한 번 쏘면 털실 1개로 바늘 3개가 부채꼴로 나가고, 매듭 셈은 1, 당겨도 털실은 1발 몫만 돌아온다.
+        [Test]
+        public void MultishotFiresFanForOneYarn()
+        {
+            RunState r = combat.CreateRun(WithPiece(StatKind.Multishot), () => .5f);
+            Assert.AreEqual(2, combat.ExtraNeedles(r), "가운데 + 좌우 2개");
+            r.roundLength = 999;   // 생존 시간이 0 이면 첫 프레임에 라운드가 끝나 실을 거둔다
+            r.player.x = 500; r.player.y = 350;
+            float yarn = r.yarn;
+            combat.Update(r, 1 / 60f, new CombatInput { shoot = true, aim = new Vector2(800, 350) });
+            Assert.AreEqual(3, r.strands.Count, "바늘 3개");
+            Assert.AreEqual(yarn - 1, r.yarn, "털실은 1개만");
+            Assert.AreEqual(1, r.shotCount, "매듭 셈은 발사 1회 = 1");
+            float[] angles = r.strands.Select(s => Mathf.Atan2(s.vy * db.arena.projectionY, s.vx)).OrderBy(a => a).ToArray();
+            Assert.AreEqual(0, angles[1], 1e-3, "가운데는 겨눈 방향");
+            Assert.AreEqual(db.hero.multishotSpread, angles[2] - angles[1], 1e-3, "좌우 각도는 데이터");
+            Assert.AreEqual(db.hero.multishotSpread, angles[1] - angles[0], 1e-3);
+            Assert.AreEqual(1, r.strands.Count(s => !s.extra));
+            r.strands.ForEach(s => s.state = StrandState.Ground);
+            float before = r.yarn;
+            combat.Update(r, 1 / 60f, new CombatInput { pull = true, aim = new Vector2(800, 350) });
+            Assert.AreEqual(Mathf.Min(combat.YarnMax(r), before + 1), r.yarn, "당기면 쓴 털실 1개 몫만 돌아온다");
+
+            RunState plain = NewRun();
+            plain.roundLength = 999;
+            plain.player.x = 500; plain.player.y = 350;
+            combat.Update(plain, 1 / 60f, new CombatInput { shoot = true, aim = new Vector2(800, 350) });
+            Assert.AreEqual(1, plain.strands.Count, "조각이 없으면 한 개");
+        }
+
+        // '굵은 실' 조각: 당길 때 실 선분 둘레의 판정 반경이 넓어져, 기본 실로는 비껴가던 적도 벤다. 굵기 배율은 상한까지.
+        [Test]
+        public void ThickThreadWidensPullHit()
+        {
+            RunState thick = combat.CreateRun(WithPiece(StatKind.ThreadWidth), () => .5f);
+            RunState plain = NewRun();
+            Assert.Greater(combat.ThreadScale(thick), 1, "굵기 배율이 커진다");
+            Assert.LessOrEqual(combat.ThreadScale(thick), db.hero.threadWidthMax, "상한");
+            Assert.AreEqual(1, combat.ThreadScale(plain), 1e-4);
+            float basePad = combat.ThreadHitPad(plain), widePad = combat.ThreadHitPad(thick);
+            Assert.Greater(widePad, basePad);
+            foreach ((RunState r, bool hits) in new[] { (plain, false), (thick, true) })
+            {
+                r.player.x = 500; r.player.y = 350;
+                // 땅에 떨어진 실: 손(500,350) → (500,100). 적은 실에서 (기본 판정 + 넓어진 몫의 절반)만큼 옆에
+                Enemy e = Add(r, "stalker", 500 + db.Enemy("stalker").radius + (basePad + widePad) / 2, 250);
+                r.strands.Add(new Strand { x = 500, y = 100, state = StrandState.Ground, element = Element.Plain });
+                combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
+                Assert.AreEqual(hits, e.hp < e.maxHp, hits ? "굵은 실은 벤다" : "기본 실은 비껴간다");
+            }
         }
 
         // 자동 조작으로 5층 끝(엔딩)까지 진행되는지: 라운드·보스·욕망 제안·상점 흐름을 모두 통과해야 한다.

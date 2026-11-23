@@ -4,7 +4,36 @@
     <ui:VisualElement name="yarn-pip" class="yarn-pip"><ui:VisualElement name="wind" class="yarn-wind" /></ui:VisualElement>
     <ui:VisualElement name="piece-dot" class="piece-dot" picking-mode="Ignore" />
     <ui:Label name="world-label" class="world-label" picking-mode="Ignore" />
-    <ui:Label name="set-line" />
+    <!-- 재봉 상자 퍼즐 한 칸 그림: 종이 · 잉크(레전더리는 금박) 테두리(둘 다 Puzzle.uss 의 k{n} 마스크) · 아이템 슬롯(눌린 홈 + 모서리 땀) · 바깥 변 바늘땀 · 장식 · 세트 매듭 · 반짝임 -->
+    <ui:VisualElement name="piece-tile" class="piece-tile" picking-mode="Ignore">
+        <ui:VisualElement name="paper" class="tile-paper" picking-mode="Ignore">
+            <ui:VisualElement name="shine" class="tile-shine" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="edge" class="tile-edge" picking-mode="Ignore" />
+        <ui:VisualElement name="slot" class="tile-slot" picking-mode="Ignore"><ui:VisualElement class="slot-corners" picking-mode="Ignore" /></ui:VisualElement>
+        <ui:VisualElement name="seam-t" class="seam seam-h" picking-mode="Ignore"><ui:VisualElement name="thread" class="thread thread-h" picking-mode="Ignore" /></ui:VisualElement>
+        <ui:VisualElement name="seam-r" class="seam seam-v" picking-mode="Ignore"><ui:VisualElement name="thread" class="thread thread-v" picking-mode="Ignore" /></ui:VisualElement>
+        <ui:VisualElement name="seam-b" class="seam seam-h" picking-mode="Ignore"><ui:VisualElement name="thread" class="thread thread-h" picking-mode="Ignore" /></ui:VisualElement>
+        <ui:VisualElement name="seam-l" class="seam seam-v" picking-mode="Ignore"><ui:VisualElement name="thread" class="thread thread-v" picking-mode="Ignore" /></ui:VisualElement>
+        <ui:VisualElement name="ornament" class="tile-ornament" picking-mode="Ignore" />
+        <ui:VisualElement name="knot" class="tile-knot" picking-mode="Ignore" />
+        <ui:VisualElement name="sparkle" class="tile-sparkle" picking-mode="Ignore" />
+    </ui:VisualElement>
+    <!-- 판 위 조각의 아이템 아이콘 (조각 무게 중심에 하나) -->
+    <ui:VisualElement name="piece-mark" class="piece-mark" picking-mode="Ignore" />
+    <!-- 세트 효과 패널 항목과 단계 줄 -->
+    <ui:VisualElement name="set-entry" class="set-entry">
+        <ui:VisualElement class="set-head">
+            <ui:VisualElement name="swatch" class="set-swatch" />
+            <ui:Label name="set-name" class="set-name" />
+            <ui:Label name="set-count" class="set-count" />
+        </ui:VisualElement>
+        <ui:VisualElement name="tiers" class="set-tiers" />
+    </ui:VisualElement>
+    <ui:VisualElement name="set-tier" class="set-tier">
+        <ui:Label name="need" class="tier-need" />
+        <ui:Label name="effect" class="tier-effect" />
+    </ui:VisualElement>
     <ui:VisualElement name="dash-pip" class="dash-pip"><ui:VisualElement name="fill" class="dash-fill" /></ui:VisualElement>
     <!-- 증강·아이템 선택 카드 (퍼즐 조각 모양: 위·오른쪽 돌기, 왼쪽 홈) -->
     <ui:Button name="puzzle" class="puzzle">

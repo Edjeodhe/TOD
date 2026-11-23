@@ -296,6 +296,7 @@ namespace TOD
         {
             WareDef ware = db.shop.wares.First(w => w.id == id);
             if (shop.sold.Contains(id) || Run.gold < Price(ware)) return;
+            if (id == "piece" && Gear.Unowned(db, Profile).Count == 0) { ui.Say(db.ui.ownedAll); return; }   // 아이템은 고유: 다 가졌으면 팔지 않는다
             Run.gold -= Price(ware);
             shop.sold.Add(id);
             float potion = Run.desires.Contains("hunger") ? db.desire.hungerPotion : 1;
@@ -354,6 +355,7 @@ namespace TOD
                 selected = null;
                 Gear.Save(db, Profile);
                 RenderInventory();
+                ui.Sew(item.id);   // 장착: 바늘이 조각 둘레를 땀땀이 한 바퀴
                 sound.Play("loot");
             }
         }

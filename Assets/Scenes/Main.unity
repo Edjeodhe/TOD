@@ -26349,7 +26349,7 @@ MonoBehaviour:
     survivalSeconds:
     - 90
     - 120
-    stairsOffset: {x: 170, y: -30}
+    stairsOffset: {x: 170, y: 30}
     altarOffset: {x: -170, y: -90}
     merchantOffset: {x: 180, y: -80}
     restStairsOffset: {x: 0, y: -260}
@@ -26357,8 +26357,8 @@ MonoBehaviour:
     interactRadius: 80
     merchantChance: 0.5
     artifactChoices: 3
-    stairsRevealTime: 0.7
-    stairPieces: 6
+    stairsRevealTime: 0.79
+    stairPieces: 7
     stairStepDelay: 0.09
     stairSettle: 0.16
     clearFadeTime: 0.6
@@ -26576,6 +26576,10 @@ MonoBehaviour:
     magnetRadius: 140
     magnetSpeed: 260
     bulletHitRadius: 18
+    multishotSpread: 0.26
+    multishotMax: 2
+    threadWidthMax: 2.5
+    threadHitWidth: 14
   needle:
     reach: 340
     launch: 1860
@@ -26736,7 +26740,8 @@ MonoBehaviour:
     healAmount: 0.15
     heartSize: 26
     healTime: 1.1
-    healColor: {r: 1, g: 0.3, b: 0.38, a: 1}
+    healColor: {r: 0.78431374, g: 0.9607843, b: 0.6039216, a: 1}
+    heartGlowColor: {r: 1, g: 0.29803923, b: 0.38039216, a: 1}
     maxXpOrbs: 3
     maxCoins: 3
     dropPopSpeed: 260
@@ -26910,7 +26915,6 @@ MonoBehaviour:
       value: 2
       shape:
       - {x: 0, y: 0}
-      - {x: 1, y: 0}
       icon: {fileID: 21300000, guid: 95a294f2fa1e43f4b8c330823ffd82ae, type: 3}
       flavor: "\uC190\uB05D\uC5D0 \uC544\uC9C1 \uBD88\uC528\uAC00 \uB0A8\uC544 \uC788\uB2E4."
     - name: "\uCC22\uC5B4\uC9C4 \uB9AC\uBCF8"
@@ -26920,8 +26924,7 @@ MonoBehaviour:
       value: 3
       shape:
       - {x: 0, y: 0}
-      - {x: 0, y: 1}
-      - {x: 1, y: 1}
+      - {x: 1, y: 0}
       icon: {fileID: 21300000, guid: 15c2812e99453da47b2048abfc836dd6, type: 3}
       flavor: "\uBB36\uC744 \uB54C\uB9C8\uB2E4 \uC870\uAE08\uC529 \uB354 \uCC22\uC5B4\uC9C4\uB2E4."
     - name: "\uB179\uC2A8 \uC548\uC804\uD540"
@@ -26940,7 +26943,6 @@ MonoBehaviour:
       value: 0.12
       shape:
       - {x: 0, y: 0}
-      - {x: 0, y: 1}
       icon: {fileID: 21300000, guid: f8a4d2000b5b61e4abe4f4f5541a43ed, type: 3}
       flavor: "\uAD6C\uBA4D\uB9C8\uB2E4 \uBB3C\uAE30\uAC00 \uB9FA\uD600 \uC788\uB2E4."
     - name: "\uC816\uC740 \uC2E4\uD0C0\uB798"
@@ -26950,7 +26952,6 @@ MonoBehaviour:
       value: 1
       shape:
       - {x: 0, y: 0}
-      - {x: 1, y: 0}
       - {x: 0, y: 1}
       icon: {fileID: 21300000, guid: 1e58e3d44f64517478aa3c57cc7be555, type: 3}
       flavor: "\uBB34\uAC81\uC9C0\uB9CC \uB04A\uC5B4\uC9C0\uC9C0 \uC54A\uB294\uB2E4."
@@ -26962,7 +26963,6 @@ MonoBehaviour:
       shape:
       - {x: 0, y: 0}
       - {x: 1, y: 0}
-      - {x: 2, y: 0}
       icon: {fileID: 21300000, guid: 7ef4891c138137040b4df920db2eae6a, type: 3}
       flavor: "\uC7B4 \uB54C\uB9C8\uB2E4 \uAE38\uC774\uAC00 \uB2EC\uB77C\uC9C4\uB2E4."
     - name: "\uAD11\uAE30\uC758 \uC2E4\uD328"
@@ -26971,9 +26971,9 @@ MonoBehaviour:
       stat: 0
       value: 6
       shape:
+      - {x: 1, y: 1}
       - {x: 1, y: 0}
       - {x: 0, y: 1}
-      - {x: 1, y: 1}
       - {x: 2, y: 1}
       icon: {fileID: 21300000, guid: 0c729f4ac3091084ca0bd8f09b1b7ccc, type: 3}
       flavor: "\uBA48\uCD94\uC9C0 \uC54A\uACE0 \uC2E4\uC744 \uD1A0\uD574 \uB0B8\uB2E4."
@@ -26985,8 +26985,7 @@ MonoBehaviour:
       shape:
       - {x: 0, y: 0}
       - {x: 1, y: 0}
-      - {x: 1, y: 1}
-      - {x: 2, y: 1}
+      - {x: 0, y: 1}
       icon: {fileID: 21300000, guid: 4421bb8ead2b7164cb4eec1a7a416b49, type: 3}
       flavor: "\uC790\uB978 \uAC83\uC744 \uAE30\uC5B5\uD55C\uB2E4."
     - name: "\uC5BC\uC5B4\uBD99\uC740 \uD540\uCFE0\uC158"
@@ -26995,9 +26994,8 @@ MonoBehaviour:
       stat: 2
       value: 20
       shape:
-      - {x: 0, y: 0}
-      - {x: 1, y: 0}
       - {x: 0, y: 1}
+      - {x: 0, y: 0}
       - {x: 1, y: 1}
       icon: {fileID: 21300000, guid: 1de7b08e0df321148adf644be7e34956, type: 3}
       flavor: "\uCC0C\uB974\uB294 \uCABD\uC774 \uBA3C\uC800 \uC5BC\uC5B4\uBD99\uB294\uB2E4."
@@ -27007,9 +27005,9 @@ MonoBehaviour:
       stat: 3
       value: 0.18
       shape:
-      - {x: 0, y: 0}
       - {x: 1, y: 0}
-      - {x: 1, y: 1}
+      - {x: 0, y: 0}
+      - {x: 2, y: 0}
       icon: {fileID: 21300000, guid: 7643bd9ea827f524e863e557481bb25f, type: 3}
       flavor: "\uBC14\uB298\uC774 \uAC70\uAFB8\uB85C \uB3C8\uB2E4."
     - name: "\uC7A0\uB4E0 \uC778\uD615 \uB208"
@@ -27018,8 +27016,8 @@ MonoBehaviour:
       stat: 4
       value: 4
       shape:
-      - {x: 0, y: 0}
       - {x: 0, y: 1}
+      - {x: 0, y: 0}
       - {x: 0, y: 2}
       - {x: 1, y: 2}
       icon: {fileID: 21300000, guid: a82ed477a58cc104db0652ccc6ca16ff, type: 3}
@@ -27031,12 +27029,36 @@ MonoBehaviour:
       value: 0.1
       shape:
       - {x: 1, y: 0}
-      - {x: 0, y: 1}
+      - {x: 0, y: 0}
       - {x: 1, y: 1}
       - {x: 2, y: 1}
       icon: {fileID: 21300000, guid: 03f142865b0d7364d94f81d6ee898ee6, type: 3}
       flavor: "\uD55C \uBC88 \uB3CC\uAE30 \uC2DC\uC791\uD558\uBA74 \uBA48\uCD9C \uC218
         \uC5C6\uB2E4."
+    - name: "\uC138 \uAC08\uB798 \uACE8\uBB34"
+      set: frustration
+      cost: 4
+      stat: 6
+      value: 2
+      shape:
+      - {x: 1, y: 0}
+      - {x: 0, y: 0}
+      - {x: 2, y: 0}
+      - {x: 3, y: 0}
+      icon: {fileID: 21300000, guid: a3c8eef7b6b062f4bb1fba5748c5497d, type: 3}
+      flavor: "\uD55C \uBC88 \uCC0C\uB974\uBA74 \uC138 \uAD70\uB370\uAC00 \uC544\uD504\uB2E4."
+    - name: "\uAD75\uC740 \uBC27\uC904 \uC2E4\uD328"
+      set: despair
+      cost: 3
+      stat: 7
+      value: 0.9
+      shape:
+      - {x: 0, y: 1}
+      - {x: 0, y: 0}
+      - {x: 0, y: 2}
+      icon: {fileID: 21300000, guid: da081a78fb5e92f42b2c32642cc6d78c, type: 3}
+      flavor: "\uB04A\uC5B4\uC9C0\uC9C0 \uC54A\uB294 \uB300\uC2E0, \uC9C0\uB098\uAC00\uB294
+        \uAC83\uC744 \uBAA8\uB450 \uC4F8\uC5B4 \uAC04\uB2E4."
     rankNames:
     - 
     - "\uC77C\uBC18"
@@ -27422,8 +27444,8 @@ MonoBehaviour:
     propLabelPx: 15
     altarHeight: 150
     merchantHeight: 0
-    stairScale: 0.3
-    stairRise: 26
+    stairScale: 0.28
+    stairRise: 25
     stairDrop: 18
   messages:
     awaken: "\uAC01\uC131 \xB7 \uC2E4 \uD53C\uD574 +20%"
@@ -27492,7 +27514,7 @@ MonoBehaviour:
     setLine: "{0} {1}\uAC1C \xB7 {2} \xB7 {3}"
     setOff: "\uBBF8\uD65C\uC131"
     setOn: "{0}\uC138\uD2B8"
-    equipped: "\uC7A5\uCC29 \xB7 "
+    equipped: "\uC7A5\uCC29 \uC911"
     invalidPlacement: "\uC870\uAC01\uC774 \uACB9\uCE58\uAC70\uB098 \uD310\uC758 \uACBD\uACC4\xB7\uB4F1\uAE09
       \uD55C\uB3C4\uB97C \uB118\uC2B5\uB2C8\uB2E4."
     pieceTooltip: "{0} \xB7 {1} +{2}"
@@ -27522,6 +27544,11 @@ MonoBehaviour:
     inventoryHint: "I  \uC7AC\uBD09 \uC0C1\uC790 \uC5F4\uAE30"
     inventoryInRun: "\uB4F1\uBC18 \uC911 \u2014 \uBC14\uAFBC \uBC30\uCE58\uB294 \uB2EB\uC744
       \uB54C \uBC14\uB85C \uC801\uC6A9\uB429\uB2C8\uB2E4 (I / Esc \uB85C \uB2EB\uAE30)"
+    pieceCells: "{0}\uCE78 \uD37C\uC990"
+    tipSet: "{0} \uC138\uD2B8 \xB7 {1} ({2})"
+    setProgress: '{0} / {1}'
+    setProgressMax: "{0} \xB7 \uCD5C\uB300"
+    ownedAll: "\uBAA8\uB4E0 \uC870\uAC01\uC744 \uC774\uBBF8 \uAC00\uC9C0\uACE0 \uC788\uC2B5\uB2C8\uB2E4."
     statNames:
     - "\uC2E4 \uD53C\uD574"
     - "\uC774\uB3D9 \uC18D\uB3C4"
@@ -27529,6 +27556,8 @@ MonoBehaviour:
     - "\uCDA9\uC804 \uC18D\uB3C4"
     - "\uC785\uC7A5 \uC695\uB9DD \uAC10\uC18C"
     - "\uD138\uC2E4 \uCD5C\uB300"
+    - "\uBC14\uB298 \uAC08\uB798"
+    - "\uC2E4 \uAD75\uAE30"
     roundNames:
     - "\uCCAB \uBC88\uC9F8 \uB77C\uC6B4\uB4DC"
     - "\uB450 \uBC88\uC9F8 \uB77C\uC6B4\uB4DC"
@@ -28308,6 +28337,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: f32ea1b30d342b84a8545b79ee0ee831, type: 3}
   - {fileID: 21300000, guid: fa8557ea691c7c54dabb937988889dd5, type: 3}
   - {fileID: 21300000, guid: 9245a55220c74ed4a9f3966a700cd950, type: 3}
+  - {fileID: 21300000, guid: f4151a830978e834ca56766b1f3e4ad1, type: 3}
   fxSprites:
   - id: 1
     sprite: {fileID: 21300000, guid: 151069dcbf27d3f4893e27b212df63b0, type: 3}

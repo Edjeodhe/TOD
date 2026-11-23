@@ -39,6 +39,12 @@ namespace TOD
         // 당길 때 걸린 실 가닥 수에 따른 피해 증가 (0 = 없음). 첫 가닥은 기본, 둘째부터 strandBonus 씩.
         public float StrandBonus(int strands) => Mathf.Min(H.strandBonusMax, H.strandBonus * Mathf.Max(0, strands - 1));
 
+        // 재봉 조각 '여러 갈래 바늘': 한 번 쏠 때 더 나가는 바늘 수 (0 = 한 개만). 줄 강화로 값이 조금 늘어도 정수로 끊는다.
+        public int ExtraNeedles(RunState r) => Mathf.Clamp(Mathf.FloorToInt(r.Gear(StatKind.Multishot) + 1e-3f), 0, Mathf.Max(0, H.multishotMax));
+        // 재봉 조각 '굵은 실': 실 굵기 배율 (1 = 기본). 그리기 두께에 곱하고, 당김 판정 반경은 ThreadHitPad 만큼 넓어진다.
+        public float ThreadScale(RunState r) => Mathf.Clamp(1 + r.Gear(StatKind.ThreadWidth), 1, Mathf.Max(1, H.threadWidthMax));
+        public float ThreadHitPad(RunState r) => F.pullHitPad + H.threadHitWidth * (ThreadScale(r) - 1);
+
         public int YarnMax(RunState r) => Mathf.Max(H.minYarn, (int)Round(H.baseYarn + r.Gear(StatKind.Yarn) + r.yarnBonus - (r.desires.Contains("obsession") ? db.desire.obsessionYarn : 0)));
         public float DesireFraction(RunState r) => r.desire / r.maxDesire;
         public int KnotInterval(RunState r) => r.rules.Contains("earlyKnot") ? H.earlyKnotInterval : H.knotInterval;
@@ -195,7 +201,7 @@ namespace TOD
                     if (r.random() < R.merchantChance) r.merchant = Near(r, R.merchantOffset);
                     r.stairs = Near(r, R.restStairsOffset);
                     r.stairsAge = R.stairsRevealTime;
-                    var kinds = Enumerable.Range(0, db.gear.pieces.Length).ToList();
+                    var kinds = Gear.Unowned(db, r.profile);   // 아이템은 고유: 이미 가진 종류는 탑에 나오지 않는다
                     while (r.artifactOffer.Count < R.artifactChoices && kinds.Count > 0)
                     {
                         int i = Mathf.Min(kinds.Count - 1, Mathf.FloorToInt(r.random() * kinds.Count));
@@ -248,8 +254,8 @@ namespace TOD
             if (r.artifactTaken || r.artifactRerolled) return false;
             r.artifactRerolled = true;
             var shown = new HashSet<int>(r.artifactOffer);
-            var kinds = Enumerable.Range(0, db.gear.pieces.Length).Where(k => !shown.Contains(k)).ToList();
-            if (kinds.Count < R.artifactChoices) kinds = Enumerable.Range(0, db.gear.pieces.Length).ToList();
+            var kinds = Gear.Unowned(db, r.profile).Where(k => !shown.Contains(k)).ToList();
+            if (kinds.Count < R.artifactChoices) kinds = Gear.Unowned(db, r.profile);
             r.artifactOffer.Clear();
             while (r.artifactOffer.Count < R.artifactChoices && kinds.Count > 0)
             {
@@ -269,7 +275,7 @@ namespace TOD
             float hp = Round(after[StatKind.Health] - before[StatKind.Health]);
             r.maxHp = Mathf.Max(1, r.maxHp + hp);
             r.hp = Mathf.Clamp(r.hp + Mathf.Max(0, hp), 1, r.maxHp);
-            r.gearStats = after;
+            r.gearStats = after;   // Multishot·ThreadWidth 는 쏠 때·당길 때 r.Gear 로 바로 읽으므로 여기서 바뀐 값이 곧 반영된다
             r.element = Gear.ThreadElement(after);
             r.yarn = Mathf.Min(r.yarn, YarnMax(r));
         }
@@ -696,12 +702,20 @@ namespace TOD
             p.facing = dir.x >= 0 ? 1 : -1;
             p.angle = Mathf.Atan2(dir.y, dir.x);
             Act(p, HeroAction.Shoot);
-            r.strands.Add(new Strand
-            {
-                x = p.x, y = p.y, vx = dir.x, vy = dir.y / A.projectionY, speed = db.needle.launch * db.needle.start,
-                range = r.reach, maxRange = r.reach, state = StrandState.Flight, bounce = r.rules.Contains("bounce"), birth = r.time, element = r.element,
-            });
+            // 털실 1개로 바늘 1 + ExtraNeedles 개를 부채꼴로 (가운데가 겨눈 방향, 화면 각도로 multishotSpread 간격)
             float screenAngle = Mathf.Atan2(dir.y, dir.x);
+            int needles = 1 + ExtraNeedles(r);
+            for (int i = 0; i < needles; i++)
+            {
+                int slot = i == 0 ? 0 : (i + 1) / 2 * (i % 2 == 1 ? -1 : 1);   // 0, -1, +1, -2, +2 ...
+                float a = screenAngle + slot * H.multishotSpread;
+                r.strands.Add(new Strand
+                {
+                    x = p.x, y = p.y, vx = Mathf.Cos(a), vy = Mathf.Sin(a) / A.projectionY, speed = db.needle.launch * db.needle.start,
+                    range = r.reach, maxRange = r.reach, state = StrandState.Flight, bounce = r.rules.Contains("bounce"), birth = r.time, element = r.element,
+                    extra = i > 0,
+                });
+            }
             p.recoil = new Timed { x = -dir.x, y = -dir.y, time = F.recoilTime, max = F.recoilTime };
             r.kick = new Timed { x = -dir.x * F.recoilCamera, y = -dir.y * F.recoilCamera, time = F.recoilCameraTime, max = F.recoilCameraTime };
             Flip(r, FlipSheet.Muzzle, p.x + dir.x * X.muzzleForward, p.y + dir.y / A.projectionY * X.muzzleForward, X.muzzle, screenAngle, r.element);
@@ -775,7 +789,8 @@ namespace TOD
             if (!echoed)
             {
                 r.strands = new List<Strand>();
-                r.yarn = Mathf.Min(YarnMax(r), r.yarn + Mathf.Ceil(strands.Count / 2f));
+                // 덤으로 나간 갈래 바늘(extra)은 털실을 쓰지 않았으므로 돌려받는 셈에서 뺀다
+                r.yarn = Mathf.Min(YarnMax(r), r.yarn + Mathf.Ceil(strands.Count(s => !s.extra) / 2f));
                 r.echo = r.rules.Contains("echo") ? new Echo { until = r.time + db.augments.echoWindow, strands = strands.Select(s => s.Copy()).ToList() } : null;
             }
             else r.echo = null;
@@ -789,6 +804,7 @@ namespace TOD
             var order = new List<Enemy>();
             var cutAngle = new Dictionary<Enemy, float>();
             int impacts = 0;
+            float hitPad = ThreadHitPad(r);   // 굵은 실일수록 실 선분 둘레가 넓게 벤다
             foreach (Strand s in strands)
             {
                 var (start, end) = Endpoints(p, s);
@@ -803,7 +819,7 @@ namespace TOD
                 var b = new Point(end.x, end.y / WorldVertical);
                 foreach (Enemy e in living)
                 {
-                    if (e != s.target && LineDistance(e.x, e.y / WorldVertical, a, b) > e.radius + F.pullHitPad) continue;
+                    if (e != s.target && LineDistance(e.x, e.y / WorldVertical, a, b) > e.radius + hitPad) continue;
                     if (!direct.ContainsKey(e)) { direct[e] = 0; order.Add(e); }
                     direct[e]++;
                     if (!cutAngle.ContainsKey(e) || e == s.target) cutAngle[e] = along;
