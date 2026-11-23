@@ -29,6 +29,8 @@ namespace TOD
         public PoseSnapshot previousPose;
         public Timed recoil;
         public float dx, dy, dashDone, dashFacing = 1;
+        public int dashCharges;              // 남은 대쉬 칸
+        public float dashCharge;             // 다음 칸이 차오른 정도 (0~1)
         public Point dashFrom;
         public bool dodged;
     }
@@ -62,7 +64,8 @@ namespace TOD
 
     public class Bullet : Point { public float vx, vy, hit, age; public bool spent; }
 
-    public class Drop : Point { public int xp, gold, shard; public bool item; }
+    // 처치 때 튀어나오는 보상. 잠깐 튀어 오른 뒤(age < popTime) 몸으로 빨려 든다.
+    public class Drop : Point { public int xp, gold, shard; public bool item; public float vx, vy, age, speed; }
 
     public class Trail { public Point a, b; public float time; public HashSet<Enemy> used = new(); }
 
@@ -127,6 +130,7 @@ namespace TOD
         public List<Trail> trails = new();
         public List<Fx> effects = new();
         public HashSet<string> rules = new(), desires = new();
+        public Dictionary<string, int> augmentsTaken = new();   // 증강 id → 고른 횟수 (카드에 Lv 로 표시)
         public Timed kick;
         public Echo echo;
         public Outcome outcome;

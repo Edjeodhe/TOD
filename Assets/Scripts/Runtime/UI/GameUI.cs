@@ -24,6 +24,7 @@ namespace TOD
         readonly List<Label> labels = new();
         int labelsUsed;
         readonly List<VisualElement> pips = new();
+        readonly List<VisualElement> dashPips = new();
         VisualElement[] rounds;
         readonly Dictionary<Vector2Int, Button> cells = new();
         UiTextConfig T => db.ui;
@@ -156,7 +157,7 @@ namespace TOD
 
         public void Label(string text, Vector2 canvas, float fontPx, Color fill, Color stroke, float strokePx, float scale, float rotationDeg, bool italic)
         {
-            if (root.panel == null) return;
+            if (root.panel == null || Opened != "") return;   // 대화 상자가 열려 있으면 전투 글자(안내 문구)는 숨긴다
             if (labelsUsed == labels.Count)
             {
                 var created = (Label)Slot(slots, "world-label");
@@ -201,10 +202,29 @@ namespace TOD
             Text(hud, "desire-value", string.Format(T.desireValue, Mathf.FloorToInt(r.desire), r.maxDesire, mood));
             Text(hud, "gold", r.gold.ToString());
             Text(hud, "knots", r.knots.Count.ToString());
-            Text(hud, "xp-value", string.Format(T.ratio, r.xp, combat.XpNeeded(r)));
             Meter(hud, "hp-bar", r.hp / r.maxHp);
             Meter(hud, "desire-bar", r.desire / r.maxDesire);
-            Meter(hud, "xp-bar", r.xp / (float)combat.XpNeeded(r));
+
+            // 하단 경험치 바 (메이플식: 레벨 · EXP 현재/필요 [퍼센트])
+            int need = Mathf.Max(1, combat.XpNeeded(r));
+            float expRatio = Mathf.Clamp01(r.xp / (float)need);
+            Text(hud, "exp-level", string.Format(T.expLevel, r.level));
+            Text(hud, "exp-text", string.Format(T.expText, r.xp, need, expRatio * 100));
+            hud.Q("exp-fill").style.width = Length.Percent(expRatio * 100);
+
+            // 대쉬 칸: 찬 칸은 밝게, 차오르는 칸은 게이지로
+            Player player = r.player;
+            int dashMax = Mathf.Max(1, db.feel.dashCharges);
+            Text(hud, "dash-value", string.Format(T.dashValue, player.dashCharges, dashMax));
+            VisualElement dashRow = hud.Q("dash-pips");
+            while (dashPips.Count < dashMax) { VisualElement pip = Slot(slots, "dash-pip"); dashRow.Add(pip); dashPips.Add(pip); }
+            for (int i = 0; i < dashPips.Count; i++)
+            {
+                VisualElement pip = dashPips[i];
+                pip.style.display = i < dashMax ? DisplayStyle.Flex : DisplayStyle.None;
+                pip.EnableInClassList("full", i < player.dashCharges);
+                pip.Q("fill").style.width = Length.Percent(i == player.dashCharges ? player.dashCharge * 100 : 0);
+            }
 
             VisualElement pipRow = hud.Q("yarn-pips");
             int pipCount = Mathf.Min(25, maxYarn);
@@ -253,7 +273,7 @@ namespace TOD
                 timer.EnableInClassList("urgent", left <= 10);
             }
             // 라운드가 끝난 뒤 쌓인 증강 안내
-            bool pending = r.phase != Phase.Combat && r.augmentQueue > 0;
+            bool pending = r.phase != Phase.Combat && r.augmentQueue > 0 && Opened == "";
             Show(hint, pending);
             if (pending) hintText.text = string.Format(T.augmentHint, r.augmentQueue);
 
@@ -295,12 +315,45 @@ namespace TOD
             return card;
         }
 
-        public void ShowAugments(List<AugmentDef> choices, int level, Action<string> pick)
+        // 퍼즐 조각 모양 카드: 색 띠(태그) · 둥근 액자 속 아이콘 · 이름 · 효과 · (조각 모양) · 설명
+        Button PuzzleCard(VisualElement container, Color color, Sprite icon, string tag, string name, string effect, string text, Action onClick)
         {
-            root.Q<Label>("augment-title").text = string.Format(T.augmentTitle, level);
+            var card = (Button)Slot(slots, "puzzle");
+            Color body = Color.Lerp(new Color(.17f, .13f, .19f), color, .16f);
+            Color band = Color.Lerp(new Color(.12f, .08f, .13f), color, .55f);
+            card.style.backgroundColor = body;
+            SetBorder(card, color);
+            foreach (string knob in new[] { "knob-top", "knob-right" }) { VisualElement k = card.Q(knob); k.style.backgroundColor = color; SetBorder(k, color); }
+            SetBorder(card.Q("notch-left"), color);
+            SetBorder(card.Q("frame"), color);
+            card.Q("band").style.backgroundColor = band;
+            Icon(card.Q("icon"), icon);
+            Text(card, "tag", tag ?? "");
+            Text(card, "name", name);
+            Text(card, "effect", effect ?? "");
+            Text(card, "text", text ?? "");
+            card.Q("shape").style.display = DisplayStyle.None;
+            card.clicked += onClick;
+            container.Add(card);
+            return card;
+        }
+
+        static void SetBorder(VisualElement e, Color c)
+        {
+            e.style.borderTopColor = c; e.style.borderBottomColor = c; e.style.borderLeftColor = c; e.style.borderRightColor = c;
+        }
+
+        public void ShowAugments(List<AugmentDef> choices, RunState r, Action<string> pick)
+        {
+            root.Q<Label>("augment-title").text = string.Format(T.augmentTitle, r.level - r.augmentQueue + 1);
             VisualElement container = root.Q("augment-choices");
             container.Clear();
-            foreach (AugmentDef a in choices) Card(container, a.icon, a.rule ? T.augmentRule : T.augmentStat, a.name, a.text, null, () => pick(a.id));
+            foreach (AugmentDef a in choices)
+            {
+                Color color = a.color.a > 0 ? a.color : new Color(.9f, .66f, .75f);
+                int owned = r.augmentsTaken.TryGetValue(a.id, out int n) ? n : 0;
+                PuzzleCard(container, color, a.icon, string.Format(T.augmentLevel, owned + 1), a.name, a.text, game.Combat.AugmentPreview(r, a), () => pick(a.id));
+            }
             ShowDialog("augment");
         }
 
@@ -340,11 +393,15 @@ namespace TOD
                 PieceDef def = db.gear.pieces[kind];
                 SetDef set = db.Set(def.set);
                 string value = def.value < 1 ? $"{Mathf.RoundToInt(def.value * 100)}%" : def.value.ToString("0.##");
-                Button card = Card(container, null, $"{set.name} · {db.gear.rankNames[def.cost]}", def.name,
-                    string.Format(T.pieceTooltip, set.bonus, T.statNames[(int)def.stat], value), null, () => pick(kind));
-                VisualElement icon = card.Q("icon");
-                icon.AddToClassList("piece-icon");
-                PieceIcon(icon, def.shape.ToList(), set.color);
+                string effect = string.Format(T.pieceEffect, T.statNames[(int)def.stat], value);
+                string text = string.Format(T.pieceShape, def.shape.Length, set.name, set.bonus) + (string.IsNullOrEmpty(def.flavor) ? "" : "\n" + def.flavor);
+                Button card = PuzzleCard(container, set.color, def.icon, $"{set.name} · {db.gear.rankNames[def.cost]}", def.name, effect, text, () => pick(kind));
+                VisualElement shape = card.Q("shape");
+                shape.style.display = DisplayStyle.Flex;
+                PieceIcon(shape, def.shape.ToList(), set.color);
+                shape.style.scale = new Scale(new Vector2(1.6f, 1.6f));
+                // 아이콘이 아직 없으면 조각 모양만 크게 보여 준다
+                if (def.icon == null) card.Q("frame").style.display = DisplayStyle.None;
             }
             ShowDialog("artifact");
         }

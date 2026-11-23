@@ -1,5 +1,5 @@
-// 주인공 종이 인형 (웹판 render.js 의 heroPose / drawHero / dodgeState).
-// 파츠 오브젝트는 MCP로 Hero/Parts/<파츠 id> 에 만들어 두고, 여기서는 이름으로 찾아 매 프레임 위치만 정한다.
+// 주인공 종이 인형. 뼈대는 MCP 로 조립한 Hero/Rig 계층이고, 동작은 HeroRig(C#)가 계산한다.
+// 여기서는 상태(달리기·쏘기·당기기·대쉬·피격·쓰러짐)에 맞춰 동작을 고르고 섞어 뼈에 적용한 뒤, 색(피격·그늘)만 입힌다.
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,24 +7,22 @@ namespace TOD
 {
     public class HeroFrame
     {
-        public RigPose pose;
-        public Affine @base;
-        public Affine[] matrices;
+        public HeroRig.Pose pose;
+        public Vector3 root;                  // 리그 원점(발밑) 월드 위치
+        public float scale, facing;
     }
+
+    // 대쉬 잔상용: 한 순간 파츠들의 그림·위치 (캔버스 기준)
+    public struct PartSnap { public Sprite sprite; public Vector2 center; public float angle, w, h; }
 
     public class HeroView : MonoBehaviour
     {
-        public TextAsset rigJson;
-        public Transform partsRoot;
-        public SpriteRenderer shadow, dodge, dodgeGlow;
-        public Sprite[] dodgeFrames;
+        public HeroRig rig;
+        public SpriteRenderer shadow;
 
-        static readonly string[] GaitParts = { "near_thigh", "near_shin", "near_foot", "far_thigh", "far_shin", "far_foot" };
-        public Rig Rig { get; private set; }
         GameDatabase db;
-        SpriteRenderer[] parts;
+        int nearArm, nearForearm, head;
         int[] gait;
-        int nearArm, nearForearm, head, needle;
         MaterialPropertyBlock block;
         static readonly int BrightId = Shader.PropertyToID("_Bright"), SatId = Shader.PropertyToID("_Sat"), FillId = Shader.PropertyToID("_Fill"),
             ShapeId = Shader.PropertyToID("_Shape");
@@ -32,58 +30,53 @@ namespace TOD
         public void Init(GameDatabase database)
         {
             db = database;
-            Rig = Rig.Load(rigJson.text);
-            parts = new SpriteRenderer[Rig.parts.Length];
-            var byName = new Dictionary<string, SpriteRenderer>();
-            foreach (Transform child in partsRoot) byName[child.name] = child.GetComponent<SpriteRenderer>();
-            for (int i = 0; i < Rig.parts.Length; i++) byName.TryGetValue(Rig.parts[i].id, out parts[i]);
-            for (int rank = 0; rank < Rig.drawOrder.Length; rank++)
-            {
-                SpriteRenderer sr = parts[Rig.drawOrder[rank]];
-                if (sr != null) sr.sortingOrder = rank;
-            }
-            gait = System.Array.ConvertAll(GaitParts, Rig.Index);
-            nearArm = Rig.Index("near_arm"); nearForearm = Rig.Index("near_forearm"); head = Rig.Index("head"); needle = Rig.Index("needle");
+            nearArm = rig.Index(rig.nearArm); nearForearm = rig.Index(rig.nearForearm); head = rig.Index(rig.head);
+            gait = System.Array.ConvertAll(rig.gait ?? new HeroBone[0], rig.Index);
             block = new MaterialPropertyBlock();
             block.SetFloat(ShapeId, 1);
             shadow.SetPropertyBlock(block);
-            dodgeGlow.sortingOrder = Rig.drawOrder.Length;
-            dodge.sortingOrder = Rig.drawOrder.Length + 1;
         }
 
         public float Scale(float y)
         {
             VisualConfig v = db.visual;
-            return v.heroScaleBase * (v.heroScaleNear + v.heroScaleFar * Mathf.Clamp01(y / db.arena.height));
+            float size = v.heroSize > 0 ? v.heroSize : 1;
+            return v.heroScaleBase * size * (v.heroScaleNear + v.heroScaleFar * Mathf.Clamp01(y / db.arena.height));
         }
 
         static float Smooth(float b) => b * b * (3 - 2 * b);
 
-        RigPose Sample(HeroAction action, float t, float strideTime, float angle, float motion)
+        HeroRig.Pose Sample(HeroAction action, float t, float strideTime, float angle, float motion)
         {
-            string clip = ClipName(action);
-            RigPose pose = Rig.Pose(clip, action == HeroAction.Run ? strideTime : Mathf.Max(0, t));
+            HeroRig.Pose pose = rig.NewPose();
+            t = Mathf.Max(0, t);
+            switch (action)
+            {
+                case HeroAction.Idle: rig.Loop(rig.idle, t, ref pose); break;
+                case HeroAction.Run: rig.Loop(rig.run, strideTime, ref pose); break;
+                case HeroAction.Shoot: rig.Shot(rig.shoot, t, ref pose); break;
+                case HeroAction.Pull: rig.Shot(rig.pull, t, ref pose); break;
+                case HeroAction.Dash: rig.Shot(rig.dash, t, ref pose); break;
+                case HeroAction.Hurt: rig.Shot(rig.hurt, t, ref pose); break;
+                default: rig.Shot(rig.die, t, ref pose); break;
+            }
             if (action == HeroAction.Shoot)
             {
                 // 겨눈 방향으로 팔·머리를 틀고, 달리며 쏘면 하체는 달리기 자세를 섞는다.
-                float aim = Mathf.Atan2(Mathf.Sin(angle), Mathf.Abs(Mathf.Cos(angle))) * Mathf.Rad2Deg * (1 - Mathf.Clamp01((t - .14f) / .12f));
-                if (nearArm >= 0) pose.ang[nearArm] += aim * .74f;
-                if (nearForearm >= 0) pose.ang[nearForearm] += aim * .26f;
-                if (head >= 0) pose.ang[head] += aim * .11f;
+                float aim = Mathf.Atan2(Mathf.Sin(angle), Mathf.Abs(Mathf.Cos(angle))) * Mathf.Rad2Deg
+                    * (1 - Mathf.Clamp01((t - rig.aimFadeStart) / Mathf.Max(.01f, rig.aimFadeTime)));
+                if (nearArm >= 0) pose.ang[nearArm] += aim * rig.aimArm;
+                if (nearForearm >= 0) pose.ang[nearForearm] += aim * rig.aimForearm;
+                if (head >= 0) pose.ang[head] += aim * rig.aimHead;
                 if (motion > .2f)
                 {
-                    RigPose stride = Rig.Pose("run", strideTime);
+                    HeroRig.Pose stride = rig.NewPose();
+                    rig.Loop(rig.run, strideTime, ref stride);
                     foreach (int i in gait) if (i >= 0) pose.ang[i] += (stride.ang[i] - pose.ang[i]) * motion;
                 }
             }
             return pose;
         }
-
-        static string ClipName(HeroAction action) => action switch
-        {
-            HeroAction.Idle => "idle", HeroAction.Run => "run", HeroAction.Shoot => "shoot", HeroAction.Pull => "pull",
-            HeroAction.Dash => "dash", HeroAction.Hurt => "hurt", _ => "die",
-        };
 
         bool InDash(Player p) => p.action != HeroAction.Die && (p.dash > 0 || p.dashGrace > 0);
 
@@ -95,13 +88,13 @@ namespace TOD
             float t = inDash ? (p.dash > 0 ? f.dashDuration - p.dash : f.dashDuration + f.dashGrace - p.dashGrace)
                 : actionTime + (action == HeroAction.Pull ? .035f : 0);
             float facing = inDash ? p.dashFacing : p.facing;
-            RigPose pose = Sample(action, t, p.strideTime, p.angle, p.motion);
+            HeroRig.Pose pose = Sample(action, t, p.strideTime, p.angle, p.motion);
             PoseSnapshot previous = p.previousPose;
             float blend = Mathf.Clamp01(t / (action is HeroAction.Shoot or HeroAction.Pull ? .055f : .085f));
             if (previous != null && previous.action != action && action != HeroAction.Die && blend < 1)
             {
                 float weight = 1 - Smooth(blend);
-                RigPose from = Sample(previous.action, previous.actionTime, previous.strideTime, previous.angle, previous.motion);
+                HeroRig.Pose from = Sample(previous.action, previous.actionTime, previous.strideTime, previous.angle, previous.motion);
                 for (int i = 0; i < pose.ang.Length; i++) pose.ang[i] += (from.ang[i] - pose.ang[i]) * weight;
                 pose.root += (from.root - pose.root) * weight;
             }
@@ -114,95 +107,80 @@ namespace TOD
                 rx = p.recoil.x * f.recoilHero * k;
                 ry = p.recoil.y * f.recoilHero * k * Space.Proj;
             }
-            float scale = Scale(p.y);
-            Affine @base = Affine.Identity.Translate(p.x + rx, Space.ProjectY(p.y) + ry).Scale(scale * facing, scale);
+            // 대쉬는 짧게 떠오른다 (예전 회피 통그림의 도약 대신).
+            if (inDash) ry -= Mathf.Sin(Mathf.PI * Mathf.Clamp01((t - .02f) / .22f)) * db.visual.dodgeHop;
+            return new HeroFrame { pose = pose, root = Space.Canvas(p.x + rx, Space.ProjectY(p.y) + ry), scale = Scale(p.y), facing = facing };
+        }
+
+        // 뼈에 자세를 적용한다 (Hand·Render 전에 한 번).
+        public void Apply(Player p, HeroFrame frame)
+        {
+            transform.position = Space.Ground(p.x, p.y);   // 부모(그림자 기준)를 먼저 놓고 리그를 놓는다
+            rig.Apply(frame.pose, frame.root, frame.scale, frame.facing);
+            bool inDash = InDash(p);
+            HeroAction action = inDash ? HeroAction.Dash : p.action;
             bool grounded = action == HeroAction.Run || action == HeroAction.Pull || (action == HeroAction.Shoot && p.motion > .2f);
-            Affine[] matrices = grounded ? Rig.GroundedMatrices(pose, @base, action == HeroAction.Pull ? null : "run") : Rig.Matrices(pose, @base);
-            return new HeroFrame { pose = pose, @base = @base, matrices = matrices };
+            if (grounded) rig.Ground(frame.scale, action == HeroAction.Pull ? 1 : rig.runGroundDamp, action == HeroAction.Pull ? float.NaN : rig.RunGroundMean(frame.scale));
         }
 
-        // 바늘 끝(손) 위치 → 전투장 좌표 (손에 든 실의 시작점)
-        public Vector2 Hand(HeroFrame frame)
+        // 바늘 뼈 원점(손) → 전투장 좌표 (손에 든 실의 시작점)
+        public Vector2 Hand()
         {
-            if (needle < 0) return Vector2.zero;
-            Vector2 c = frame.matrices[needle].Apply(Vector2.zero);
-            return new Vector2(c.x, (c.y - Space.Top) / Space.Proj);
+            if (rig.needle == null) return Vector2.zero;
+            Vector3 w = rig.needle.transform.position;
+            return new Vector2(w.x * Space.Ppu, (-w.y * Space.Ppu - Space.Top) / Space.Proj);
         }
 
-        public (int index, float hop) DodgeState(Player p)
-        {
-            if (!InDash(p)) return (-1, 0);
-            FeelConfig f = db.feel;
-            float elapsed = p.dash > 0 ? f.dashDuration - p.dash : f.dashDuration + f.dashGrace - p.dashGrace;
-            int index = elapsed < db.visual.dodgeLaunchEnd ? 0 : elapsed < db.visual.dodgeAirEnd ? 1 : 2;
-            float hop = Mathf.Sin(Mathf.PI * Mathf.Clamp01((elapsed - .02f) / .22f)) * db.visual.dodgeHop;
-            return (index, hop);
-        }
-
-        public float DodgeScale(float y) => db.visual.dodgeScale * Scale(y) / db.visual.heroScaleBase;
-
-        public void Render(Player p, HeroFrame frame, float alpha, Color shadowColor)
+        public void Render(Player p, float alpha, Color shadowColor)
         {
             Vector3 root = Space.Ground(p.x, p.y);
-            transform.position = root;
-            var (dodgeIndex, hop) = DodgeState(p);
             float scale = Scale(p.y);
-            float size = 25 * scale / db.visual.heroScaleBase * (dodgeIndex >= 0 ? 1 - hop / 40 : 1);
+            float hop = InDash(p) ? Mathf.Clamp01(1 - (rig.transform.position.y - root.y) * Space.Ppu / 40) : 1;
+            float size = 25 * scale / db.visual.heroScaleBase * hop;
             Place(shadow.transform, root, new Vector2(p.x, Space.ProjectY(p.y) + 3), 0, new Vector2(size * 2 / shadow.sprite.rect.width, size * .68f / shadow.sprite.rect.height));
             shadow.color = alpha < 1 ? Painter.Alpha(shadowColor, 0) : shadowColor;
 
-            bool dodging = dodgeIndex >= 0 && dodgeFrames.Length > dodgeIndex;
-            dodge.gameObject.SetActive(dodging);
-            dodgeGlow.gameObject.SetActive(dodging);
-            foreach (SpriteRenderer sr in parts) if (sr != null) sr.enabled = !dodging;
-            if (dodging)
-            {
-                float s = DodgeScale(p.y);
-                var at = new Vector2(p.x, Space.ProjectY(p.y) - hop);
-                dodge.sprite = dodgeFrames[dodgeIndex];
-                Place(dodge.transform, root, at, 0, new Vector2(s * p.dashFacing, s));
-                dodge.color = new Color(1, 1, 1, alpha);
-                dodgeGlow.sprite = dodgeFrames[dodgeIndex];
-                Place(dodgeGlow.transform, root, at, 0, new Vector2(s * 1.06f * p.dashFacing, s * 1.06f));
-                dodgeGlow.color = new Color(1, 1, 1, .55f);
-                block.Clear();
-                block.SetColor(FillId, db.visual.dodgeColor);
-                dodgeGlow.SetPropertyBlock(block);
-                return;
-            }
-
-            // 피격: 처음 절반은 붉게 물들고, 무적 시간 동안 깜빡인다.
+            // 피격: 처음 절반은 붉게 물들고(채도는 그대로), 무적 시간 동안 깜빡인다.
             bool glow = p.hurt > .31f;
             if (p.hurt > 0 && p.hurt <= .31f && alpha >= 1 && Mathf.FloorToInt(p.hurt * 22) % 2 == 1) alpha = .45f;
-            for (int i = 0; i < parts.Length; i++)
+            Color hurt = db.palette.heroHurt;
+            float amount = db.palette.heroHurtAmount > 0 ? db.palette.heroHurtAmount : .55f;
+            foreach (HeroBone b in rig.bones)
             {
-                SpriteRenderer sr = parts[i];
-                RigPart part = Rig.parts[i];
-                if (sr == null || sr.sprite == null) continue;
-                sr.enabled = !part.hidden;
-                Affine m = frame.matrices[i];
-                Rect rect = sr.sprite.rect;
-                Vector2 center = m.Apply(new Vector2(rect.width / 2 - part.pivot.x, rect.height / 2 - part.pivot.y));
-                float det = m.a * m.d - m.b * m.c;
-                float k = Mathf.Sqrt(m.a * m.a + m.b * m.b);
-                float angle = det >= 0 ? Mathf.Atan2(m.b, m.a) : Mathf.Atan2(-m.b, -m.a);
-                Place(sr.transform, root, center, angle, new Vector2(det >= 0 ? k : -k, k));
+                SpriteRenderer sr = b != null ? b.art : null;
+                if (sr == null) continue;
+                sr.color = new Color(1, 1, 1, alpha);
                 block.Clear();
-                if (glow)
-                {
-                    sr.color = new Color(db.palette.heroHurt.r, db.palette.heroHurt.g, db.palette.heroHurt.b, alpha);
-                    block.SetFloat(SatId, 0);
-                    block.SetFloat(BrightId, 1.6f);
-                }
-                else
-                {
-                    sr.color = new Color(1, 1, 1, alpha);
-                    block.SetFloat(SatId, 1);
-                    block.SetFloat(BrightId, 1);
-                    block.SetColor(FillId, new Color(22 / 255f, 19 / 255f, 27 / 255f, part.shade));
-                }
+                block.SetFloat(SatId, 1);
+                block.SetFloat(BrightId, glow ? 1.1f : 1);
+                block.SetColor(FillId, glow ? new Color(hurt.r, hurt.g, hurt.b, Mathf.Max(amount, b.shade)) : new Color(22 / 255f, 19 / 255f, 27 / 255f, b.shade));
                 sr.SetPropertyBlock(block);
             }
+        }
+
+        // 지금 자세의 파츠 그림들 (뒤에서 앞 순서) — 대쉬 잔상이 이 모양을 단색으로 그린다.
+        public List<PartSnap> Snapshot()
+        {
+            var list = new List<PartSnap>();
+            var order = new List<SpriteRenderer>();
+            foreach (HeroBone b in rig.bones) if (b != null && b.art != null && b.art.enabled) order.Add(b.art);
+            order.Sort((a, c) => a.sortingOrder.CompareTo(c.sortingOrder));
+            foreach (SpriteRenderer sr in order)
+            {
+                Matrix4x4 m = sr.transform.localToWorldMatrix;
+                Vector2 ax = m.GetColumn(0), ay = m.GetColumn(1);
+                float det = ax.x * ay.y - ax.y * ay.x;
+                float unityAngle = det >= 0 ? Mathf.Atan2(ax.y, ax.x) : Mathf.Atan2(-ax.y, -ax.x);
+                Rect rect = sr.sprite.rect;
+                Vector3 c = sr.bounds.center;
+                list.Add(new PartSnap
+                {
+                    sprite = sr.sprite, center = new Vector2(c.x * Space.Ppu, -c.y * Space.Ppu), angle = -unityAngle,
+                    w = rect.width / sr.sprite.pixelsPerUnit * ax.magnitude * Space.Ppu * (det >= 0 ? 1 : -1),
+                    h = rect.height / sr.sprite.pixelsPerUnit * ay.magnitude * Space.Ppu,
+                });
+            }
+            return list;
         }
 
         // 캔버스 좌표 center 에 회전·크기를 적용해 root 기준 로컬로 배치

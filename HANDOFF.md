@@ -19,7 +19,7 @@
 |---|---|
 | 뷰 | 2D 직교 + Y정렬. 웹판의 1000×700 전투장 좌표와 `PROJECTION_Y .67`을 그대로 씁니다. |
 | 렌더 파이프라인 | URP 2D 렌더러, Linear 색공간 |
-| 주인공 리그 | `hero-quarter.rig.json`을 읽는 C# 런타임. 리그 편집은 계속 `rig.html`에서 합니다. |
+| 주인공 리그 | **(2026-11-23 변경)** Unity 뼈대 계층(`Arena/Hero/Rig`) + C# 동작(`HeroRig`). 웹 `rig.html`·rig json 은 더 이상 Unity 에서 읽지 않습니다. |
 | 웹판 | 동결하고 `web/`로 옮깁니다. Unity Assets에는 런타임 아트만 두고, 원본 시트와 .blend는 `art_src/`로 옮깁니다. |
 | UI | UI Toolkit, 갈무리(Galmuri) 폰트 |
 | 플랫폼·입력 | PC 키보드·마우스, New Input System |
@@ -83,6 +83,25 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 3차 요청 (2026-11-23) — 피격·크기·대쉬·드롭·증강·아이템·경험치 바·리그
+
+> 사용자 선택: 피격은 붉게 물듦 + 깜빡, 캐릭터 75%, 스탯 증강 8종, 아이템 12개 새로, 리그는 Unity 계층 + C# 동작.
+
+- [x] **피격:** 흑백(채도 0) 대신 원래 색 위에 붉은 기운(`palette.heroHurt`, 양 `heroHurtAmount`)을 덮고 무적 시간 동안 깜빡입니다.
+- [x] **캐릭터 크기:** `visual.heroSize` 0.75 (그림자·잔상 포함). 바늘 비행 높이 `needleVisual.flightLift` 15.
+- [x] **대쉬 2칸:** `feel.dashCharges` 2, 한 칸 충전 `feel.dashCooldown` 1.6초(× 대쉬 충전 능력치), 연달아 쓸 때 최소 간격 `dashMinCooldown`. 왼쪽 위 HUD 에 칸 + 차오르는 게이지.
+- [x] **경험치·골드 드롭:** 처치하면 초록 경험치 구(최대 3알)와 골드(최대 3닢)가 튀어나왔다가(`rewards.dropPop*`) 몸으로 빨려 들어 회수됩니다(`dropVacuum*`). 빛·꼬리·흡수 반짝임(`fx.pickup`)·효과음(`xp`, `gold`). 라운드가 끝날 때 남은 드롭도 몸으로 날아옵니다.
+- [x] **증강:** 스탯 8종(공격력·공격속도·이동속도·최대 체력·사거리·바늘 속도·털실 최대·대쉬 충전), 아이콘은 Codex. 카드에 "지금 → 고른 뒤" 수치와 Lv(고른 횟수). Esc 로 닫고 E 로 다시 열면 같은 선택지.
+- [x] **아이템:** 쉬어가기 라운드의 제단을 **탑**(`prop_tower`, 높이 `palette.altarHeight`)으로 바꿈. 상호작용하면 퍼즐 카드 창(세트 색·아이콘·이름·효과·조각 모양·설명)에서 1개를 고릅니다. 조각 12개(혼돈·절망·좌절 × 4) 새로 만듦. 0~2번은 세트 테스트 때문에 모양을 유지.
+- [x] **하단 경험치 바:** 메이플식(레벨 칸 · 노란 초록 게이지 · 10% 눈금 · `EXP 현재 / 필요 [퍼센트]`).
+- [x] **리그:** 웹에서 구운 rig json 을 읽던 `Rig.cs`·`MiniJson.cs`를 지우고, 원본 파츠 그림으로 씬에 뼈대 계층을 MCP 로 조립했습니다. 동작은 `HeroRig`(C#)가 매 프레임 계산합니다.
+  - 반복 동작(idle·run): 뼈마다 `offset + a1·sin(2π(u+p1)) + a2·sin(4π(u+p2))`. 한 번 동작(shoot·pull·dash·hurt·die): 시작 자세 → `peakTime` 최고 자세 → `settleTime` 정리 자세 → 0.
+  - 처음 값은 웹 키프레임에서 한 번 맞춘 것입니다(`tools/fit_hero_motion.py`, 원본은 `art_src/rig/hero-quarter.rig.json`, 최대 오차 약 3°). 이후 조정은 `Arena/Hero/Rig` 인스펙터에서 합니다.
+  - 회피 통그림 3장 대신 대쉬 뼈 동작 + 떠오름. 대쉬 잔상은 생긴 순간의 파츠 자세를 하늘색 실루엣으로 그립니다.
+- 그림(Codex CLI): `tools/codex_prompts/{stat_icons,item_icons,tower,xp_orb}.txt` → `art_src/raw/*.png` → `python tools/bake_stage2_art.py` → `Assets/sprites/{stat_*,item_*,prop_tower,xp_orb}.png`. 경험치 구는 초록이라 자홍 키로 뽑았습니다. 탑 창문(키 색)은 굽기에서 빛 색으로 채웁니다.
+- 테스트 7개: 증강 적용(공격속도·사거리·최대 체력), 대쉬 2칸 충전, 드롭 흡수 추가.
+- 확인 못 한 것: 사람이 직접 한 플레이, 달리기·쏘기 동작을 웹판과 나란히 비교, 효과음 청취.
+
 ## Unity 판 (2026-11-23 포팅 완료)
 
 ### 실행
@@ -100,12 +119,12 @@
 | `Arena/Background` | 맵 바탕(`Fill`), 바닥 청크 템플릿(`Chunks/ChunkTemplate`: 바닥 + 등불 3개), 화면 그늘(`Shade`), 불씨 템플릿. `BackgroundView`가 카메라 주변 청크만 복제·재활용하고 컨셉 색을 입힘. 맵 위쪽 벽·아치·테두리는 `ArenaRenderer.DrawMap`이 그림 |
 | `Arena/Painter/Slots` | 실·이펙트를 그리는 SpriteRenderer/LineRenderer **템플릿 슬롯**(런타임에 복제) |
 | `Arena/Enemies/EnemyTemplate` | 적 템플릿: 그림자·정예 고리·늘이기 계층(Body/Center/Rot/Squash/Unrot/Back/Flip)·두 동강용 BodyA/B·체력바·바늘 4개 |
-| `Arena/Hero` | 리그 파츠 23개(`Parts/<파츠 id>`) + 회피 통그림. `HeroView`가 `hero-quarter.rig.json`으로 매 프레임 배치 |
+| `Arena/Hero` | `Rig`(HeroRig) 아래 뼈 24개 계층(`hips/torso/...`, 각 뼈에 `HeroBone` + 그림 `Art`). 피벗·관절 위치는 뼈 Transform, 동작 값은 `HeroRig` 인스펙터. 회피 통그림은 없앴고 대쉬도 뼈 동작으로 그립니다 |
 | `Arena/Particles` | 불씨·물방울·스파크·반짝임 ParticleSystem 4개 |
 
 ### 코드 (`Assets/Scripts`)
 - `Runtime/Sim` — `Combat.cs`(combat.js 1:1), `Profile.cs`(gear.js), `RunState.cs`. Unity 오브젝트에 의존하지 않습니다.
-- `Runtime/Rig` — `Rig.cs`(runtime.js: 포즈·FK·접지 보정), `MiniJson.cs`
+- `Runtime/Rig` — `HeroRig.cs`(동작 계산: 반복 동작은 사인 2개, 한 번 동작은 시작→최고→정리 자세, 발 접지 보정), `HeroBone.cs`, `Affine.cs`
 - `Runtime/View` — `ArenaRenderer`, `Painter`(Canvas 호출을 템플릿 슬롯으로), `HeroView`, `EnemyView`, `ParticleFx`, `BackgroundView`, `CameraRig`, `Space`(좌표 변환·슬롯 풀)
 - `Runtime/UI/GameUI.cs`, `Runtime/Game/GameController.cs`, `Runtime/Audio/SoundBank.cs`, `Runtime/Debug/AutoPilot.cs`
 - `Editor/ProjectSetup.cs` — `TOD/Setup/1~4` 메뉴(텍스처 임포트·플립북 슬라이스, URP 2D 파이프라인+후처리 패스, UI PanelSettings, Player 설정). MCP로 못 만드는 설정·에셋만 다룹니다.
@@ -139,7 +158,7 @@
 
 ## 웹 프로토타입 (동결, `web/`)
 
-- 개발 서버와 리그 편집은 `node web/server.js` 실행 후 [게임](http://localhost:5173/) 또는 [리그 에디터](http://localhost:5173/rig.html)를 엽니다. 서버는 `/assets/*`를 Unity `Assets/`에서 먼저 찾고, 없으면 `art_src/`(원본 시트·옛 파츠·.blend)에서 찾습니다. 리그 저장은 `Assets/rig/hero-quarter.rig.json`에 하므로 Unity 판도 같은 리그를 읽습니다.
+- 개발 서버와 리그 편집은 `node web/server.js` 실행 후 [게임](http://localhost:5173/) 또는 [리그 에디터](http://localhost:5173/rig.html)를 엽니다. 서버는 `/assets/*`를 Unity `Assets/`에서 먼저 찾고, 없으면 `art_src/`(원본 시트·옛 파츠·.blend)에서 찾습니다. 리그 json 은 2026-11-23부터 `art_src/rig/hero-quarter.rig.json`에 있고(서버가 `art_src/`에서 찾음), Unity 판은 더 이상 읽지 않습니다. 웹에서 리그를 고쳐 Unity 에 옮기려면 `python tools/fit_hero_motion.py`로 값을 다시 뽑아 MCP 로 `HeroRig`에 넣습니다.
 - `web/index.html`을 파일로 바로 여는 오프라인 모드는 에셋이 옮겨져서 이미지가 깨집니다. 서버로 실행하세요. `node tools/build_offline_game.mjs`는 `web/src/game/offline.js`를 갱신합니다.
 - 아래 1~8장과 이 절의 나머지 내용은 웹판을 기준으로 쓴 것입니다(경로의 `index.html`, `src/` 등은 이제 `web/` 아래에 있습니다).
 - 프로토타입은 **5층, 층당 3라운드**입니다. 보스를 쓰러뜨려 층을 돌파하고, 마지막 보스 선택 뒤 엔딩을 확인합니다. 사망하거나 일시 정지 메뉴 또는 상점에서 귀환한 뒤 장비를 조합하고 다음 등반을 시작할 수 있습니다.

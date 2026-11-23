@@ -10,7 +10,7 @@ namespace TOD
     public enum WaveShape { Sine, Triangle, Sawtooth, Square }
     public enum RoundKind { Survival, Rest, Boss }
     // 증강이 바꾸는 등반 능력치
-    public enum RunStat { FireInterval, Reach, NeedleSpeed, Damage, YarnMax, Recharge, Encumbrance, DashCooldown, MoveSpeed, Desire }
+    public enum RunStat { FireInterval, Reach, NeedleSpeed, Damage, YarnMax, Recharge, Encumbrance, DashCooldown, MoveSpeed, Desire, MaxHealth }
     public enum StatOp { Add, Multiply }
 
     [Serializable] public class ArenaConfig
@@ -120,7 +120,9 @@ namespace TOD
         [Header("Throw recoil")] public float recoilHero, recoilTime, recoilCamera, recoilCameraTime;
         [Header("Needle bite")] public float stickFreeze, stickPush, stickTime, stickBossPush, stickShake, stickFlash, stickJolt;
         [Header("Pull cut")] public float cutTime, cutSplit, cutFlash;
+        // dashCooldown = 대쉬 1칸이 다시 차는 시간, dashMinCooldown = 연달아 쓸 때 최소 간격
         [Header("Dash")] public float dashDuration, dashGrace, dashDistance, dashEase, dashSlow, dashGhostInterval, dashGhostLife, dashCooldown, dashMinCooldown;
+        public int dashCharges;               // 대쉬 칸 수 (2)
         public float dashTrailTime, dashTrailPad, dashFxOffset;
         [Header("Yank")] public float yankReach, yankBoss, yankTime, yankMinGap, stretchTime;
         [Header("Pull impact")] public float pullHitPad, pullEnemyFlash;
@@ -164,6 +166,12 @@ namespace TOD
         public float eliteItemChance;
         public bool bossDropsItem;            // 아이템은 쉬어가는 라운드에서만 얻으므로 보통 false
         public int xpBase, xpStep;
+        [Header("떨어지는 경험치 구·골드")]
+        public int maxXpOrbs, maxCoins;       // 처치 한 번에 나오는 최대 개수 (값은 나눠 담는다)
+        public float dropPopSpeed, dropPopTime, dropHop;          // 튀어나오는 속도·시간·높이(캔버스 px)
+        public float dropVacuumSpeed, dropVacuumAccel;            // 그 뒤 몸으로 빨려 드는 속도·가속
+        public float orbSize, coinSize, dropGlow;                 // 그리기 크기(캔버스 px), 빛 배율
+        public Color xpColor, goldColor;                          // 흡수 반짝임 색
     }
 
     [Serializable] public class AugmentEffect { public RunStat stat; public StatOp op; public float value; }
@@ -174,6 +182,7 @@ namespace TOD
         [TextArea] public string text;
         public bool rule;                     // 규칙형(현재 데이터에서 빠짐, 코드만 남음)
         public Sprite icon;
+        public Color color;                   // 퍼즐 카드 색
         public AugmentEffect[] effects;       // 능력치형 효과
     }
 
@@ -223,6 +232,8 @@ namespace TOD
         public StatKind stat;
         public float value;
         public Vector2Int[] shape;
+        public Sprite icon;
+        [TextArea] public string flavor;      // 카드 아래 짧은 설명
     }
 
     [Serializable] public class GearConfig
@@ -273,7 +284,7 @@ namespace TOD
     {
         public FxSpec awaken, frenzy, dodgeText, dodgeShock, hurtNumber, hurtBurst;
         public FxSpec muzzle, puncture, thunk, pullStrand, damageNumber, slash, snip, hitFlash, heroFlash, combo, transfer;
-        public FxSpec bossSummon, meleeSlash, dashTrail, dashBurst, dust, dustEnd, killBurst, sliced, absorb, augment, upgrade;
+        public FxSpec bossSummon, meleeSlash, dashTrail, dashBurst, dust, dustEnd, killBurst, sliced, absorb, augment, upgrade, pickup;
         public float muzzleForward, slashGrowth, snipGrowth, heroFlashGrowth, bossScale;
         public int maxGrowthHits, maxFlashHits;
         public Color hurtNumberColor, hurtBurstColor, dodgeTextColor, damageColor, transferColor, comboColor, rageComboColor;
@@ -285,6 +296,7 @@ namespace TOD
         public ElementTone[] tones;
         public Color[] floorPalette;
         public float heroScaleBase, heroScaleNear, heroScaleFar;   // .104 × (.94 + .12 × y/H)
+        public float heroSize = 1;            // 주인공 전체 크기 배율 (그림자·회피 통그림 포함)
         public float dodgeScale, dodgeLaunchEnd, dodgeAirEnd, dodgeHop;
         public float strandSegment, frustrationSegment;
         public Color dodgeColor;
@@ -300,9 +312,11 @@ namespace TOD
         public Color aimRing, aimDot, dust, sliceGlow, textStroke;
         public Color lampBase, heroHurt, transferGlow, transferCore;
         public float lampGlowAlpha, lampFlameAlpha, moteAlphaBase, moteAlphaPulse;
+        public float heroHurtAmount = .55f;   // 피격 때 붉게 덮는 양 (채도는 그대로)
         [Header("계단·제단·상인")]
         public Color stairsGlow, promptActive, promptIdle;
         public float propLabelPx;
+        public float altarHeight, merchantHeight;   // 쉬어가기 탑·상인을 그릴 높이 (캔버스 px, 0 이면 그림 크기)
     }
 
     // 전투 중 배너·알림 문구. {0}, {1} 자리에 숫자/이름이 들어간다.
@@ -332,6 +346,7 @@ namespace TOD
         public string soundOn, soundOff;
         public string timer, cleared, promptStairs, promptAltar, promptMerchant, augmentHint;
         public string restRoundName, bossRoundLabel, survivalLabel, purified, artifactEyebrow, artifactTaken;
+        public string dashValue, expText, expLevel, augmentLevel, pieceEffect, pieceShape;
         public string[] statNames;            // StatKind 순서
         public string[] roundNames;           // 첫 번째 라운드, 두 번째 라운드, 층 보스
     }

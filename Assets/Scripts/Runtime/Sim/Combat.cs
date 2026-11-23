@@ -94,6 +94,7 @@ namespace TOD
             r.player.x = A.width / 2;
             r.player.y = A.height / 2;
             r.player.angle = H.initialAngle;
+            r.player.dashCharges = Mathf.Max(1, F.dashCharges);
             return r;
         }
 
@@ -270,6 +271,7 @@ namespace TOD
             AugmentDef def = db.Augment(id);
             if (def == null) return;
             if (def.rule) r.rules.Add(id);
+            r.augmentsTaken[id] = (r.augmentsTaken.TryGetValue(id, out int taken) ? taken : 0) + 1;
             foreach (AugmentEffect fx in def.effects ?? Array.Empty<AugmentEffect>())
             {
                 float Apply(float v) => fx.op == StatOp.Multiply ? v * fx.value : v + fx.value;
@@ -289,9 +291,40 @@ namespace TOD
                     case RunStat.DashCooldown: r.dashRate = Apply(r.dashRate); break;
                     case RunStat.MoveSpeed: r.moveScale = Apply(r.moveScale); break;
                     case RunStat.Desire: AdjustDesire(r, fx.op == StatOp.Multiply ? r.desire * (fx.value - 1) : fx.value); break;
+                    case RunStat.MaxHealth:
+                        float gain = Apply(r.maxHp) - r.maxHp;
+                        r.maxHp += gain;
+                        r.hp = Mathf.Min(r.maxHp, r.hp + Mathf.Max(0, gain));   // 늘어난 만큼 채워 준다
+                        break;
                 }
             }
             r.augmentQueue--;
+        }
+
+        // 증강 카드에 보여 줄 "지금 → 고른 뒤" (첫 번째 효과 기준).
+        public string AugmentPreview(RunState r, AugmentDef def)
+        {
+            if (def.effects == null || def.effects.Length == 0) return "";
+            AugmentEffect fx = def.effects[0];
+            float Apply(float v) => fx.op == StatOp.Multiply ? v * fx.value : v + fx.value;
+            string Pair(float a, float b, string format, string unit = "") => $"{a.ToString(format)}{unit} → {b.ToString(format)}{unit}";
+            switch (fx.stat)
+            {
+                case RunStat.Damage: return Pair(r.damage, Apply(r.damage), "0.#");
+                case RunStat.FireInterval:
+                    float next = Mathf.Max(db.augments.minFireInterval, Apply(r.fireInterval));
+                    return Pair(1 / r.fireInterval, 1 / next, "0.00", "발/초");
+                case RunStat.MoveSpeed: return Pair(r.moveScale * 100, Apply(r.moveScale) * 100, "0", "%");
+                case RunStat.MaxHealth: return Pair(r.maxHp, Apply(r.maxHp), "0");
+                case RunStat.Reach: return Pair(r.reach, Apply(r.reach), "0");
+                case RunStat.NeedleSpeed: return Pair(r.needleSpeed * 100, Apply(r.needleSpeed) * 100, "0", "%");
+                case RunStat.YarnMax: return Pair(YarnMax(r), YarnMax(r) + (Apply(r.yarnBonus) - r.yarnBonus), "0");
+                case RunStat.DashCooldown:
+                    float charge = F.dashCooldown;
+                    return Pair(charge * r.dashRate, charge * Apply(r.dashRate), "0.00", "초");
+                case RunStat.Recharge: return Pair(r.recharge * 100, Apply(r.recharge) * 100, "0", "%");
+                default: return "";
+            }
         }
 
         // 보스 정화 뒤 계단에서 고르는 욕망 흡수 (null = 거절)
@@ -373,8 +406,8 @@ namespace TOD
                 Spawn(r, FxKind.Burst, e.x, e.y, X.killBurst).color = X.killBurstColor;
                 Retire(r, e);
             }
-            foreach (Drop d in r.drops) Collect(r, d);
-            r.drops.Clear(); r.bullets.Clear(); r.strands.Clear(); r.knots.Clear(); r.trails.Clear(); r.echo = null;
+            foreach (Drop d in r.drops) d.age = Mathf.Max(d.age, db.rewards.dropPopTime);   // 남은 드롭은 몸으로 빨려 든다
+            r.bullets.Clear(); r.strands.Clear(); r.knots.Clear(); r.trails.Clear(); r.echo = null;
             r.phase = Phase.Cleared;
             r.stairs = Near(r, R.stairsOffset);
             r.stairsAge = 0;
@@ -419,8 +452,53 @@ namespace TOD
             while (r.xp >= XpNeeded(r)) { r.xp -= XpNeeded(r); r.level++; r.augmentQueue++; }
         }
 
+        void DropPiece(RunState r, Enemy e, Drop d)
+        {
+            RewardConfig rw = db.rewards;
+            float angle = r.random() * Mathf.PI * 2;
+            float speed = rw.dropPopSpeed * (.45f + r.random() * .55f);
+            d.x = e.x; d.y = e.y;
+            d.vx = Mathf.Cos(angle) * speed;
+            d.vy = Mathf.Sin(angle) * speed / WorldVertical;
+            d.age = -r.random() * .08f;          // 조금씩 엇갈려 빨려 든다
+            r.drops.Add(d);
+        }
+
+        // 드롭 한 알: 튀어나와 미끄러지다가, popTime 뒤에는 점점 빨라지며 몸으로 빨려 든다.
+        bool UpdateDrop(RunState r, Drop d, float dt)
+        {
+            RewardConfig rw = db.rewards;
+            Player p = r.player;
+            d.age += dt;
+            float gap = Distance(d, p);
+            if (d.age >= rw.dropPopTime && gap < H.pickupRadius) { Collect(r, d); return true; }
+            if (d.age < rw.dropPopTime)
+            {
+                float drag = Mathf.Exp(-6 * dt);
+                d.x = Mathf.Clamp(d.x + d.vx * dt, A.wallLeft, A.wallRight);
+                d.y = Mathf.Clamp(d.y + d.vy * dt, A.wallTop, A.wallBottom);
+                d.vx *= drag; d.vy *= drag;
+                return false;
+            }
+            d.speed = d.speed <= 0 ? rw.dropVacuumSpeed : d.speed + rw.dropVacuumAccel * dt;
+            Vector2 dir = Unit(p.x - d.x, p.y - d.y);
+            float step = Mathf.Min(gap, d.speed * dt);
+            d.x += dir.x * step; d.y += dir.y * step;
+            if (Distance(d, p) < H.pickupRadius) { Collect(r, d); return true; }
+            return false;
+        }
+
         void Collect(RunState r, Drop drop)
         {
+            // 몸에 닿는 순간 작은 반짝임 (경험치는 초록, 골드는 금빛)
+            RewardConfig rw = db.rewards;
+            if (drop.xp > 0 || drop.gold > 0)
+            {
+                Fx glint = Spawn(r, FxKind.Burst, r.player.x + (r.random() - .5f) * 14, r.player.y + (r.random() - .5f) * 8, X.pickup);
+                glint.color = drop.xp > 0 ? rw.xpColor : rw.goldColor;
+                glint.lift = 20;
+            }
+            if (drop.xp > 0 || drop.gold > 0) Event(r, drop.xp > 0 ? "xp" : "gold");
             GainXp(r, drop.xp);
             r.gold += drop.gold;
             if (drop.shard > 0) r.profile.shards += drop.shard;
@@ -433,12 +511,16 @@ namespace TOD
             RewardConfig rw = db.rewards;
             r.kills++;
             bool boss = e.IsBoss;
-            r.drops.Add(new Drop
-            {
-                x = e.x, y = e.y, xp = boss ? rw.xpBoss : e.elite ? rw.xpElite : rw.xpNormal,
-                gold = (int)(e.type.gold * (e.elite ? E.eliteGold : 1)), shard = boss ? rw.shardBoss : e.elite ? rw.shardElite : 0,
-                item = (boss && rw.bossDropsItem) || (e.elite && r.random() < rw.eliteItemChance),
-            });
+            int xp = boss ? rw.xpBoss : e.elite ? rw.xpElite : rw.xpNormal;
+            int gold = (int)(e.type.gold * (e.elite ? E.eliteGold : 1));
+            // 경험치 구·골드를 여러 알로 나눠 튀어나오게 한다 (합계는 그대로).
+            int orbs = Mathf.Clamp(xp, xp > 0 ? 1 : 0, Mathf.Max(1, rw.maxXpOrbs));
+            for (int i = 0; i < orbs; i++) DropPiece(r, e, new Drop { xp = xp / orbs + (i < xp % orbs ? 1 : 0) });
+            int coins = Mathf.Clamp(gold, gold > 0 ? 1 : 0, Mathf.Max(1, rw.maxCoins));
+            for (int i = 0; i < coins; i++) DropPiece(r, e, new Drop { gold = gold / coins + (i < gold % coins ? 1 : 0) });
+            int shard = boss ? rw.shardBoss : e.elite ? rw.shardElite : 0;
+            bool item = (boss && rw.bossDropsItem) || (e.elite && r.random() < rw.eliteItemChance);
+            if (shard > 0 || item) DropPiece(r, e, new Drop { shard = shard, item = item });
             if (r.desires.Contains("hunger")) r.hp = Mathf.Min(r.maxHp, r.hp + db.desire.hungerHeal);
             if (stuck.Count > 0 && r.desires.Contains("obsession"))
             {
@@ -854,7 +936,15 @@ namespace TOD
 
             Vector2 move = Unit(input.x, input.y);
             bool moving = input.x != 0 || input.y != 0;
-            if (input.dash && p.dash <= 0 && p.dashCooldown <= 0) StartDash(r, moving, move);
+            // 대쉬 칸: 비어 있는 칸은 하나씩 차오른다 (dashCooldown × 대쉬 충전 능력치).
+            int dashMax = Mathf.Max(1, F.dashCharges);
+            if (p.dashCharges < dashMax)
+            {
+                p.dashCharge += dt / Mathf.Max(.05f, F.dashCooldown * r.dashRate);
+                if (p.dashCharge >= 1) { p.dashCharges++; p.dashCharge = p.dashCharges < dashMax ? p.dashCharge - 1 : 0; }
+            }
+            else p.dashCharge = 0;
+            if (input.dash && p.dash <= 0 && p.dashCooldown <= 0 && p.dashCharges > 0) StartDash(r, moving, move);
             if (p.dash > 0) UpdateDash(r, dt);
             else
             {
@@ -916,18 +1006,7 @@ namespace TOD
                 }
                 return !(b.age < E.bulletLife && b.x > 0 && b.y > 0 && b.x < A.width && b.y < A.height);
             });
-            r.drops.RemoveAll(d =>
-            {
-                float gap = Distance(d, p);
-                if (gap < H.pickupRadius) { Collect(r, d); return true; }
-                if (gap < H.magnetRadius)
-                {
-                    Vector2 dir = Unit(p.x - d.x, p.y - d.y);
-                    float step = Mathf.Min(gap, H.magnetSpeed * dt);
-                    d.x += dir.x * step; d.y += dir.y * step;
-                }
-                return false;
-            });
+            r.drops.RemoveAll(d => UpdateDrop(r, d, dt));
             if (r.outcome != Outcome.None) return;
             switch (r.phase)
             {
@@ -953,7 +1032,8 @@ namespace TOD
             p.dx = dir.x; p.dy = dir.y;
             p.dash = F.dashDuration;
             p.dashDone = 0;
-            p.dashCooldown = Mathf.Max(F.dashMinCooldown, F.dashCooldown * r.dashRate);
+            p.dashCharges--;
+            p.dashCooldown = F.dashMinCooldown;
             p.dashFrom = new Point(p.x, p.y);
             p.dodged = false;
             p.ghostIn = 0;

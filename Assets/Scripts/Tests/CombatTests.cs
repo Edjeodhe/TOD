@@ -115,13 +115,51 @@ namespace TOD.Tests
                 Assert.IsTrue(picks.All(p => !p.rule && p.effects != null && p.effects.Length > 0), "능력치형 증강만 나온다");
             }
             RunState r = NewRun();
-            float interval = r.fireInterval, reach = r.reach;
-            r.augmentQueue = 2;
-            combat.ApplyAugment(r, "fire");
+            float interval = r.fireInterval, reach = r.reach, maxHp = r.maxHp;
+            r.augmentQueue = 3;
+            combat.ApplyAugment(r, "attackSpeed");
             combat.ApplyAugment(r, "reach");
+            combat.ApplyAugment(r, "maxHealth");
             Assert.Less(r.fireInterval, interval, "발사 간격이 줄어든다");
             Assert.Greater(r.reach, reach, "사거리가 늘어난다");
+            Assert.Greater(r.maxHp, maxHp, "최대 체력이 늘어난다");
+            Assert.AreEqual(r.maxHp, r.hp, "늘어난 만큼 체력도 찬다");
+            Assert.AreEqual(1, r.augmentsTaken["reach"]);
             Assert.AreEqual(0, r.augmentQueue);
+        }
+
+        // 대쉬는 2칸: 연달아 두 번 쓸 수 있고, 빈 칸은 시간이 지나면 다시 찬다.
+        [Test]
+        public void DashHasTwoChargesThatRefill()
+        {
+            RunState r = NewRun();
+            int max = db.feel.dashCharges;
+            Assert.AreEqual(max, r.player.dashCharges);
+            var dash = new CombatInput { dash = true, x = 1 };
+            combat.Update(r, 1 / 60f, dash);
+            for (int i = 0; i < 40; i++) combat.Update(r, 1 / 60f, new CombatInput());
+            combat.Update(r, 1 / 60f, dash);
+            Assert.AreEqual(max - 2, r.player.dashCharges, "두 번 쓰면 두 칸이 빈다");
+            for (int i = 0; i < 60 * 6; i++) combat.Update(r, 1 / 60f, new CombatInput());
+            Assert.AreEqual(max, r.player.dashCharges, "시간이 지나면 모두 다시 찬다");
+        }
+
+        // 처치하면 경험치 구·골드가 튀어나왔다가 몸으로 빨려 들어 회수된다.
+        [Test]
+        public void KillDropsFlyIntoHero()
+        {
+            RunState r = NewRun();
+            r.player.x = 500; r.player.y = 350;
+            Enemy e = Add(r, "stalker", 620, 350);
+            r.strands.Add(new Strand { x = e.x, y = e.y, target = e, state = StrandState.Stuck, element = Element.Plain });
+            e.hp = 1;
+            combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(620, 350) });
+            Assert.Greater(r.drops.Count, 0, "드롭이 생긴다");
+            int gold = r.gold, xp = r.xp + r.level * 1000;
+            for (int i = 0; i < 60 * 4 && r.drops.Count > 0; i++) combat.Update(r, 1 / 60f, new CombatInput());
+            Assert.AreEqual(0, r.drops.Count, "모두 몸으로 빨려 들어 회수된다");
+            Assert.Greater(r.gold, gold, "골드가 오른다");
+            Assert.Greater(r.xp + r.level * 1000, xp, "경험치가 오른다");
         }
 
         // 자동 조작으로 5층 끝(엔딩)까지 진행되는지: 라운드·보스·욕망 제안·상점 흐름을 모두 통과해야 한다.

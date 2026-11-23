@@ -70,8 +70,11 @@ Button:disabled { opacity: 0.48; }
 .yarn-pip.full { background-color: #89beb7; }
 .yarn-wind { height: 100%; background-color: #528983; width: 0; }
 .thread-status { flex-direction: row; justify-content: space-between; margin-top: 6px; color: #a898a2; font-size: 14px; }
-.xp { flex-direction: row; align-items: center; color: #a898a2; font-size: 14px; }
-.xp .meter { flex-grow: 1; height: 5px; margin: 0 10px; }
+.dash-icon { background-image: url("project://database/Assets/sprites/stat_dash.png"); }
+.dash-pips { flex-direction: row; height: 10px; }
+.dash-pip { flex-grow: 1; margin-right: 6px; background-color: #352b39; border-radius: 3px; border-width: 1px; border-color: #4a3b4d; overflow: hidden; }
+.dash-pip.full { background-color: #9fd4ea; border-color: #d6f1fb; }
+.dash-fill { height: 100%; width: 0; background-color: #4f7f93; }
 .status-bottom { flex-direction: row; border-top-width: 1px; border-color: #352b37; margin-top: 16px; padding-top: 13px; }
 .status-bottom > VisualElement { flex-grow: 1; flex-direction: row; align-items: center; color: #a898a2; font-size: 15px; margin-right: 12px; }
 .status-bottom .icon { width: 26px; height: 26px; margin-right: 6px; -unity-background-scale-mode: scale-to-fit; }
@@ -88,13 +91,13 @@ Button:disabled { opacity: 0.48; }
 .round-timer { position: absolute; top: 84px; left: 0; right: 0; align-items: center; }
 .round-timer > Label { font-size: 40px; color: #f3d7d7; -unity-font: url("project://database/Assets/Fonts/Galmuri14.ttf"); -unity-text-outline-width: 1px; -unity-text-outline-color: #1c0e21; }
 .round-timer.urgent > Label { color: #ff8a9a; }
-.hint-bar { position: absolute; bottom: 70px; left: 0; right: 0; align-items: center; }
+.hint-bar { position: absolute; bottom: 86px; left: 0; right: 0; align-items: center; }
 .hint-bar > Label { background-color: rgba(33, 22, 37, 0.92); border-width: 1px; border-color: #cfac78; border-radius: 6px; padding: 10px 20px; color: #f3e2c8; font-size: 20px; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
 .choice .piece-icon { width: 40px; height: 40px; margin-bottom: 8px; }
 .boss-hud { position: absolute; bottom: 34px; left: 0; right: 0; align-items: center; }
 .boss-hud > Label { color: #f1c1cf; font-size: 18px; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
 .boss-hud .meter { width: 440px; height: 12px; margin-top: 7px; border-width: 1px; border-color: #79435b; }
-.controls-hint { position: absolute; left: 26px; bottom: 22px; flex-direction: row; color: #a898a2; font-size: 15px; }
+.controls-hint { position: absolute; left: 26px; bottom: 40px; flex-direction: row; color: #a898a2; font-size: 15px; }
 .controls-hint > Label { margin-right: 22px; }
 .kbd { background-color: #251e29; border-width: 1px; border-bottom-width: 3px; border-color: #534653; border-radius: 4px; color: #e0cdd7; padding: 3px 7px; margin-right: 6px; font-size: 14px; }
 
@@ -179,7 +182,35 @@ Button:disabled { opacity: 0.48; }
 .dialog { width: 1040px; background-color: #231a27; border-width: 1px; border-color: #674659; border-radius: 10px; padding: 34px 40px; }
 .dialog-title { font-size: 40px; -unity-font: url("project://database/Assets/Fonts/Galmuri14.ttf"); }
 .dialog-text { color: #c1aeba; margin-top: 10px; }
-.notice { position: absolute; bottom: 30px; left: 0; right: 0; align-items: center; }
+.notice { position: absolute; bottom: 48px; left: 0; right: 0; align-items: center; }
 .notice > Label { background-color: #322337; border-width: 1px; border-color: #865872; border-radius: 6px; padding: 12px 20px; color: #f3d8e4; }
 .room-flash { position: absolute; left: 0; right: 0; top: 0; bottom: 0; align-items: center; justify-content: center; }
 .room-flash > VisualElement { width: 560px; height: 560px; -unity-background-scale-mode: scale-to-fit; background-image: url("project://database/Assets/vfx/stitch.png"); }
+
+/* ---------- 하단 경험치 바 (메이플식) ---------- */
+.exp-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; flex-direction: row; align-items: center; background-color: rgba(14, 10, 17, 0.94); border-top-width: 1px; border-color: #5a4a3c; padding: 0 8px 0 0; }
+.exp-level { width: 86px; height: 100%; -unity-text-align: middle-center; color: #ffe7a6; font-size: 15px; background-color: #3b2a1f; border-right-width: 1px; border-color: #7a5e3a; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); margin-right: 8px; }
+.exp-track { flex-grow: 1; height: 14px; background-color: #26202a; border-width: 1px; border-color: #0b080d; border-radius: 2px; overflow: hidden; }
+.exp-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background-color: #b7d84b; border-right-width: 1px; border-color: #f2ffb8; }
+.exp-shine { position: absolute; left: 0; right: 0; top: 0; height: 40%; background-color: rgba(255, 255, 255, 0.28); }
+.exp-tick { position: absolute; top: 0; bottom: 0; width: 1px; background-color: rgba(0, 0, 0, 0.55); }
+.exp-text { position: absolute; left: 0; right: 0; top: -3px; bottom: 0; -unity-text-align: middle-center; color: #ffffff; font-size: 13px; -unity-text-outline-width: 1px; -unity-text-outline-color: #120c10; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
+
+/* ---------- 퍼즐 카드 (증강·아이템 선택) ---------- */
+.puzzle-grid { flex-direction: row; justify-content: center; margin-top: 34px; }
+.puzzle { width: 280px; min-height: 300px; margin: 0 26px 10px 26px; padding: 0; flex-direction: column; align-items: stretch; justify-content: flex-start; background-color: #2c2131; border-width: 3px; border-color: #e6a8bf; border-radius: 14px; overflow: visible; -unity-text-align: upper-center; transition-property: translate, scale; transition-duration: 0.12s; }
+.puzzle:hover { scale: 1.04 1.04; translate: 0 -4px; }
+.knob { position: absolute; width: 34px; height: 34px; border-radius: 17px; background-color: #e6a8bf; border-width: 3px; border-color: #e6a8bf; }
+.knob-top { top: -20px; left: 120px; }
+.knob-right { right: -20px; top: 133px; }
+.notch { position: absolute; width: 30px; height: 30px; border-radius: 15px; background-color: #231a27; border-width: 3px; border-color: #e6a8bf; }
+.notch-left { left: -17px; top: 135px; }
+.puzzle-band { height: 34px; border-top-left-radius: 10px; border-top-right-radius: 10px; background-color: #6b3d52; justify-content: center; }
+.puzzle-tag { color: #fff1f6; font-size: 15px; -unity-text-align: middle-center; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
+.puzzle-body { align-items: center; padding: 14px 18px 18px 18px; }
+.puzzle-frame { width: 104px; height: 104px; border-radius: 52px; background-color: #1d1520; border-width: 3px; border-color: #e6a8bf; align-items: center; justify-content: center; margin-bottom: 10px; }
+.puzzle-icon { width: 84px; height: 84px; -unity-background-scale-mode: scale-to-fit; }
+.puzzle-name { color: #fbe9f1; font-size: 23px; margin-bottom: 4px; -unity-font: url("project://database/Assets/Fonts/Galmuri14.ttf"); }
+.puzzle-effect { color: #ffe08e; font-size: 17px; margin-bottom: 6px; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); white-space: normal; }
+.puzzle-shape { width: 56px; height: 30px; margin: 4px 0 6px 0; }
+.puzzle-text { color: #c9b6c2; font-size: 14px; white-space: normal; -unity-font: url("project://database/Assets/Fonts/Galmuri11.ttf"); }

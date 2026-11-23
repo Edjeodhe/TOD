@@ -1,0 +1,9 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/item_icons.png
+Size: landscape 1536x1024.
+Create a game item icon sheet: 12 separate item icons arranged in a 4 columns x 3 rows grid, each icon about 220px, fully separated with wide empty gaps (at least 80px), nothing touching, each with its own thick black outline, three-quarter view, sewing-themed cursed trinkets:
+Row 1 (CHAOS set, dusty pink and crimson accents): (1) an ember-glowing brass thimble  (2) a torn crimson ribbon tied in a bow  (3) bloodstained tailor scissors  (4) a wildly unravelling spool of hot-pink thread with sparks
+Row 2 (DESPAIR set, pale grey-teal and ice-blue accents): (5) a teardrop-shaped glass button  (6) a soaked dripping ball of grey-teal yarn  (7) a frozen pincushion covered in frost with pins  (8) a single sleeping doll eye with long lashes, closed
+Row 3 (FRUSTRATION set, mustard-yellow and brass accents): (9) a rusty safety pin  (10) a tangled yellow measuring tape knot  (11) a cracked brass pocket watch with a needle as its hand  (12) a tiny antique sewing machine struck by a small lightning bolt
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline around every shape, slightly paper-grain texture INSIDE the shapes, low saturation, low brightness, muted plum / dusty pink / grey-teal palette (#16131B, #4A3D50, #E89BB7, #8CC7BE). Cute but eerie mood.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels, no numbers. Do not use any green color inside the artwork itself.

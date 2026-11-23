@@ -41,10 +41,13 @@
                     </ui:VisualElement>
                     <ui:VisualElement class="meter"><ui:VisualElement name="desire-bar" class="meter-fill desire" /></ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement class="xp" picking-mode="Ignore">
-                    <ui:Label text="경험치" />
-                    <ui:VisualElement class="meter"><ui:VisualElement name="xp-bar" class="meter-fill" /></ui:VisualElement>
-                    <ui:Label name="xp-value" text="0 / 5" />
+                <ui:VisualElement class="stat" picking-mode="Ignore">
+                    <ui:VisualElement class="stat-label" picking-mode="Ignore">
+                        <ui:VisualElement class="icon dash-icon" />
+                        <ui:Label text="대쉬" />
+                        <ui:Label name="dash-value" text="2 / 2" class="value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="dash-pips" class="dash-pips" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement class="status-bottom" picking-mode="Ignore">
                     <ui:VisualElement>
@@ -82,6 +85,15 @@
             <ui:VisualElement name="boss-hud" class="boss-hud hidden" picking-mode="Ignore">
                 <ui:Label text="실타래의 지배자" />
                 <ui:VisualElement class="meter"><ui:VisualElement name="boss-bar" class="meter-fill boss" /></ui:VisualElement>
+            </ui:VisualElement>
+            <!-- 메이플식 하단 경험치 바 -->
+            <ui:VisualElement name="exp" class="exp-bar" picking-mode="Ignore">
+                <ui:Label name="exp-level" text="LV. 1" class="exp-level" />
+                <ui:VisualElement class="exp-track" picking-mode="Ignore">
+                    <ui:VisualElement name="exp-fill" class="exp-fill" picking-mode="Ignore"><ui:VisualElement class="exp-shine" picking-mode="Ignore" /></ui:VisualElement>
+                    <ui:VisualElement class="exp-tick" style="left: 10%;" /><ui:VisualElement class="exp-tick" style="left: 20%;" /><ui:VisualElement class="exp-tick" style="left: 30%;" /><ui:VisualElement class="exp-tick" style="left: 40%;" /><ui:VisualElement class="exp-tick" style="left: 50%;" /><ui:VisualElement class="exp-tick" style="left: 60%;" /><ui:VisualElement class="exp-tick" style="left: 70%;" /><ui:VisualElement class="exp-tick" style="left: 80%;" /><ui:VisualElement class="exp-tick" style="left: 90%;" />
+                    <ui:Label name="exp-text" text="EXP 0 / 5 [0.00%]" class="exp-text" picking-mode="Ignore" />
+                </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="controls-hint" picking-mode="Ignore">
                 <ui:Label text="WASD 이동" />
@@ -203,8 +215,8 @@
             <ui:VisualElement name="dialog-augment" class="dialog hidden">
                 <ui:Label text="증강 선택" class="eyebrow" />
                 <ui:Label name="augment-title" class="dialog-title" />
-                <ui:Label text="세 가지 증강 중 하나를 선택하세요. 전투는 멈춰 있습니다." class="dialog-text" />
-                <ui:VisualElement name="augment-choices" class="choice-grid" />
+                <ui:Label text="올릴 능력치 하나를 고르세요. Esc로 닫고 나중에 E로 다시 열 수 있습니다." class="dialog-text" />
+                <ui:VisualElement name="augment-choices" class="puzzle-grid" />
             </ui:VisualElement>
             <ui:VisualElement name="dialog-desire" class="dialog hidden">
                 <ui:VisualElement class="ui-vfx" picking-mode="Ignore" style="background-image: url('project://database/Assets/vfx/boss.png');" />
@@ -230,9 +242,9 @@
             </ui:VisualElement>
             <ui:VisualElement name="dialog-artifact" class="dialog hidden">
                 <ui:Label name="artifact-eyebrow" class="eyebrow" />
-                <ui:Label text="아티팩트 선택" class="dialog-title" />
-                <ui:Label text="이 층에서 얻을 수 있는 재봉 조각은 하나뿐입니다. 하나를 고르면 재봉 상자에 들어갑니다." class="dialog-text" />
-                <ui:VisualElement name="artifacts" class="choice-grid" />
+                <ui:Label text="탑의 조각" class="dialog-title" />
+                <ui:Label text="이 층에서 얻을 수 있는 재봉 조각은 하나뿐입니다. 고른 조각은 재봉 상자에 들어갑니다. (Esc: 나중에)" class="dialog-text" />
+                <ui:VisualElement name="artifacts" class="puzzle-grid" />
                 <ui:VisualElement class="actions"><ui:Button name="close-artifact" text="나중에 고르기" /></ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="dialog-upgrade" class="dialog hidden">

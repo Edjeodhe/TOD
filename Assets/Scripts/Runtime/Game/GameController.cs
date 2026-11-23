@@ -93,6 +93,7 @@ namespace TOD
             summary = null;
             paused = false;
             Run = Combat.CreateRun(Profile, () => Random.value);
+            offered = null;
             shop = null;
             aim = Center;
             arena.Clear();
@@ -138,15 +139,17 @@ namespace TOD
         bool shopOpenedBeforeRetreat;
         List<AugmentDef> offered;
 
+        // Esc 로 닫았다가 E 로 다시 열면 같은 선택지를 보여 준다 (다시 굴리기 방지).
         void ShowAugments()
         {
-            offered = Combat.AugmentChoices(Run);
-            ui.ShowAugments(offered, Run.level - Run.augmentQueue + 1, PickAugment);
+            offered ??= Combat.AugmentChoices(Run);
+            ui.ShowAugments(offered, Run, PickAugment);
         }
 
         void PickAugment(string id)
         {
             Combat.ApplyAugment(Run, id);
+            offered = null;
             AddPlayerFx(FxSprite.Stitch, db.fx.augment);
             ui.CloseDialog();
             sound.Play("upgrade");
@@ -368,7 +371,7 @@ namespace TOD
             if (k == null) return;
             if (k.escapeKey.wasPressedThisFrame)
             {
-                if (Opened == "upgrade") ui.CloseDialog();
+                if (Opened is "upgrade" or "augment" or "artifact" or "shop") ui.CloseDialog();   // 증강·아이템은 나중에 E 로 다시 연다
                 else if (Opened == "retreat") CancelRetreat();
                 else TogglePause();
             }

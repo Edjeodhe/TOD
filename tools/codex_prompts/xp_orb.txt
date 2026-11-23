@@ -1,0 +1,5 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/xp_orb.png
+Size: square 1024x1024.
+Create ONE small game pickup icon centered, about 520px wide: an experience orb, a perfectly round glossy glowing green glass sphere (bright mint to emerald green, #5BE38A to #1E9E5A), a soft white highlight in the upper left, a faint inner swirl like a stitched thread, thick black outline around the sphere. Simple and readable at tiny sizes. Don't Starve Together-like hand-drawn 2D look with paper grain inside.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure magenta (#FF00FF) everywhere, no gradient, no texture, no glow onto the background, no shadow, no text. Do not use any magenta or pink inside the artwork.

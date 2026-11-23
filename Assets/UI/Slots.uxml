@@ -1,8 +1,23 @@
-<!-- 작은 반복 요소 템플릿: 판 칸, 털실 칸, 조각 점, 전투 글자. GameUI 가 이름으로 골라 복제한다. -->
+<!-- 작은 반복 요소 템플릿: 판 칸, 털실 칸, 대쉬 칸, 조각 점, 전투 글자, 퍼즐 카드. GameUI 가 이름으로 골라 복제한다. -->
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <ui:Button name="cell" class="cell" />
     <ui:VisualElement name="yarn-pip" class="yarn-pip"><ui:VisualElement name="wind" class="yarn-wind" /></ui:VisualElement>
     <ui:VisualElement name="piece-dot" class="piece-dot" picking-mode="Ignore" />
     <ui:Label name="world-label" class="world-label" picking-mode="Ignore" />
     <ui:Label name="set-line" />
+    <ui:VisualElement name="dash-pip" class="dash-pip"><ui:VisualElement name="fill" class="dash-fill" /></ui:VisualElement>
+    <!-- 증강·아이템 선택 카드 (퍼즐 조각 모양: 위·오른쪽 돌기, 왼쪽 홈) -->
+    <ui:Button name="puzzle" class="puzzle">
+        <ui:VisualElement name="knob-top" class="knob knob-top" picking-mode="Ignore" />
+        <ui:VisualElement name="knob-right" class="knob knob-right" picking-mode="Ignore" />
+        <ui:VisualElement name="notch-left" class="notch notch-left" picking-mode="Ignore" />
+        <ui:VisualElement name="band" class="puzzle-band" picking-mode="Ignore"><ui:Label name="tag" class="puzzle-tag" picking-mode="Ignore" /></ui:VisualElement>
+        <ui:VisualElement class="puzzle-body" picking-mode="Ignore">
+            <ui:VisualElement name="frame" class="puzzle-frame" picking-mode="Ignore"><ui:VisualElement name="icon" class="puzzle-icon" picking-mode="Ignore" /></ui:VisualElement>
+            <ui:Label name="name" class="puzzle-name" picking-mode="Ignore" />
+            <ui:Label name="effect" class="puzzle-effect" picking-mode="Ignore" />
+            <ui:VisualElement name="shape" class="puzzle-shape" picking-mode="Ignore" />
+            <ui:Label name="text" class="puzzle-text" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:Button>
 </ui:UXML>

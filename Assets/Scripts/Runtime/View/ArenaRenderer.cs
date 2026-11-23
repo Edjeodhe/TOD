@@ -24,7 +24,7 @@ namespace TOD
         public ParticleFx particles;
         public BackgroundView background;
         public CameraRig cameraRig;
-        public Sprite goldIcon, shardIcon, knotIcon, needleSprite, streakSprite, barbSprite;
+        public Sprite goldIcon, shardIcon, knotIcon, needleSprite, streakSprite, barbSprite, xpOrbSprite, softSprite;
         public Sprite stairsSprite, altarSprite, merchantSprite, archSprite;
         public FxSpriteEntry[] fxSprites;
         public FlipbookEntry[] flipbooks;
@@ -105,7 +105,7 @@ namespace TOD
             particleClock = r.time;
             particles.SetRunning(dt > 0);
 
-            foreach (Drop d in r.drops) painter.Sprite(Layer.Ground, d.shard > 0 ? shardIcon : goldIcon, C(d.x, d.y) - new Vector2(0, 3), 0, 18, 18, Color.white);
+            DrawDrops(r, clock);
             foreach (Enemy e in r.enemies)
             {
                 if (e.action == EnemyAction.WindupDash)
@@ -132,7 +132,8 @@ namespace TOD
 
             Player player = r.player;
             HeroFrame frame = hero.Pose(player, heroActionTime);
-            Vector2 hand = hero.Hand(frame);
+            hero.Apply(player, frame);
+            Vector2 hand = hero.Hand();
             handNow = hand;
             pins.Clear();
             foreach (Strand s in r.strands)
@@ -158,13 +159,56 @@ namespace TOD
             }
             DrawAfterimages(r);
             SyncEnemies(r, dt);
-            hero.Render(player, frame, r.outcome == Outcome.Absorbed ? .55f : 1, Pal.shadow);
+            hero.Render(player, r.outcome == Outcome.Absorbed ? .55f : 1, Pal.shadow);
             DrawEffects(r);
             if (active && aim.x >= 0 && aim.x <= db.arena.width && aim.y >= 0 && aim.y <= db.arena.height)
             {
                 painter.Ellipse(Layer.Effects, C(aim.x, aim.y), 10, 10 * Space.Proj, Pal.aimRing, 1);
                 Vector2 dot = C(aim.x, aim.y);
                 painter.Rect(Layer.Effects, dot.x - 1, dot.y - 1, 2, 2, Pal.aimDot);
+            }
+        }
+
+        // 경험치 구(초록)·골드: 튀어 올랐다가 몸으로 빨려 든다. 빛을 둘러 멀리서도 보이게 한다.
+        void DrawDrops(RunState r, float clock)
+        {
+            RewardConfig rw = db.rewards;
+            Vector2 hero = C(r.player.x, r.player.y);
+            foreach (Drop d in r.drops)
+            {
+                float pop = Mathf.Max(.01f, rw.dropPopTime);
+                float t = Mathf.Clamp01(d.age / pop);
+                float hop = d.age < pop ? Mathf.Sin(Mathf.PI * t) * rw.dropHop : 0;
+                Vector2 ground = C(d.x, d.y);
+                bool flying = d.age >= pop;
+                // 빨려 드는 중에는 몸(허리 높이) 쪽으로 떠오른다.
+                float rise = flying ? Mathf.Clamp01(1 - Vector2.Distance(ground, hero) / 160) * 18 : 0;
+                Vector2 at = ground - new Vector2(0, 6 + hop + rise);
+                float bob = Mathf.Sin(clock * 6 + d.x * .05f) * 1.2f;
+                painter.Ellipse(Layer.Ground, ground, 5, 5 * Space.Proj * .6f, Painter.Alpha(Pal.shadow, .5f));
+                if (d.xp > 0)
+                {
+                    float size = rw.orbSize > 0 ? rw.orbSize : 12;
+                    if (softSprite != null)
+                        painter.Sprite(Layer.Effects, softSprite, at, 0, size * rw.dropGlow, size * rw.dropGlow, Painter.Alpha(rw.xpColor, .55f), additive: true);
+                    painter.Sprite(Layer.Effects, xpOrbSprite != null ? xpOrbSprite : goldIcon, at + new Vector2(0, bob), 0, size, size, Color.white);
+                }
+                else if (d.gold > 0)
+                {
+                    float size = rw.coinSize > 0 ? rw.coinSize : 16;
+                    if (softSprite != null)
+                        painter.Sprite(Layer.Effects, softSprite, at, 0, size * rw.dropGlow * .8f, size * rw.dropGlow * .8f, Painter.Alpha(rw.goldColor, .4f), additive: true);
+                    // 동전이 돌듯 가로로 줄었다 늘어난다.
+                    float spin = .55f + .45f * Mathf.Abs(Mathf.Cos(clock * 5 + d.x));
+                    painter.Sprite(Layer.Effects, goldIcon, at + new Vector2(0, bob), 0, size * spin, size, Color.white);
+                }
+                else painter.Sprite(Layer.Effects, shardIcon, at, 0, 20, 20, Color.white);
+                if (flying)
+                {
+                    Vector2 dir = (hero - ground).normalized;
+                    Color tail = d.xp > 0 ? rw.xpColor : rw.goldColor;
+                    painter.Line(Layer.Effects, at, at - dir * 14, 2, Painter.Alpha(tail, .5f), additive: true);
+                }
             }
         }
 
@@ -230,8 +274,8 @@ namespace TOD
         // 쉬어가는 라운드의 제단·상인, 라운드가 끝나면 나타나는 계단과 그 위 안내 문구.
         void DrawProps(RunState r, Interactable nearest, float clock, float dt)
         {
-            if (r.altar != null) DrawProp(altarSprite, r.altar, r.artifactTaken ? null : db.ui.promptAltar, nearest == Interactable.Altar, r.artifactTaken ? .55f : 1);
-            if (r.merchant != null) DrawProp(merchantSprite, r.merchant, db.ui.promptMerchant, nearest == Interactable.Merchant, 1);
+            if (r.altar != null) DrawProp(altarSprite, Pal.altarHeight, r.altar, r.artifactTaken ? null : db.ui.promptAltar, nearest == Interactable.Altar, r.artifactTaken ? .55f : 1);
+            if (r.merchant != null) DrawProp(merchantSprite, Pal.merchantHeight, r.merchant, db.ui.promptMerchant, nearest == Interactable.Merchant, 1);
             if (r.stairs == null || stairsSprite == null) return;
             float reveal = db.rounds.stairsRevealTime;
             float k = reveal > 0 ? Mathf.Clamp01(r.stairsAge / reveal) : 1;
@@ -256,16 +300,17 @@ namespace TOD
             if (k >= 1) PropLabel(db.ui.promptStairs, at - new Vector2(0, rect.height * .7f + 22), nearest == Interactable.Stairs);
         }
 
-        void DrawProp(Sprite sprite, Point p, string label, bool near, float alpha)
+        void DrawProp(Sprite sprite, float height, Point p, string label, bool near, float alpha)
         {
             Vector2 at = C(p);
             float h = 0;
             if (sprite != null)
             {
                 Rect rect = sprite.rect;
-                h = rect.height;
-                painter.Ellipse(Layer.Ground, at, rect.width * .4f, rect.width * .4f * .34f, Pal.shadow);
-                painter.Sprite(Layer.Ground, sprite, at - new Vector2(0, h * .42f), 0, rect.width, h, new Color(1, 1, 1, alpha));
+                h = height > 0 ? height : rect.height;
+                float w = h * rect.width / rect.height;
+                painter.Ellipse(Layer.Ground, at, w * .4f, w * .4f * .34f, Pal.shadow);
+                painter.Sprite(Layer.Ground, sprite, at - new Vector2(0, h * .42f), 0, w, h, new Color(1, 1, 1, alpha));
             }
             if (near) painter.Ellipse(Layer.Ground, at, 46, 46 * Space.Proj, Painter.Alpha(Pal.promptActive, .7f), 1.5f);
             if (!string.IsNullOrEmpty(label)) PropLabel(label, at - new Vector2(0, h * .85f + 18), near);
@@ -568,6 +613,7 @@ namespace TOD
                     }
                     default: // Burst, Slash: 퍼지는 고리 + 다섯 조각
                     {
+                        if (!float.IsNaN(fx.lift)) at -= new Vector2(0, fx.lift);
                         float radius = fx.kind == FxKind.Slash ? 29 : 14;
                         Color color = Painter.Alpha(fx.color ?? Color.white, fade);
                         float ringR = 5 + (1 - fade) * radius;
@@ -709,25 +755,31 @@ namespace TOD
             }
         }
 
-        // 대쉬 잔상: 모두 같은 하늘색 실루엣으로 옅어지며 살짝 떠오른다.
+        // 대쉬 잔상: 생긴 순간의 파츠 자세를 같은 하늘색 실루엣으로 그리며 옅어지고 살짝 떠오른다.
+        readonly Dictionary<Fx, List<PartSnap>> ghosts = new();
+        readonly List<Fx> ghostStale = new();
+
         void DrawAfterimages(RunState r)
         {
+            ghostStale.Clear();
+            foreach (Fx fx in ghosts.Keys) if (!r.effects.Contains(fx)) ghostStale.Add(fx);
+            foreach (Fx fx in ghostStale) ghosts.Remove(fx);
             foreach (Fx fx in r.effects)
             {
                 if (fx.kind != FxKind.Afterimage) continue;
+                if (!ghosts.TryGetValue(fx, out List<PartSnap> parts)) ghosts[fx] = parts = hero.Snapshot();
                 float fade = fx.Fade;
-                float elapsed = fx.progress * db.feel.dashDuration;
-                int index = elapsed < db.visual.dodgeLaunchEnd ? 0 : 1;
-                if (hero.dodgeFrames.Length <= index) continue;
-                float hop = Mathf.Sin(Mathf.PI * Mathf.Clamp01((elapsed - .02f) / .22f)) * db.visual.dodgeHop + (1 - fade) * 4;
-                Sprite frame = hero.dodgeFrames[index];
-                float s = hero.DodgeScale(fx.y);
-                Vector2 at = C(fx.x, fx.y) - new Vector2(0, hop);
-                Rect rect = frame.rect;
-                SpriteRenderer solid = painter.Sprite(Layer.Ground, frame, at, 0, rect.width * s * fx.facing, rect.height * s, new Color(1, 1, 1, fade * .5f));
-                painter.Style(solid, fill: db.visual.dodgeColor, fillAmount: 1);
-                SpriteRenderer glow = painter.Sprite(Layer.Ground, frame, at, 0, rect.width * s * fx.facing * 1.04f, rect.height * s * 1.04f, new Color(1, 1, 1, fade * .3f), additive: true);
-                painter.Style(glow, fill: db.visual.dodgeColor, fillAmount: 1);
+                Vector2 rise = new(0, -(1 - fade) * 4);
+                foreach (PartSnap part in parts)
+                {
+                    SpriteRenderer solid = painter.Sprite(Layer.Ground, part.sprite, part.center + rise, part.angle, part.w, part.h, new Color(1, 1, 1, fade * .5f));
+                    painter.Style(solid, fill: db.visual.dodgeColor, fillAmount: 1);
+                }
+                foreach (PartSnap part in parts)
+                {
+                    SpriteRenderer glow = painter.Sprite(Layer.Ground, part.sprite, part.center + rise, part.angle, part.w * 1.04f, part.h * 1.04f, new Color(1, 1, 1, fade * .3f), additive: true);
+                    painter.Style(glow, fill: db.visual.dodgeColor, fillAmount: 1);
+                }
             }
         }
     }
