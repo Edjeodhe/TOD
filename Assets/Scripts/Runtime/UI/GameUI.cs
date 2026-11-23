@@ -25,6 +25,7 @@ namespace TOD
         int labelsUsed;
         readonly List<VisualElement> pips = new();
         readonly List<VisualElement> dashPips = new();
+        readonly List<(VisualElement card, VisualElement shine, float strength, float phase, Color color)> shines = new();
         VisualElement[] rounds;
         readonly Dictionary<Vector2Int, Button> cells = new();
         UiTextConfig T => db.ui;
@@ -61,6 +62,8 @@ namespace TOD
             Bind("refuse", game.Refuse);
             Bind("close-shop", CloseDialog);
             Bind("close-artifact", CloseDialog);
+            Bind("reroll-augment", game.RerollAugments);
+            Bind("reroll-artifact", game.RerollArtifacts);
             Bind("confirm-upgrade", game.ConfirmUpgrade);
             Bind("cancel-upgrade", CloseDialog);
             Bind("restart", game.StartRun);
@@ -123,6 +126,21 @@ namespace TOD
 
         public void Tick()
         {
+            // 유니크·레전더리 카드: 빛 줄기가 카드를 가로질러 지나가고, 레전더리는 테두리가 숨 쉬듯 밝아진다.
+            foreach (var (card, shine, strength, phase, color) in shines)
+            {
+                if (card.panel == null) continue;
+                float u = Mathf.Repeat(Now * (.45f + strength * .35f) + phase, 1.6f) / 1.6f;
+                shine.style.left = Length.Percent(-40 + u * 180);
+                shine.style.opacity = strength;
+                if (strength < .9f) continue;
+                // 레전더리: 빛 줄기가 지날 때마다 테두리·돌기가 금빛으로 번쩍인다.
+                float flash = Mathf.Pow(Mathf.Max(0, Mathf.Sin(u * Mathf.PI)), 6);
+                Color edge = Color.Lerp(color, new Color(1f, .9f, .62f), flash * .8f);
+                card.style.unityBackgroundImageTintColor = PaperTint(edge);
+                SetBorder(card.Q("frame"), edge);
+                foreach (string knob in new[] { "knob-top", "knob-right" }) card.Q(knob).style.backgroundColor = edge;
+            }
             if (Now >= noticeUntil) Show(notice, false);
             if (Now >= bannerUntil) Show(banner, false);
             if (Now >= flashUntil) Show(roomFlash, false);
@@ -196,7 +214,8 @@ namespace TOD
             Text(hud, "level", string.Format(T.level, r.level));
             Text(hud, "hp-value", string.Format(T.ratio, r.hp, r.maxHp));
             Text(hud, "yarn-value", string.Format(T.ratio, yarn, maxYarn));
-            Text(hud, "thread-count", string.Format(T.threadCount, r.strands.Count));
+            float bonus = combat.StrandBonus(r.strands.Count);
+            Text(hud, "thread-count", bonus > 0 ? string.Format(T.threadBonus, r.strands.Count, Mathf.RoundToInt(bonus * 100)) : string.Format(T.threadCount, r.strands.Count));
             Text(hud, "knot-ready", string.Format(T.knotReady, Mathf.Max(1, combat.KnotInterval(r) - r.shotCount)));
             string mood = r.mood == Mood.Frenzy ? T.frenzySuffix : r.mood == Mood.Awakened ? T.awakenSuffix : "";
             Text(hud, "desire-value", string.Format(T.desireValue, Mathf.FloorToInt(r.desire), r.maxDesire, mood));
@@ -276,6 +295,7 @@ namespace TOD
             bool pending = r.phase != Phase.Combat && r.augmentQueue > 0 && Opened == "";
             Show(hint, pending);
             if (pending) hintText.text = string.Format(T.augmentHint, r.augmentQueue);
+            else if (game.CanOpenRunInventory) { Show(hint, true); hintText.text = T.inventoryHint; }
 
             Enemy boss = r.enemies.FirstOrDefault(e => e.IsBoss);
             Show(hud.Q("boss-hud"), boss != null);
@@ -319,14 +339,12 @@ namespace TOD
         Button PuzzleCard(VisualElement container, Color color, Sprite icon, string tag, string name, string effect, string text, Action onClick)
         {
             var card = (Button)Slot(slots, "puzzle");
-            Color body = Color.Lerp(new Color(.17f, .13f, .19f), color, .16f);
-            Color band = Color.Lerp(new Color(.12f, .08f, .13f), color, .55f);
-            card.style.backgroundColor = body;
-            SetBorder(card, color);
-            foreach (string knob in new[] { "knob-top", "knob-right" }) { VisualElement k = card.Q(knob); k.style.backgroundColor = color; SetBorder(k, color); }
-            SetBorder(card.Q("notch-left"), color);
+            card.Q("shine").style.display = DisplayStyle.None;
+            // 종이 카드(Assets/UI/Paper/card.png)를 등급 색으로 살짝 물들이고, 띠(찢어진 양피지)는 진하게 물들인다. 돌기 테두리는 USS 의 잉크 선.
+            card.style.unityBackgroundImageTintColor = PaperTint(color);
+            foreach (string knob in new[] { "knob-top", "knob-right" }) card.Q(knob).style.backgroundColor = color;
             SetBorder(card.Q("frame"), color);
-            card.Q("band").style.backgroundColor = band;
+            card.Q("band").style.unityBackgroundImageTintColor = Color.Lerp(color, Color.white, .3f);
             Icon(card.Q("icon"), icon);
             Text(card, "tag", tag ?? "");
             Text(card, "name", name);
@@ -338,13 +356,16 @@ namespace TOD
             return card;
         }
 
+        static Color PaperTint(Color c) => Color.Lerp(Color.white, c, .38f);
+
         static void SetBorder(VisualElement e, Color c)
         {
             e.style.borderTopColor = c; e.style.borderBottomColor = c; e.style.borderLeftColor = c; e.style.borderRightColor = c;
         }
 
-        public void ShowAugments(List<AugmentDef> choices, RunState r, Action<string> pick)
+        public void ShowAugments(List<AugmentDef> choices, RunState r, Action<string> pick, bool canReroll)
         {
+            SetReroll("reroll-augment", canReroll);
             root.Q<Label>("augment-title").text = string.Format(T.augmentTitle, r.level - r.augmentQueue + 1);
             VisualElement container = root.Q("augment-choices");
             container.Clear();
@@ -383,8 +404,25 @@ namespace TOD
         public void SetSaleLabel(string text) => Text(root, "sale-label", text);
 
         // 쉬어가는 라운드의 아티팩트(재봉 조각) 3택 1
-        public void ShowArtifacts(int floor, IEnumerable<int> kinds, Action<int> pick)
+        void SetReroll(string name, bool available)
         {
+            var button = root.Q<Button>(name);
+            button.text = available ? T.reroll : T.rerollUsed;
+            button.SetEnabled(available);
+        }
+
+        // 등반 중 재봉 상자: 안내 문구를 보여 준다 (닫기 버튼·Esc·I 는 전투로 돌아간다).
+        public void SetInventoryInRun(bool inRun)
+        {
+            Label note = root.Q<Label>("inventory-run-note");
+            note.text = T.inventoryInRun;
+            Show(note, inRun);
+        }
+
+        public void ShowArtifacts(int floor, IEnumerable<int> kinds, Action<int> pick, bool canReroll)
+        {
+            SetReroll("reroll-artifact", canReroll);
+            shines.Clear();
             Text(root, "artifact-eyebrow", string.Format(T.artifactEyebrow, floor));
             VisualElement container = root.Q("artifacts");
             container.Clear();
@@ -395,7 +433,15 @@ namespace TOD
                 string value = def.value < 1 ? $"{Mathf.RoundToInt(def.value * 100)}%" : def.value.ToString("0.##");
                 string effect = string.Format(T.pieceEffect, T.statNames[(int)def.stat], value);
                 string text = string.Format(T.pieceShape, def.shape.Length, set.name, set.bonus) + (string.IsNullOrEmpty(def.flavor) ? "" : "\n" + def.flavor);
-                Button card = PuzzleCard(container, set.color, def.icon, $"{set.name} · {db.gear.rankNames[def.cost]}", def.name, effect, text, () => pick(kind));
+                // 카드 색은 등급(코스트) 색: 일반 회색 · 레어 하늘색 · 유니크 노란색 · 레전더리 붉은색. 세트 색은 조각 모양에 남긴다.
+                Color[] ranks = db.gear.rankColors;
+                Color rankColor = ranks != null && def.cost < ranks.Length ? ranks[def.cost] : set.color;
+                Button card = PuzzleCard(container, rankColor, def.icon, $"{db.gear.rankNames[def.cost]} · {set.name}", def.name, effect, text, () => pick(kind));
+                card.AddToClassList($"rank-{def.cost}");
+                float shine = db.gear.rankShine != null && def.cost < db.gear.rankShine.Length ? db.gear.rankShine[def.cost] : 0;
+                VisualElement band = card.Q("shine");
+                band.style.display = shine > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+                if (shine > 0) shines.Add((card, band, shine, shines.Count * .37f, rankColor));
                 VisualElement shape = card.Q("shape");
                 shape.style.display = DisplayStyle.Flex;
                 PieceIcon(shape, def.shape.ToList(), set.color);

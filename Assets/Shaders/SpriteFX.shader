@@ -16,6 +16,7 @@ Shader "TOD/SpriteFX"
         _Sat ("Saturation", Float) = 1
         _Fill ("Fill (rgb, amount)", Color) = (0, 0, 0, 0)
         _CutPlane ("Cut plane (nx, ny, d, on)", Vector) = (0, 0, 0, 0)
+        _CutPlane2 ("Second cut plane", Vector) = (0, 0, 0, 0)
         _Shape ("Shape", Float) = 0
         _Ring ("Ring thickness", Float) = 0.1
         _Purify ("Purify floor", Float) = 0
@@ -62,6 +63,7 @@ Shader "TOD/SpriteFX"
                 float _Sat;
                 float4 _Fill;
                 float4 _CutPlane;
+                float4 _CutPlane2;
                 float _Shape;
                 float _Ring;
                 float _Purify;
@@ -70,6 +72,14 @@ Shader "TOD/SpriteFX"
             CBUFFER_END
 
             float4 _TOD_PurifyCircle, _TOD_PurifyLook, _TOD_PurifyFill;
+
+            float Hash21(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
+            float ValueNoise(float2 p)
+            {
+                float2 i = floor(p), f = frac(p);
+                float2 u = f * f * (3 - 2 * f);
+                return lerp(lerp(Hash21(i), Hash21(i + float2(1, 0)), u.x), lerp(Hash21(i + float2(0, 1)), Hash21(i + float2(1, 1)), u.x), u.y);
+            }
 
             Varyings vert(Attributes input)
             {
@@ -99,6 +109,10 @@ Shader "TOD/SpriteFX"
                 {
                     clip(dot(i.positionWS.xy, _CutPlane.xy) - _CutPlane.z);
                 }
+                if (_CutPlane2.w > 0.5)
+                {
+                    clip(dot(i.positionWS.xy, _CutPlane2.xy) - _CutPlane2.z);   // 두 절단선 사이의 조각 (보스 종이 조각)
+                }
                 half lum = dot(c.rgb, half3(0.299, 0.587, 0.114));
                 half3 raw = c.rgb;
                 c.rgb = lerp(lum.xxx, c.rgb, _Sat) * _Bright;
@@ -109,7 +123,9 @@ Shader "TOD/SpriteFX"
                     float2 d = i.positionWS.xy - _TOD_PurifyCircle.xy;
                     d.y /= max(_TOD_PurifyCircle.w, 1e-3);
                     float soft = max(_TOD_PurifyLook.z, 1e-4);
-                    float inside = 1 - smoothstep(_TOD_PurifyCircle.z - soft, _TOD_PurifyCircle.z, length(d));
+                    // 경계를 꽃잎처럼 흐트러뜨려 둥근 테두리가 보이지 않게 한다 (_TOD_PurifyLook.w = 흐트러짐 폭).
+                    float wobble = (ValueNoise(i.positionWS.xy * 1.3) * .65 + ValueNoise(i.positionWS.xy * 4.1) * .35 - .5) * _TOD_PurifyLook.w;
+                    float inside = 1 - smoothstep(_TOD_PurifyCircle.z - soft, _TOD_PurifyCircle.z, length(d) + wobble);
                     half3 pure = lerp(lum.xxx, raw, _TOD_PurifyLook.y) * _TOD_PurifyLook.x;
                     pure = lerp(pure, _TOD_PurifyFill.rgb, _TOD_PurifyFill.a);
                     c.rgb = lerp(c.rgb, pure, inside);

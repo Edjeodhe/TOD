@@ -75,7 +75,11 @@ namespace TOD
             ui.UpdateMeta(Profile);
         }
 
-        public void BackFromRoom() => ShowScreen(summary != null ? roomReturn : UiScreen.Lobby);
+        public void BackFromRoom()
+        {
+            if (runInventory) { CloseRunInventory(); return; }
+            ShowScreen(summary != null ? roomReturn : UiScreen.Lobby);
+        }
 
         public void ToggleSound()
         {
@@ -94,6 +98,8 @@ namespace TOD
             paused = false;
             Run = Combat.CreateRun(Profile, () => Random.value);
             offered = null;
+            augmentRerolled = false;
+            runInventory = false;
             shop = null;
             aim = Center;
             arena.Clear();
@@ -117,7 +123,33 @@ namespace TOD
         }
 
         // 플레이어가 움직일 수 있는 상태 (전투·정화·라운드 종료 모두 포함, 대화 상자·일시 정지 제외)
-        bool IsCombat => Run != null && Run.phase != Phase.Victory && !paused && Opened == "" && Run.outcome == Outcome.None;
+        bool IsCombat => Run != null && Run.phase != Phase.Victory && !paused && Opened == "" && !runInventory && Run.outcome == Outcome.None;
+
+        // 등반 중 재봉 상자(I): 라운드가 끝났거나 쉬어가는 라운드일 때만 연다. 전투는 멈춘다.
+        bool runInventory;
+        public bool CanOpenRunInventory => Run != null && Run.phase == Phase.Cleared && Opened == "" && !paused;
+
+        public void ToggleRunInventory()
+        {
+            if (runInventory) { CloseRunInventory(); return; }
+            if (!CanOpenRunInventory) return;
+            runInventory = true;
+            selected = null;
+            ui.ShowScreen(UiScreen.Inventory);
+            ui.SetInventoryInRun(true);
+            RenderInventory();
+            sound.Play("loot");
+        }
+
+        void CloseRunInventory()
+        {
+            if (!runInventory) return;
+            runInventory = false;
+            Combat.RefreshGear(Run);
+            Gear.Save(db, Profile);
+            ui.SetInventoryInRun(false);
+            ui.ShowScreen(UiScreen.Combat);
+        }
 
         public void TogglePause()
         {
@@ -143,13 +175,33 @@ namespace TOD
         void ShowAugments()
         {
             offered ??= Combat.AugmentChoices(Run);
-            ui.ShowAugments(offered, Run, PickAugment);
+            ui.ShowAugments(offered, Run, PickAugment, !augmentRerolled);
+        }
+
+        // 증강 창 아래 '다시 굴리기': 선택 한 번마다 한 번.
+        bool augmentRerolled;
+        public void RerollAugments()
+        {
+            if (Run == null || Opened != "augment" || augmentRerolled || offered == null) return;
+            augmentRerolled = true;
+            offered = Combat.AugmentChoices(Run, offered);
+            sound.Play("reroll");
+            ShowAugments();
+        }
+
+        // 쉬어가기 탑 아이템 창의 '다시 굴리기': 층마다 한 번.
+        public void RerollArtifacts()
+        {
+            if (Run == null || Opened != "artifact" || !Combat.RerollArtifacts(Run)) return;
+            sound.Play("reroll");
+            ui.ShowArtifacts(Run.floor, Run.artifactOffer, PickArtifact, !Run.artifactRerolled);
         }
 
         void PickAugment(string id)
         {
             Combat.ApplyAugment(Run, id);
             offered = null;
+            augmentRerolled = false;
             AddPlayerFx(FxSprite.Stitch, db.fx.augment);
             ui.CloseDialog();
             sound.Play("upgrade");
@@ -166,7 +218,7 @@ namespace TOD
                     if (Run.roundKind == RoundKind.Boss && Run.desirePending) ui.ShowDesire(Run.offer, Run.floor, Run.offer.id == db.desire.refine.id);
                     else Ascend();
                     break;
-                case Interactable.Altar: ui.ShowArtifacts(Run.floor, Run.artifactOffer, PickArtifact); break;
+                case Interactable.Altar: ui.ShowArtifacts(Run.floor, Run.artifactOffer, PickArtifact, !Run.artifactRerolled); break;
                 case Interactable.Merchant: ShowShop(); break;
             }
         }
@@ -371,14 +423,16 @@ namespace TOD
             if (k == null) return;
             if (k.escapeKey.wasPressedThisFrame)
             {
-                if (Opened is "upgrade" or "augment" or "artifact" or "shop") ui.CloseDialog();   // 증강·아이템은 나중에 E 로 다시 연다
+                if (runInventory) CloseRunInventory();
+                else if (Opened is "upgrade" or "augment" or "artifact" or "shop") ui.CloseDialog();   // 증강·아이템은 나중에 E 로 다시 연다
                 else if (Opened == "retreat") CancelRetreat();
                 else TogglePause();
             }
             if (k.enterKey.wasPressedThisFrame && screen == UiScreen.Lobby && Run == null && Opened == "") StartRun();
-            if (k.rKey.wasPressedThisFrame && screen == UiScreen.Inventory) Rotate();
+            if (k.rKey.wasPressedThisFrame && (screen == UiScreen.Inventory || runInventory)) Rotate();
             if (IsCombat && k.spaceKey.wasPressedThisFrame) dashRequested = true;
-            if (k.eKey.wasPressedThisFrame) Interact();
+            if (k.eKey.wasPressedThisFrame && !runInventory) Interact();
+            if (k.iKey.wasPressedThisFrame) ToggleRunInventory();
         }
 
         CombatInput ReadCombatInput()

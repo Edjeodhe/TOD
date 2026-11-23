@@ -19,7 +19,10 @@
                         <ui:Label text="체력" />
                         <ui:Label name="hp-value" text="100 / 100" class="value" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="meter"><ui:VisualElement name="hp-bar" class="meter-fill health" /></ui:VisualElement>
+                    <ui:VisualElement class="bar-frame small" picking-mode="Ignore">
+                        <ui:VisualElement class="bar-track meter" picking-mode="Ignore"><ui:VisualElement name="hp-bar" class="meter-fill health" picking-mode="Ignore" /></ui:VisualElement>
+                        <ui:VisualElement class="bar-ink" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="stat" picking-mode="Ignore">
                     <ui:VisualElement class="stat-label" picking-mode="Ignore">
@@ -39,7 +42,10 @@
                         <ui:Label text="욕망" />
                         <ui:Label name="desire-value" text="0 / 100" class="value" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="meter"><ui:VisualElement name="desire-bar" class="meter-fill desire" /></ui:VisualElement>
+                    <ui:VisualElement class="bar-frame small" picking-mode="Ignore">
+                        <ui:VisualElement class="bar-track meter" picking-mode="Ignore"><ui:VisualElement name="desire-bar" class="meter-fill desire" picking-mode="Ignore" /></ui:VisualElement>
+                        <ui:VisualElement class="bar-ink" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="stat" picking-mode="Ignore">
                     <ui:VisualElement class="stat-label" picking-mode="Ignore">
@@ -82,17 +88,27 @@
             <ui:VisualElement name="banner" class="banner hidden" picking-mode="Ignore"><ui:Label name="banner-text" /></ui:VisualElement>
             <ui:VisualElement name="timer" class="round-timer hidden" picking-mode="Ignore"><ui:Label name="timer-text" /></ui:VisualElement>
             <ui:VisualElement name="hint" class="hint-bar hidden" picking-mode="Ignore"><ui:Label name="hint-text" /></ui:VisualElement>
+            <!-- 보스 HUD: 화면 위 가운데, 크게 (이름 띠 + 잉크 틀 게이지) -->
             <ui:VisualElement name="boss-hud" class="boss-hud hidden" picking-mode="Ignore">
-                <ui:Label text="실타래의 지배자" />
-                <ui:VisualElement class="meter"><ui:VisualElement name="boss-bar" class="meter-fill boss" /></ui:VisualElement>
+                <ui:VisualElement class="boss-title" picking-mode="Ignore">
+                    <ui:VisualElement class="boss-seal" picking-mode="Ignore"><ui:Label text="♜" picking-mode="Ignore" /></ui:VisualElement>
+                    <ui:Label name="boss-name" text="실타래의 지배자" class="boss-name" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement class="bar-frame boss-frame" picking-mode="Ignore">
+                    <ui:VisualElement class="bar-track meter" picking-mode="Ignore"><ui:VisualElement name="boss-bar" class="meter-fill boss" picking-mode="Ignore" /></ui:VisualElement>
+                    <ui:VisualElement class="bar-ink" picking-mode="Ignore" />
+                </ui:VisualElement>
             </ui:VisualElement>
             <!-- 메이플식 하단 경험치 바 -->
             <ui:VisualElement name="exp" class="exp-bar" picking-mode="Ignore">
                 <ui:Label name="exp-level" text="LV. 1" class="exp-level" />
-                <ui:VisualElement class="exp-track" picking-mode="Ignore">
-                    <ui:VisualElement name="exp-fill" class="exp-fill" picking-mode="Ignore"><ui:VisualElement class="exp-shine" picking-mode="Ignore" /></ui:VisualElement>
-                    <ui:VisualElement class="exp-tick" style="left: 10%;" /><ui:VisualElement class="exp-tick" style="left: 20%;" /><ui:VisualElement class="exp-tick" style="left: 30%;" /><ui:VisualElement class="exp-tick" style="left: 40%;" /><ui:VisualElement class="exp-tick" style="left: 50%;" /><ui:VisualElement class="exp-tick" style="left: 60%;" /><ui:VisualElement class="exp-tick" style="left: 70%;" /><ui:VisualElement class="exp-tick" style="left: 80%;" /><ui:VisualElement class="exp-tick" style="left: 90%;" />
-                    <ui:Label name="exp-text" text="EXP 0 / 5 [0.00%]" class="exp-text" picking-mode="Ignore" />
+                <ui:VisualElement class="bar-frame exp-frame" picking-mode="Ignore">
+                    <ui:VisualElement class="bar-track exp-track" picking-mode="Ignore">
+                        <ui:VisualElement name="exp-fill" class="exp-fill" picking-mode="Ignore"><ui:VisualElement class="exp-shine" picking-mode="Ignore" /></ui:VisualElement>
+                        <ui:VisualElement class="exp-tick" style="left: 10%;" /><ui:VisualElement class="exp-tick" style="left: 20%;" /><ui:VisualElement class="exp-tick" style="left: 30%;" /><ui:VisualElement class="exp-tick" style="left: 40%;" /><ui:VisualElement class="exp-tick" style="left: 50%;" /><ui:VisualElement class="exp-tick" style="left: 60%;" /><ui:VisualElement class="exp-tick" style="left: 70%;" /><ui:VisualElement class="exp-tick" style="left: 80%;" /><ui:VisualElement class="exp-tick" style="left: 90%;" />
+                        <ui:Label name="exp-text" text="EXP 0 / 5 [0.00%]" class="exp-text" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="bar-ink" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="controls-hint" picking-mode="Ignore">
@@ -150,6 +166,7 @@
             <ui:VisualElement class="room-body">
                 <ui:Label name="inventory-header" class="eyebrow" />
                 <ui:Label text="재봉 상자" class="room-title" />
+                <ui:Label name="inventory-run-note" class="room-note hidden" />
                 <ui:Label text="조각을 고르고(R로 회전) 판의 칸을 누르세요. 같은 색의 변을 맞대면 세트 효과가 켜집니다." class="room-text" />
                 <ui:VisualElement class="inventory-layout">
                     <ui:VisualElement name="board" class="board" />
@@ -217,6 +234,7 @@
                 <ui:Label name="augment-title" class="dialog-title" />
                 <ui:Label text="올릴 능력치 하나를 고르세요. Esc로 닫고 나중에 E로 다시 열 수 있습니다." class="dialog-text" />
                 <ui:VisualElement name="augment-choices" class="puzzle-grid" />
+                <ui:VisualElement class="actions reroll-row"><ui:Button name="reroll-augment" text="다시 굴리기" class="reroll" /></ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="dialog-desire" class="dialog hidden">
                 <ui:VisualElement class="ui-vfx" picking-mode="Ignore" style="background-image: url('project://database/Assets/vfx/boss.png');" />
@@ -245,7 +263,7 @@
                 <ui:Label text="탑의 조각" class="dialog-title" />
                 <ui:Label text="이 층에서 얻을 수 있는 재봉 조각은 하나뿐입니다. 고른 조각은 재봉 상자에 들어갑니다. (Esc: 나중에)" class="dialog-text" />
                 <ui:VisualElement name="artifacts" class="puzzle-grid" />
-                <ui:VisualElement class="actions"><ui:Button name="close-artifact" text="나중에 고르기" /></ui:VisualElement>
+                <ui:VisualElement class="actions reroll-row"><ui:Button name="reroll-artifact" text="다시 굴리기" class="reroll" /><ui:Button name="close-artifact" text="나중에 고르기" /></ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="dialog-upgrade" class="dialog hidden">
                 <ui:Label text="모이라의 의식" class="eyebrow" />

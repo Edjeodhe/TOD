@@ -65,11 +65,13 @@ namespace TOD.Tests
             r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Plain });
             r.strands.Add(new Strand { x = 500, y = 100, state = StrandState.Ground, element = Element.Plain });
             r.strands.Add(new Strand { x = 505, y = 100, state = StrandState.Ground, element = Element.Plain });
+            // 한 타 피해 = 실 피해 × (1 + 실 가닥 보너스). 예시(피해 14, 보너스 없음)에서는 A 70 / B·C 28.
+            float hit = r.damage * (1 + combat.StrandBonus(3));
             combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
             Assert.AreEqual(5, r.combo, "총 타격 수");
-            Assert.AreEqual(a.maxHp - 70, a.hp, "A (바늘이 꽂힌 적)");
-            Assert.AreEqual(b.maxHp - 28, b.hp, "B");
-            Assert.AreEqual(c.maxHp - 28, c.hp, "C");
+            Assert.AreEqual(a.maxHp - Combat.Round(hit * 5), a.hp, "A (바늘이 꽂힌 적) = 5타");
+            Assert.AreEqual(b.maxHp - Combat.Round(hit * 2), b.hp, "B = 2타");
+            Assert.AreEqual(c.maxHp - Combat.Round(hit * 2), c.hp, "C = 2타");
             Assert.AreEqual(0, r.strands.Count, "당기면 실을 모두 회수");
         }
 
@@ -126,6 +128,45 @@ namespace TOD.Tests
             Assert.AreEqual(r.maxHp, r.hp, "늘어난 만큼 체력도 찬다");
             Assert.AreEqual(1, r.augmentsTaken["reach"]);
             Assert.AreEqual(0, r.augmentQueue);
+        }
+
+        // 실을 많이 걸어 둘수록 당길 때 한 타의 피해가 커진다 (상한 있음).
+        [Test]
+        public void MoreStrandsHitHarder()
+        {
+            Assert.AreEqual(0, combat.StrandBonus(1), 1e-4, "한 가닥은 기본 피해");
+            Assert.Greater(combat.StrandBonus(4), combat.StrandBonus(2));
+            Assert.AreEqual(db.hero.strandBonusMax, combat.StrandBonus(100), 1e-4, "상한");
+        }
+
+        // 보스를 잡으면 바로 정화되지 않고 묶임→잘림 연출 단계를 거친 뒤, 보스가 있던 자리에서 정화가 퍼진다.
+        [Test]
+        public void BossDeathPlaysBeforePurify()
+        {
+            RunState r = NewRun();
+            r.roundKind = RoundKind.Boss;
+            r.player.x = 500; r.player.y = 350;
+            Enemy boss = Add(r, "boss", 700, 300);
+            r.strands.Add(new Strand { x = boss.x, y = boss.y, target = boss, state = StrandState.Stuck, element = Element.Plain });
+            boss.hp = 1;
+            combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(700, 300) });
+            Assert.AreEqual(Phase.BossDying, r.phase);
+            Assert.IsNotNull(r.bossDeath);
+            for (int i = 0; i < 60 * 4 && r.phase == Phase.BossDying; i++) combat.Update(r, 1 / 60f, new CombatInput());
+            Assert.AreEqual(Phase.Purifying, r.phase);
+            Assert.AreEqual(700, r.purifyCenter.x, 1e-3, "정화는 보스 자리에서 퍼진다");
+        }
+
+        // 쉬어가기 탑의 아이템 3개는 한 번만 다시 굴릴 수 있다.
+        [Test]
+        public void TowerRerollsOnce()
+        {
+            RunState r = combat.CreateRun(EmptyProfile(), () => Random.value);
+            r.artifactOffer.AddRange(new[] { 0, 1, 2 });
+            Assert.IsTrue(combat.RerollArtifacts(r));
+            Assert.AreEqual(db.rounds.artifactChoices, r.artifactOffer.Count);
+            Assert.IsFalse(r.artifactOffer.Contains(0) && r.artifactOffer.Contains(1) && r.artifactOffer.Contains(2), "다른 조각이 섞여 나온다");
+            Assert.IsFalse(combat.RerollArtifacts(r), "두 번째는 안 된다");
         }
 
         // 대쉬는 2칸: 연달아 두 번 쓸 수 있고, 빈 칸은 시간이 지나면 다시 찬다.

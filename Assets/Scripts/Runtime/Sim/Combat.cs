@@ -36,6 +36,9 @@ namespace TOD
         }
 
         public int XpNeeded(RunState r) => db.rewards.xpBase + (r.level - 1) * db.rewards.xpStep;
+        // 당길 때 걸린 실 가닥 수에 따른 피해 증가 (0 = 없음). 첫 가닥은 기본, 둘째부터 strandBonus 씩.
+        public float StrandBonus(int strands) => Mathf.Min(H.strandBonusMax, H.strandBonus * Mathf.Max(0, strands - 1));
+
         public int YarnMax(RunState r) => Mathf.Max(H.minYarn, (int)Round(H.baseYarn + r.Gear(StatKind.Yarn) + r.yarnBonus - (r.desires.Contains("obsession") ? db.desire.obsessionYarn : 0)));
         public float DesireFraction(RunState r) => r.desire / r.maxDesire;
         public int KnotInterval(RunState r) => r.rules.Contains("earlyKnot") ? H.earlyKnotInterval : H.knotInterval;
@@ -164,7 +167,7 @@ namespace TOD
             r.echo = null; r.shotCount = 0; r.winding = 0; r.dry = 0; r.nextKnot = 0;
             r.yarn = YarnMax(r);
             r.stairs = r.altar = r.merchant = null;
-            r.artifactOffer.Clear(); r.artifactTaken = false; r.desirePending = false;
+            r.artifactOffer.Clear(); r.artifactTaken = false; r.desirePending = false; r.artifactRerolled = false; r.bossDeath = null;
             r.purifyTime = -1; r.purifyCenter = null;
             if (r.roundKind != RoundKind.Boss) r.purified = false;
             r.spawnTimers.Clear();
@@ -239,6 +242,38 @@ namespace TOD
             return best;
         }
 
+        // 쉬어가기 탑의 조각 3개를 한 번 다시 굴린다 (지금 보이는 조각은 되도록 빼고).
+        public bool RerollArtifacts(RunState r)
+        {
+            if (r.artifactTaken || r.artifactRerolled) return false;
+            r.artifactRerolled = true;
+            var shown = new HashSet<int>(r.artifactOffer);
+            var kinds = Enumerable.Range(0, db.gear.pieces.Length).Where(k => !shown.Contains(k)).ToList();
+            if (kinds.Count < R.artifactChoices) kinds = Enumerable.Range(0, db.gear.pieces.Length).ToList();
+            r.artifactOffer.Clear();
+            while (r.artifactOffer.Count < R.artifactChoices && kinds.Count > 0)
+            {
+                int i = Mathf.Min(kinds.Count - 1, Mathf.FloorToInt(r.random() * kinds.Count));
+                r.artifactOffer.Add(kinds[i]);
+                kinds.RemoveAt(i);
+            }
+            return true;
+        }
+
+        // 등반 중 재봉 상자(I)에서 배치를 바꾼 뒤: 장비 능력치 차이만큼 바로 반영한다.
+        public void RefreshGear(RunState r)
+        {
+            GearStats before = r.gearStats, after = Gear.Stats(db, r.profile);
+            r.damage += after[StatKind.Damage] - before[StatKind.Damage];
+            r.recharge += after[StatKind.Recharge] - before[StatKind.Recharge];
+            float hp = Round(after[StatKind.Health] - before[StatKind.Health]);
+            r.maxHp = Mathf.Max(1, r.maxHp + hp);
+            r.hp = Mathf.Clamp(r.hp + Mathf.Max(0, hp), 1, r.maxHp);
+            r.gearStats = after;
+            r.element = Gear.ThreadElement(after);
+            r.yarn = Mathf.Min(r.yarn, YarnMax(r));
+        }
+
         public PieceDef TakeArtifact(RunState r, int kind)
         {
             if (r.artifactTaken || !r.artifactOffer.Contains(kind)) return null;
@@ -249,10 +284,12 @@ namespace TOD
             return def;
         }
 
-        public List<AugmentDef> AugmentChoices(RunState r)
+        public List<AugmentDef> AugmentChoices(RunState r, ICollection<AugmentDef> avoid = null)
         {
             AugmentConfig c = db.augments;
             List<AugmentDef> pool = c.augments.Where(a => !a.rule || !r.rules.Contains(a.id)).ToList();
+            // 다시 굴리기: 방금 본 카드는 되도록 빼고 고른다 (남는 수가 모자라면 그대로 둔다).
+            if (avoid != null && pool.Count(a => !avoid.Contains(a)) >= c.choices) pool = pool.Where(a => !avoid.Contains(a)).ToList();
             var choices = new List<AugmentDef>();
             while (choices.Count < c.choices && pool.Count > 0)
             {
@@ -414,7 +451,27 @@ namespace TOD
             Event(r, "cleared", db.ui.cleared);
         }
 
-        // 보스 처치: 캐릭터에서 정화의 고리가 퍼지고, 끝나면 계단이 나타난다.
+        // 보스 처치: 실이 몸을 감아 조이고 → 종이처럼 잘려 떨어진 뒤 정화가 시작된다. 남은 적은 실이 풀리며 사라진다.
+        void StartBossDeath(RunState r, Enemy boss)
+        {
+            foreach (Enemy e in r.enemies.ToList())
+            {
+                if (e == boss) continue;
+                Spawn(r, FxKind.Burst, e.x, e.y, X.killBurst).color = db.purify.ringColor;
+                Retire(r, e);
+            }
+            r.bullets.Clear(); r.strands.Clear(); r.knots.Clear(); r.trails.Clear(); r.echo = null;
+            r.bossDeath = new BossDeath
+            {
+                x = boss.x, y = boss.y, type = boss.type, elite = boss.elite, facing = boss.facing, height = boss.height,
+                cutAngle = boss.cut?.angle ?? -.5f,
+            };
+            r.phase = Phase.BossDying;
+            r.shake = Mathf.Max(r.shake, db.bossDeath.shake);
+            Event(r, "bossbind");
+        }
+
+        // 보스 처치 연출이 끝나면: 보스가 있던 자리에서 정화가 퍼지고, 끝나면 계단이 나타난다.
         void BeginPurify(RunState r)
         {
             foreach (Enemy e in r.enemies.ToList())
@@ -429,7 +486,7 @@ namespace TOD
             DesireDef[] unowned = db.desire.desires.Where(d => !r.desires.Contains(d.id)).ToArray();
             r.offer = unowned.Length > 0 ? unowned[Mathf.Min(unowned.Length - 1, Mathf.FloorToInt(r.random() * unowned.Length))] : db.desire.refine;
             r.desirePending = true;
-            r.purifyCenter = new Point(r.player.x, r.player.y);
+            r.purifyCenter = r.bossDeath != null ? new Point(r.bossDeath.x, r.bossDeath.y) : new Point(r.player.x, r.player.y);
             r.purifyTime = 0;
             r.phase = Phase.Purifying;
             Event(r, "purify", db.ui.purified);
@@ -449,7 +506,12 @@ namespace TOD
         void GainXp(RunState r, int amount)
         {
             r.xp += amount;
-            while (r.xp >= XpNeeded(r)) { r.xp -= XpNeeded(r); r.level++; r.augmentQueue++; }
+            while (r.xp >= XpNeeded(r))
+            {
+                r.xp -= XpNeeded(r); r.level++; r.augmentQueue++;
+                r.player.levelUp = db.visual.levelUpTime;   // 몸에 초록 기운 (증강은 라운드가 끝난 뒤 고른다)
+                Event(r, "levelup");
+            }
         }
 
         void DropPiece(RunState r, Enemy e, Drop d)
@@ -527,6 +589,7 @@ namespace TOD
                 Enemy nearby = r.enemies.Where(o => o.hp > 0 && o != e).OrderBy(o => Distance(o, e)).FirstOrDefault();
                 if (nearby != null) r.strands.AddRange(stuck.Select(s => { Strand copy = s.Copy(); copy.target = nearby; return copy; }));
             }
+            if (boss) { StartBossDeath(r, e); return; }
             if (e.cut != null)
             {
                 Fx fx = Spawn(r, FxKind.Sliced, e.x, e.y, X.sliced);
@@ -734,7 +797,8 @@ namespace TOD
                     impacts++;
                 }
             }
-            float damage = r.damage * (rage ? db.desire.rageMultiplier : 1) * (r.mood == Mood.Awakened ? db.desire.awakenDamage : 1);
+            float damage = r.damage * (rage ? db.desire.rageMultiplier : 1) * (r.mood == Mood.Awakened ? db.desire.awakenDamage : 1)
+                * (1 + StrandBonus(strands.Count));   // 실을 많이 걸어 둘수록 한 번에 세게 당긴다
             var wounded = new List<Enemy>();
             int transfers = 0;
             foreach (Enemy e in living)
@@ -927,6 +991,7 @@ namespace TOD
             r.elapsed += dt;
             p.actionTime += dt;
             p.dashCooldown = Mathf.Max(0, p.dashCooldown - dt);
+            p.levelUp = Mathf.Max(0, p.levelUp - dt);
             p.dashGrace = Mathf.Max(0, p.dashGrace - dt);
             p.hurt = Mathf.Max(0, p.hurt - dt);
             p.shotCooldown = Mathf.Max(0, p.shotCooldown - dt);
@@ -1012,6 +1077,20 @@ namespace TOD
             {
                 case Phase.Combat when r.roundKind == RoundKind.Survival && r.elapsed >= r.roundLength: ClearRound(r); break;
                 case Phase.Combat when r.roundKind == RoundKind.Boss && !r.enemies.Any(e => e.IsBoss): BeginPurify(r); break;
+                case Phase.BossDying:
+                    BossDeathConfig bd = db.bossDeath;
+                    float before = r.bossDeath.time;
+                    r.bossDeath.time += dt;
+                    // 잘리는 순간: 화면 섬광·흔들림·효과음
+                    if (before < bd.wrapTime && r.bossDeath.time >= bd.wrapTime)
+                    {
+                        r.shake = Mathf.Max(r.shake, bd.shake * 1.6f);
+                        r.snapFlash = F.cutFlash;
+                        r.freeze = Mathf.Max(r.freeze, F.freezeMax);
+                        Event(r, "bosscut");
+                    }
+                    if (r.bossDeath.time >= bd.Total) BeginPurify(r);
+                    break;
                 case Phase.Purifying:
                     r.purifyTime += dt;
                     if (r.purifyTime >= db.purify.duration)

@@ -128,7 +128,8 @@ namespace TOD
             foreach (Trail trail in r.trails) painter.Line(Layer.Ground, C(trail.a), C(trail.b), 1.8f, Painter.Alpha(Tone(r.element).color, .73f), dashed: true);
 
             DrawProps(r, nearest, clock, dt);
-            DrawPurifyRing(r);
+            DrawPurifyRing(r, dt);
+            DrawBossDeath(r, dt);
 
             Player player = r.player;
             HeroFrame frame = hero.Pose(player, heroActionTime);
@@ -160,6 +161,7 @@ namespace TOD
             DrawAfterimages(r);
             SyncEnemies(r, dt);
             hero.Render(player, r.outcome == Outcome.Absorbed ? .55f : 1, Pal.shadow);
+            DrawLevelUp(player, dt);
             DrawEffects(r);
             if (active && aim.x >= 0 && aim.x <= db.arena.width && aim.y >= 0 && aim.y <= db.arena.height)
             {
@@ -239,7 +241,7 @@ namespace TOD
             float radius = r.purified ? 1e6f : r.phase == Phase.Purifying && combat != null ? combat.PurifyRadius(r) : -1;
             Vector3 center = r.purifyCenter != null ? Space.Ground(r.purifyCenter.x, r.purifyCenter.y) : Vector3.zero;
             Shader.SetGlobalVector(PurifyCircleId, new Vector4(center.x, center.y, radius / Space.Ppu, Space.Proj));
-            Shader.SetGlobalVector(PurifyLookId, new Vector4(pc.floorBright, pc.floorSat, Mathf.Max(1, pc.edgeSoftness) / Space.Ppu, 0));
+            Shader.SetGlobalVector(PurifyLookId, new Vector4(pc.floorBright, pc.floorSat, Mathf.Max(1, pc.edgeSoftness) / Space.Ppu, pc.edgeNoise / Space.Ppu));
             Shader.SetGlobalColor(PurifyFillId, pc.floorFill);
         }
 
@@ -322,19 +324,181 @@ namespace TOD
 
         float PropPx => Pal.propLabelPx > 0 ? Pal.propLabelPx : 15;
 
-        // 보스 정화: 캐릭터에서 상아·청록 고리가 바닥을 따라 퍼진다. 고리 안쪽 바닥은 셰이더가 되살린다.
-        void DrawPurifyRing(RunState r)
+        // 보스 정화: 보스가 있던 자리에서 바닥이 번지듯 밝아진다. 둥근 테두리 선은 그리지 않고,
+        // 경계는 셰이더가 꽃잎처럼 흐트러뜨리며, 경계를 따라 상아·청록 꽃잎 빛이 피어오른다.
+        void DrawPurifyRing(RunState r, float dt)
         {
             if (r.phase != Phase.Purifying || r.purifyCenter == null || combat == null) return;
             PurifyConfig pc = db.purify;
             float radius = combat.PurifyRadius(r);
             Vector2 at = C(r.purifyCenter);
             float u = pc.duration > 0 ? Mathf.Clamp01(r.purifyTime / pc.duration) : 1;
-            float fade = 1 - Mathf.SmoothStep(.75f, 1, u);
-            painter.Ellipse(Layer.Ground, at, radius, radius * Space.Proj, Painter.Alpha(pc.glowColor, .55f * fade), pc.glowWidth, additive: true);
-            painter.Ellipse(Layer.Ground, at, radius, radius * Space.Proj, Painter.Alpha(pc.ringColor, fade), pc.ringWidth, additive: true);
-            float inner = radius * .82f;
-            painter.Ellipse(Layer.Ground, at, inner, inner * Space.Proj, Painter.Alpha(pc.ringColor, .35f * fade), Mathf.Max(1, pc.ringWidth * .4f), additive: true);
+            // 가운데에서 한 번 크게 피었다가 사그라지는 빛
+            if (softSprite != null && pc.centerGlow > 0)
+            {
+                float bloom = Mathf.Sin(Mathf.PI * Mathf.Clamp01(u * 1.6f));
+                float size = pc.centerGlow * (.6f + u * .8f);
+                painter.Sprite(Layer.Effects, softSprite, at - new Vector2(0, 30), 0, size, size * .8f, Painter.Alpha(pc.glowColor, .35f * bloom), additive: true);
+                painter.Sprite(Layer.Effects, softSprite, at - new Vector2(0, 30), 0, size * .45f, size * .4f, Painter.Alpha(pc.ringColor, .45f * bloom), additive: true);
+            }
+            if (dt <= 0 || pc.petalRate <= 0) return;
+            // 경계 위 무작위 지점(화면 안만)에서 꽃잎 빛이 떠오른다
+            int count = Mathf.FloorToInt(pc.petalRate * dt) + (Rand() < pc.petalRate * dt % 1 ? 1 : 0);
+            for (int i = 0; i < count; i++)
+            {
+                float angle = Rand() * Mathf.PI * 2;
+                float rr = radius * (.86f + Rand() * .14f);
+                Vector2 p = at + new Vector2(Mathf.Cos(angle) * rr, Mathf.Sin(angle) * rr * Space.Proj);
+                if (!view.Contains(p)) continue;
+                Color c = Rand() < .55f ? pc.ringColor : pc.glowColor;
+                particles.Emit(ParticleKind.Glint, p, new Vector2((Rand() - .5f) * 20, -30 - Rand() * 50), .9f + Rand() * .6f, c, 1.8f + Rand() * 1.6f);
+            }
+        }
+
+        // 보스 처치: 실이 몸을 감아 조이고 → 하얀 칼빛과 함께 종이처럼 잘리고 → 조각과 종이 부스러기가 흩어진다.
+        void DrawBossDeath(RunState r, float dt)
+        {
+            BossDeath b = r.bossDeath;
+            if (r.phase != Phase.BossDying || b == null || b.type == null) return;
+            BossDeathConfig bd = db.bossDeath;
+            Sprite art = b.type.sprite;
+            float h = b.height, w = h * art.rect.width / art.rect.height;
+            Vector2 foot = C(b.x, b.y);
+            Vector2 center = foot - new Vector2(0, h / 2);
+            // 몬스터 그림은 발밑 기준(피벗)이라, 그림을 놓는 점과 회전 중심은 피벗 위치다.
+            Vector2 anchor = center + new Vector2((art.pivot.x / art.rect.width - .5f) * w * b.facing, (.5f - art.pivot.y / art.rect.height) * h);
+            float t = b.time;
+            float wrapK = bd.wrapTime > 0 ? Mathf.Clamp01(t / bd.wrapTime) : 1;
+            float cutT = t - bd.wrapTime;
+            float fallT = cutT - bd.cutTime;
+            Color thread = bd.threadColor;
+            // 절단선: 비스듬히 평행한 cuts 줄 (cutAngle 기준), 몸 높이에 고르게
+            float angle = b.cutAngle;
+            var u = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+            var n = new Vector2(-u.y, u.x);
+            int cuts = Mathf.Max(1, bd.cuts);
+            float span = h * .62f;
+            float Offset(int k) => (k + 1f) / (cuts + 1f) * span - span / 2;
+
+            if (fallT < 0)
+            {
+                // 묶이는 동안: 떨며 어두워지고, 실이 위에서 아래로 차례로 감기며 조인다.
+                float shake = Mathf.Sin(t * 70) * 2.2f * wrapK;
+                SpriteRenderer body = painter.Sprite(Layer.Ground, art, anchor + new Vector2(shake, 0), 0, w * b.facing, h, Color.white);
+                bool flash = cutT >= 0;
+                painter.Style(body, bright: flash ? 2.2f : 1 - .25f * wrapK, sat: flash ? .2f : 1 - .4f * wrapK);
+                int loops = Mathf.Max(1, bd.loops);
+                float tighten = 1 - Mathf.Pow(1 - wrapK, 2);
+                for (int i = 0; i < loops; i++)
+                {
+                    float show = Mathf.Clamp01(wrapK * loops - i);
+                    if (show <= 0) continue;
+                    float y = foot.y - h * (.12f + .76f * (i + .5f) / loops);
+                    float rx = w * (.62f - .3f * tighten) * (.85f + .15f * Mathf.Sin(i * 1.7f));
+                    var points = new List<Vector2>();
+                    int seg = 28;
+                    for (int k = 0; k <= seg * show; k++)
+                    {
+                        float a = k / (float)seg * Mathf.PI * 2 + i * .9f;
+                        points.Add(new Vector2(foot.x + shake + Mathf.Cos(a) * rx, y + Mathf.Sin(a) * rx * .28f - k / (float)seg * h * .05f));
+                    }
+                    if (points.Count < 2) continue;
+                    painter.Line(Layer.Effects, points, bd.threadWidth * 3, Painter.Alpha(thread, .35f), additive: true);
+                    painter.Line(Layer.Effects, points, bd.threadWidth, thread);
+                }
+                if (cutT >= 0)
+                {
+                    // 잘리는 순간: 절단선을 따라 하얀 칼빛이 차례로 그어진다.
+                    for (int k = 0; k < cuts; k++)
+                    {
+                        float kk = Mathf.Clamp01(cutT / Mathf.Max(.01f, bd.cutTime) * cuts - k);
+                        if (kk <= 0) continue;
+                        Vector2 c0 = center + n * Offset(k);
+                        float len = w * 1.4f;
+                        Vector2 a = c0 - u * len * .5f, e = a + u * len * kk;
+                        painter.Blade(Layer.Effects, a, e, 10 * (1 - kk * .5f), Painter.Alpha(bd.cutColor, .5f), true);
+                        painter.Blade(Layer.Effects, a, e, 3, Color.white, true);
+                    }
+                }
+                return;
+            }
+
+            // 떨어지는 동안: 절단선 사이 조각마다 바깥으로 밀려나며 기울어 떨어지고 옅어진다.
+            float fk = bd.fallTime > 0 ? Mathf.Clamp01(fallT / bd.fallTime) : 1;
+            float alpha = fk < .6f ? 1 : 1 - (fk - .6f) / .4f;
+            for (int piece = 0; piece <= cuts; piece++)
+            {
+                float side = piece - cuts / 2f;
+                float drift = (10 + 26 * (1 - Mathf.Pow(1 - fk, 2.4f))) * side;
+                float drop = 60 * fk * fk * (1 + Mathf.Abs(side) * .3f);
+                float rot = side * .18f * fk;
+                Vector2 offset = n * drift + new Vector2(0, drop);
+                SpriteRenderer sr = painter.Sprite(Layer.Ground, art, anchor + offset, rot, w * b.facing, h, new Color(1, 1, 1, alpha));
+                Vector4? lower = piece > 0 ? Plane(anchor, center, offset, rot, n, Offset(piece - 1), 1) : null;
+                Vector4? upper = piece < cuts ? Plane(anchor, center, offset, rot, n, Offset(piece), -1) : null;
+                painter.Style(sr, bright: fk < .08f ? 1.8f : .9f, sat: .8f, cut: lower ?? upper, cut2: lower != null ? upper : null);
+                // 잘린 종이 가장자리: 밝은 종이색 선
+                if (upper != null)
+                {
+                    Vector2 edge = anchor + offset + Rotate(center + n * Offset(piece) - anchor, rot);
+                    Vector2 dir = Rotate(u, rot);
+                    painter.Line(Layer.Effects, edge - dir * w * .55f, edge + dir * w * .55f, 1.6f, Painter.Alpha(bd.flakeColor, alpha * .9f));
+                }
+            }
+            // 종이 부스러기·끊어진 실 끝
+            if (dt > 0 && fk < .5f)
+            {
+                int flakes = Mathf.Max(0, bd.flakes);
+                for (int i = 0; i < flakes * dt * 6 && i < flakes; i++)
+                {
+                    Vector2 p0 = center + n * Offset(Mathf.FloorToInt(Rand() * cuts)) + u * (Rand() - .5f) * w;
+                    var v = new Vector2((Rand() - .5f) * bd.flakeSpeed, -Rand() * bd.flakeSpeed * .6f);
+                    particles.Emit(Rand() < .7f ? ParticleKind.Spark : ParticleKind.Glint, p0, v, .6f + Rand() * .5f, Rand() < .7f ? bd.flakeColor : thread, 2.4f + Rand() * 2);
+                }
+            }
+        }
+
+        static Vector2 Rotate(Vector2 v, float a) => new(v.x * Mathf.Cos(a) - v.y * Mathf.Sin(a), v.x * Mathf.Sin(a) + v.y * Mathf.Cos(a));
+
+        // 조각을 offset 만큼 옮기고 피벗(anchor) 기준으로 rot 만큼 돌렸을 때 절단선(center + n·d)의 월드 반평면. keep = +1 이면 n 쪽을 남긴다.
+        static Vector4 Plane(Vector2 anchor, Vector2 center, Vector2 offset, float rot, Vector2 n, float d, float keep)
+        {
+            Vector2 point = anchor + offset + Rotate(center + n * d - anchor, rot);
+            Vector2 normal = Rotate(n, rot) * keep;
+            Vector3 world = Space.Canvas(point);
+            var nw = new Vector2(normal.x, -normal.y).normalized;
+            return new Vector4(nw.x, nw.y, Vector2.Dot(nw, world), 1);
+        }
+
+        // 레벨업: 몸 주위에 초록 기운이 감돌며 빛 알갱이가 피어오른다 (숫자 대신 간접 표현).
+        void DrawLevelUp(Player p, float dt)
+        {
+            VisualConfig v = db.visual;
+            if (p.levelUp <= 0 || v.levelUpTime <= 0) return;
+            float k = p.levelUp / v.levelUpTime;
+            float fade = Mathf.Min(1, k * 3) * Mathf.Min(1, (1 - k) * 8 + .2f);
+            Vector2 foot = C(p.x, p.y);
+            float body = 46 * hero.Scale(p.y) / Mathf.Max(.001f, db.visual.heroScaleBase);
+            if (softSprite != null)
+            {
+                float pulse = .8f + .2f * Mathf.Sin((1 - k) * v.levelUpTime * 9);
+                painter.Sprite(Layer.Effects, softSprite, foot - new Vector2(0, body * .5f), 0, v.levelUpGlow * pulse, v.levelUpGlow * 1.3f * pulse,
+                    Painter.Alpha(v.levelUpColor, .4f * fade), additive: true);
+            }
+            // 발밑에서 퍼지는 고리 (처음 0.5초)
+            float ring = 1 - k;
+            if (ring * v.levelUpTime < .5f)
+            {
+                float rr = 14 + ring * v.levelUpTime * 70;
+                painter.Ellipse(Layer.Ground, foot, rr, rr * Space.Proj, Painter.Alpha(v.levelUpColor, (1 - ring * v.levelUpTime / .5f) * .7f), 2, additive: true);
+            }
+            if (dt <= 0) return;
+            int count = Mathf.FloorToInt(v.levelUpRate * dt * fade) + (Rand() < v.levelUpRate * dt * fade % 1 ? 1 : 0);
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 at = foot + new Vector2((Rand() - .5f) * 30, -Rand() * body);
+                particles.Emit(ParticleKind.Glint, at, new Vector2((Rand() - .5f) * 10, -40 - Rand() * 40), .6f + Rand() * .4f, v.levelUpColor, 1.6f + Rand() * 1.4f);
+            }
         }
 
         void SyncEnemies(RunState r, float dt)

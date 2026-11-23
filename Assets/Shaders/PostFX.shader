@@ -4,7 +4,7 @@
 // 전역 값(GameController 가 매 프레임 설정): _TOD_Desire, _TOD_Motion, _TOD_Flash(rgb,a), _TOD_Snap, _TOD_Hurt,
 //   _TOD_Border, _TOD_CanvasHeight, _TOD_Enabled,
 //   _TOD_Purified (정화된 화면 비네트 약화 0~1), _TOD_Warp (욕망 80% 이상 일렁임 0~1),
-//   _TOD_WarpTint (붉은 막 rgb, a = 최대 양), _TOD_WarpParams (흔들림 폭(캔버스 px), 물결 수, 속도)
+//   _TOD_WarpTint (붉은 막 rgb, a = 최대 양), _TOD_WarpParams (z = 숨쉬기 속도. 흔들림은 쓰지 않음)
 Shader "TOD/PostFX"
 {
     SubShader
@@ -66,29 +66,20 @@ Shader "TOD/PostFX"
                 float2 canvas = float2(500. + (uv.x - .5) * res.x, st.y * res.y);
                 float time = _Time.y, beat = floor(time * 8.), motion = _TOD_Motion, desire = saturate(_TOD_Desire);
 
-                // 손그림 보일링: 화면 전체가 8fps 박자로 1px 안팎 떨린다.
-                float2 wob = (float2(noise(st * 9. + beat * 3.1), noise(st * 9. - beat * 2.7)) - .5) * 2.2 / res * motion;
-                float2 q = uv + float2(wob.x, -wob.y);
-                // 욕망 일렁임: 아지랑이처럼 가로·세로로 천천히 물결친다.
+                // (2026-11-23) 화면을 흔드는 효과(손그림 보일링·욕망 물결)는 뺐다: 서브픽셀로 흔들면 화면 전체가 흐려진다.
+                float2 q = uv;
                 float warp = saturate(_TOD_Warp);
-                if (warp > 0.)
-                {
-                    float freq = max(_TOD_WarpParams.y, .01), speed = _TOD_WarpParams.z;
-                    float wx = sin(st.y * freq * 6.2832 + time * speed) + .5 * sin(st.y * freq * 13.7 - time * speed * 1.7 + st.x * 4.);
-                    float wy = sin(st.x * freq * 5.1 - time * speed * .8) * .6;
-                    q += float2(wx, -wy) * _TOD_WarpParams.x * warp / res;
-                }
                 float3 c = Overlays(Fetch(q), canvas);
                 if (warp > 0.)
                 {
-                    // 붉은 막: 가장자리가 더 짙고 숨 쉬듯 진해졌다 옅어진다. (SetGlobalColor 는 Linear 로 바꿔 넘기므로 sRGB 로 되돌린다)
+                    // 욕망 80% 이상: 붉은 막만 남긴다 (가장자리가 더 짙고 숨 쉬듯 진해졌다 옅어진다). SetGlobalColor 는 Linear 로 넘기므로 sRGB 로 되돌린다.
                     float rim = saturate((length(canvas - float2(500., 295.)) - 120.) / 420.);
                     float breathe = .75 + .25 * sin(time * max(_TOD_WarpParams.z, .01) * .5);
                     c = lerp(c, LinearToSRGB(_TOD_WarpTint.rgb), _TOD_WarpTint.a * warp * breathe * (.45 + .55 * rim));
                 }
 
                 // 잉크 외곽: 밝기 Sobel → 경계를 어둡게 덧칠, 종이결로 끊어져 거친 붓 느낌.
-                float2 px = 1. / res;
+                float2 px = 1. / _ScreenParams.xy;            // 화면 픽셀 단위 (캔버스 단위면 1080p 에서 외곽이 두껍고 흐려진다)
                 float tl = lum(Fetch(q + px * float2(-1, 1))), tc = lum(Fetch(q + px * float2(0, 1)));
                 float tr = lum(Fetch(q + px * float2(1, 1))), ml = lum(Fetch(q + px * float2(-1, 0)));
                 float mr = lum(Fetch(q + px * float2(1, 0))), bl = lum(Fetch(q + px * float2(-1, -1)));
@@ -118,7 +109,7 @@ Shader "TOD/PostFX"
                 c = lerp(c, float3(.05, .03, .06) + float3(.18, 0., .07) * desire, vig * (.55 + .25 * desire));
 
                 // 필름 그레인 (12fps) + 촛불 깜빡임
-                float g = hash(floor(st * res) + floor(time * 12.)) - .5;
+                float g = hash(floor(st * _ScreenParams.xy) + floor(time * 12.)) - .5;
                 c += g * .045 * motion;
                 c *= 1. + (noise(float2(time * 2.3, 0.)) - .5) * .035 * motion;
                 return half4(SRGBToLinear(saturate(c)), 1);

@@ -145,6 +145,10 @@ namespace TOD
             if (p.hurt > 0 && p.hurt <= .31f && alpha >= 1 && Mathf.FloorToInt(p.hurt * 22) % 2 == 1) alpha = .45f;
             Color hurt = db.palette.heroHurt;
             float amount = db.palette.heroHurtAmount > 0 ? db.palette.heroHurtAmount : .55f;
+            // 레벨업: 몸이 초록 기운으로 은은하게 물들었다 빠진다 (피격이 우선).
+            VisualConfig v = db.visual;
+            float level = p.levelUp > 0 && v.levelUpTime > 0 ? p.levelUp / v.levelUpTime : 0;
+            float levelFill = level > 0 ? v.levelUpFill * Mathf.Min(1, level * 3) * (.75f + .25f * Mathf.Sin(Time.time * 9)) : 0;
             foreach (HeroBone b in rig.bones)
             {
                 SpriteRenderer sr = b != null ? b.art : null;
@@ -153,7 +157,10 @@ namespace TOD
                 block.Clear();
                 block.SetFloat(SatId, 1);
                 block.SetFloat(BrightId, glow ? 1.1f : 1);
-                block.SetColor(FillId, glow ? new Color(hurt.r, hurt.g, hurt.b, Mathf.Max(amount, b.shade)) : new Color(22 / 255f, 19 / 255f, 27 / 255f, b.shade));
+                Color fill = glow ? new Color(hurt.r, hurt.g, hurt.b, Mathf.Max(amount, b.shade))
+                    : levelFill > b.shade ? new Color(v.levelUpColor.r, v.levelUpColor.g, v.levelUpColor.b, levelFill)
+                    : new Color(22 / 255f, 19 / 255f, 27 / 255f, b.shade);
+                block.SetColor(FillId, fill);
                 sr.SetPropertyBlock(block);
             }
         }

@@ -1,6 +1,8 @@
 // 적 한 마리 (웹판 render.js drawEnemy). 템플릿 계층(MCP로 생성):
 //  Enemy(SortingGroup)/Shadow, Ring, HpBack, HpFill, Pins/Pin0..3/{Stroke,Needle},
 //  Body/Center/Rot/Squash/Unrot/Back/Flip/{BodyA,BodyB}  ← 당김 방향 늘이기 + 좌우 뒤집기 + 두 동강
+// 몸은 종류별 뼈대 리그(MonsterRig 템플릿 = Arena/Enemies/Rigs/<종류>)를 Flip 아래로 복제해 그린다.
+// 실에 베이는 동안(e.cut)만 통그림(type.sprite) 두 조각으로 바꿔 그린다.
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,10 +14,14 @@ namespace TOD
         public Transform body, center, rot, squash, unrot, back, flip;
         public SpriteRenderer bodyA, bodyB;
         public SpriteRenderer[] pinStrokes, pinNeedles;
+        public MonsterRig[] rigs;             // 종류별 리그 템플릿 (씬에서 꺼 둔 Rigs 아래)
+
+        readonly Dictionary<string, MonsterRig> own = new();
+        MonsterRig shown;
 
         MaterialPropertyBlock block;
         static readonly int BrightId = Shader.PropertyToID("_Bright"), SatId = Shader.PropertyToID("_Sat"), CutId = Shader.PropertyToID("_CutPlane"),
-            ShapeId = Shader.PropertyToID("_Shape"), RingId = Shader.PropertyToID("_Ring");
+            ShapeId = Shader.PropertyToID("_Shape"), RingId = Shader.PropertyToID("_Ring"), FillId = Shader.PropertyToID("_Fill");
 
         void Ensure() => block ??= new MaterialPropertyBlock();
 
@@ -27,6 +33,29 @@ namespace TOD
             block.SetFloat(ShapeId, shape);
             block.SetFloat(RingId, ringAmount);
             sr.SetPropertyBlock(block);
+        }
+
+        // 이 종류의 리그 (처음 쓸 때 템플릿을 Flip 아래로 복제). 템플릿이 없으면 null → 통그림으로 그린다.
+        MonsterRig RigFor(string id)
+        {
+            if (own.TryGetValue(id, out MonsterRig rig)) return rig;
+            MonsterRig template = null;
+            if (rigs != null) foreach (MonsterRig r in rigs) if (r != null && r.type == id) template = r;
+            if (template != null)
+            {
+                rig = Instantiate(template, flip);
+                rig.name = template.name;
+                rig.gameObject.SetActive(false);
+            }
+            return own[id] = rig;
+        }
+
+        void ShowRig(MonsterRig rig)
+        {
+            if (shown == rig) return;
+            if (shown != null) shown.gameObject.SetActive(false);
+            shown = rig;
+            if (rig != null) rig.gameObject.SetActive(true);
         }
 
         // 바닥 타원을 발밑 기준 로컬(캔버스 px)로 놓는다.
@@ -46,8 +75,10 @@ namespace TOD
             Sprite art = e.type.sprite;
             float h = e.height;
             float w = h * (art.rect.width / art.rect.height);
-            float bob = Mathf.Sin(Mathf.Floor(time * 12) / 12 * 8 + e.x) * (e.action == EnemyAction.Move ? 2 : .5f);
             bool boss = e.IsBoss;
+            MonsterRig rig = RigFor(e.type.id);
+            // 리그가 있으면 걷기 출렁임은 리그 동작이 맡는다
+            float bob = rig != null ? 0 : Mathf.Sin(Mathf.Floor(time * 12) / 12 * 8 + e.x) * (e.action == EnemyAction.Move ? 2 : .5f);
 
             Ellipse(shadow, 0, 3, e.radius, e.radius * .34f);
             shadow.color = pal.shadow;
@@ -87,6 +118,8 @@ namespace TOD
             }
             float bright = e.flash > .15f ? 2.6f : e.flash > 0 ? 1.9f : 1;
             float sat = e.flash > .15f ? .4f : 1;
+            if (e.cut != null || rig == null)
+                ShowRig(null);
             if (e.cut != null)
             {
                 // 실 따라 두 동강: 임팩트 순간 벌어졌다가(히트스톱 동안 유지) 다시 붙는다.
@@ -94,8 +127,28 @@ namespace TOD
                 float angle = e.facing > 0 ? e.cut.angle : Mathf.PI - e.cut.angle;
                 Halves(angle, 7 * k, e.cut.side, h, bright, sat);
             }
+            else if (rig != null)
+            {
+                bodyA.gameObject.SetActive(false);
+                bodyB.gameObject.SetActive(false);
+                ShowRig(rig);
+                rig.Animate(e, time, dt, h / rig.height);
+                SpriteRenderer[] arts = rig.Arts;
+                for (int i = 0; i < arts.Length; i++)
+                {
+                    if (arts[i] == null) continue;
+                    Color shade = rig.shadeColor;
+                    shade.a = rig.bones[i].shade;
+                    block.Clear();
+                    block.SetFloat(BrightId, bright);
+                    block.SetFloat(SatId, sat);
+                    block.SetColor(FillId, shade);
+                    arts[i].SetPropertyBlock(block);
+                }
+            }
             else
             {
+                bodyA.gameObject.SetActive(true);
                 bodyB.gameObject.SetActive(false);
                 bodyA.transform.localPosition = Vector3.zero;
                 block.Clear();
@@ -133,6 +186,7 @@ namespace TOD
 
         void Halves(float angle, float gap, float side, float h, float bright, float sat)
         {
+            bodyA.gameObject.SetActive(true);
             bodyB.gameObject.SetActive(true);
             Vector2 d = new(Mathf.Cos(angle), Mathf.Sin(angle));
             Vector2 n = new(-d.y, d.x);

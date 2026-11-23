@@ -6,7 +6,7 @@ using UnityEngine;
 namespace TOD
 {
     // Combat: 생존·보스 전투 중 / Purifying: 보스 처치 후 정화 연출 / Cleared: 라운드 종료(계단·제단·상인과 상호작용) / Victory
-    public enum Phase { Combat, Purifying, Cleared, Victory }
+    public enum Phase { Combat, Purifying, Cleared, Victory, BossDying }
     public enum Interactable { None, Stairs, Altar, Merchant }
     public enum Outcome { None, Dead, Absorbed, Clear, Retreat }
     public enum Mood { Normal, Frenzy, Awakened }
@@ -30,6 +30,7 @@ namespace TOD
         public Timed recoil;
         public float dx, dy, dashDone, dashFacing = 1;
         public int dashCharges;              // 남은 대쉬 칸
+        public float levelUp;                // 레벨업 초록 기운 남은 시간
         public float dashCharge;             // 다음 칸이 차오른 정도 (0~1)
         public Point dashFrom;
         public bool dodged;
@@ -61,6 +62,9 @@ namespace TOD
         public Vector2 bite;
         public Strand Copy() => (Strand)MemberwiseClone();
     }
+
+    // 보스가 실에 묶여 종이처럼 잘리는 연출 상태. 뷰가 time 으로 단계를 나눠 그린다.
+    public class BossDeath : Point { public EnemyType type; public bool elite; public float facing = 1, time, height, cutAngle; }
 
     public class Bullet : Point { public float vx, vy, hit, age; public bool spent; }
 
@@ -130,7 +134,9 @@ namespace TOD
         public List<Trail> trails = new();
         public List<Fx> effects = new();
         public HashSet<string> rules = new(), desires = new();
-        public Dictionary<string, int> augmentsTaken = new();   // 증강 id → 고른 횟수 (카드에 Lv 로 표시)
+        public Dictionary<string, int> augmentsTaken = new();
+        public bool artifactRerolled;        // 쉬어가기 탑: 층마다 한 번 다시 굴리기
+        public BossDeath bossDeath;          // 보스 처치 연출 (BossDying 단계)   // 증강 id → 고른 횟수 (카드에 Lv 로 표시)
         public Timed kick;
         public Echo echo;
         public Outcome outcome;

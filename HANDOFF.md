@@ -83,6 +83,40 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 4차 요청 (2026-11-23) — 흔들림 제거·선명도·레벨업·실 보너스·등급·리롤·인벤토리·보스 처치·정화
+
+> 사용자 선택: UI 는 DST식 찢어진 종이, 몬스터는 Codex 파츠로 뼈대 리그, 아이템 등급은 목록대로(유니크·레전더리 번쩍), 일렁임은 둘 다 제거.
+> 나눠서 진행: 몬스터 리그는 세션 `monster-rig`, 종이 UI·보스 HUD 상단 중앙은 세션 `paper-ui` 가 맡습니다(각자 이 문서에 절을 추가).
+
+- [x] **흔들림 제거:** `PostFX.shader` 의 손그림 보일링(8fps 1px 흔들림)과 욕망 80% 물결 일렁임을 뺐습니다. 욕망 80% 붉은 막은 남김.
+- [x] **선명도:** 흐림 원인 두 가지를 고쳤습니다. ① 보일링이 화면을 서브픽셀로 흔들어 전체가 번짐 → 제거. ② 잉크 외곽선 Sobel 이 캔버스(590px) 단위로 샘플해 1080p 에서 두껍고 흐림 → 화면 픽셀 단위. ③ 스프라이트를 3~7배 줄여 그리는데 밉맵이 없어 뭉개짐 → `ProjectSetup` 텍스처 임포트에 밉맵(Kaiser) + 바이어스 −0.6 + Trilinear.
+- [x] **레벨업:** 숫자 대신 몸에 초록 기운(파츠 단색 덮기 `visual.levelUpFill`, 발밑 고리, 빛 알갱이 `levelUpRate`, 둘레 빛 `levelUpGlow`, `levelUpTime` 1.6초) + 효과음 `levelup`.
+- [x] **실 보너스:** 당길 때 걸린 실이 한 가닥 늘 때마다 한 타 피해 +12% (`hero.strandBonus`, 최대 `strandBonusMax` 60%). HUD 실 줄에 `+N%` 표시.
+- [x] **스탯 증강 카드:** 등급이 없으므로 모두 같은 회색.
+- [x] **아이템 등급:** 카드 색 = 등급(`gear.rankColors`): 일반 회색, 레어 하늘색, 유니크 노란색, 레전더리 어두운 빨강. 유니크는 빛 줄기가 지나가고, 레전더리는 더 굵은 빛 줄기 + 지날 때마다 테두리가 금빛으로 번쩍(`gear.rankShine`).
+- [x] **다시 굴리기:** 증강 창은 선택마다 1번, 쉬어가기 탑 아이템 창은 층마다 1번. 방금 본 카드는 되도록 빼고 다시 뽑습니다.
+- [x] **등반 중 재봉 상자(I):** 라운드가 끝났거나(Cleared) 쉬어가는 라운드일 때만 열립니다(전투 정지). 닫을 때(I·Esc·돌아가기) `Combat.RefreshGear` 가 장비 능력치 차이를 바로 반영합니다(피해·충전·최대 체력·실 속성). 하단 안내 `I 재봉 상자 열기`.
+- [x] **보스 처치 연출:** 보스가 쓰러지면 바로 정화하지 않고 `Phase.BossDying` (`bossDeath`): 실 고리가 위에서 아래로 감겨 조이고(1.2초) → 하얀 칼빛 두 줄과 함께 섬광·멈춤·흔들림(0.35초) → 종이 조각 세 개로 잘려 밀려나며 떨어지고 종이 부스러기·실 끝이 흩어짐(1.1초) → 보스가 있던 자리에서 정화. 조각은 SpriteFX 의 두 번째 절단면 `_CutPlane2` 로 자릅니다.
+- [x] **정화:** 둥근 테두리 선을 없앴습니다. 경계는 노이즈로 꽃잎처럼 흐트러지고(`purify.edgeNoise`, 넓은 `edgeSoftness`), 경계를 따라 상아·청록 꽃잎 빛이 피어오르며(`petalRate`), 가운데에서 큰 빛이 한 번 피었다 집니다(`centerGlow`). 정화된 바닥은 더 밝게(`floorBright` 1.25).
+- [x] **갈무리 폰트 굽기:** 공식 배포(github.com/quiple/galmuri v2.40.4)를 받아 비교해 보니 `Assets/Fonts` 의 TTF 와 같은 파일이었습니다. 흐림은 UI Toolkit 이 TTF 를 SDF 로 그려 17px 같은 아무 크기로 늘린 탓이라, 고유 픽셀 크기의 **비트맵 폰트 에셋**을 구웠습니다(`Assets/Fonts/Baked/Galmuri9-10px`, `Galmuri11-12px`, `Galmuri11-Bold-12px`, `Galmuri14-15px`, RASTER_HINTED·점 필터·KS X 1001 한글 2350자 + 게임 문구 미리 구움, 빠진 글자는 실행 중 동적 추가).
+  - `python tools/galmuri_charset.py` (글자 목록) → MCP `FontAsset.CreateFontAsset` 로 굽기 → `python tools/snap_ui_fonts.py` 가 USS 를 `-unity-font-definition` 으로 바꾸고 글자 크기를 고유 크기 배수(10 / 12·24·36·48 / 15·30·45·60)로 맞춤. **USS 에 글자 크기를 새로 넣을 때도 이 배수만 씁니다.** 다시 돌리면 이미 바꾼 규칙에 정의가 한 번 더 붙으니 새 규칙만 손으로 맞추세요.
+  - 전투 글자(피해 숫자 등)는 코드가 크기를 정하므로 고유 배수가 아닐 수 있습니다(점 필터라 흐리지는 않음).
+- 테스트 10개: 실 보너스, 보스 처치 → 정화, 탑 다시 굴리기 추가. 당김 예시 테스트는 보너스를 반영해 타격 수 기준으로 바꿈.
+
+## 종이 UI (2026-11-23) — DST식 찢어진 종이 + 거친 잉크
+
+> 사용자 선택: "DST식 찢어진 종이". 보스 HUD 는 화면 위 가운데, 크게.
+
+- **그림:** Codex 시트 `art_src/raw/ui_kit.png`(프롬프트 `tools/codex_prompts/ui_kit.txt`, 초록 키) → `python tools/bake_ui_paper.py` → `Assets/UI/Paper/`:
+  `panel_dark`(어두운 종이 판) · `panel_light`(양피지 판) · `button`(찢어진 띠) · `meter_frame`(속이 빈 잉크 틀) · `card`(바느질 카드) · `seal`(밀랍 인장) · `grain`(게이지 채움용 회색 종이 결, 반복).
+  스프라이트 border(9-slice)는 임포터에 넣었고(`panel_dark` 64, `panel_light` 72, `card` 44, `button` 좌우 64·위아래 44, `meter_frame` 좌우 56·위아래 40), USS 에서도 같은 값을 `-unity-slice-*` 로 씁니다. 굵기는 `-unity-slice-scale` 로 맞춥니다.
+- **USS 규칙(`Assets/UI/Main.uss`):** 색은 tint(`-unity-background-image-tint-color`)로 물들입니다. HUD 판·방·로비 = 어두운 종이, 대화 상자 = 양피지 + 잉크 글자, 버튼·꼬리표·띠·알림 = 찢어진 양피지(주 버튼은 포도주색), 일시 정지·소리 = 밀랍 인장, 게이지 = 잉크 틀(`.bar-frame` > `.bar-track` + `.bar-ink`) 안에 종이 결 채움. 글꼴은 그대로 갈무리(한글 손글씨 글꼴은 프로젝트에 없음).
+- **배치:** 위 가운데 줄은 생존 타이머(top 14) 또는 **보스 HUD**(top 10: 인장 + 이름 띠 32px, 700×70 잉크 틀 게이지) → 그 아래 라운드 띠(top 146). 증강·아이템·상점 창은 1200px, 나머지 대화 상자는 900px.
+- **퍼즐 카드:** 바느질 카드를 등급 색으로 살짝 물들이고(`GameUI.PaperTint`), 띠는 진하게 물든 양피지, 돌기는 등급 색 + 잉크 테두리, 홈은 양피지 색. 레전더리 번쩍임은 카드 tint·액자 테두리·돌기 색으로 냅니다(`GameUI.Tick`). 표시 코드만 바꿨고 게임 로직은 그대로입니다.
+- **UXML 구조 변경:** `hp-bar`·`desire-bar`·`boss-bar`·`exp-track` 을 잉크 틀로 감쌌고, 보스 HUD 에 `boss-name` 라벨과 인장을 넣었습니다. `GameUI` 가 찾는 이름은 모두 그대로입니다.
+- 확인(플레이 캡처 `Temp/Shots/after_*.png`): 로비, 전투 HUD(타이머), 보스 HUD, 증강 창, 탑 아이템 창(레전더리·유니크·레어), 상점, 욕망 제안, 일시 정지 + 알림, 재봉 상자(등반 중), 다락, 결과. EditMode 10개 통과.
+- 남은 것: 다락 배경의 `room-shade`가 그림을 거의 어둡게 하지 않는 것처럼 보임(이전부터, 확인만 함). 사람 눈으로 본 마우스 호버·눌림 느낌.
+
 ## 3차 요청 (2026-11-23) — 피격·크기·대쉬·드롭·증강·아이템·경험치 바·리그
 
 > 사용자 선택: 피격은 붉게 물듦 + 깜빡, 캐릭터 75%, 스탯 증강 8종, 아이템 12개 새로, 리그는 Unity 계층 + C# 동작.
@@ -102,6 +136,23 @@
 - 테스트 7개: 증강 적용(공격속도·사거리·최대 체력), 대쉬 2칸 충전, 드롭 흡수 추가.
 - 확인 못 한 것: 사람이 직접 한 플레이, 달리기·쏘기 동작을 웹판과 나란히 비교, 효과음 청취.
 
+## 몬스터 뼈대 리그 (2026-11-23)
+
+> 사용자 선택: "Codex로 파츠 뽑아 뼈대 조립". 몬스터 4종이 통그림 늘이기 대신 뼈대로 걷습니다.
+
+- **그림:** `tools/codex_prompts/enemy_{stalker,charger,shooter,boss}_parts.txt`(참고 = 기존 통그림) → `art_src/raw/enemy_*_parts.png`(초록 키) → `python tools/bake_enemy_parts.py` → `Assets/sprites/enemy_{종류}_{파츠}.png`(23장, 시트의 0.5배) → `TOD/Setup/1. Texture Imports`(이름이 `enemy_`라 아래 가운데 피벗).
+  - 스토커: head·torso·uarm·farm·thigh·shin(발 포함). 차저: head·torso·uarm·farm·thigh·shin·foot. 슈터: head·jaw·torso·arm·leg. 보스: head·torso·skirt·uarm·farm(다리 없음, 치마로 미끄러짐).
+- **코드:** `Runtime/Rig/BoneRig.cs`(공통: 뼈 배열·`Pose`·`Loop`·`Shot`·`ApplyPose`) ← `HeroRig`(주인공, API 그대로)와 `MonsterRig`(몬스터)가 상속합니다. 뼈는 주인공과 같은 `HeroBone`, 파형은 `Wave/LoopMotion/ShotMotion`을 그대로 씁니다.
+  - 걷기 위상 = 실제로 걸은 거리 / `stride`(그림 px). 빨리 가면 발도 빨라지고, 뒷걸음질이면 거꾸로 돕니다. 위상이 1초에 도는 횟수는 `maxStepRate`로 막습니다(차저 돌진 440px/초). 당겨지거나 밀리는 이동은 걷기로 치지 않습니다.
+  - 실제 속도로 idle ↔ walk를 섞습니다(`walkFull` 캔버스 px/초에서 100%, `walkFollow`로 부드럽게). 서 있는 슈터는 숨쉬기만 합니다.
+  - 행동: 예고 `melee`/`shot`/`dash`(keepEnd) → 돌진 `charge`(걷기 위에 겹침) → 쉬는 동안 마무리 `strike`/`fire`/`brake`(예고의 정리 자세에서 이어 시작). 피격 `hurt`는 `flash`가 새로 켜질 때마다 위에 더합니다.
+  - 접지: `feet`(발마다 뒤꿈치·발끝)의 가장 낮은 점을 리그 로컬 공간에서 바닥에 맞춥니다(`groundFollow` 1, 보스 0). 늘이기·회전 계층 아래에서도 맞습니다.
+  - `EnemyView`: 종류별 템플릿(`rigs`)을 처음 쓸 때 자기 `Flip` 아래로 복제해 둡니다(뷰 하나에 종류마다 최대 1개). 배율 = `e.height / rig.height`. 늘이기·당김·정예 고리·체력바·바늘·깜빡임(파츠마다 `_Bright/_Sat`, 뒤쪽 팔다리는 `_Fill` 그늘)은 그대로이고, 리그가 있으면 옛 계단식 출렁임은 끕니다. **두 동강(e.cut) 동안만** 통그림 `type.sprite` 두 조각으로 바꿔 그립니다.
+- **씬(MCP):** `Arena/Enemies/Rigs`(꺼 둠) 아래 `Stalker/Charger/Shooter/Boss`(MonsterRig + 뼈 계층 + `Art`). 파츠 정렬 순서 10~24, 그래서 `EnemyTemplate`의 체력바를 40·41, 바늘을 45·46으로 올렸습니다. 관절·동작 값은 여기 인스펙터에서 조정합니다.
+  - 첫 값: `art_src/rig/enemy_rigs.json`(관절, `tools/enemy_rig_seed.py`가 동작·접지를 써 넣음). `python tools/preview_enemy_rig.py <종류> <동작> out.png [프레임]`이 같은 계산으로 그려 봅니다. **조립한 뒤에는 씬이 원본**이고 json 은 다시 읽지 않습니다.
+- 확인: EditMode 10개 통과. 플레이(`StartRun` + 종류별 소환 + AutoPilot)에서 4종 모두 걷기·정렬·좌우 뒤집기·깜빡임·두 동강·정예 고리 확인(`Temp/Shots/rig_*.png`).
+- 남은 것: 움직임은 정지 화면과 미리보기 스트립으로만 봤습니다(실제 속도감은 사람 눈 확인 필요). 리그 몸이 옛 통그림보다 좁아 같은 키에서 조금 작아 보입니다(`rig.height`를 줄이면 커짐). 스토커 앞팔 위팔이 가슴 위에 얹혀 관절 공이 보입니다. 두 동강 순간 리그 자세 → 통그림으로 바뀌는 튐. 보스 처치 연출(`DrawBossDeath`)은 여전히 통그림입니다.
+
 ## Unity 판 (2026-11-23 포팅 완료)
 
 ### 실행
@@ -118,7 +169,7 @@
 | `Arena` | `ArenaRenderer`(render.js). 비전투 화면에서는 꺼집니다. |
 | `Arena/Background` | 맵 바탕(`Fill`), 바닥 청크 템플릿(`Chunks/ChunkTemplate`: 바닥 + 등불 3개), 화면 그늘(`Shade`), 불씨 템플릿. `BackgroundView`가 카메라 주변 청크만 복제·재활용하고 컨셉 색을 입힘. 맵 위쪽 벽·아치·테두리는 `ArenaRenderer.DrawMap`이 그림 |
 | `Arena/Painter/Slots` | 실·이펙트를 그리는 SpriteRenderer/LineRenderer **템플릿 슬롯**(런타임에 복제) |
-| `Arena/Enemies/EnemyTemplate` | 적 템플릿: 그림자·정예 고리·늘이기 계층(Body/Center/Rot/Squash/Unrot/Back/Flip)·두 동강용 BodyA/B·체력바·바늘 4개 |
+| `Arena/Enemies/EnemyTemplate` | 적 템플릿: 그림자·정예 고리·늘이기 계층(Body/Center/Rot/Squash/Unrot/Back/Flip)·두 동강용 BodyA/B·체력바·바늘 4개. `EnemyView.rigs` = 종류별 몸 리그 템플릿(`Arena/Enemies/Rigs/*`, 꺼 둠) |
 | `Arena/Hero` | `Rig`(HeroRig) 아래 뼈 24개 계층(`hips/torso/...`, 각 뼈에 `HeroBone` + 그림 `Art`). 피벗·관절 위치는 뼈 Transform, 동작 값은 `HeroRig` 인스펙터. 회피 통그림은 없앴고 대쉬도 뼈 동작으로 그립니다 |
 | `Arena/Particles` | 불씨·물방울·스파크·반짝임 ParticleSystem 4개 |
 

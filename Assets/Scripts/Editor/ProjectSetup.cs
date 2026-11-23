@@ -60,12 +60,15 @@ namespace TOD.EditorTools
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = flip ? SpriteImportMode.Multiple : SpriteImportMode.Single;
             importer.spritePixelsPerUnit = PixelsPerUnit;
-            importer.mipmapEnabled = false;
+            // 스프라이트는 화면에서 3~7배 줄여 그리므로 밉맵 + 살짝 날카로운 바이어스로 뭉개짐·자글거림을 막는다.
+            importer.mipmapEnabled = !flip && name != "dash" && name != "white";
+            importer.mipMapBias = -0.6f;
+            importer.mipmapFilter = TextureImporterMipFilter.KaiserFilter;
             importer.alphaIsTransparency = true;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.maxTextureSize = 4096;
             importer.wrapMode = tiled ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
-            importer.filterMode = name == "dash" ? FilterMode.Point : FilterMode.Bilinear;
+            importer.filterMode = name == "dash" ? FilterMode.Point : FilterMode.Trilinear;
 
             var settings = new TextureImporterSettings();
             importer.ReadTextureSettings(settings);

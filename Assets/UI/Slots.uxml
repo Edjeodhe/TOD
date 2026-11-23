@@ -11,6 +11,7 @@
         <ui:VisualElement name="knob-top" class="knob knob-top" picking-mode="Ignore" />
         <ui:VisualElement name="knob-right" class="knob knob-right" picking-mode="Ignore" />
         <ui:VisualElement name="notch-left" class="notch notch-left" picking-mode="Ignore" />
+        <ui:VisualElement name="shine-clip" class="shine-clip" picking-mode="Ignore"><ui:VisualElement name="shine" class="shine" picking-mode="Ignore" /></ui:VisualElement>
         <ui:VisualElement name="band" class="puzzle-band" picking-mode="Ignore"><ui:Label name="tag" class="puzzle-tag" picking-mode="Ignore" /></ui:VisualElement>
         <ui:VisualElement class="puzzle-body" picking-mode="Ignore">
             <ui:VisualElement name="frame" class="puzzle-frame" picking-mode="Ignore"><ui:VisualElement name="icon" class="puzzle-icon" picking-mode="Ignore" /></ui:VisualElement>

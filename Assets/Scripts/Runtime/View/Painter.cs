@@ -23,7 +23,7 @@ namespace TOD
         readonly List<Vector3> scratch = new();
         static AnimationCurve blade;
         static readonly int BrightId = Shader.PropertyToID("_Bright"), SatId = Shader.PropertyToID("_Sat"), FillId = Shader.PropertyToID("_Fill"),
-            CutId = Shader.PropertyToID("_CutPlane"), ShapeId = Shader.PropertyToID("_Shape"), RingId = Shader.PropertyToID("_Ring");
+            CutId = Shader.PropertyToID("_CutPlane"), Cut2Id = Shader.PropertyToID("_CutPlane2"), ShapeId = Shader.PropertyToID("_Shape"), RingId = Shader.PropertyToID("_Ring");
 
         void Awake()
         {
@@ -67,13 +67,14 @@ namespace TOD
         }
 
         // 필터 흉내: 밝기·채도·단색 덮기·반평면 절단 (월드 법선 n, 거리 d).
-        public void Style(Renderer r, float bright = 1, float sat = 1, Color fill = default, float fillAmount = 0, Vector4? cut = null, float shape = 0, float ring = 0)
+        public void Style(Renderer r, float bright = 1, float sat = 1, Color fill = default, float fillAmount = 0, Vector4? cut = null, float shape = 0, float ring = 0, Vector4? cut2 = null)
         {
             block.Clear();
             block.SetFloat(BrightId, bright);
             block.SetFloat(SatId, sat);
             block.SetColor(FillId, new Color(fill.r, fill.g, fill.b, fillAmount));
             block.SetVector(CutId, cut ?? Vector4.zero);
+            block.SetVector(Cut2Id, cut2 ?? Vector4.zero);
             block.SetFloat(ShapeId, shape);
             block.SetFloat(RingId, ring);
             r.SetPropertyBlock(block);

@@ -50,13 +50,11 @@ namespace TOD
 
     [Serializable] public class RigFoot { public HeroBone bone; public Vector2 sole; public float depth; }
 
-    public class HeroRig : MonoBehaviour
+    public class HeroRig : BoneRig
     {
-        [Header("뼈대 (MCP 로 조립)")]
-        public HeroBone[] bones;              // 부모가 먼저 오는 순서
+        [Header("주인공 뼈")]
         public HeroBone needle, nearArm, nearForearm, head;
         public HeroBone[] gait;               // 달리며 쏠 때 달리기 자세를 섞는 다리 뼈
-        public Vector2 rootPos;               // 엉덩이 뼈의 기본 위치 (그림 px)
         public RigFoot[] feet;
         public float runGroundDamp = .35f;    // 달리기 때 발 접지 보정을 얼마나 따를지 (사이클 평균 기준)
         public float maxGroundCorrection = 46;
@@ -67,65 +65,15 @@ namespace TOD
         [Header("쏘기: 겨눈 방향으로 팔·머리 틀기")]
         public float aimArm = .74f, aimForearm = .26f, aimHead = .11f, aimFadeStart = .14f, aimFadeTime = .12f;
 
-        float[] angles;
         float runGroundMean = float.NaN;
-
-        public int Count => bones.Length;
-
-        public struct Pose
-        {
-            public float[] ang;               // 뼈마다 동작 각도 (기본 rest 제외)
-            public Vector2 root;
-        }
-
-        public Pose NewPose() => new() { ang = new float[bones.Length] };
-
-        public int Index(HeroBone bone) => bone == null ? -1 : Array.IndexOf(bones, bone);
-
-        public void Loop(LoopMotion m, float t, ref Pose pose)
-        {
-            float u = m.length > 0 ? Mathf.Repeat(t, m.length) / m.length : 0;
-            if (m.rootX != null) pose.root.x += m.rootX.At(u);
-            if (m.rootY != null) pose.root.y += m.rootY.At(u);
-            foreach (BoneWave w in m.bones)
-            {
-                int i = BoneIndex(w.bone);
-                if (i >= 0) pose.ang[i] += w.At(u);
-            }
-        }
-
-        public void Shot(ShotMotion m, float t, ref Pose pose)
-        {
-            t = Mathf.Clamp(t, 0, m.length);
-            pose.root += new Vector2(m.Value(t, m.rootStart.x, m.rootPeak.x, m.rootSettle.x), m.Value(t, m.rootStart.y, m.rootPeak.y, m.rootSettle.y));
-            foreach (BonePose b in m.bones)
-            {
-                int i = BoneIndex(b.bone);
-                if (i >= 0) pose.ang[i] += m.Value(t, b.start, b.peak, b.settle);
-            }
-        }
-
-        int BoneIndex(string id)
-        {
-            for (int i = 0; i < bones.Length; i++) if (bones[i] != null && bones[i].id == id) return i;
-            return -1;
-        }
 
         // 자세를 뼈 Transform 에 적용한다. root = 리그 원점(발밑)의 월드 위치, scale = 그림 px → 캔버스 px 배율.
         public void Apply(Pose pose, Vector3 root, float scale, float facing)
         {
             transform.position = root;
             transform.localScale = new Vector3(scale * facing, scale, 1);
-            for (int i = 0; i < bones.Length; i++)
-            {
-                HeroBone b = bones[i];
-                if (b == null) continue;
-                if (i == 0) b.transform.localPosition = Px(rootPos + pose.root);
-                b.transform.localRotation = Quaternion.Euler(0, 0, -(b.rest + pose.ang[i]));
-            }
+            ApplyPose(pose);
         }
-
-        static Vector3 Px(Vector2 px) => new(px.x / Space.Ppu, -px.y / Space.Ppu, 0);
 
         // 발바닥이 바닥(리그 원점)에 닿도록 리그를 위아래로 옮긴다. damp < 1 이면 사이클 평균에서 그만큼만 따른다.
         public void Ground(float scale, float damp, float mean)

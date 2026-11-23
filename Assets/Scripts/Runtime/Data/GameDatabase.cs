@@ -86,6 +86,17 @@ namespace TOD
         public float duration, zoom, zoomIn, zoomOut;
         public Color ringColor, glowColor, floorFill;
         public float ringWidth, glowWidth, floorBright, floorSat, vignetteCut, edgeSoftness;
+        public float edgeNoise, petalRate, centerGlow;   // 경계를 꽃잎처럼 흐트러뜨리는 양(px)·꽃잎 입자 수·가운데 빛 크기
+    }
+
+    // 보스 처치 연출: 실이 몸을 감아 조이고(wrapTime) → 종이처럼 잘려(cutTime) → 조각이 떨어져 흩어진 뒤(fallTime) 정화가 시작된다.
+    [Serializable] public class BossDeathConfig
+    {
+        public float wrapTime, cutTime, fallTime;
+        public int loops, cuts, flakes;
+        public float threadWidth, shake, flakeSpeed;
+        public Color threadColor, cutColor, flakeColor;
+        public float Total => wrapTime + cutTime + fallTime;
     }
 
     [Serializable] public class NeedleVisual
@@ -98,6 +109,7 @@ namespace TOD
     [Serializable] public class HeroConfig
     {
         public float baseHp, baseDamage;
+        public float strandBonus, strandBonusMax;   // 당길 때 실 한 가닥이 더 걸릴 때마다 피해 +strandBonus (최대 strandBonusMax)
         public int baseYarn, minYarn;
         public float moveSpeed, encumbrance, minSpeedFactor, frenzySpeed, initialAngle;
         public float shotInterval, aimDeadZone;
@@ -244,6 +256,8 @@ namespace TOD
         public int baseColumns, baseRows, baseCostLimit, costLimitStep;
         public float rowBonus;
         public int[] startingKinds;
+        public Color[] rankColors;            // 코스트 1~4 → 일반 회색·레어 하늘색·유니크 노란색·레전더리 붉은색 (0번 미사용)
+        public float[] rankShine;             // 등급별 번쩍임 세기 (0 = 없음)
         public string saveKey;
     }
 
@@ -297,6 +311,9 @@ namespace TOD
         public Color[] floorPalette;
         public float heroScaleBase, heroScaleNear, heroScaleFar;   // .104 × (.94 + .12 × y/H)
         public float heroSize = 1;            // 주인공 전체 크기 배율 (그림자·회피 통그림 포함)
+        [Header("레벨업: 몸에 초록 기운")]
+        public float levelUpTime, levelUpFill, levelUpGlow, levelUpRate;
+        public Color levelUpColor;
         public float dodgeScale, dodgeLaunchEnd, dodgeAirEnd, dodgeHop;
         public float strandSegment, frustrationSegment;
         public Color dodgeColor;
@@ -347,6 +364,7 @@ namespace TOD
         public string timer, cleared, promptStairs, promptAltar, promptMerchant, augmentHint;
         public string restRoundName, bossRoundLabel, survivalLabel, purified, artifactEyebrow, artifactTaken;
         public string dashValue, expText, expLevel, augmentLevel, pieceEffect, pieceShape;
+        public string reroll, rerollUsed, threadBonus, inventoryHint, inventoryInRun;
         public string[] statNames;            // StatKind 순서
         public string[] roundNames;           // 첫 번째 라운드, 두 번째 라운드, 층 보스
     }
@@ -378,6 +396,7 @@ namespace TOD
         public ShopConfig shop;
         public FxConfig fx;
         public PurifyConfig purify;
+        public BossDeathConfig bossDeath;
         public NeedleVisual needleVisual;
         public VisualConfig visual;
         public RenderPalette palette;

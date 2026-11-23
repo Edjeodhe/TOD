@@ -1,0 +1,12 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/ui_kit.png
+Size: landscape 1536x1024.
+Create a game UI kit sheet in the style of Don't Starve Together's interface: hand-drawn, torn and aged paper pieces with rough black ink outlines. 6 separate pieces, each fully separated with wide empty gaps (at least 70px), nothing touching, no text anywhere:
+(1) a large DARK paper panel, about 560x420px: worn charcoal-plum paper (#2B2229 to #3A2E33) with torn ragged edges, a thick rough black ink outline and a thin faded dusty-pink inner ink line, the CENTER area plain and evenly textured (it will be stretched as a 9-slice panel)
+(2) a large LIGHT parchment panel, about 560x420px: aged cream parchment (#D9C8A5 to #C9B48C) with torn ragged edges, burnt darker corners, thick rough black ink outline, plain evenly textured center (9-slice)
+(3) a wide torn paper button strip, about 420x110px: parchment with ragged left/right edges and a rough black outline, plain center
+(4) a long hollow meter frame, about 760x70px: a hand-inked rough black frame with small stitched corners, the INSIDE of the frame left empty (pure green background inside)
+(5) a tall paper card, about 300x420px: dark plum paper (#3A2E36) with a stitched dashed border line inset from the edge and a rough black outline, plain center
+(6) a small round wax-seal-like badge, about 150x150px: dark wine red (#6E2A3A) wax with a rough edge and black outline, empty center
+Muted, desaturated, eerie palette; paper grain texture inside every piece.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels, no numbers. Do not use any green color inside the artwork itself.
