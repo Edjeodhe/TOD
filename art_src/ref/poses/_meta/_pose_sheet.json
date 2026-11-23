@@ -1,0 +1,62 @@
+[
+ {
+  "name": "pose_shoot_windup",
+  "bbox": [
+   24,
+   22,
+   451,
+   492
+  ],
+  "area": 101636
+ },
+ {
+  "name": "pose_shoot_release",
+  "bbox": [
+   521,
+   37,
+   965,
+   485
+  ],
+  "area": 97943
+ },
+ {
+  "name": "pose_shoot_follow",
+  "bbox": [
+   1088,
+   24,
+   1465,
+   490
+  ],
+  "area": 93568
+ },
+ {
+  "name": "pose_pull_grab",
+  "bbox": [
+   47,
+   527,
+   430,
+   986
+  ],
+  "area": 98210
+ },
+ {
+  "name": "pose_pull_yank",
+  "bbox": [
+   507,
+   515,
+   979,
+   985
+  ],
+  "area": 101485
+ },
+ {
+  "name": "pose_hurt",
+  "bbox": [
+   1044,
+   513,
+   1480,
+   984
+  ],
+  "area": 96427
+ }
+]

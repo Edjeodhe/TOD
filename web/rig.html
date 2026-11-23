@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>욕망의 탑 · 리깅</title>
+<style>
+  :root { --bg:#16131B; --panel:#211b27; --line:#3a3042; --mid:#4A3D50; --pink:#E89BB7; --teal:#8CC7BE; --txt:#e9dfe6; --dim:#9d8fa1; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--txt); font:13px/1.4 system-ui, "Malgun Gothic", sans-serif; overflow:hidden; }
+  #app { display:grid; grid-template-columns: 1fr 340px; grid-template-rows: 44px 1fr 150px; height:100%; }
+  header { grid-column:1/3; display:flex; align-items:center; gap:10px; padding:0 12px; border-bottom:1px solid var(--line); background:var(--panel); }
+  header h1 { font-size:14px; margin:0 8px 0 0; color:var(--pink); letter-spacing:.5px; }
+  .tabs button { border:1px solid var(--line); background:transparent; color:var(--dim); padding:5px 10px; cursor:pointer; }
+  .tabs button.on { background:var(--mid); color:var(--txt); }
+  .tabs button:first-child { border-radius:6px 0 0 6px } .tabs button:last-child { border-radius:0 6px 6px 0 }
+  button.btn { border:1px solid var(--line); background:var(--mid); color:var(--txt); padding:5px 10px; border-radius:6px; cursor:pointer; }
+  button.btn:hover { border-color:var(--pink); }
+  button.primary { background:var(--pink); color:#2a1620; border-color:var(--pink); font-weight:600; }
+  #status { margin-left:auto; color:var(--dim); font-size:12px; }
+  #view { position:relative; background: radial-gradient(circle at 50% 60%, #2a2231, #16131B 70%); }
+  #cv { width:100%; height:100%; display:block; cursor:crosshair; }
+  #hint { position:absolute; left:10px; bottom:8px; color:var(--dim); font-size:11.5px; pointer-events:none; white-space:pre-line; }
+  aside { grid-row:2/4; grid-column:2; border-left:1px solid var(--line); background:var(--panel); overflow:auto; padding:10px 12px; }
+  h2 { font-size:12px; color:var(--teal); margin:14px 0 6px; text-transform:uppercase; letter-spacing:1px; }
+  h2:first-child { margin-top:0 }
+  #parts { list-style:none; margin:0; padding:0; border:1px solid var(--line); border-radius:6px; max-height:230px; overflow:auto; }
+  #parts li { padding:3px 8px; cursor:pointer; display:flex; justify-content:space-between; }
+  #parts li:hover { background:#2c2433; } #parts li.sel { background:var(--mid); color:var(--pink); }
+  #parts li span.z { color:var(--dim); font-size:11px; }
+  .row { display:grid; grid-template-columns: 70px 1fr 1fr; gap:6px; align-items:center; margin:4px 0; }
+  .row label { color:var(--dim); }
+  input[type=number], select { width:100%; background:#18131c; color:var(--txt); border:1px solid var(--line); border-radius:4px; padding:3px 5px; }
+  input[type=range] { width:100%; accent-color:var(--pink); }
+  .chk { display:flex; gap:12px; flex-wrap:wrap; margin:6px 0; } .chk label { display:flex; gap:4px; align-items:center; color:var(--dim); }
+  #timeline { grid-column:1; grid-row:3; border-top:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; }
+  #tlbar { display:flex; gap:8px; align-items:center; padding:6px 10px; border-bottom:1px solid var(--line); }
+  #tlbar .t { font-variant-numeric:tabular-nums; color:var(--pink); min-width:90px; }
+  #tl { flex:1; width:100%; display:block; cursor:pointer; }
+  .small { font-size:11.5px; color:var(--dim); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>욕망의 탑 · 캐릭터 리깅</h1>
+    <div class="tabs"><button data-mode="setup" class="on">셋업 (피벗/부착)</button><button data-mode="anim">애니메이션 (포즈/키)</button></div>
+    <button class="btn" id="bPreview">게임 미리보기</button>
+    <button class="btn" id="bUndo">되돌리기</button>
+    <button class="btn primary" id="bSave">저장 (Ctrl+S)</button>
+    <span id="status">불러오는 중…</span>
+  </header>
+  <div id="view"><canvas id="cv"></canvas><div id="hint"></div></div>
+  <aside>
+    <h2>파츠</h2>
+    <ul id="parts"></ul>
+    <h2>선택 파츠 <span id="selName" style="color:var(--pink);text-transform:none"></span></h2>
+    <div id="props">
+      <div class="row"><label>부모</label><select id="pParent" style="grid-column:2/4"></select></div>
+      <div class="row"><label>피벗 x/y</label><input type="number" id="pPx"><input type="number" id="pPy"></div>
+      <div class="row"><label>부착 x/y</label><input type="number" id="pAx"><input type="number" id="pAy"></div>
+      <div class="row"><label>z / 기본각</label><input type="number" id="pZ"><input type="number" id="pRest"></div>
+      <div class="row"><label>크기 / 음영</label><input type="number" id="pScale" step="0.05"><input type="number" id="pShade" step="0.05" min="0" max="0.9"></div>
+      <div class="chk"><label><input type="checkbox" id="pHidden">숨김</label></div>
+    </div>
+    <h2>애니메이션</h2>
+    <div class="row"><label>클립</label><select id="aSel" style="grid-column:2/4"></select></div>
+    <div class="row"><label>길이(초)</label><input type="number" id="aLen" step="0.05"><select id="aInterp"><option value="step">step (종이인형)</option><option value="linear">linear</option></select></div>
+    <div class="row"><label>스텝 fps</label><input type="range" id="aStep" min="0" max="30" step="1"><span id="aStepV" class="small"></span></div>
+    <div class="chk">
+      <label><input type="checkbox" id="aLoop">루프</label>
+      <label><input type="checkbox" id="aAuto" checked>자동 키</label>
+      <label><input type="checkbox" id="aOnion">어니언 스킨</label>
+      <label><input type="checkbox" id="vPivots" checked>할핀 표시</label>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn" id="bKey">키 추가 (K)</button>
+      <button class="btn" id="bDelKey">키 삭제 (Del)</button>
+      <button class="btn" id="bKeyAll">전체 파츠 키</button>
+      <button class="btn" id="bNewAnim">새 클립</button>
+    </div>
+    <h2>통그림 비교</h2>
+    <div class="row"><label>레퍼런스</label><select id="rSel" style="grid-column:2/4"><option value="">(없음)</option></select></div>
+    <div class="row"><label>불투명도</label><input type="range" id="rAlpha" min="0" max="1" step="0.05" value="0.45"><label class="small"><input type="checkbox" id="rFront" checked> 앞에</label></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn" id="bFit">자동 맞춤 → 현재 키</button>
+      <button class="btn" id="bFitAll">전 클립 통그림 맞춤</button>
+    </div>
+    <p class="small" id="rInfo"></p>
+    <p class="small" style="margin-top:14px">
+      셋업: 파츠 드래그 = 부착 위치 이동 · 할핀(●) 드래그 = 피벗 이동(그림 고정) · 우클릭 드래그 = 기본각<br>
+      애니메이션: 파츠 드래그 = 할핀 기준 회전 (자동 키) · 타임라인 클릭 = 시간 이동 · 키 드래그 = 타이밍 이동<br>
+      휠 = 확대 · 가운데버튼/Space+드래그 = 화면 이동 · 저장하면 게임에 바로 반영
+    </p>
+  </aside>
+  <div id="timeline">
+    <div id="tlbar">
+      <button class="btn" id="bPlay">▶ 재생 (Enter)</button>
+      <span class="t" id="tNow">0.00s</span>
+      <span class="small" id="tlInfo"></span>
+    </div>
+    <canvas id="tl"></canvas>
+  </div>
+</div>
+<script type="module" src="src/rig/editor.js"></script>
+</body>
+</html>

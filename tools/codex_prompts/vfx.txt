@@ -1,0 +1,13 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: assets/raw/vfx_sheet.png
+Size: landscape 1536x1024.
+Create a GAME VFX SPRITE SHEET for additive blending: 6 separate glowing magic effect sprites on a PERFECTLY FLAT PURE BLACK (#000000) background, arranged in a tidy 3 columns x 2 rows grid, each effect centered in its own 512x512 cell, each fully contained in its cell with at least 40px of pure black margin, nothing crossing cell borders. Theme: a sorcerer seamstress who fights with magical needles and thread (like an arcane tailor's spell), hand-drawn 2D anime game VFX style with bright white-hot cores fading into saturated color, crisp sharp shapes, sparkles.
+Row 1:
+1. CHAOS (hot pink / magenta #ff5fa2): a radial burst of thorny rose-vine thread and pink flame petals exploding outward from the center, with small spiky thorns and sparks.
+2. DESPAIR (teal / cyan #4fe0d0): a splash of liquid sorrow — a central teardrop impact with concentric ripple rings and flying droplets arranged radially.
+3. FRUSTRATION (golden yellow #ffd23f): a radial crackle of jagged forked lightning bolts from a bright center, with tiny electric sparks.
+Row 2:
+4. SNIP (white with pale lavender glow): a giant crossed scissor-blade slash — two crossing sharp crescent slash arcs forming an X, like magical shears snipping, with a bright flash at the crossing point.
+5. NEEDLE SIGIL (pale blue-white): a circular arcane sewing sigil seen from above — a ring of stitch marks, a thin rune circle, four small sewing needles pointing outward, sparkles.
+6. YANK (warm white / peach): a converging burst of taut thread lines and speed streaks all pulling INWARD toward the center point, with a bright flash at the center — a feeling of being violently pulled.
+Rules: no text, no labels, no numbers, no grid lines, no borders, no characters, no background texture, the background must stay pure black everywhere so it disappears under additive blending.

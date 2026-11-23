@@ -1,0 +1,247 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Main.uss" />
+    <ui:VisualElement name="root" class="root" picking-mode="Ignore">
+
+        <!-- 전투 중 글자 (피해 숫자, N HIT, ×N) -->
+        <ui:VisualElement name="world-text" class="layer" picking-mode="Ignore" />
+
+        <!-- 전투 HUD -->
+        <ui:VisualElement name="hud" class="layer hud hidden" picking-mode="Ignore">
+            <ui:VisualElement class="panel status" picking-mode="Ignore">
+                <ui:VisualElement class="section-head" picking-mode="Ignore">
+                    <ui:Label text="◇" class="mark" />
+                    <ui:Label text="재봉사의 상태" class="heading" />
+                    <ui:Label name="level" text="LV. 1" class="tag" />
+                </ui:VisualElement>
+                <ui:VisualElement class="stat" picking-mode="Ignore">
+                    <ui:VisualElement class="stat-label" picking-mode="Ignore">
+                        <ui:VisualElement class="icon" style="background-image: url('project://database/Assets/sprites/icon_heart.png');" />
+                        <ui:Label text="체력" />
+                        <ui:Label name="hp-value" text="100 / 100" class="value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="meter"><ui:VisualElement name="hp-bar" class="meter-fill health" /></ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="stat" picking-mode="Ignore">
+                    <ui:VisualElement class="stat-label" picking-mode="Ignore">
+                        <ui:VisualElement class="icon" style="background-image: url('project://database/Assets/sprites/icon_yarn.png');" />
+                        <ui:Label text="털실" />
+                        <ui:Label name="yarn-value" text="6 / 6" class="value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="yarn-pips" class="yarn-pips" />
+                    <ui:VisualElement class="thread-status" picking-mode="Ignore">
+                        <ui:Label name="thread-count" text="실 0가닥" />
+                        <ui:Label name="knot-ready" text="매듭까지 5발" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="stat" picking-mode="Ignore">
+                    <ui:VisualElement class="stat-label" picking-mode="Ignore">
+                        <ui:VisualElement class="icon" style="background-image: url('project://database/Assets/sprites/icon_desire.png');" />
+                        <ui:Label text="욕망" />
+                        <ui:Label name="desire-value" text="0 / 100" class="value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="meter"><ui:VisualElement name="desire-bar" class="meter-fill desire" /></ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="xp" picking-mode="Ignore">
+                    <ui:Label text="경험치" />
+                    <ui:VisualElement class="meter"><ui:VisualElement name="xp-bar" class="meter-fill" /></ui:VisualElement>
+                    <ui:Label name="xp-value" text="0 / 5" />
+                </ui:VisualElement>
+                <ui:VisualElement class="status-bottom" picking-mode="Ignore">
+                    <ui:VisualElement>
+                        <ui:VisualElement class="icon" style="background-image: url('project://database/Assets/sprites/icon_gold.png');" />
+                        <ui:Label text="골드" />
+                        <ui:Label name="gold" text="0" class="value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement>
+                        <ui:VisualElement class="icon" style="background-image: url('project://database/Assets/sprites/icon_knot.png');" />
+                        <ui:Label text="매듭" />
+                        <ui:Label name="knots" text="0" class="value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="panel route" picking-mode="Ignore">
+                <ui:VisualElement class="section-head" picking-mode="Ignore">
+                    <ui:Label text="◇" class="mark" />
+                    <ui:Label text="등반 기록" class="heading" />
+                    <ui:Label name="floor-label" text="01F" class="tag" />
+                </ui:VisualElement>
+                <ui:VisualElement name="rounds" picking-mode="Ignore">
+                    <ui:VisualElement class="round current"><ui:Label text="1" class="num" /><ui:Label name="round-name-1" text="첫 번째 라운드" /></ui:VisualElement>
+                    <ui:VisualElement class="round"><ui:Label text="2" class="num" /><ui:Label name="round-name-2" text="두 번째 라운드" /></ui:VisualElement>
+                    <ui:VisualElement class="round"><ui:Label text="♜" class="num" /><ui:Label name="round-name-3" text="층 보스" /></ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="route-info" text="층마다 세 라운드를 돌파하세요." class="route-info" />
+            </ui:VisualElement>
+
+            <ui:Button name="pause" text="Ⅱ" class="icon-button pause-button" tooltip="일시 정지 (Esc)" />
+            <ui:VisualElement name="banner" class="banner hidden" picking-mode="Ignore"><ui:Label name="banner-text" /></ui:VisualElement>
+            <ui:VisualElement name="boss-hud" class="boss-hud hidden" picking-mode="Ignore">
+                <ui:Label text="실타래의 지배자" />
+                <ui:VisualElement class="meter"><ui:VisualElement name="boss-bar" class="meter-fill boss" /></ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="controls-hint" picking-mode="Ignore">
+                <ui:Label text="WASD 이동" />
+                <ui:Label text="좌클릭 바늘 발사" />
+                <ui:Label text="우클릭 실 당기기" />
+                <ui:Label text="Space 대쉬" />
+                <ui:Label text="Esc 일시 정지" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 로비 (프롤로그) -->
+        <ui:VisualElement name="lobby" class="layer lobby">
+            <ui:VisualElement class="lobby-shade" picking-mode="Ignore" />
+            <ui:VisualElement class="topbar">
+                <ui:VisualElement class="brand">
+                    <ui:VisualElement class="brand-icon"><ui:VisualElement /></ui:VisualElement>
+                    <ui:VisualElement>
+                        <ui:Label text="욕망의 탑" class="brand-name" />
+                        <ui:Label text="TOWER OF DESIRE" class="brand-sub" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="shards" tooltip="기억의 파편"><ui:VisualElement /><ui:Label name="meta-shards" text="0" /></ui:VisualElement>
+                <ui:Button name="sound" text="♪" class="icon-button" tooltip="소리 켜기/끄기" />
+            </ui:VisualElement>
+            <ui:VisualElement class="welcome-copy">
+                <ui:VisualElement class="chapter"><ui:VisualElement /><ui:Label text="프롤로그" /><ui:VisualElement /></ui:VisualElement>
+                <ui:Label text="욕망의 탑" class="welcome-title" />
+                <ui:Label text="사라진 아버지의 흔적을 따라,&#10;견습 재봉사가 탑의 문을 연다." class="welcome-text" />
+                <ui:VisualElement class="menu">
+                    <ui:Button name="start" text="등반 시작  →" class="primary start-button" />
+                    <ui:Button name="open-inventory" text="재봉 상자" />
+                    <ui:Button name="open-attic" text="예견의 다락" />
+                </ui:VisualElement>
+                <ui:VisualElement class="hint"><ui:Label text="Enter" class="kbd" /><ui:Label text="로 시작" /></ui:VisualElement>
+                <ui:Label name="best-record" text="◇ 최고 기록  미기록" class="record" />
+            </ui:VisualElement>
+            <ui:VisualElement class="lobby-controls">
+                <ui:Label text="조작 안내" class="control-title" />
+                <ui:Label text="WASD 이동" />
+                <ui:Label text="좌클릭 바늘 발사" />
+                <ui:Label text="우클릭 실 당기기" />
+                <ui:Label text="Space 대쉬" />
+                <ui:Label text="Esc 일시 정지" />
+            </ui:VisualElement>
+            <ui:VisualElement class="corner tl" picking-mode="Ignore" />
+            <ui:VisualElement class="corner tr" picking-mode="Ignore" />
+            <ui:VisualElement class="corner bl" picking-mode="Ignore" />
+            <ui:VisualElement class="corner br" picking-mode="Ignore" />
+        </ui:VisualElement>
+
+        <!-- 재봉 상자 -->
+        <ui:VisualElement name="inventory" class="layer room hidden">
+            <ui:VisualElement class="room-body">
+                <ui:Label name="inventory-header" class="eyebrow" />
+                <ui:Label text="재봉 상자" class="room-title" />
+                <ui:Label text="조각을 고르고(R로 회전) 판의 칸을 누르세요. 같은 색의 변을 맞대면 세트 효과가 켜집니다." class="room-text" />
+                <ui:VisualElement class="inventory-layout">
+                    <ui:VisualElement name="board" class="board" />
+                    <ui:ScrollView name="stash" class="stash" />
+                </ui:VisualElement>
+                <ui:VisualElement name="sets" class="sets" />
+                <ui:VisualElement class="actions">
+                    <ui:Button name="rotate" text="회전 (R)" />
+                    <ui:Button name="unequip" text="판에서 빼기" />
+                    <ui:Button name="inventory-back" text="돌아가기" class="primary" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 예견의 다락 -->
+        <ui:VisualElement name="attic" class="layer room attic hidden">
+            <ui:VisualElement class="room-shade" picking-mode="Ignore" />
+            <ui:VisualElement class="room-body">
+                <ui:Label text="✧  마녀 모이라" class="eyebrow" />
+                <ui:Label text="예견의 다락" class="room-title" />
+                <ui:Label text="기억의 파편을 내밀면 모이라가 다음 등반의 미래를 읽습니다." class="room-text" />
+                <ui:VisualElement name="upgrades" class="choice-grid" />
+                <ui:VisualElement class="actions"><ui:Button name="attic-back" text="돌아가기" /></ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 등반 결과 -->
+        <ui:VisualElement name="summary" class="layer room hidden">
+            <ui:VisualElement class="room-body">
+                <ui:VisualElement name="summary-vfx" class="ui-vfx" picking-mode="Ignore" />
+                <ui:Label text="✧  등반 결과" class="eyebrow" />
+                <ui:Label name="summary-title" class="room-title" />
+                <ui:Label name="summary-body" class="room-text" />
+                <ui:VisualElement class="actions">
+                    <ui:Button name="restart" text="다시 등반" class="primary" />
+                    <ui:Button name="summary-inventory" text="재봉 상자" />
+                    <ui:Button name="summary-attic" text="예견의 다락" />
+                    <ui:Button name="summary-lobby" text="프롤로그" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 대화 상자 -->
+        <ui:VisualElement name="overlay" class="layer overlay hidden">
+            <ui:VisualElement name="dialog-pause" class="dialog hidden">
+                <ui:Label text="등반 중" class="eyebrow" />
+                <ui:Label text="일시 정지" class="dialog-title" />
+                <ui:Label text="전투를 계속하거나 기억의 파편을 가지고 귀환할 수 있습니다." class="dialog-text" />
+                <ui:VisualElement class="actions">
+                    <ui:Button name="resume" text="계속하기" class="primary" />
+                    <ui:Button name="retreat" text="다락으로 귀환" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="dialog-retreat" class="dialog hidden">
+                <ui:Label text="등반 종료" class="eyebrow" />
+                <ui:Label text="지금 귀환할까요?" class="dialog-title" />
+                <ui:Label text="모은 기억의 파편과 장비는 가지고 돌아갑니다. 이번 등반의 골드와 증강은 사라집니다." class="dialog-text" />
+                <ui:VisualElement class="actions">
+                    <ui:Button name="confirm-retreat" text="귀환하기" class="primary" />
+                    <ui:Button name="cancel-retreat" text="계속하기" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="dialog-augment" class="dialog hidden">
+                <ui:Label text="증강 선택" class="eyebrow" />
+                <ui:Label name="augment-title" class="dialog-title" />
+                <ui:Label text="세 가지 증강 중 하나를 선택하세요. 전투는 멈춰 있습니다." class="dialog-text" />
+                <ui:VisualElement name="augment-choices" class="choice-grid" />
+            </ui:VisualElement>
+            <ui:VisualElement name="dialog-desire" class="dialog hidden">
+                <ui:VisualElement class="ui-vfx" picking-mode="Ignore" style="background-image: url('project://database/Assets/vfx/boss.png');" />
+                <ui:Label name="desire-eyebrow" class="eyebrow" />
+                <ui:Label name="desire-name" class="dialog-title" />
+                <ui:Label name="desire-text" class="dialog-text" />
+                <ui:Label name="desire-penalty" class="dialog-text" />
+                <ui:VisualElement class="actions">
+                    <ui:Button name="absorb" text="욕망 흡수" class="primary" />
+                    <ui:Button name="refuse" text="그대로 지나가기" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="dialog-shop" class="dialog hidden">
+                <ui:Label text="층 사이 휴식처" class="eyebrow" />
+                <ui:Label text="떠돌이 상인 단추" class="dialog-title" />
+                <ui:Label text="금화를 내고 다음 층에 들고 갈 물품을 고르세요." class="dialog-text" />
+                <ui:Label name="sale-label" class="dialog-text" />
+                <ui:VisualElement name="wares" class="choice-grid shop-grid" />
+                <ui:VisualElement class="actions">
+                    <ui:Button name="next-floor" class="primary" />
+                    <ui:Button name="shop-retreat" text="귀환" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="dialog-rest" class="dialog hidden">
+                <ui:Label name="rest-eyebrow" class="eyebrow" />
+                <ui:Label text="잠깐의 숨 고르기" class="dialog-title" />
+                <ui:Label name="rest-text" class="dialog-text" />
+                <ui:VisualElement class="actions"><ui:Button name="next-round" class="primary" /></ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="dialog-upgrade" class="dialog hidden">
+                <ui:Label text="모이라의 의식" class="eyebrow" />
+                <ui:Label text="미래를 읽을까요?" class="dialog-title" />
+                <ui:Label name="upgrade-text" class="dialog-text" />
+                <ui:VisualElement class="actions">
+                    <ui:Button name="confirm-upgrade" text="예, 미래를 읽어요" class="primary" />
+                    <ui:Button name="cancel-upgrade" text="취소" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="room-flash" class="room-flash hidden" picking-mode="Ignore"><ui:VisualElement picking-mode="Ignore" /></ui:VisualElement>
+        <ui:VisualElement name="notice" class="notice hidden" picking-mode="Ignore"><ui:Label name="notice-text" /></ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

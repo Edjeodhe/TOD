@@ -1,0 +1,5 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: assets/raw/floor.png
+Size: square 1024x1024.
+Create a SEAMLESS TILEABLE texture (edges must wrap perfectly on all four sides) of a dark cracked old stone tower floor seen from straight above: irregular flagstones, hand-drawn black cracks and outlines, faint stitched thread lines and a few scattered tiny pins and button details between stones, very low contrast and dark (base around #2b2430 to #3a3040) so game characters read clearly on top. No lighting gradient, no vignette, no objects, no text.
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline around every shape, slightly paper-grain texture INSIDE the shapes, low saturation, low brightness, muted plum / dusty pink / grey-teal palette (#16131B, #4A3D50, #E89BB7, #8CC7BE). Cute characters but eerie mood.

@@ -1,0 +1,17 @@
+Use your built-in image generation tool to create the image (do not write code to draw it, do not edit the reference image with code). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: assets/raw/hero_flat_dodge.png
+Size: landscape 1536x1024.
+The attached image is the hero's rig parts atlas in the final art style. Draw the SAME character fully assembled, 2.5 heads tall (chibi SD, head about 40% of total height), in a 45-degree 3/4 quarter view, body and face facing RIGHT while evading BACKWARD toward the LEFT.
+Create a 3-FRAME DODGE ANIMATION STRIP: three separate full-body drawings in one row, same scale (each figure about 560px tall), each separated by at least 90px of green, nothing touching:
+1. LAUNCH: deep crouch pushing off, torso leaning back to the left, coat tail and tail whipping forward, one arm thrown back, needle hand tucked at chest.
+2. MID-AIR: airborne quick backward hop, body tilted ~25 degrees back, legs tucked, coat flaring, ears swept forward, tail in a big S curve.
+3. LANDING SKID: landing low on the back foot, front leg extended, one hand touching the floor, needle hand raised ready to counter-throw.
+No motion lines, no speed effects, no dust, no ground shadow.
+ART STYLE — FLAT, HAND-MADE LOOK (critical, avoid the typical AI-illustration look):
+- Flat cel style like a clean 2D indie game cut-out puppet: every shape is filled with ONE solid flat color plus at most ONE hard-edged flat shadow shape in a darker tone. No gradients, no airbrush, no soft shading, no rim light, no glossy highlights, no bloom.
+- NO texture at all inside shapes: no paper grain, no fabric noise, no fur strands, no crosshatching, no dithering. (Texture is added later by the game shader.)
+- Simple, confident, slightly irregular hand-cut silhouettes; few large shapes; fewer small details. Stitches are a few simple dashes, patches are simple flat quads. Avoid ornamental micro-detail, avoid symmetrical perfection, avoid shiny anime eyes (eyes are simple flat ovals with one small flat white dot).
+- One consistent black (#1a1218) outline of even, medium-thick weight around every piece; no inner sketch lines except a few deliberate fold lines.
+- Strict limited palette, use only these colors: outline #1a1218, coat burgundy #7a2d45 / coat shadow #561f33, fur dusty pink #d98fa6 / fur shadow #b46f88, ear inner #e8a7b9, hair #c9819b / hair shadow #a5647e, scarf & vest peach #efc0a3 / shadow #cf9c84, grey vest #8d8592, brass pins & buttons #c89a4b, eyes #3a2328 with white dot, nose #e46a8a, bandage #e7d2c4, shoe #5b2b3b, needle silver #cfc8d2 / #9f97a6.
+- 3/4 QUARTER VIEW (45 degrees, facing right and slightly toward the viewer): every form shows a front plane and a side plane — make the side plane the flat shadow tone so the volume reads as 2.5D with only two flat tones.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no text, no labels, no numbers. Do not use any green color inside the artwork.

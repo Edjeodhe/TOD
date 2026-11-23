@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#151217">
+  <meta name="description" content="아버지의 바늘과 실을 들고 욕망의 탑을 오르는 쿼터뷰 로그라이크.">
+  <title>욕망의 탑</title>
+  <link rel="icon" href="assets/sprites/icon_needle.png">
+  <link rel="stylesheet" href="src/game/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="top-inner">
+      <button class="brand" data-tab="climb" aria-label="욕망의 탑 메인">
+        <span class="brand-icon"><img src="assets/sprites/icon_needle.png" alt=""></span>
+        <span>욕망의 탑<small>TOWER OF DESIRE</small></span>
+      </button>
+      <nav aria-label="게임 메뉴">
+        <button data-tab="climb" class="selected">등반</button>
+        <button data-tab="inventory">재봉 상자</button>
+        <button data-tab="attic">예견의 다락</button>
+      </nav>
+      <div class="top-actions">
+        <span class="shards" title="기억의 파편"><img src="assets/sprites/icon_shard.png" alt="기억의 파편"><b id="meta-shards">0</b></span>
+        <button class="icon-button" id="sound" aria-label="소리 켜기" aria-pressed="false" title="소리 켜기">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path id="sound-mark" d="m16 10 5 5m0-5-5 5"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow"><span>✧</span> <span id="page-kicker">T H E&nbsp; A S C E N T</span></p>
+        <h1 id="page-title">등반 준비</h1>
+      </div>
+      <span class="record" id="best-record"><span>◇</span> 최고 기록 <b>미기록</b></span>
+    </div>
+
+    <div class="game-layout">
+      <section class="stage panel" id="stage" aria-label="게임 화면">
+        <div class="arena" id="arena" hidden>
+          <canvas id="world" width="1000" height="590" aria-label="욕망의 탑 전투장"></canvas>
+          <div id="arena-banner" class="arena-banner" aria-live="polite"></div>
+          <div id="boss-hud" class="boss-hud" hidden><span>실타래의 지배자</span><div class="meter"><i></i></div></div>
+          <button class="icon-button pause-button" id="pause" aria-label="일시 정지" title="일시 정지 (Esc)">Ⅱ</button>
+        </div>
+        <div class="welcome" id="welcome">
+          <div class="welcome-shade"></div>
+          <div class="welcome-copy">
+            <div class="chapter"><i></i> 프롤로그 <i></i></div>
+            <h2>욕망의 탑</h2>
+            <p>사라진 아버지의 흔적을 따라,<br>견습 재봉사가 탑의 문을 연다.</p>
+            <button class="primary start-button" id="start" disabled>등반 시작 <span aria-hidden="true">→</span></button>
+            <span class="start-hint"><kbd>Enter</kbd>로 시작</span>
+          </div>
+          <span class="corner corner-tl"></span><span class="corner corner-tr"></span>
+          <span class="corner corner-bl"></span><span class="corner corner-br"></span>
+        </div>
+        <div class="room" id="room" hidden></div>
+        <div class="overlay" id="overlay" hidden></div>
+      </section>
+
+      <aside class="sidebar" aria-label="게임 상태">
+        <section class="panel status">
+          <div class="section-head"><span>◇</span><h2>재봉사의 상태</h2><span class="state-level" id="level">LV. 1</span></div>
+          <div class="stat">
+            <div class="stat-label"><img src="assets/sprites/icon_heart.png" alt=""><span>체력</span><b id="hp-value">100 / 100</b></div>
+            <div class="meter health"><i id="hp-bar"></i></div>
+          </div>
+          <div class="stat">
+            <div class="stat-label"><img src="assets/sprites/icon_yarn.png" alt=""><span>털실</span><b id="yarn-value">6 / 6</b></div>
+            <div id="yarn-pips" class="yarn-pips" aria-hidden="true"></div>
+            <div class="thread-status"><span id="thread-count">실 0가닥</span><span id="knot-ready">매듭까지 5발</span></div>
+          </div>
+          <div class="stat">
+            <div class="stat-label"><img src="assets/sprites/icon_desire.png" alt=""><span>욕망</span><b id="desire-value">0 / 100</b></div>
+            <div class="meter desire"><i id="desire-bar"></i></div>
+          </div>
+          <div class="xp"><span>경험치</span><div class="meter"><i id="xp-bar"></i></div><b id="xp-value">0 / 5</b></div>
+          <div class="status-bottom">
+            <div><img src="assets/sprites/icon_gold.png" alt=""><span>골드</span><b id="gold">0</b></div>
+            <div><img src="assets/sprites/icon_knot.png" alt=""><span>매듭</span><b id="knots">0</b></div>
+          </div>
+        </section>
+
+        <section class="panel route">
+          <div class="section-head"><span>◇</span><h2>등반 기록</h2><b id="floor-label">01F</b></div>
+          <ol id="rounds" aria-label="층 라운드 진행">
+            <li class="current"><span>1</span><div>첫 번째 라운드</div></li>
+            <li><span>2</span><div>두 번째 라운드</div></li>
+            <li><span>♜</span><div>층 보스</div></li>
+          </ol>
+          <p id="route-info">층마다 세 라운드를 돌파하세요.</p>
+        </section>
+
+        <section class="panel quick-guide">
+          <span class="guide-icon">⌘</span>
+          <p><strong>바닥에 꽂힌 바늘도 실이 남습니다.</strong><small>적이 실을 가로지를 때 당기세요.</small></p>
+        </section>
+      </aside>
+    </div>
+
+    <div id="touch-controls" class="touch-controls" hidden>
+      <div class="dpad" aria-label="이동">
+        <button data-move="w" aria-label="위로 이동">↑</button>
+        <button data-move="a" aria-label="왼쪽 이동">←</button>
+        <button data-move="s" aria-label="아래로 이동">↓</button>
+        <button data-move="d" aria-label="오른쪽 이동">→</button>
+      </div>
+      <div class="touch-actions"><button id="touch-pull">실 당기기</button><button id="touch-dash">대쉬</button></div>
+    </div>
+    <footer class="controls" aria-label="조작 안내">
+      <div class="control-title">조작 안내</div>
+      <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>이동</span></div>
+      <div><kbd>좌클릭</kbd><span>바늘 발사</span></div>
+      <div><kbd>우클릭</kbd><span>실 당기기</span></div>
+      <div><kbd>Space</kbd><span>대쉬</span></div>
+      <div><kbd>Esc</kbd><span>일시 정지</span></div>
+    </footer>
+    <p class="touch-guide">전투장을 터치해 바늘을 발사하고, 별도 버튼으로 실을 당기세요.</p>
+  </main>
+  <div class="notice" id="notice" role="status" hidden></div>
+  <script>
+    function showLoadError() {
+      const notice = document.getElementById('notice');
+      notice.textContent = '게임 파일을 불러오지 못했습니다. src와 assets 폴더가 있는 프로젝트에서 다시 열어 주세요.';
+      notice.hidden = false;
+    }
+    if (location.protocol === 'file:') {
+      const offline = document.createElement('script');
+      offline.src = 'src/game/offline.js';
+      offline.onerror = showLoadError;
+      offline.onload = () => {
+        if (globalThis.todOfflineStart) globalThis.todOfflineStart.catch(showLoadError);
+        else showLoadError();
+      };
+      document.body.append(offline);
+    } else {
+      import('./src/game/main.js').catch(showLoadError);
+    }
+  </script>
+</body>
+</html>

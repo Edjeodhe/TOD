@@ -1,0 +1,127 @@
+// 한 번의 등반 상태 (웹판 createRun 이 만드는 객체). 좌표는 전투장 논리 좌표.
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace TOD
+{
+    public enum Phase { Combat, Rest, Desire, Shop, Victory }
+    public enum Outcome { None, Dead, Absorbed, Clear, Retreat }
+    public enum Mood { Normal, Frenzy, Awakened }
+    public enum HeroAction { Idle, Run, Shoot, Pull, Dash, Hurt, Die }
+    public enum EnemyAction { Move, WindupMelee, WindupShot, WindupDash, Charge, Rest }
+    public enum StrandState { Flight, Stuck, Ground }
+
+    public class Point { public float x, y; public Point() { } public Point(float x, float y) { this.x = x; this.y = y; } }
+
+    public class Knot : Point { public int index; }
+
+    public class Timed { public float x, y, time, max, done; }
+
+    public class PoseSnapshot { public HeroAction action; public float actionTime, strideTime, angle, motion; }
+
+    public class Player : Point
+    {
+        public float facing = 1, vx, vy, dash, dashGrace, dashCooldown, ghostIn, hurt, shotCooldown, angle, motion, strideTime, actionTime;
+        public HeroAction action = HeroAction.Idle;
+        public PoseSnapshot previousPose;
+        public Timed recoil;
+        public float dx, dy, dashDone, dashFacing = 1;
+        public Point dashFrom;
+        public bool dodged;
+    }
+
+    public class Cut { public float angle, time, max, side; }
+
+    public class Enemy : Point
+    {
+        public EnemyType type;
+        public bool elite;
+        public float hp, maxHp, radius, wait, speed, damage, timer, facing = 1, flash, height;
+        public int threshold;
+        public EnemyAction action;
+        public Vector2 aim = Vector2.right;
+        public Timed stretch, jolt, push, yank;
+        public Cut cut;
+        public bool IsBoss => type.id == "boss";
+    }
+
+    public class Strand : Point
+    {
+        public float vx, vy, speed, range, birth, landed;
+        public Point anchor;
+        public Enemy target;
+        public StrandState state;
+        public bool bounce;
+        public Element? element;              // 대쉬 흔적이 만든 실은 속성이 없다 → 등반의 속성을 쓴다
+        public Vector2 bite;
+        public Strand Copy() => (Strand)MemberwiseClone();
+    }
+
+    public class Bullet : Point { public float vx, vy, hit, age; public bool spent; }
+
+    public class Drop : Point { public int xp, gold, shard; public bool item; }
+
+    public class Trail { public Point a, b; public float time; public HashSet<Enemy> used = new(); }
+
+    public class Echo { public float until; public List<Strand> strands; }
+
+    public enum FxKind { Sprite, Flip, Number, Combo, Burst, Slash, Dust, Pull, Cut, Sliced, Transfer, Afterimage }
+    public enum FxSprite { None, Pull, Dash, Boss, Needle, Stitch, Streak, Launch, Dodge, Shock }
+    public enum FlipSheet { Puncture, Slash, Snip, Flash, Muzzle, Thunk }
+
+    // 화면 효과 한 개. 시뮬레이션은 수명만 줄이고, 그리기는 뷰가 맡는다.
+    public class Fx
+    {
+        public FxKind kind;
+        public float x, y, toX, toY, time, max, size, angle = float.NaN, lift = float.NaN, alpha = 1, seed, progress, facing = 1, side = 1;
+        public FxSprite sprite;
+        public FlipSheet sheet;
+        public Element element;
+        public Color? color;                  // tint 를 색으로 지정할 때
+        public bool squash, mirror, burst, rage, elite, useElement;
+        public string text;
+        public int pop;
+        public EnemyType type;
+        public float Fade => max > 0 ? time / max : 0;
+    }
+
+    public struct GameEvent { public string type, message; }
+
+    public class RunState
+    {
+        public Profile profile;
+        public Func<float> random;
+        public GearStats gearStats;
+        public int floor = 1, round = 1, level = 1, xp, gold, kills, spawned, shotCount, nextKnot, augmentQueue, combo;
+        public float time, elapsed, spawnIn, desire, maxDesire, hp, maxHp, yarn, yarnBonus, recharge, damage, fireRate = 1, dashRate = 1, encumbrance;
+        public float winding, dry, freeze, shake, flash, snapFlash, hurtFlash, deathClock;
+        public Color flashTint;
+        public Element element;
+        public Mood mood;
+        public Player player = new();
+        public List<Knot> knots = new();
+        public List<Enemy> enemies = new();
+        public List<Strand> strands = new();
+        public List<Bullet> bullets = new();
+        public List<Drop> drops = new();
+        public List<Trail> trails = new();
+        public List<Fx> effects = new();
+        public HashSet<string> rules = new(), desires = new();
+        public Timed kick;
+        public Echo echo;
+        public Outcome outcome;
+        public Phase phase = Phase.Combat;
+        public DesireDef offer;
+        public readonly List<GameEvent> events = new();
+
+        public float Gear(StatKind kind) => gearStats[kind];
+    }
+
+    public struct CombatInput
+    {
+        public float x, y;
+        public bool shoot, dash, pull;
+        public Vector2 aim;                   // 전투장 좌표
+    }
+}

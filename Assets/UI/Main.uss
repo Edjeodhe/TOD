@@ -1,0 +1,179 @@
+/* 웹판 style.css 를 게임식 전체화면(1920×1080 기준)으로 옮긴 스타일. 색은 웹판 :root 변수와 같다. */
+:root {
+    --ink: #e9d9d5;
+    --muted: #a898a2;
+    --pink: #e6a8bf;
+    --gold: #cfac78;
+    --teal: #8cc7be;
+    --edge: #3c303d;
+    --panel: rgba(29, 24, 31, 0.92);
+    -unity-font: url("project://database/Assets/Fonts/Galmuri11.ttf");
+    font-size: 20px;
+    color: #e9d9d5;
+}
+
+.root { flex-grow: 1; }
+.layer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.hidden { display: none; }
+.serif { -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
+.title-font { -unity-font: url("project://database/Assets/Fonts/Galmuri14.ttf"); }
+.small-font { -unity-font: url("project://database/Assets/Fonts/Galmuri9.ttf"); }
+Label { margin: 0; padding: 0; white-space: normal; }
+
+/* ---------- buttons ---------- */
+Button {
+    margin: 0;
+    -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf");
+    font-size: 20px;
+    border-radius: 6px;
+    border-width: 1px;
+    padding: 10px 22px;
+    min-height: 52px;
+    border-color: #69485f;
+    background-color: #3a2938;
+    color: #efdae5;
+    transition-property: background-color, border-color, scale;
+    transition-duration: 0.12s;
+}
+Button:hover { border-color: #b47e9f; background-color: #483044; }
+Button:active { scale: 0.97 0.97; }
+Button:disabled { opacity: 0.48; }
+.primary { background-color: #d08aa7; border-color: #ecaec2; color: #241724; }
+.primary:hover { background-color: #efb9cf; }
+.icon-button { min-height: 48px; width: 48px; padding: 0; font-size: 22px; color: #a898a2; border-color: #4c3c4b; background-color: #251d27; }
+.icon-button:hover { color: #e9d9d5; border-color: #846077; }
+.actions { flex-direction: row; flex-wrap: wrap; align-items: center; margin-top: 24px; }
+.actions > Button { margin-right: 12px; margin-bottom: 6px; }
+
+.eyebrow { color: #cfac78; font-size: 15px; margin-bottom: 8px; letter-spacing: 3px; }
+.panel { border-width: 1px; border-color: #3c303d; background-color: rgba(29, 24, 31, 0.9); border-radius: 10px; }
+.meter { background-color: #352b39; height: 8px; border-radius: 4px; overflow: hidden; }
+.meter-fill { height: 100%; width: 0; border-radius: 4px; background-color: #cfac78; }
+.meter-fill.health { background-color: #d9819f; }
+.meter-fill.desire { background-color: #a679b6; }
+.meter-fill.boss { background-color: #c2708d; }
+
+/* ---------- HUD ---------- */
+.hud { padding: 22px 26px; }
+.status { position: absolute; left: 26px; top: 22px; width: 380px; padding: 20px 22px; }
+.route { position: absolute; right: 90px; top: 22px; width: 330px; padding: 20px 22px; }
+.section-head { flex-direction: row; align-items: center; margin-bottom: 16px; }
+.section-head .mark { color: #cfac78; margin-right: 8px; }
+.section-head .heading { flex-grow: 1; font-size: 21px; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
+.tag { color: #cfac78; font-size: 16px; border-width: 1px; border-color: #594338; background-color: #342630; border-radius: 4px; padding: 3px 8px; }
+.stat { margin-bottom: 14px; }
+.stat-label { flex-direction: row; align-items: center; margin-bottom: 6px; color: #d4c3cb; font-size: 17px; }
+.stat-label .icon { width: 28px; height: 28px; margin-right: 8px; -unity-background-scale-mode: scale-to-fit; }
+.stat-label .value { margin-left: auto; color: #e9d9d5; }
+.yarn-pips { flex-direction: row; height: 8px; }
+.yarn-pip { flex-grow: 1; margin-right: 5px; background-color: #352b39; border-radius: 2px; overflow: hidden; }
+.yarn-pip.full { background-color: #89beb7; }
+.yarn-wind { height: 100%; background-color: #528983; width: 0; }
+.thread-status { flex-direction: row; justify-content: space-between; margin-top: 6px; color: #a898a2; font-size: 14px; }
+.xp { flex-direction: row; align-items: center; color: #a898a2; font-size: 14px; }
+.xp .meter { flex-grow: 1; height: 5px; margin: 0 10px; }
+.status-bottom { flex-direction: row; border-top-width: 1px; border-color: #352b37; margin-top: 16px; padding-top: 13px; }
+.status-bottom > VisualElement { flex-grow: 1; flex-direction: row; align-items: center; color: #a898a2; font-size: 15px; margin-right: 12px; }
+.status-bottom .icon { width: 26px; height: 26px; margin-right: 6px; -unity-background-scale-mode: scale-to-fit; }
+.status-bottom .value { margin-left: auto; color: #cfac78; }
+.round { flex-direction: row; align-items: center; color: #a697a5; padding: 6px 8px; border-width: 1px; border-color: rgba(0, 0, 0, 0); border-radius: 4px; font-size: 16px; margin-bottom: 4px; }
+.round .num { width: 26px; height: 26px; border-width: 1px; border-color: #574559; border-radius: 4px; -unity-text-align: middle-center; margin-right: 12px; }
+.round.current { color: #efccdc; background-color: #352635; border-color: #593c55; }
+.round.current .num { border-color: #b27899; color: #e6a8bf; }
+.round.done { color: #8cc7be; }
+.route-info { color: #a898a2; margin-top: 12px; font-size: 15px; min-height: 22px; }
+.pause-button { position: absolute; right: 26px; top: 22px; }
+.banner { position: absolute; top: 26px; left: 0; right: 0; align-items: center; }
+.banner > Label { background-color: rgba(33, 22, 37, 0.92); border-width: 1px; border-color: #71516e; border-radius: 4px; padding: 8px 18px; color: #f2cadc; font-size: 18px; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
+.boss-hud { position: absolute; bottom: 34px; left: 0; right: 0; align-items: center; }
+.boss-hud > Label { color: #f1c1cf; font-size: 18px; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
+.boss-hud .meter { width: 440px; height: 12px; margin-top: 7px; border-width: 1px; border-color: #79435b; }
+.controls-hint { position: absolute; left: 26px; bottom: 22px; flex-direction: row; color: #a898a2; font-size: 15px; }
+.controls-hint > Label { margin-right: 22px; }
+.kbd { background-color: #251e29; border-width: 1px; border-bottom-width: 3px; border-color: #534653; border-radius: 4px; color: #e0cdd7; padding: 3px 7px; margin-right: 6px; font-size: 14px; }
+
+/* ---------- world labels ---------- */
+.world-label {
+    position: absolute;
+    -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf");
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    translate: -50% -50%;
+    -unity-text-outline-color: #1c0e21;
+}
+
+/* ---------- lobby ---------- */
+.lobby { background-image: url("project://database/Assets/ref/image-1-1.jpeg"); -unity-background-scale-mode: scale-and-crop; background-color: #291e2a; }
+.lobby-shade { position: absolute; left: 0; top: 0; bottom: 0; right: 0; background-image: url("project://database/Assets/Art/Generated/lobby_shade.png"); -unity-background-scale-mode: stretch-to-fill; }
+.topbar { position: absolute; left: 0; right: 0; top: 0; height: 96px; flex-direction: row; align-items: center; padding: 0 56px; border-bottom-width: 1px; border-color: #3c303d; background-color: rgba(23, 19, 25, 0.9); }
+.brand { flex-direction: row; align-items: center; flex-grow: 1; }
+.brand-icon { width: 46px; height: 46px; border-width: 1px; border-color: #794d66; background-color: #332132; rotate: 45deg; margin-right: 20px; align-items: center; justify-content: center; }
+.brand-icon > VisualElement { width: 32px; height: 32px; rotate: -45deg; background-image: url("project://database/Assets/sprites/icon_needle.png"); -unity-background-scale-mode: scale-to-fit; }
+.brand-name { font-size: 27px; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
+.brand-sub { color: #cfac78; font-size: 12px; letter-spacing: 4px; margin-top: 6px; }
+.shards { flex-direction: row; align-items: center; color: #8cc7be; margin-right: 20px; font-size: 22px; }
+.shards > VisualElement { width: 30px; height: 30px; margin-right: 8px; background-image: url("project://database/Assets/sprites/icon_shard.png"); -unity-background-scale-mode: scale-to-fit; }
+.welcome-copy { position: absolute; left: 130px; top: 230px; width: 760px; }
+.chapter { flex-direction: row; align-items: center; color: #cfac78; letter-spacing: 6px; font-size: 16px; margin-bottom: 20px; }
+.chapter > VisualElement { width: 18px; height: 1px; background-color: #b48d6c; margin: 0 12px; }
+.welcome-title { font-size: 112px; color: #f3d7d7; -unity-font: url("project://database/Assets/Fonts/Galmuri14.ttf"); -unity-text-outline-width: 2px; -unity-text-outline-color: #4a2b3e; }
+.welcome-text { color: #dfc9d1; font-size: 20px; margin: 22px 0 38px 0; }
+.menu { flex-direction: column; align-items: flex-start; }
+.menu > Button { min-width: 300px; margin-bottom: 12px; -unity-text-align: middle-left; }
+.start-button { font-size: 22px; min-height: 64px; }
+.hint { color: #c7b0bd; font-size: 15px; margin-top: 10px; flex-direction: row; align-items: center; }
+.record { color: #a898a2; font-size: 16px; margin-top: 30px; }
+.record-value { color: #cfac78; }
+.corner { position: absolute; width: 30px; height: 30px; border-color: rgba(213, 157, 180, 0.47); }
+.corner.tl { left: 18px; top: 114px; border-left-width: 1px; border-top-width: 1px; }
+.corner.tr { right: 18px; top: 114px; border-right-width: 1px; border-top-width: 1px; }
+.corner.bl { left: 18px; bottom: 18px; border-left-width: 1px; border-bottom-width: 1px; }
+.corner.br { right: 18px; bottom: 18px; border-right-width: 1px; border-bottom-width: 1px; }
+.lobby-controls { position: absolute; left: 130px; bottom: 56px; flex-direction: row; align-items: center; color: #a898a2; font-size: 15px; border-width: 1px; border-color: #3c303d; border-radius: 7px; background-color: rgba(29, 24, 31, 0.85); padding: 14px 20px; }
+.lobby-controls > Label { margin-right: 24px; }
+.lobby-controls .control-title { color: #cfac78; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
+
+/* ---------- rooms (재봉 상자 · 다락 · 결과) ---------- */
+.room { align-items: center; justify-content: center; background-color: #201823; }
+.room.attic { background-image: url("project://database/Assets/ref/image-23-1.jpeg"); -unity-background-scale-mode: scale-and-crop; }
+.room-shade { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgba(27, 18, 28, 0.82); }
+.room-body { width: 1040px; background-color: rgba(37, 27, 41, 0.95); border-width: 1px; border-color: #674659; border-radius: 10px; padding: 34px 40px; }
+.room-title { font-size: 44px; -unity-font: url("project://database/Assets/Fonts/Galmuri14.ttf"); }
+.room-text { color: #c1aeba; margin-top: 10px; }
+.inventory-layout { flex-direction: row; margin-top: 20px; }
+.board { flex-direction: row; flex-wrap: wrap; width: 560px; }
+.cell { margin: 2px; padding: 0; min-height: 0; border-radius: 3px; border-color: #534157; background-color: #30243a; color: #241624; font-size: 16px; }
+.cell:hover { border-color: #e6a8bf; }
+.cell.reinforced { border-color: #98704d; border-width: 2px; }
+.cell.filled { border-color: rgba(255, 255, 255, 0.33); }
+.cell.preview { border-width: 2px; border-color: rgba(255, 255, 255, 0.6); }
+.cell.invalid { background-color: #744051; }
+.stash { flex-grow: 1; margin-left: 22px; max-height: 360px; }
+.piece-button { flex-direction: row; align-items: center; min-height: 40px; padding: 6px 10px; margin-bottom: 6px; font-size: 16px; -unity-font: url("project://database/Assets/Fonts/Galmuri11.ttf"); -unity-text-align: middle-left; background-color: #322638; border-color: #5d475f; }
+.piece-button.selected { border-color: #e6a8bf; background-color: #51384d; }
+.piece-icon { width: 30px; height: 22px; margin-right: 10px; }
+.piece-dot { position: absolute; width: 6px; height: 6px; border-radius: 1px; }
+.piece-name { flex-grow: 1; }
+.piece-cost { color: #a898a2; }
+.sets { flex-direction: row; flex-wrap: wrap; color: #a898a2; font-size: 15px; margin-top: 14px; }
+.sets > Label { margin-right: 22px; }
+.choice-grid { flex-direction: row; flex-wrap: wrap; margin-top: 20px; }
+.choice { width: 300px; min-height: 160px; margin: 0 14px 14px 0; flex-direction: column; align-items: flex-start; justify-content: flex-start; padding: 16px; background-color: #33233a; border-color: #63475f; -unity-text-align: upper-left; }
+.choice:hover { background-color: #49304a; border-color: #ce8aab; }
+.choice .icon { width: 40px; height: 40px; margin-bottom: 8px; -unity-background-scale-mode: scale-to-fit; }
+.choice .tag-line { color: #cfac78; font-size: 14px; -unity-font: url("project://database/Assets/Fonts/Galmuri11.ttf"); }
+.choice .name { color: #efccdf; font-size: 20px; margin: 4px 0; }
+.choice .text { color: #c5b0bc; font-size: 15px; -unity-font: url("project://database/Assets/Fonts/Galmuri11.ttf"); }
+.choice .foot { color: #cfac78; font-size: 15px; margin-top: 8px; -unity-font: url("project://database/Assets/Fonts/Galmuri11.ttf"); }
+.shop-grid .choice { width: 460px; min-height: 130px; }
+.ui-vfx { position: absolute; right: 24px; top: 30px; width: 300px; height: 300px; opacity: 0.58; -unity-background-scale-mode: scale-to-fit; }
+
+/* ---------- dialogs ---------- */
+.overlay { align-items: center; justify-content: center; background-color: rgba(18, 13, 23, 0.79); }
+.dialog { width: 1040px; background-color: #231a27; border-width: 1px; border-color: #674659; border-radius: 10px; padding: 34px 40px; }
+.dialog-title { font-size: 40px; -unity-font: url("project://database/Assets/Fonts/Galmuri14.ttf"); }
+.dialog-text { color: #c1aeba; margin-top: 10px; }
+.notice { position: absolute; bottom: 30px; left: 0; right: 0; align-items: center; }
+.notice > Label { background-color: #322337; border-width: 1px; border-color: #865872; border-radius: 6px; padding: 12px 20px; color: #f3d8e4; }
+.room-flash { position: absolute; left: 0; right: 0; top: 0; bottom: 0; align-items: center; justify-content: center; }
+.room-flash > VisualElement { width: 560px; height: 560px; -unity-background-scale-mode: scale-to-fit; background-image: url("project://database/Assets/vfx/stitch.png"); }

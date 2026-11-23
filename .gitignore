@@ -1,0 +1,47 @@
+# Unity 생성물
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+crashlytics-build.properties
+.vs/
+.vscode/
+.idea/
+
+# 임베드한 mcp-unity 의 Node 의존성 (clone 후 Packages/com.gamelovers.mcp-unity/Server~ 에서 npm ci)
+Packages/com.gamelovers.mcp-unity/Server~/node_modules/
+
+# 웹판 배포본 (자체 .git 을 가진 별도 폴더, dist 는 빌드 산출물)
+web/sites/
+
+# Blender 자동 백업
+*.blend1
+
+# 개인 설정
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,10 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: assets/raw/hero_v3_dodge.png
+Size: landscape 1536x1024.
+The attached pose sheet shows the EXACT character, proportions and style to match: chibi mouse-beastfolk girl tailor, head about 45% of total height with big ears and fluffy pink hair, big brown eyes with black eyelashes, small slim body, burgundy open tailcoat worn loosely over a grey vest and peach cravat, short cream pleated skirt, tall burgundy boots, long thin pink tail, long silver sewing needle.
+Draw a 3-FRAME DODGE ANIMATION STRIP of this same character in the same 45-degree 3/4 view, body and face facing RIGHT while evading BACKWARD toward the LEFT. Three separate full-body drawings in one row, same scale (each figure about 540px tall), each separated by at least 90px of green, nothing touching:
+1 LAUNCH: deep crouch pushing off, torso leaning back to the left, coat tails and tail whipping forward, one arm thrown back, needle hand tucked at chest.
+2 MID-AIR: airborne quick backward hop, body tilted about 25 degrees back, legs tucked, coat flaring open, skirt fluttering, ears swept forward, tail in a big S curve.
+3 LANDING SKID: landing low on the back foot, front leg extended, one hand touching the floor, needle hand raised ready to counter-throw.
+Same flat style as the pose sheet: solid flat fills with one hard-edged shadow tone, no gradients, no texture, no glossy highlights, same palette, same even black outline. No motion lines, no effects, no dust, no ground shadow, no text.
+BACKGROUND: one perfectly flat solid pure chroma-key green (#00FF00) everywhere, no green inside the artwork.

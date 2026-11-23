@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Button name="piece" class="piece-button">
+        <ui:VisualElement name="icon" class="piece-icon" picking-mode="Ignore" />
+        <ui:Label name="name" class="piece-name" picking-mode="Ignore" />
+        <ui:Label name="cost" class="piece-cost" picking-mode="Ignore" />
+    </ui:Button>
+</ui:UXML>
