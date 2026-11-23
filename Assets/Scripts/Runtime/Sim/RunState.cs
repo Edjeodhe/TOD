@@ -5,7 +5,9 @@ using UnityEngine;
 
 namespace TOD
 {
-    public enum Phase { Combat, Rest, Desire, Shop, Victory }
+    // Combat: 생존·보스 전투 중 / Purifying: 보스 처치 후 정화 연출 / Cleared: 라운드 종료(계단·제단·상인과 상호작용) / Victory
+    public enum Phase { Combat, Purifying, Cleared, Victory }
+    public enum Interactable { None, Stairs, Altar, Merchant }
     public enum Outcome { None, Dead, Absorbed, Clear, Retreat }
     public enum Mood { Normal, Frenzy, Awakened }
     public enum HeroAction { Idle, Run, Shoot, Pull, Dash, Hurt, Die }
@@ -48,7 +50,7 @@ namespace TOD
 
     public class Strand : Point
     {
-        public float vx, vy, speed, range, birth, landed;
+        public float vx, vy, speed, range, maxRange, birth, landed;
         public Point anchor;
         public Enemy target;
         public StrandState state;
@@ -79,7 +81,7 @@ namespace TOD
         public FlipSheet sheet;
         public Element element;
         public Color? color;                  // tint 를 색으로 지정할 때
-        public bool squash, mirror, burst, rage, elite, useElement;
+        public bool squash, mirror, burst, rage, elite, useElement, followHero;
         public string text;
         public int pop;
         public EnemyType type;
@@ -94,7 +96,24 @@ namespace TOD
         public Func<float> random;
         public GearStats gearStats;
         public int floor = 1, round = 1, level = 1, xp, gold, kills, spawned, shotCount, nextKnot, augmentQueue, combo;
-        public float time, elapsed, spawnIn, desire, maxDesire, hp, maxHp, yarn, yarnBonus, recharge, damage, fireRate = 1, dashRate = 1, encumbrance;
+        public float time, elapsed, desire, maxDesire, hp, maxHp, yarn, yarnBonus, recharge, damage, dashRate = 1, encumbrance;
+        // 바늘·이동 능력치 (증강으로 오른다)
+        public float fireInterval, reach, needleSpeed = 1, moveScale = 1;
+        // 라운드
+        public int roundIndex;
+        public RoundKind roundKind;
+        public ConceptDef[] floorConcepts = new ConceptDef[0];
+        public ConceptDef concept;
+        public float roundLength;
+        public readonly Dictionary<SpawnEntry, float> spawnTimers = new();
+        public Point stairs, altar, merchant;
+        public float stairsAge;
+        public List<int> artifactOffer = new();
+        public bool artifactTaken, desirePending;
+        public Point purifyCenter;
+        public float purifyTime = -1;
+        public bool purified;
+        public readonly Stack<Enemy> enemyPool = new();
         public float winding, dry, freeze, shake, flash, snapFlash, hurtFlash, deathClock;
         public Color flashTint;
         public Element element;

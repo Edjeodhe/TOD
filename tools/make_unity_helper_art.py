@@ -110,6 +110,79 @@ shade[..., 3] = (t * 0x92).astype(np.uint8)
 save(Image.fromarray(shade, "RGBA"), "bg_shade")
 
 
+# ---- 탑 벽 아치 하나 (큰 맵 위쪽 벽을 따라 반복해서 그린다) ----
+def arch(d, s):
+    w, h = 50, 70
+    pts = [(1, h - 1), (1, 35)]
+    for (ax, ay), (qx, qy), (bx, by) in [((1, 35), (1, 13), (25, 1)), ((25, 1), (49, 13), (49, 35))]:
+        for i in range(1, 17):
+            t = i / 16
+            pts.append(((1 - t) ** 2 * ax + 2 * (1 - t) * t * qx + t * t * bx, (1 - t) ** 2 * ay + 2 * (1 - t) * t * qy + t * t * by))
+    pts.append((49, h - 1))
+    poly = [(x * s, y * s) for x, y in pts]
+    d.polygon(poly, fill=hex_rgba("#19101d"))
+    d.line(poly + [poly[0]], fill=hex_rgba("#60455690"), width=round(1.5 * s))
+
+
+save(supersampled((50, 70), arch), "arch")
+
+
+# ---- 계단 (라운드가 끝나면 나타나는 '위로 올라가기', 임시 그림) ----
+def stairs(d, s):
+    W, Hh = 220, 170
+    steps = 5
+    for i in range(steps):
+        # 뒤(위) 계단부터 그린다: 단마다 윗면(밝음) + 앞면(어두움)
+        k = steps - 1 - i
+        x0, x1 = 30 + k * 10, 190 - k * 10
+        y = 40 + i * 24
+        top = [(x0 * s, y * s), (x1 * s, y * s), ((x1 - 8) * s, (y + 9) * s), ((x0 + 8) * s, (y + 9) * s)]
+        front = [((x0 + 8) * s, (y + 9) * s), ((x1 - 8) * s, (y + 9) * s), ((x1 - 8) * s, (y + 24) * s), ((x0 + 8) * s, (y + 24) * s)]
+        d.polygon(front, fill=hex_rgba("#2a1d2e"), outline=hex_rgba("#120c16"))
+        d.polygon(top, fill=hex_rgba("#5a4660"), outline=hex_rgba("#120c16"))
+        d.line([top[0], top[1]], fill=hex_rgba("#e6a8bf"), width=round(2 * s))
+    # 계단 위로 이어지는 빛 기둥 자리 (반투명 아치)
+    d.polygon([(70 * s, 40 * s), (150 * s, 40 * s), (140 * s, 4 * s), (80 * s, 4 * s)], fill=hex_rgba("#cfe9e255"))
+
+
+save(supersampled((220, 170), stairs), "stairs")
+
+
+# ---- 아티팩트 제단 (임시 그림) ----
+def altar(d, s):
+    d.ellipse((20 * s, 96 * s, 140 * s, 124 * s), fill=hex_rgba("#1b1320"))
+    d.polygon([(48 * s, 60 * s), (112 * s, 60 * s), (104 * s, 112 * s), (56 * s, 112 * s)], fill=hex_rgba("#3a2a40"), outline=hex_rgba("#120c16"))
+    d.ellipse((30 * s, 46 * s, 130 * s, 74 * s), fill=hex_rgba("#6b5270"), outline=hex_rgba("#120c16"), width=round(2 * s))
+    d.ellipse((44 * s, 52 * s, 116 * s, 68 * s), outline=hex_rgba("#cfac78"), width=round(2 * s))
+
+
+save(supersampled((160, 130), altar), "altar")
+
+
+# ---- 상인 '단추' (쉬어가는 라운드에 50% 확률로 나온다, 임시 그림) ----
+def merchant(d, s):
+    def S(*pts):
+        return [v * s for v in pts]
+    d.ellipse(S(22, 150, 118, 166), fill=hex_rgba("#1b1320"))                          # 바닥 그늘
+    d.polygon([(30 * s, 156 * s), (110 * s, 156 * s), (94 * s, 70 * s), (46 * s, 70 * s)],
+              fill=hex_rgba("#4a3550"), outline=hex_rgba("#120c16"))                    # 망토
+    d.polygon([(58 * s, 70 * s), (82 * s, 70 * s), (78 * s, 156 * s), (62 * s, 156 * s)], fill=hex_rgba("#3a2a40"))
+    for y in (92, 112, 132):                                                            # 큰 단추 세 개
+        d.ellipse(S(64, y, 76, y + 12), fill=hex_rgba("#cfac78"), outline=hex_rgba("#120c16"))
+        d.point([(68 * s, (y + 5) * s), (72 * s, (y + 5) * s)], fill=hex_rgba("#120c16"))
+    d.ellipse(S(46, 30, 94, 76), fill=hex_rgba("#e9d8c4"), outline=hex_rgba("#120c16"), width=round(2 * s))   # 얼굴
+    d.ellipse(S(58, 46, 68, 56), fill=hex_rgba("#120c16"))                              # 단추 눈
+    d.ellipse(S(72, 46, 82, 56), fill=hex_rgba("#120c16"))
+    d.polygon([(38 * s, 36 * s), (102 * s, 36 * s), (86 * s, 6 * s), (54 * s, 6 * s)],
+              fill=hex_rgba("#5a4660"), outline=hex_rgba("#120c16"))                    # 모자
+    d.line([(38 * s, 36 * s), (102 * s, 36 * s)], fill=hex_rgba("#e6a8bf"), width=round(2 * s))
+    d.rectangle(S(98, 96, 126, 120), fill=hex_rgba("#6b5270"), outline=hex_rgba("#120c16"))  # 짐 보따리
+    d.line([(98 * s, 108 * s), (126 * s, 108 * s)], fill=hex_rgba("#cfac78"), width=round(2 * s))
+
+
+save(supersampled((140, 170), merchant), "merchant")
+
+
 # ---- 로비 그늘 (웹판 .welcome-shade: 왼쪽에서 오른쪽으로 옅어지는 막 + 아래쪽 그늘) ----
 def ramp(t, stops):
     for (t0, c0), (t1, c1) in zip(stops, stops[1:]):

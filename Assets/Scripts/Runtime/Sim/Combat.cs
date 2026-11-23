@@ -18,7 +18,7 @@ namespace TOD
         FxConfig X => db.fx;
         MessageConfig M => db.messages;
         float WorldVertical => A.attackY / A.projectionY;
-        public int BossRound => A.roundDurations.Length - 1;
+        RoundConfig R => db.rounds;
 
         // JS Math.round (0.5 은 올림)
         public static float Round(float v) => Mathf.Floor(v + .5f);
@@ -40,18 +40,20 @@ namespace TOD
         public float DesireFraction(RunState r) => r.desire / r.maxDesire;
         public int KnotInterval(RunState r) => r.rules.Contains("earlyKnot") ? H.earlyKnotInterval : H.knotInterval;
         public float EnemyHeight(Enemy e) => e.type.height * (e.elite ? E.eliteHeight : 1);
-        public float RoundDuration(RunState r) => r.round < A.roundDurations.Length ? A.roundDurations[r.round] : 0;
+        public float TimeLeft(RunState r) => r.roundKind == RoundKind.Survival ? Mathf.Max(0, r.roundLength - r.elapsed) : 0;
 
         public static (Point start, Point end) Endpoints(Player player, Strand s) => (s.anchor ?? player, (Point)s.target ?? s);
 
         float NeedleSpeed(Strand s, float now)
         {
             NeedleConfig n = db.needle;
-            float left = Mathf.Clamp01(s.range / n.reach);
+            float left = Mathf.Clamp01(s.range / Mathf.Max(1, s.maxRange));
             float cruise = n.settle + (n.launch - n.settle) * Mathf.Pow(left, n.curve);
             float kick = Mathf.Clamp01((now - s.birth) / n.kick);
-            return cruise * (n.start + (1 - n.start) * (1 - Mathf.Pow(1 - kick, 3)));
+            return cruise * (n.start + (1 - n.start) * (1 - Mathf.Pow(1 - kick, 3))) * needleScale;
         }
+
+        float needleScale = 1;   // UpdateNeedles 가 등반의 바늘 속도 능력치로 맞춘다
 
         float DashTravel(float u) => F.dashDistance * (1 - Mathf.Pow(1 - Mathf.Clamp01(u), F.dashEase));
 
@@ -83,10 +85,11 @@ namespace TOD
             float hp = Round(H.baseHp + gear[StatKind.Health]);
             var r = new RunState
             {
-                profile = profile, random = random, gearStats = gear, spawnIn = db.spawn.startDelay,
+                profile = profile, random = random, gearStats = gear,
                 element = Gear.ThreadElement(gear), maxDesire = db.desire.maxBase + profile.capacity * db.desire.capacityStep,
                 hp = hp, maxHp = hp, yarn = Round(H.baseYarn + gear[StatKind.Yarn]), recharge = 1 + gear[StatKind.Recharge],
                 damage = H.baseDamage + gear[StatKind.Damage], encumbrance = H.encumbrance,
+                fireInterval = H.shotInterval, reach = db.needle.reach,
             };
             r.player.x = A.width / 2;
             r.player.y = A.height / 2;
@@ -123,25 +126,126 @@ namespace TOD
             Event(r, "desire", awakened ? M.awaken : M.frenzy);
         }
 
+        // 층 시작: 컨셉 10개 중 3개를 뽑아 생존 R1·생존 R2·보스 라운드에 하나씩 쓴다.
         public void BeginFloor(RunState r)
         {
-            r.round = 1;
-            r.player.x = A.width / 2;
-            r.player.y = A.height / 2;
+            List<ConceptDef> pool = db.concepts.ToList();
+            var picked = new List<ConceptDef>();
+            int survivalRounds = R.sequence.Count(k => k != RoundKind.Rest);
+            while (picked.Count < survivalRounds && pool.Count > 0)
+            {
+                int i = Mathf.Min(pool.Count - 1, Mathf.FloorToInt(r.random() * pool.Count));
+                picked.Add(pool[i]);
+                pool.RemoveAt(i);
+            }
+            r.floorConcepts = picked.ToArray();
+            r.roundIndex = 0;
+            r.purified = false;
             AdjustDesire(r, Mathf.Max(0, Round(db.desire.perFloor * r.floor - r.Gear(StatKind.Purity))));
             if (r.outcome == Outcome.None) BeginRound(r);
         }
 
+        // 라운드마다 새 맵: 플레이어를 가운데에 두고 모든 전투 요소를 비운다.
         public void BeginRound(RunState r)
         {
-            r.phase = Phase.Combat;
-            r.elapsed = 0; r.spawned = 0; r.spawnIn = db.spawn.startDelay;
-            r.bullets.Clear(); r.strands.Clear(); r.knots.Clear(); r.trails.Clear();
+            r.round = r.roundIndex + 1;
+            r.roundKind = R.sequence[r.roundIndex];
+            int combatIndex = R.sequence.Take(r.roundIndex + 1).Count(k => k != RoundKind.Rest) - 1;
+            r.concept = r.roundKind == RoundKind.Rest
+                ? r.floorConcepts.LastOrDefault()
+                : r.floorConcepts[Mathf.Clamp(combatIndex, 0, r.floorConcepts.Length - 1)];
+            r.player.x = A.width / 2;
+            r.player.y = A.height / 2;
+            r.elapsed = 0; r.spawned = 0;
+            foreach (Enemy e in r.enemies) r.enemyPool.Push(e);
+            r.enemies.Clear(); r.drops.Clear();
+            r.bullets.Clear(); r.strands.Clear(); r.knots.Clear(); r.trails.Clear(); r.effects.Clear();
             r.echo = null; r.shotCount = 0; r.winding = 0; r.dry = 0; r.nextKnot = 0;
             r.yarn = YarnMax(r);
-            if (r.round == BossRound) SpawnEnemy(r, "boss", new Point(A.bossSpawn.x, A.bossSpawn.y));
-            string name = r.round == BossRound ? M.bossRoundName : string.Format(M.roundName, r.round);
+            r.stairs = r.altar = r.merchant = null;
+            r.artifactOffer.Clear(); r.artifactTaken = false; r.desirePending = false;
+            r.purifyTime = -1; r.purifyCenter = null;
+            if (r.roundKind != RoundKind.Boss) r.purified = false;
+            r.spawnTimers.Clear();
+            foreach (SpawnEntry s in db.spawn.table) r.spawnTimers[s] = s.startDelay;
+            string name;
+            switch (r.roundKind)
+            {
+                case RoundKind.Survival:
+                    r.phase = Phase.Combat;
+                    int survival = R.sequence.Take(r.roundIndex + 1).Count(k => k == RoundKind.Survival) - 1;
+                    r.roundLength = R.survivalSeconds[Mathf.Clamp(survival, 0, R.survivalSeconds.Length - 1)];
+                    name = r.concept?.name ?? string.Format(M.roundName, r.round);
+                    break;
+                case RoundKind.Boss:
+                    r.phase = Phase.Combat;
+                    r.roundLength = 0;
+                    SpawnEnemy(r, "boss", Near(r, R.bossOffset));
+                    name = M.bossRoundName;
+                    break;
+                default:
+                    // 쉬어가는 라운드: 아티팩트 제단·확률 상인·보스로 가는 계단
+                    r.phase = Phase.Cleared;
+                    r.roundLength = 0;
+                    r.altar = Near(r, R.altarOffset);
+                    if (r.random() < R.merchantChance) r.merchant = Near(r, R.merchantOffset);
+                    r.stairs = Near(r, R.restStairsOffset);
+                    r.stairsAge = R.stairsRevealTime;
+                    var kinds = Enumerable.Range(0, db.gear.pieces.Length).ToList();
+                    while (r.artifactOffer.Count < R.artifactChoices && kinds.Count > 0)
+                    {
+                        int i = Mathf.Min(kinds.Count - 1, Mathf.FloorToInt(r.random() * kinds.Count));
+                        r.artifactOffer.Add(kinds[i]);
+                        kinds.RemoveAt(i);
+                    }
+                    name = db.ui.restRoundName;
+                    break;
+            }
             Event(r, "round", string.Format(M.roundBanner, r.floor, name));
+        }
+
+        Point Near(RunState r, Vector2 offset) => new(
+            Mathf.Clamp(r.player.x + offset.x, A.wallLeft + 60, A.wallRight - 60),
+            Mathf.Clamp(r.player.y + offset.y, A.wallTop + 60, A.wallBottom - 60));
+
+        // 계단에서 E: 다음 라운드, 보스 뒤라면 다음 층 (마지막 층이면 승리).
+        public void Ascend(RunState r)
+        {
+            if (r.roundKind == RoundKind.Boss)
+            {
+                if (r.floor >= A.finalFloor) { r.phase = Phase.Victory; return; }
+                r.floor++;
+                BeginFloor(r);
+                return;
+            }
+            r.roundIndex = Mathf.Min(r.roundIndex + 1, R.sequence.Length - 1);
+            BeginRound(r);
+        }
+
+        public Interactable Nearest(RunState r)
+        {
+            Interactable best = Interactable.None;
+            float bestGap = R.interactRadius;
+            void Check(Point p, Interactable kind)
+            {
+                if (p == null) return;
+                float gap = Distance(p, r.player);
+                if (gap <= bestGap) { bestGap = gap; best = kind; }
+            }
+            if (r.phase == Phase.Cleared && r.stairsAge >= R.stairsRevealTime) Check(r.stairs, Interactable.Stairs);
+            if (!r.artifactTaken) Check(r.altar, Interactable.Altar);
+            Check(r.merchant, Interactable.Merchant);
+            return best;
+        }
+
+        public PieceDef TakeArtifact(RunState r, int kind)
+        {
+            if (r.artifactTaken || !r.artifactOffer.Contains(kind)) return null;
+            r.artifactTaken = true;
+            PieceDef def = Gear.AddItem(db, r.profile, kind);
+            Gear.Save(db, r.profile);
+            Event(r, "loot", string.Format(M.loot, def.name));
+            return def;
         }
 
         public List<AugmentDef> AugmentChoices(RunState r)
@@ -160,31 +264,45 @@ namespace TOD
             return choices;
         }
 
+        // 증강은 능력치 효과 목록을 그대로 적용한다 (규칙형은 rules 에 기록만).
         public void ApplyAugment(RunState r, string id)
         {
-            AugmentConfig c = db.augments;
-            if (db.Augment(id)?.rule == true) r.rules.Add(id);
-            switch (id)
+            AugmentDef def = db.Augment(id);
+            if (def == null) return;
+            if (def.rule) r.rules.Add(id);
+            foreach (AugmentEffect fx in def.effects ?? Array.Empty<AugmentEffect>())
             {
-                case "fire": r.fireRate *= c.fireRate; break;
-                case "damage": r.damage += c.damage; break;
-                case "supply": r.yarnBonus += c.supplyYarn; r.recharge *= c.supplyRecharge; r.yarn = Mathf.Min(YarnMax(r), r.yarn + c.supplyYarn); break;
-                case "light": r.encumbrance *= c.lightEncumbrance; r.dashRate *= c.lightDash; break;
-                case "calm": AdjustDesire(r, -c.calm); break;
+                float Apply(float v) => fx.op == StatOp.Multiply ? v * fx.value : v + fx.value;
+                switch (fx.stat)
+                {
+                    case RunStat.FireInterval: r.fireInterval = Mathf.Max(db.augments.minFireInterval, Apply(r.fireInterval)); break;
+                    case RunStat.Reach: r.reach = Apply(r.reach); break;
+                    case RunStat.NeedleSpeed: r.needleSpeed = Apply(r.needleSpeed); break;
+                    case RunStat.Damage: r.damage = Apply(r.damage); break;
+                    case RunStat.YarnMax:
+                        float before = r.yarnBonus;
+                        r.yarnBonus = Apply(r.yarnBonus);
+                        r.yarn = Mathf.Min(YarnMax(r), r.yarn + Mathf.Max(0, r.yarnBonus - before));
+                        break;
+                    case RunStat.Recharge: r.recharge = Apply(r.recharge); break;
+                    case RunStat.Encumbrance: r.encumbrance = Apply(r.encumbrance); break;
+                    case RunStat.DashCooldown: r.dashRate = Apply(r.dashRate); break;
+                    case RunStat.MoveSpeed: r.moveScale = Apply(r.moveScale); break;
+                    case RunStat.Desire: AdjustDesire(r, fx.op == StatOp.Multiply ? r.desire * (fx.value - 1) : fx.value); break;
+                }
             }
             r.augmentQueue--;
         }
 
+        // 보스 정화 뒤 계단에서 고르는 욕망 흡수 (null = 거절)
         public void ChooseDesire(RunState r, string id)
         {
-            if (id != null)
-            {
-                if (id == db.desire.refine.id) r.damage += db.desire.refineDamage;
-                else r.desires.Add(id);
-                r.yarn = Mathf.Min(r.yarn, YarnMax(r));
-                AdjustDesire(r, db.desire.absorb);
-            }
-            if (r.outcome == Outcome.None) r.phase = r.floor == A.finalFloor ? Phase.Victory : Phase.Shop;
+            r.desirePending = false;
+            if (id == null) return;
+            if (id == db.desire.refine.id) r.damage += db.desire.refineDamage;
+            else r.desires.Add(id);
+            r.yarn = Mathf.Min(r.yarn, YarnMax(r));
+            AdjustDesire(r, db.desire.absorb);
         }
 
         // ---------------------------------------------------------------- enemies, rewards, damage
@@ -195,24 +313,104 @@ namespace TOD
             SpawnConfig s = db.spawn;
             if (location == null)
             {
-                int edge = Mathf.FloorToInt(r.random() * 4);
-                location = edge < 2
-                    ? new Point(edge == 1 ? A.width - s.edgeInset : s.edgeInset, s.edgeInsetY + r.random() * (A.height - 2 * s.edgeInsetY))
-                    : new Point(s.sideSpan + r.random() * (A.width - 2 * s.sideSpan), edge == 2 ? s.topSpan : A.height - s.topSpan);
-                if (Distance(location, r.player) < s.avoidPlayerRadius) location.x = A.width - location.x;
+                // 화면 밖 고리 위의 무작위 지점 (맵 경계 안)
+                float angle = r.random() * Mathf.PI * 2;
+                float distance = s.spawnDistanceMin + r.random() * (s.spawnDistanceMax - s.spawnDistanceMin);
+                location = new Point(
+                    Mathf.Clamp(r.player.x + Mathf.Cos(angle) * distance, A.enemyMarginX, A.width - A.enemyMarginX),
+                    Mathf.Clamp(r.player.y + Mathf.Sin(angle) * distance / WorldVertical, A.enemyMarginY, A.height - A.enemyMarginY));
             }
-            float hp = Round(def.hp * (1 + E.hpPerFloor * (r.floor - 1)) * (elite ? E.eliteHp : 1));
-            var enemy = new Enemy
-            {
-                x = location.x, y = location.y, type = def, elite = elite, hp = hp, maxHp = hp, radius = def.radius,
-                wait = def.wait * (1 - E.waitJitter / 2 + r.random() * E.waitJitter),
-                speed = def.speed * (1 + E.speedPerFloor * (r.floor - 1)),
-                damage = def.damage * (1 + E.damagePerFloor * (r.floor - 1)) * (elite ? E.eliteDamage : 1),
-                action = EnemyAction.Move,
-            };
+            ConceptDef c = r.concept;
+            float hp = Round(def.hp * (1 + E.hpPerFloor * (r.floor - 1)) * (elite ? E.eliteHp : 1) * (c?.hpScale ?? 1));
+            // 오브젝트 풀: 사라진 적 객체를 다시 쓴다.
+            Enemy enemy = r.enemyPool.Count > 0 ? r.enemyPool.Pop() : new Enemy();
+            enemy.x = location.x; enemy.y = location.y; enemy.type = def; enemy.elite = elite;
+            enemy.hp = hp; enemy.maxHp = hp; enemy.radius = def.radius;
+            enemy.wait = def.wait * (1 - E.waitJitter / 2 + r.random() * E.waitJitter);
+            enemy.speed = def.speed * (1 + E.speedPerFloor * (r.floor - 1)) * (c?.speedScale ?? 1);
+            enemy.damage = def.damage * (1 + E.damagePerFloor * (r.floor - 1)) * (elite ? E.eliteDamage : 1);
+            enemy.action = EnemyAction.Move; enemy.timer = 0; enemy.facing = 1; enemy.flash = 0; enemy.threshold = 0;
+            enemy.aim = Vector2.right; enemy.stretch = enemy.jolt = enemy.push = enemy.yank = null; enemy.cut = null;
             enemy.height = EnemyHeight(enemy);
             r.enemies.Add(enemy);
             return enemy;
+        }
+
+        void Retire(RunState r, Enemy e) { r.enemies.Remove(e); r.enemyPool.Push(e); }
+
+        // 유형별 스폰 표: 간격·마릿수에 무작위 흔들림, 컨셉 가중치와 층 배율을 곱한다.
+        void UpdateSpawns(RunState r, float dt)
+        {
+            SpawnConfig s = db.spawn;
+            ConceptDef c = r.concept;
+            float floorRate = 1 + s.floorRateStep * (r.floor - 1);
+            foreach (SpawnEntry entry in s.table)
+            {
+                float weight = c?.typeWeights?.FirstOrDefault(w => w.type == entry.type)?.weight ?? 1;
+                if (weight <= 0) continue;
+                float timer = r.spawnTimers.TryGetValue(entry, out float t) ? t : entry.startDelay;
+                timer -= dt;
+                if (timer <= 0)
+                {
+                    int count = Mathf.Max(1, entry.count + Mathf.RoundToInt((r.random() * 2 - 1) * entry.countJitter));
+                    for (int i = 0; i < count && r.enemies.Count < s.maxEnemies; i++)
+                    {
+                        r.spawned++;
+                        SpawnEnemy(r, entry.type, null, r.random() < entry.eliteChance * (c?.eliteScale ?? 1));
+                    }
+                    float interval = entry.interval / (weight * (c?.spawnRate ?? 1) * floorRate);
+                    timer = Mathf.Max(s.minInterval, interval * (1 + (r.random() * 2 - 1) * entry.intervalJitter));
+                }
+                r.spawnTimers[entry] = timer;
+            }
+        }
+
+        // 생존 시간이 끝나면: 스폰 중지, 남은 적은 흩어지며 사라지고, 드롭은 회수, 화면 가운데에 계단.
+        void ClearRound(RunState r)
+        {
+            foreach (Enemy e in r.enemies.ToList())
+            {
+                Spawn(r, FxKind.Burst, e.x, e.y, X.killBurst).color = X.killBurstColor;
+                Retire(r, e);
+            }
+            foreach (Drop d in r.drops) Collect(r, d);
+            r.drops.Clear(); r.bullets.Clear(); r.strands.Clear(); r.knots.Clear(); r.trails.Clear(); r.echo = null;
+            r.phase = Phase.Cleared;
+            r.stairs = Near(r, R.stairsOffset);
+            r.stairsAge = 0;
+            Event(r, "cleared", db.ui.cleared);
+        }
+
+        // 보스 처치: 캐릭터에서 정화의 고리가 퍼지고, 끝나면 계단이 나타난다.
+        void BeginPurify(RunState r)
+        {
+            foreach (Enemy e in r.enemies.ToList())
+            {
+                Spawn(r, FxKind.Burst, e.x, e.y, X.killBurst).color = db.purify.ringColor;
+                Retire(r, e);
+            }
+            r.bullets.Clear();
+            r.profile.shards += db.rewards.shardFloorClear;
+            r.profile.best = Mathf.Max(r.profile.best, r.floor);
+            Gear.Save(db, r.profile);
+            DesireDef[] unowned = db.desire.desires.Where(d => !r.desires.Contains(d.id)).ToArray();
+            r.offer = unowned.Length > 0 ? unowned[Mathf.Min(unowned.Length - 1, Mathf.FloorToInt(r.random() * unowned.Length))] : db.desire.refine;
+            r.desirePending = true;
+            r.purifyCenter = new Point(r.player.x, r.player.y);
+            r.purifyTime = 0;
+            r.phase = Phase.Purifying;
+            Event(r, "purify", db.ui.purified);
+        }
+
+        // 정화 고리 반지름 (전투장 단위 — 바닥에서는 원, 화면에서는 세로로 눌린 타원) — 맵 모서리까지 닿는다.
+        public float PurifyRadius(RunState r)
+        {
+            if (r.purifyCenter == null) return 0;
+            float far = 0;
+            foreach (var (cx, cy) in new[] { (0f, 0f), (A.width, 0f), (0f, A.height), (A.width, A.height) })
+                far = Mathf.Max(far, Hypot(cx - r.purifyCenter.x, cy - r.purifyCenter.y));
+            float u = Mathf.Clamp01(r.purifyTime / db.purify.duration);
+            return far * (1 - Mathf.Pow(1 - u, 2.2f));
         }
 
         void GainXp(RunState r, int amount)
@@ -239,7 +437,7 @@ namespace TOD
             {
                 x = e.x, y = e.y, xp = boss ? rw.xpBoss : e.elite ? rw.xpElite : rw.xpNormal,
                 gold = (int)(e.type.gold * (e.elite ? E.eliteGold : 1)), shard = boss ? rw.shardBoss : e.elite ? rw.shardElite : 0,
-                item = boss || (e.elite && r.random() < rw.eliteItemChance),
+                item = (boss && rw.bossDropsItem) || (e.elite && r.random() < rw.eliteItemChance),
             });
             if (r.desires.Contains("hunger")) r.hp = Mathf.Min(r.maxHp, r.hp + db.desire.hungerHeal);
             if (stuck.Count > 0 && r.desires.Contains("obsession"))
@@ -336,14 +534,14 @@ namespace TOD
             if (Hypot(dx, dy) < H.aimDeadZone) return;
             Vector2 dir = Unit(dx, dy);
             r.yarn -= 1;
-            p.shotCooldown = H.shotInterval / r.fireRate;
+            p.shotCooldown = r.fireInterval;
             p.facing = dir.x >= 0 ? 1 : -1;
             p.angle = Mathf.Atan2(dir.y, dir.x);
             Act(p, HeroAction.Shoot);
             r.strands.Add(new Strand
             {
                 x = p.x, y = p.y, vx = dir.x, vy = dir.y / A.projectionY, speed = db.needle.launch * db.needle.start,
-                range = db.needle.reach, state = StrandState.Flight, bounce = r.rules.Contains("bounce"), birth = r.time, element = r.element,
+                range = r.reach, maxRange = r.reach, state = StrandState.Flight, bounce = r.rules.Contains("bounce"), birth = r.time, element = r.element,
             });
             float screenAngle = Mathf.Atan2(dir.y, dir.x);
             p.recoil = new Timed { x = -dir.x, y = -dir.y, time = F.recoilTime, max = F.recoilTime };
@@ -380,6 +578,7 @@ namespace TOD
 
         void UpdateNeedles(RunState r, float dt)
         {
+            needleScale = r.needleSpeed;
             foreach (Strand s in r.strands.ToList())
             {
                 if (s.state != StrandState.Flight) continue;
@@ -438,9 +637,10 @@ namespace TOD
                 Element element = s.element ?? r.element;
                 Fx snap = Spawn(r, FxKind.Pull, start.x, start.y, X.pullStrand);
                 snap.toX = end.x; snap.toY = end.y; snap.element = element; snap.rage = rage; snap.seed = r.random() * 100;
+                snap.followHero = s.anchor == null;   // 손에 든 실은 지금 손 위치로 감겨 들어온다 (당긴 자리에 실이 남지 않게)
                 float along = Mathf.Atan2((end.y - start.y) * A.projectionY, end.x - start.x);
                 Fx blade = Spawn(r, FxKind.Cut, start.x, start.y, new FxSpec { time = F.cutTime, alpha = 1 });
-                blade.toX = end.x; blade.toY = end.y; blade.angle = along; blade.element = element;
+                blade.toX = end.x; blade.toY = end.y; blade.angle = along; blade.element = element; blade.followHero = s.anchor == null;
                 var a = new Point(start.x, start.y / WorldVertical);
                 var b = new Point(end.x, end.y / WorldVertical);
                 foreach (Enemy e in living)
@@ -541,8 +741,8 @@ namespace TOD
                 string type = E.bossSummons[Mathf.Min(e.threshold - 1, E.bossSummons.Length - 1)];
                 foreach (float dx in new[] { -E.summonOffset.x, E.summonOffset.x })
                 {
-                    SpawnEnemy(r, type, new Point(Mathf.Clamp(e.x + dx, db.spawn.topSpan, A.width - db.spawn.topSpan),
-                        Mathf.Clamp(e.y + E.summonOffset.y, db.spawn.topSpan, A.height - db.spawn.topSpan)));
+                    SpawnEnemy(r, type, new Point(Mathf.Clamp(e.x + dx, A.enemyMarginX, A.width - A.enemyMarginX),
+                        Mathf.Clamp(e.y + E.summonOffset.y, A.enemyMarginY, A.height - A.enemyMarginY)));
                 }
                 Event(r, "round", M.bossSummon);
             }
@@ -631,7 +831,7 @@ namespace TOD
 
         public void Update(RunState r, float dt, CombatInput input)
         {
-            if (r.phase != Phase.Combat || r.outcome != Outcome.None) return;
+            if (r.phase == Phase.Victory || r.outcome != Outcome.None) return;
             r.shake = Mathf.Max(0, r.shake - dt);
             r.flash = Mathf.Max(0, r.flash - dt);
             r.snapFlash = Mathf.Max(0, r.snapFlash - dt);
@@ -650,6 +850,7 @@ namespace TOD
             p.shotCooldown = Mathf.Max(0, p.shotCooldown - dt);
             r.dry = Mathf.Max(0, r.dry - dt);
             if (r.echo != null && r.echo.until <= r.time) r.echo = null;
+            if (r.stairs != null) r.stairsAge += dt;
 
             Vector2 move = Unit(input.x, input.y);
             bool moving = input.x != 0 || input.y != 0;
@@ -659,7 +860,7 @@ namespace TOD
             {
                 p.motion += ((moving ? 1 : 0) - p.motion) * Mathf.Min(1, dt * H.motionLerp);
                 float factor = Mathf.Max(H.minSpeedFactor, 1 - r.knots.Count * r.encumbrance);
-                float speed = H.moveSpeed * (1 + r.Gear(StatKind.Speed)) * factor * (r.mood == Mood.Frenzy ? H.frenzySpeed : 1);
+                float speed = H.moveSpeed * (1 + r.Gear(StatKind.Speed)) * r.moveScale * factor * (r.mood == Mood.Frenzy ? H.frenzySpeed : 1);
                 p.vx = move.x * speed;
                 p.vy = move.y * speed * WorldVertical;
                 p.x = Mathf.Clamp(p.x + p.vx * dt, A.wallLeft, A.wallRight);
@@ -686,21 +887,9 @@ namespace TOD
             else r.winding = 0;
             UpdateNeedles(r, dt);
             if (input.pull) Pull(r);
-            r.enemies.RemoveAll(e => e.hp <= 0);
+            foreach (Enemy dead in r.enemies.Where(e => e.hp <= 0).ToList()) Retire(r, dead);
 
-            float duration = RoundDuration(r);
-            if (duration > 0 && r.elapsed < duration)
-            {
-                r.spawnIn -= dt;
-                if (r.spawnIn <= 0 && r.enemies.Count < db.spawn.maxEnemies)
-                {
-                    SpawnConfig s = db.spawn;
-                    r.spawned++;
-                    string type = r.round == 1 && r.spawned <= s.firstRoundStalkers ? s.firstRoundType : s.rotation[(r.spawned + r.floor) % s.rotation.Length];
-                    SpawnEnemy(r, type, null, r.spawned % (r.round == 1 ? s.eliteEveryFirstRound : s.eliteEveryLater) == 0);
-                    r.spawnIn = Mathf.Max(s.minInterval, (r.round == 1 ? s.intervalFirstRound : s.intervalLater) - r.floor * s.intervalFloorStep);
-                }
-            }
+            if (r.phase == Phase.Combat && r.roundKind == RoundKind.Survival && r.elapsed < r.roundLength) UpdateSpawns(r, dt);
             float worldDt = p.dash > 0 ? dt * F.dashSlow : dt;
             foreach (Enemy e in r.enemies.ToList())
             {
@@ -740,21 +929,20 @@ namespace TOD
                 return false;
             });
             if (r.outcome != Outcome.None) return;
-            bool bossRound = r.round == BossRound;
-            if ((duration > 0 && r.elapsed >= duration && r.enemies.Count == 0) || (bossRound && !r.enemies.Any(e => e.IsBoss)))
+            switch (r.phase)
             {
-                foreach (Drop d in r.drops) Collect(r, d);
-                r.drops.Clear(); r.enemies.Clear(); r.bullets.Clear(); r.strands.Clear(); r.knots.Clear();
-                if (bossRound)
-                {
-                    r.profile.shards += db.rewards.shardFloorClear;
-                    r.profile.best = Mathf.Max(r.profile.best, r.floor);
-                    Gear.Save(db, r.profile);
-                    DesireDef[] unowned = db.desire.desires.Where(d => !r.desires.Contains(d.id)).ToArray();
-                    r.offer = unowned.Length > 0 ? unowned[Mathf.Min(unowned.Length - 1, Mathf.FloorToInt(r.random() * unowned.Length))] : db.desire.refine;
-                    r.phase = Phase.Desire;
-                }
-                else r.phase = Phase.Rest;
+                case Phase.Combat when r.roundKind == RoundKind.Survival && r.elapsed >= r.roundLength: ClearRound(r); break;
+                case Phase.Combat when r.roundKind == RoundKind.Boss && !r.enemies.Any(e => e.IsBoss): BeginPurify(r); break;
+                case Phase.Purifying:
+                    r.purifyTime += dt;
+                    if (r.purifyTime >= db.purify.duration)
+                    {
+                        r.purified = true;
+                        r.phase = Phase.Cleared;
+                        r.stairs = Near(r, R.stairsOffset);
+                        r.stairsAge = 0;
+                    }
+                    break;
             }
         }
 

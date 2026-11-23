@@ -6,7 +6,7 @@
 
 ## ⚠ 작업 규칙 (모든 작업에 적용, 2026-11-23~)
 
-- **Unity 객체의 생성과 수정은 MCP(`mcp-unity`)로 에디터에서 직접 합니다.** 씬, GameObject, 컴포넌트와 그 값, 프리팹, 머티리얼 등이 대상이며, 코드에 하드코딩해 만들거나 고치지 않습니다.
+- **Unity 객체의 생성과 수정은 MCP(`UnityMCP`, MCP for Unity)로 에디터에서 직접 합니다.** 씬, GameObject, 컴포넌트와 그 값, 프리팹, 머티리얼 등이 대상이며, 코드에 하드코딩해 만들거나 고치지 않습니다.
 - **예외는 템플릿 슬롯 복제입니다.** MCP로 미리 만든 템플릿(프리팹, 풀 슬롯, UI 템플릿)을 런타임에 복제하는 일은 코드로 합니다.
 - **게임 데이터도 코드에 두지 않습니다.** 적 스탯, 증강, 퍼즐 조각, 상점 품목, 타격감 수치가 대상입니다. 코드에는 빈 필드만 선언하고, 실제 값은 데이터 프리팹이나 씬 컴포넌트에 MCP `update_component`로 넣습니다.
 - **UI는 UXML/USS 에셋 파일로 작성합니다.** UIDocument GameObject는 MCP로 만듭니다. 목록형 UI는 UXML 템플릿을 복제합니다.
@@ -28,6 +28,61 @@
 | 화면 배치 | 게임식 전체화면: 타이틀 → 로비(등반/재봉 상자/다락) → 전투(모서리 HUD) |
 | 진행 | 전투, 아웃게임, VFX, 후처리를 한 번에 옮깁니다. |
 
+## 진행 중 작업 — 2차 개편 (2026-11-23 시작)
+
+> 작업이 끊기면 여기서 이어 갑니다. 단계를 마칠 때마다 체크합니다.
+
+### 사용자 결정
+- **층 구성:** 생존 R1(90초) → 생존 R2(120초) → 쉬어가기 → 보스. 생존 라운드는 시간을 버티면 클리어됩니다.
+- **컨셉:** 임시 10개 중 층마다 3개를 무작위로 뽑아 R1·R2·보스 라운드에 하나씩 씁니다. 컨셉은 바닥·등불 색조, 몬스터 구성 비율, 스폰 속도와 난이도 배율을 바꿉니다.
+- **맵:** 경계가 있는 큰 맵(4000×2800)이고 카메라가 캐릭터를 따라갑니다. 바닥은 카메라 주변만 청크 단위로 생성·재활용합니다. 라운드마다 새 맵입니다.
+- **라운드 종료:**
+  - 시간이 끝나면 스폰이 멈추고 남은 적은 사라지며, 드롭은 자동 회수됩니다.
+  - 화면 가운데(캐릭터 근처)에 이펙트와 함께 계단이 나타나고 "위로 올라가기"가 뜹니다. 계단 가까이에서 **E**를 누르면 올라갑니다.
+- **증강:**
+  - 전투 중에는 고르지 않습니다. 라운드가 끝난 뒤 아무 데서나 E를 누르면 쌓인 수만큼 3택 1을 고릅니다.
+  - 증강은 능력치 전용입니다. 규칙형 4개는 데이터에서 빼고 코드만 남깁니다.
+- **쉬어가는 라운드:**
+  - 아티팩트(퍼즐 조각) 3개 중 1개를 고릅니다. 상인은 50% 확률로 나오며 조각은 팔지 않습니다.
+  - 아이템은 층마다 이 1개뿐입니다. 정예·보스의 조각 드롭은 없앱니다.
+- **바늘:**
+  - 발사 간격 0.55초, 사거리 340, 속도는 기존의 약 60%입니다. 셋 다 능력치이고 증강으로 올립니다.
+  - 손 높이로 곧게 날다가 끝에서 바닥에 수직으로 박힙니다.
+  - 박힌 자리의 원을 더 잘 보이게 합니다.
+- **버그:** 우클릭으로 당긴 뒤 실이 맵에 잠깐 남는 현상. 원인 후보는 당기기 연출이 당긴 순간의 플레이어 위치로 감겨 들어가는 것입니다.
+- **스폰:** 무작위 요소를 넣고, 유형별로 간격과 마릿수를 차등합니다(예: 근접 1초에 3마리, 원거리 3초에 1마리). 몬스터는 오브젝트 풀링을 씁니다.
+- **보스 정화:**
+  - 캐릭터에서 상아·청록 빛의 고리가 바닥을 따라 4초에 걸쳐 퍼지고, 카메라가 줌아웃됩니다.
+  - 고리가 지나간 바닥은 채도와 밝기가 회복되고, 비네트와 욕망 테두리가 약해집니다. 정화된 상태는 그 층을 떠날 때까지 유지됩니다.
+  - 욕망 흡수 제안은 정화 후 계단에서 E를 눌렀을 때 뜹니다.
+- **욕망 80% 이상:** 화면이 살짝 붉어지며 일렁입니다(후처리).
+
+### 단계
+- [x] 1. 데이터 구조: 맵·라운드·컨셉·스폰 표·증강 효과·정화·일렁임·바늘 연출 값 (`GameDatabase.cs`. 값 입력은 6단계)
+- [x] 2. 시뮬레이션: 라운드 흐름, 스폰 표, 적 풀, 계단·제단·상인, 증강 대기, 아티팩트, 바늘 능력치 (`Combat.cs`, `RunState.cs`)
+  - Phase는 Combat / Purifying / Cleared / Victory입니다. `Combat.Ascend`, `Nearest`, `TakeArtifact`, `PurifyRadius`, `TimeLeft`를 추가했습니다.
+  - 당기기 잔상 수정: Pull·Cut 이펙트에 `followHero`를 넣었고, 뷰가 현재 손 위치로 감기게 합니다.
+- [x] 3. 뷰: 카메라 추적·줌, 바닥 청크, 맵 경계, 바늘 비행·박힘, 박힘 원, 당기기 잔상 수정, 계단·제단·상인, 정화
+  - `CameraRig`(추적·줌), `BackgroundView`+`ChunkView`(청크), `ArenaRenderer`의 카메라·맵 벽/테두리·계단/제단/상인·정화 고리·정화 셰이더 전역값(`_TOD_PurifyCircle/Look/Fill`). 데이터 필드 추가: `MapConfig` 벽·테두리 색과 아치, `RenderPalette` 계단 빛·안내 문구 색.
+  - 바늘(`NeedleVisual`): 나는 동안 바닥에서 `flightLift`(캔버스 px)만큼 떠서 곧게 날고, 떨어지면 `diveTime`초 동안 수직으로 떨어져 박힌다. 박힌 각도는 `stickAngle`(도, 90 = 수직), 날아온 쪽으로 `stickTilt`(도)만큼 기운다. 박힘 원은 `ringRadius/Width/Glow(가산 빛 두께)/Pulse(반지름 흔들림 px)/PulseSpeed/Alpha`.
+  - 당기기 잔상: `Fx.followHero`이면 `DrawPullSnap`·`DrawCut`의 시작점이 그 프레임의 손 위치(`handNow`). 감기는 타이밍은 `pullSnapDelay`(0~1, 기존 .16)·`pullSnapPower`(기존 2.4).
+  - SpriteFX `_Purify`: 고리 안쪽 바닥의 컨셉 덮개를 걷고 `floorBright/floorSat`로 되살림, `floorFill`로 덮음, `edgeSoftness` px로 경계를 부드럽게. 바닥 청크는 `BackgroundView.Paint`가 프로퍼티 블록으로 켬.
+  - 상인 임시 그림: `tools/make_unity_helper_art.py` → `Assets/Art/Generated/merchant.png`.
+- **MCP 교체 (2026-11-23):** gamelovers `mcp-unity`를 CoplayDev **MCP for Unity v10.3.0**(Window > MCP for Unity)으로 바꿨습니다. `.mcp.json`은 `UnityMCP`(HTTP `localhost:8080/mcp`)입니다. 아래 "MCP 관련 주의"의 `[TOD patch]` 기능은 더 이상 없습니다.
+- [x] 4. 후처리: 정화·일렁임 (`PostFX.shader`: `_TOD_Purified`만큼 비네트 약화, `_TOD_Warp`로 화면이 물결치고 `_TOD_WarpTint`로 붉어짐. `_TOD_WarpParams` = 폭(캔버스 px), 물결 수, 속도)
+- [x] 5. UI: 타이머, E 안내, 아티팩트 대화 상자, 라운드 목록(4칸 + 컨셉 이름)
+- [x] 6. MCP: 씬 정리(배경 → 청크 템플릿), 새 템플릿, 데이터 입력
+  - `Arena/Background`: 고정 화면용 `FloorTint/Dusk/Frame`과 등불 6개를 지우고 `Chunks/ChunkTemplate`(ChunkView: Floor + Lamps/Lamp0~2)으로 바꿈. `Fill`은 맵 전체를 덮게 키움. `Shade`는 `BackgroundView`가 매 프레임 카메라 중심으로 옮김. 예전 바닥 덮개 역할은 컨셉 `floorFill`이 맡음(정화되면 걷힘).
+  - `ArenaRenderer`의 `stairs/altar/merchant/archSprite` = `Assets/Art/Generated/*.png`(TOD/Setup/1로 스프라이트 임포트). `CameraRig.baseSize` 2.95.
+  - `GameDatabase` 입력값(임시): 맵 4000×2800(벽 25~3975 × 24~2775), 청크 481.28(바닥 타일 1장)·청크당 등불 1, 라운드 순서 생존·생존·쉬어가기·보스(90초/120초), 계단은 플레이어 위쪽 120, 상인 확률 .5, 아티팩트 3택. 컨셉 10개(잿빛 회랑·핏빛 연회·얼어붙은 성가대·녹슨 태엽·곰팡이 정원·거울 무도회·젖은 다락·그을린 재봉실·속삭이는 서고·굶주린 식탁). 스폰 표: 스토커 2.2초마다 3±1마리, 차저 6초마다 1±1(12초부터), 슈터 3초마다 1(18초부터), 최대 36마리, 화면 밖 600~800.
+  - 바늘: `hero.shotInterval` .55, `needle.reach` 340, `launch/settle` 1860/336(기존 60%). `needleVisual.flightLift` 20(사격 중 손 높이 실측 약 18px).
+  - 증강: 규칙형 4개(bounce·dashThread·earlyKnot·echo)를 데이터에서 뺌. 능력치형 8개(fire·damage·supply·light·calm + 새 reach·swift·stride)에 `effects`를 넣음. `minFireInterval` .25.
+  - 정화(4초, 줌 1.6), 욕망 일렁임(80%부터, 붉은 막 .12), 계단 빛·안내 문구 색과 UI 문구도 입력.
+- [x] 7. 테스트 갱신, 플레이 검증, 커밋
+  - `AugmentChoicesAreUniqueStatOnly`로 교체(규칙형 없음 + fire·reach 적용 확인). EditMode 5개 통과.
+  - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
+  - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
+
 ## Unity 판 (2026-11-23 포팅 완료)
 
 ### 실행
@@ -37,12 +92,12 @@
 ### 씬 구성 (모두 MCP로 생성·입력)
 | 오브젝트 | 내용 |
 |---|---|
-| `Main Camera` | 직교 2.95(캔버스 590px 높이), `CameraRig`(흔들림·당기기 킥) |
+| `Main Camera` | 직교 2.95(캔버스 590px 높이), `CameraRig`(캐릭터 추적·맵 경계·정화 줌아웃·흔들림·당기기 킥) |
 | `Game/GameDatabase` | **모든 게임 데이터**: 전투장·스폰·주인공·바늘·타격감·적 4종·보상·증강 9종·욕망·세트·조각 7종·다락·상점·이펙트 크기와 수명·실 속성 색·화면 색·문구·효과음. 밸런스는 여기 인스펙터에서 조정합니다. |
 | `Game/GameController` | 진행(main.js), `SoundBank`(합성 효과음, `sample`을 넣으면 샘플로 교체), `AutoPilot`(검증용 자동 조작, 평소 꺼짐) |
 | `Game/UI` | UIDocument(`Assets/UI/Main.uxml`) + `GameUI` |
 | `Arena` | `ArenaRenderer`(render.js). 비전투 화면에서는 꺼집니다. |
-| `Arena/Background` | 바닥 타일·노을·탑 벽·등불 6개·그늘·불씨 템플릿 (`BackgroundView`가 층별 등불 색과 불씨만 움직임) |
+| `Arena/Background` | 맵 바탕(`Fill`), 바닥 청크 템플릿(`Chunks/ChunkTemplate`: 바닥 + 등불 3개), 화면 그늘(`Shade`), 불씨 템플릿. `BackgroundView`가 카메라 주변 청크만 복제·재활용하고 컨셉 색을 입힘. 맵 위쪽 벽·아치·테두리는 `ArenaRenderer.DrawMap`이 그림 |
 | `Arena/Painter/Slots` | 실·이펙트를 그리는 SpriteRenderer/LineRenderer **템플릿 슬롯**(런타임에 복제) |
 | `Arena/Enemies/EnemyTemplate` | 적 템플릿: 그림자·정예 고리·늘이기 계층(Body/Center/Rot/Squash/Unrot/Back/Flip)·두 동강용 BodyA/B·체력바·바늘 4개 |
 | `Arena/Hero` | 리그 파츠 23개(`Parts/<파츠 id>`) + 회피 통그림. `HeroView`가 `hero-quarter.rig.json`으로 매 프레임 배치 |
@@ -59,14 +114,12 @@
 - 셰이더 `Assets/Shaders`: `SpriteFX`(밝기·채도·단색 덮기·반평면 절단·원/고리), `LineFX`, `PostFX`(shader.js + 화면 섬광·피격·욕망 테두리)
 
 ### MCP 관련 주의
-- `Packages/com.gamelovers.mcp-unity`는 **임베드 후 패치한 사본**입니다(`.mcp.json`도 이 경로를 가리킴). `UpdateComponentTool.cs`의 `[TOD patch]` 부분에서 다음을 지원합니다. git 원본으로 되돌리면 이 기능들이 사라집니다.
-  - JSON 배열로 배열·리스트 채우기
-  - 필드 타입에 맞는 서브 에셋 참조(PNG → Sprite) 및 `"경로#이름"` 지정
-  - `"scene:경로"` 형식의 씬 오브젝트 참조
-  - AnimationCurve·Gradient 값
-- `update_component`에서 직렬화 이름이 아닌 C# 프로퍼티 이름(예: `orthographicSize`)을 쓰면 값이 덮어써져 사라집니다. 반드시 직렬화 이름(`orthographic size`, `m_ClearFlags` 등)을 씁니다. enum은 인덱스나 이름을 씁니다.
-- 스크립트를 수정한 뒤에는 `execute_menu_item("Assets/Refresh")` → `recompile_scripts` 순서로 실행합니다. Unity 창이 뒤에 있으면 자동 새로고침이 일어나지 않습니다.
-- Unity 창이 뒤에 있으면 플레이 모드가 거의 진행되지 않습니다. 검증할 때는 창을 앞으로 가져온 뒤 `TOD/Debug/Capture Game View`(→ `Temp/tod_capture.png`)로 확인합니다.
+- MCP 서버는 CoplayDev **MCP for Unity**(`UnityMCP`, Window > MCP for Unity에서 서버 시작)입니다. 옛 gamelovers 패키지의 `[TOD patch]`(배열 채우기, `"scene:경로"` 참조)는 없습니다.
+- 컴포넌트 값·배열·오브젝트 참조는 `execute_code`에서 `SerializedObject`/`FindProperty`로 넣는 방식이 가장 확실합니다(직렬화 이름 사용, `Undo.RecordObject` 후 `ApplyModifiedProperties`, 씬 저장은 `manage_scene save`). 2026-11-23 데이터 입력과 배경 정리는 이렇게 했습니다.
+- `execute_code`는 CodeDom(C# 6)으로 돕니다: `Object`는 `UnityEngine.Object`로 적고, 로컬 함수 대신 `System.Func/Action`을 씁니다. `AssetDatabase.DeleteAsset` 같은 패턴은 안전 검사에 막힙니다.
+- 스크립트를 고친 뒤에는 `refresh_unity(compile=request)` → `read_console`로 오류를 확인합니다.
+- `manage_camera screenshot`은 `output_folder`를 주지 않으면 `Assets/Screenshots`에 저장합니다. 검증 캡처는 `output_folder: "Temp/Shots"`로 둡니다. 플레이 중 캡처 때 MCP 쪽에서 "PlayerLoop ... called recursively" 오류가 콘솔에 찍히지만 게임 오류는 아닙니다.
+- 플레이 검증 때 시간 건너뛰기는 `execute_code`로 `GameController.Run.elapsed`를 바꾸고, E는 `GameController.Interact()`로 대신합니다.
 
 ### 검증한 것 / 남은 것
 - 확인한 것:
@@ -83,7 +136,6 @@
   - 물방울 입자는 정사각 빌보드입니다.
   - 모션 감소(`prefers-reduced-motion`) 대응과 통그림 섞기(cels)는 옮기지 않았습니다(웹판에서도 꺼져 있었습니다).
   - HUD 패널이 전투장 위쪽 모서리를 조금 가립니다.
-- Unity 프로젝트에는 아직 `.gitignore`가 없습니다(Library/Temp/Logs가 추적 대상으로 보임).
 
 ## 웹 프로토타입 (동결, `web/`)
 

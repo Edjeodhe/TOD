@@ -85,6 +85,12 @@ Button:disabled { opacity: 0.48; }
 .pause-button { position: absolute; right: 26px; top: 22px; }
 .banner { position: absolute; top: 26px; left: 0; right: 0; align-items: center; }
 .banner > Label { background-color: rgba(33, 22, 37, 0.92); border-width: 1px; border-color: #71516e; border-radius: 4px; padding: 8px 18px; color: #f2cadc; font-size: 18px; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
+.round-timer { position: absolute; top: 84px; left: 0; right: 0; align-items: center; }
+.round-timer > Label { font-size: 40px; color: #f3d7d7; -unity-font: url("project://database/Assets/Fonts/Galmuri14.ttf"); -unity-text-outline-width: 1px; -unity-text-outline-color: #1c0e21; }
+.round-timer.urgent > Label { color: #ff8a9a; }
+.hint-bar { position: absolute; bottom: 70px; left: 0; right: 0; align-items: center; }
+.hint-bar > Label { background-color: rgba(33, 22, 37, 0.92); border-width: 1px; border-color: #cfac78; border-radius: 6px; padding: 10px 20px; color: #f3e2c8; font-size: 20px; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
+.choice .piece-icon { width: 40px; height: 40px; margin-bottom: 8px; }
 .boss-hud { position: absolute; bottom: 34px; left: 0; right: 0; align-items: center; }
 .boss-hud > Label { color: #f1c1cf; font-size: 18px; -unity-font: url("project://database/Assets/Fonts/Galmuri11-Bold.ttf"); }
 .boss-hud .meter { width: 440px; height: 12px; margin-top: 7px; border-width: 1px; border-color: #79435b; }

@@ -18,8 +18,8 @@ namespace TOD
 
         GameController game;
         GameDatabase db;
-        VisualElement root, hud, lobby, inventory, attic, summary, overlay, worldText, notice, banner, roomFlash;
-        Label noticeText, bannerText;
+        VisualElement root, hud, lobby, inventory, attic, summary, overlay, worldText, notice, banner, roomFlash, timer, hint;
+        Label noticeText, bannerText, timerText, hintText;
         float noticeUntil, bannerUntil, flashUntil;
         readonly List<Label> labels = new();
         int labelsUsed;
@@ -43,7 +43,8 @@ namespace TOD
             banner = root.Q("banner"); bannerText = root.Q<Label>("banner-text");
             roomFlash = root.Q("room-flash");
             rounds = root.Q("rounds").Children().ToArray();
-            for (int i = 0; i < rounds.Length && i < T.roundNames.Length; i++) root.Q<Label>($"round-name-{i + 1}").text = T.roundNames[i];
+            timer = root.Q("timer"); timerText = root.Q<Label>("timer-text");
+            hint = root.Q("hint"); hintText = root.Q<Label>("hint-text");
 
             Bind("start", game.StartRun);
             Bind("open-inventory", () => game.ShowScreen(UiScreen.Inventory));
@@ -57,8 +58,8 @@ namespace TOD
             Bind("cancel-retreat", game.CancelRetreat);
             Bind("absorb", game.Absorb);
             Bind("refuse", game.Refuse);
-            Bind("next-floor", game.NextFloor);
-            Bind("next-round", game.NextRound);
+            Bind("close-shop", CloseDialog);
+            Bind("close-artifact", CloseDialog);
             Bind("confirm-upgrade", game.ConfirmUpgrade);
             Bind("cancel-upgrade", CloseDialog);
             Bind("restart", game.StartRun);
@@ -167,7 +168,7 @@ namespace TOD
             label.text = text;
             Vector3 screen = worldCamera.WorldToScreenPoint(Space.Canvas(canvas));
             Vector2 p = RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(screen.x, UnityEngine.Screen.height - screen.y));
-            float perPx = root.layout.height / Space.CanvasHeight;
+            float perPx = root.layout.height / (worldCamera.orthographicSize * 2 * Space.Ppu);
             label.style.left = p.x;
             label.style.top = p.y;
             label.style.fontSize = fontPx * perPx;
@@ -218,20 +219,44 @@ namespace TOD
             }
 
             Text(hud, "floor-label", string.Format(T.floorLabel, r.floor));
-            bool done = r.phase != Phase.Combat || r.outcome == Outcome.Clear;
-            for (int i = 0; i < rounds.Length; i++)
+            // 라운드 목록: 생존 R1·R2는 컨셉 이름, 쉬어가기, 보스(컨셉 이름)
+            bool done = r.phase != Phase.Combat;
+            int combatIndex = 0;
+            for (int i = 0; i < rounds.Length && i < db.rounds.sequence.Length; i++)
             {
-                rounds[i].EnableInClassList("current", i == r.round - 1 && !done);
-                rounds[i].EnableInClassList("done", i < r.round - 1 || (i == r.round - 1 && done));
+                RoundKind kind = db.rounds.sequence[i];
+                string name = kind == RoundKind.Rest ? T.restRoundName
+                    : combatIndex < r.floorConcepts.Length ? (kind == RoundKind.Boss ? string.Format(T.bossRoundLabel, r.floorConcepts[combatIndex].name) : r.floorConcepts[combatIndex].name)
+                    : T.survivalLabel;
+                if (kind != RoundKind.Rest) combatIndex++;
+                Text(rounds[i], $"round-name-{i + 1}", name);
+                rounds[i].EnableInClassList("current", i == r.roundIndex && !done);
+                rounds[i].EnableInClassList("done", i < r.roundIndex || (i == r.roundIndex && done));
             }
-            string route;
-            float remaining = combat.RoundDuration(r) - r.elapsed;
-            if (r.phase == Phase.Shop) route = T.routeShop;
-            else if (r.phase != Phase.Combat) route = string.Format(T.routeCleared, r.floor, r.round);
-            else if (r.round == combat.BossRound) route = T.routeBoss;
-            else if (remaining > 0) route = string.Format(T.routeTimer, Mathf.CeilToInt(remaining));
-            else route = string.Format(T.routeRemaining, r.enemies.Count);
+            string route = r.phase switch
+            {
+                Phase.Purifying => T.purified,
+                Phase.Cleared when r.roundKind == RoundKind.Rest => T.routeShop,
+                Phase.Cleared => string.Format(T.routeCleared, r.floor, r.round),
+                _ when r.roundKind == RoundKind.Boss => T.routeBoss,
+                _ => string.Format(T.routeRemaining, r.enemies.Count),
+            };
             Text(hud, "route-info", route);
+
+            // 생존 타이머 (분:초)
+            bool timing = r.phase == Phase.Combat && r.roundKind == RoundKind.Survival;
+            Show(timer, timing);
+            if (timing)
+            {
+                int left = Mathf.CeilToInt(combat.TimeLeft(r));
+                timerText.text = string.Format(T.timer, left / 60, left % 60);
+                timer.EnableInClassList("urgent", left <= 10);
+            }
+            // 라운드가 끝난 뒤 쌓인 증강 안내
+            bool pending = r.phase != Phase.Combat && r.augmentQueue > 0;
+            Show(hint, pending);
+            if (pending) hintText.text = string.Format(T.augmentHint, r.augmentQueue);
+
             Enemy boss = r.enemies.FirstOrDefault(e => e.IsBoss);
             Show(hud.Q("boss-hud"), boss != null);
             if (boss != null) Meter(hud, "boss-bar", boss.hp / boss.maxHp);
@@ -288,10 +313,9 @@ namespace TOD
             ShowDialog("desire");
         }
 
-        public void ShowShop(ShopConfig shop, Func<WareDef, int> price, Func<WareDef, bool> sold, int gold, string saleLabel, int nextFloor, Action<string> buy)
+        public void ShowShop(ShopConfig shop, Func<WareDef, int> price, Func<WareDef, bool> sold, int gold, string saleLabel, Action<string> buy)
         {
             Text(root, "sale-label", saleLabel);
-            root.Q<Button>("next-floor").text = string.Format(T.nextFloor, nextFloor);
             VisualElement container = root.Q("wares");
             container.Clear();
             foreach (WareDef w in shop.wares)
@@ -305,12 +329,24 @@ namespace TOD
 
         public void SetSaleLabel(string text) => Text(root, "sale-label", text);
 
-        public void ShowRest(int floor, int round, bool bossNext)
+        // 쉬어가는 라운드의 아티팩트(재봉 조각) 3택 1
+        public void ShowArtifacts(int floor, IEnumerable<int> kinds, Action<int> pick)
         {
-            Text(root, "rest-eyebrow", string.Format(T.restEyebrow, floor, round));
-            Text(root, "rest-text", bossNext ? T.restBodyBoss : T.restBodyNext);
-            root.Q<Button>("next-round").text = bossNext ? T.restButtonBoss : T.restButtonNext;
-            ShowDialog("rest");
+            Text(root, "artifact-eyebrow", string.Format(T.artifactEyebrow, floor));
+            VisualElement container = root.Q("artifacts");
+            container.Clear();
+            foreach (int kind in kinds)
+            {
+                PieceDef def = db.gear.pieces[kind];
+                SetDef set = db.Set(def.set);
+                string value = def.value < 1 ? $"{Mathf.RoundToInt(def.value * 100)}%" : def.value.ToString("0.##");
+                Button card = Card(container, null, $"{set.name} · {db.gear.rankNames[def.cost]}", def.name,
+                    string.Format(T.pieceTooltip, set.bonus, T.statNames[(int)def.stat], value), null, () => pick(kind));
+                VisualElement icon = card.Q("icon");
+                icon.AddToClassList("piece-icon");
+                PieceIcon(icon, def.shape.ToList(), set.color);
+            }
+            ShowDialog("artifact");
         }
 
         public void ShowUpgradeConfirm(UpgradeDef upgrade, int cost)

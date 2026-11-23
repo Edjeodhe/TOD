@@ -25,6 +25,7 @@ namespace TOD
         public BackgroundView background;
         public CameraRig cameraRig;
         public Sprite goldIcon, shardIcon, knotIcon, needleSprite, streakSprite, barbSprite;
+        public Sprite stairsSprite, altarSprite, merchantSprite, archSprite;
         public FxSpriteEntry[] fxSprites;
         public FlipbookEntry[] flipbooks;
 
@@ -33,14 +34,45 @@ namespace TOD
         readonly Dictionary<Enemy, EnemyView> enemyViews = new();
         readonly Dictionary<Enemy, List<Strand>> pins = new();
         readonly List<Enemy> stale = new();
-        float particleClock = -1;
+        float particleClock = -1, viewClock = -1, zoomPhase;
+        Combat combat;
+        Vector2 handNow;                       // 이번 프레임 손 위치 (전투장 좌표). 당기기 연출이 이 위치로 감겨 든다.
+        Rect view;                             // 이번 프레임 카메라가 보는 캔버스 영역
         RenderPalette Pal => db.palette;
+        NeedleVisual NV => db.needleVisual;
 
-        public void Init()
+        public float Zoom => cameraRig.Zoom;
+
+        public void Init(Combat simulation)
         {
+            combat = simulation;
             enemyPool = new Pool<EnemyView>(enemyTemplate, enemyRoot);
             hero.Init(db);
-            background.Init(db.arena.height);
+            background.Init(db);
+        }
+
+        // 라운드마다 새 맵: 바닥 청크를 새 시드로 다시 깔고 적 뷰·입자를 비운다.
+        public void BeginRound(RunState r)
+        {
+            background.BeginRound(UnityEngine.Random.Range(1, 1 << 30));
+            enemyPool?.ReleaseAll();
+            enemyViews.Clear();
+            particles.Clear();
+            zoomPhase = 0;
+        }
+
+        // 정화된 정도 (0~1): 정화 고리가 지금 카메라 화면을 덮은 비율. 정화가 끝난 층은 1.
+        public float PurifiedCoverage(RunState r)
+        {
+            if (r.purified) return 1;
+            if (r.phase != Phase.Purifying || r.purifyCenter == null || combat == null) return 0;
+            float far = 1;
+            foreach (Vector2 corner in new[] { view.min, view.max, new Vector2(view.xMin, view.yMax), new Vector2(view.xMax, view.yMin) })
+            {
+                float ay = (corner.y - Space.Top) / Space.Proj;
+                far = Mathf.Max(far, Mathf.Sqrt(Mathf.Pow(corner.x - r.purifyCenter.x, 2) + Mathf.Pow(ay - r.purifyCenter.y, 2)));
+            }
+            return Mathf.Clamp01(combat.PurifyRadius(r) / far);
         }
 
         static float EaseOutBack(float t) => 1 + 2.4f * Mathf.Pow(t - 1, 3) + 1.4f * Mathf.Pow(t - 1, 2);
@@ -59,12 +91,15 @@ namespace TOD
             particles.Clear();
         }
 
-        public void Render(RunState r, Vector2 aim, float clock, bool active, float heroActionTime)
+        public void Render(RunState r, Vector2 aim, float clock, bool active, float heroActionTime, Interactable nearest)
         {
             painter.Begin();
-            Color[] floors = db.visual.floorPalette;
-            background.Render(floors[(r.floor - 1) % floors.Length], clock, Pal, db.arena.height);
-            cameraRig.Apply(r.shake, r.kick, clock);
+            float viewDt = viewClock < 0 ? 0 : Mathf.Clamp(clock - viewClock, 0, .1f);
+            viewClock = clock;
+            UpdateCamera(r, viewDt, clock);
+            background.Render(r, view, clock, Zoom);
+            ApplyPurifyGlobals(r);
+            DrawMap();
             if (particleClock < 0 || r.time < particleClock || r.time - particleClock > .5f) particleClock = r.time;
             float dt = Mathf.Min(.05f, r.time - particleClock);
             particleClock = r.time;
@@ -92,9 +127,13 @@ namespace TOD
             }
             foreach (Trail trail in r.trails) painter.Line(Layer.Ground, C(trail.a), C(trail.b), 1.8f, Painter.Alpha(Tone(r.element).color, .73f), dashed: true);
 
+            DrawProps(r, nearest, clock, dt);
+            DrawPurifyRing(r);
+
             Player player = r.player;
             HeroFrame frame = hero.Pose(player, heroActionTime);
             Vector2 hand = hero.Hand(frame);
+            handNow = hand;
             pins.Clear();
             foreach (Strand s in r.strands)
             {
@@ -127,6 +166,130 @@ namespace TOD
                 Vector2 dot = C(aim.x, aim.y);
                 painter.Rect(Layer.Effects, dot.x - 1, dot.y - 1, 2, 2, Pal.aimDot);
             }
+        }
+
+        // ---------------------------------------------------------------- camera, map, props
+
+        // 캐릭터를 따라가는 카메라 (맵 경계 + 여유 안). 정화 중에는 줌아웃했다가 끝나면 돌아온다.
+        void UpdateCamera(RunState r, float dt, float clock)
+        {
+            PurifyConfig pc = db.purify;
+            bool zoomingOut = r.phase == Phase.Purifying;
+            float span = zoomingOut ? pc.zoomOut : pc.zoomIn;
+            zoomPhase = Mathf.MoveTowards(zoomPhase, zoomingOut ? 1 : 0, span > 0 ? dt / span : 1);
+            float zoom = 1 + (Mathf.Max(1, pc.zoom) - 1) * Mathf.SmoothStep(0, 1, zoomPhase);
+            MapConfig m = db.map;
+            float o = m.cameraOverscan;
+            Rect bounds = Rect.MinMaxRect(-o, Space.ProjectY(0) - m.wallHeight - o, db.arena.width + o, Space.ProjectY(db.arena.height) + o);
+            cameraRig.Apply(C(r.player.x, r.player.y), bounds, zoom, r.shake, r.kick, clock);
+            view = cameraRig.VisibleCanvas();
+        }
+
+        // 바닥 셰이더(SpriteFX 의 _Purify)가 쓰는 정화 원: (월드 중심 x, y, 월드 반지름(가로), 세로 압축).
+        static readonly int PurifyCircleId = Shader.PropertyToID("_TOD_PurifyCircle"), PurifyLookId = Shader.PropertyToID("_TOD_PurifyLook"),
+            PurifyFillId = Shader.PropertyToID("_TOD_PurifyFill");
+
+        void ApplyPurifyGlobals(RunState r)
+        {
+            PurifyConfig pc = db.purify;
+            float radius = r.purified ? 1e6f : r.phase == Phase.Purifying && combat != null ? combat.PurifyRadius(r) : -1;
+            Vector3 center = r.purifyCenter != null ? Space.Ground(r.purifyCenter.x, r.purifyCenter.y) : Vector3.zero;
+            Shader.SetGlobalVector(PurifyCircleId, new Vector4(center.x, center.y, radius / Space.Ppu, Space.Proj));
+            Shader.SetGlobalVector(PurifyLookId, new Vector4(pc.floorBright, pc.floorSat, Mathf.Max(1, pc.edgeSoftness) / Space.Ppu, 0));
+            Shader.SetGlobalColor(PurifyFillId, pc.floorFill);
+        }
+
+        // 맵 위쪽 탑 벽(아치 반복)과 바닥 테두리. 보이는 부분만 그린다.
+        void DrawMap()
+        {
+            MapConfig m = db.map;
+            float width = db.arena.width, top = Space.ProjectY(0);
+            float x0 = Mathf.Max(0, view.xMin), x1 = Mathf.Min(width, view.xMax);
+            if (x1 > x0 && view.yMin < top)
+            {
+                painter.Rect(Layer.Background, x0, top - m.wallHeight, x1 - x0, m.wallHeight, m.wallColor);
+                if (archSprite != null && m.archHeight > 0 && m.archSpacing > 0)
+                {
+                    float h = m.archHeight, w = h * archSprite.rect.width / archSprite.rect.height;
+                    for (float x = Mathf.Floor(x0 / m.archSpacing) * m.archSpacing + m.archSpacing / 2; x < x1 + m.archSpacing; x += m.archSpacing)
+                        if (x - w / 2 >= 0 && x + w / 2 <= width) painter.Sprite(Layer.Background, archSprite, new Vector2(x, top - h / 2), 0, w, h, Color.white);
+                }
+                painter.Line(Layer.Background, new Vector2(x0, top), new Vector2(x1, top), 3, m.wallEdge);
+            }
+            Border(m.borderInset, 2, m.borderColor);
+            Border(m.borderInnerInset, 1, m.borderInnerColor);
+        }
+
+        void Border(float inset, float width, Color color)
+        {
+            if (color.a <= 0) return;
+            float w = db.arena.width - inset, h = db.arena.height - inset;
+            painter.Line(Layer.Ground, new[] { C(inset, inset), C(w, inset), C(w, h), C(inset, h), C(inset, inset) }, width, color);
+        }
+
+        // 쉬어가는 라운드의 제단·상인, 라운드가 끝나면 나타나는 계단과 그 위 안내 문구.
+        void DrawProps(RunState r, Interactable nearest, float clock, float dt)
+        {
+            if (r.altar != null) DrawProp(altarSprite, r.altar, r.artifactTaken ? null : db.ui.promptAltar, nearest == Interactable.Altar, r.artifactTaken ? .55f : 1);
+            if (r.merchant != null) DrawProp(merchantSprite, r.merchant, db.ui.promptMerchant, nearest == Interactable.Merchant, 1);
+            if (r.stairs == null || stairsSprite == null) return;
+            float reveal = db.rounds.stairsRevealTime;
+            float k = reveal > 0 ? Mathf.Clamp01(r.stairsAge / reveal) : 1;
+            Vector2 at = C(r.stairs);
+            Color glow = Pal.stairsGlow;
+            // 등장: 바닥에 빛 고리가 퍼지며 계단이 솟아오른다. 그 뒤로는 은은한 빛 기둥이 남는다.
+            if (k < 1)
+            {
+                float burst = 30 + k * 150;
+                painter.Ellipse(Layer.Ground, at, burst, burst * Space.Proj, Painter.Alpha(glow, (1 - k) * .9f), 3, additive: true);
+                if (dt > 0 && Rand() < .8f)
+                    particles.Emit(ParticleKind.Glint, at + new Vector2((Rand() - .5f) * 160, (Rand() - .5f) * 50), new Vector2(0, -60 - Rand() * 60), .7f, glow, 2.2f);
+            }
+            float pulse = .5f + .5f * Mathf.Sin(clock * 2.4f);
+            painter.Ellipse(Layer.Ground, at, 120, 120 * Space.Proj, Painter.Alpha(glow, (.16f + .08f * pulse) * k), additive: true);
+            float s = k < 1 ? EaseOutBack(k) : 1;
+            Rect rect = stairsSprite.rect;
+            painter.Sprite(Layer.Ground, stairsSprite, at - new Vector2(0, rect.height * .35f * s), 0, rect.width * s, rect.height * s, new Color(1, 1, 1, Mathf.Min(1, k * 2)));
+            painter.Ellipse(Layer.Effects, at - new Vector2(0, rect.height * .9f), 40 + 6 * pulse, rect.height * .9f, Painter.Alpha(glow, .09f * k), additive: true);
+            if (dt > 0 && k >= 1 && Rand() < .25f)
+                particles.Emit(ParticleKind.Glint, at + new Vector2((Rand() - .5f) * 70, -Rand() * 40), new Vector2(0, -40), .9f, glow, 1.8f);
+            if (k >= 1) PropLabel(db.ui.promptStairs, at - new Vector2(0, rect.height * .7f + 22), nearest == Interactable.Stairs);
+        }
+
+        void DrawProp(Sprite sprite, Point p, string label, bool near, float alpha)
+        {
+            Vector2 at = C(p);
+            float h = 0;
+            if (sprite != null)
+            {
+                Rect rect = sprite.rect;
+                h = rect.height;
+                painter.Ellipse(Layer.Ground, at, rect.width * .4f, rect.width * .4f * .34f, Pal.shadow);
+                painter.Sprite(Layer.Ground, sprite, at - new Vector2(0, h * .42f), 0, rect.width, h, new Color(1, 1, 1, alpha));
+            }
+            if (near) painter.Ellipse(Layer.Ground, at, 46, 46 * Space.Proj, Painter.Alpha(Pal.promptActive, .7f), 1.5f);
+            if (!string.IsNullOrEmpty(label)) PropLabel(label, at - new Vector2(0, h * .85f + 18), near);
+        }
+
+        void PropLabel(string text, Vector2 at, bool near) =>
+            // 작은 글자는 테두리가 글자 안을 덮지 않게 글자 크기에 맞춰 얇게 둔다.
+            Text?.Label(text, at, PropPx, near ? Pal.promptActive : Pal.promptIdle, Pal.textStroke, Mathf.Max(1.5f, PropPx * .14f), near ? 1.1f : 1, 0, false);
+
+        float PropPx => Pal.propLabelPx > 0 ? Pal.propLabelPx : 15;
+
+        // 보스 정화: 캐릭터에서 상아·청록 고리가 바닥을 따라 퍼진다. 고리 안쪽 바닥은 셰이더가 되살린다.
+        void DrawPurifyRing(RunState r)
+        {
+            if (r.phase != Phase.Purifying || r.purifyCenter == null || combat == null) return;
+            PurifyConfig pc = db.purify;
+            float radius = combat.PurifyRadius(r);
+            Vector2 at = C(r.purifyCenter);
+            float u = pc.duration > 0 ? Mathf.Clamp01(r.purifyTime / pc.duration) : 1;
+            float fade = 1 - Mathf.SmoothStep(.75f, 1, u);
+            painter.Ellipse(Layer.Ground, at, radius, radius * Space.Proj, Painter.Alpha(pc.glowColor, .55f * fade), pc.glowWidth, additive: true);
+            painter.Ellipse(Layer.Ground, at, radius, radius * Space.Proj, Painter.Alpha(pc.ringColor, fade), pc.ringWidth, additive: true);
+            float inner = radius * .82f;
+            painter.Ellipse(Layer.Ground, at, inner, inner * Space.Proj, Painter.Alpha(pc.ringColor, .35f * fade), Mathf.Max(1, pc.ringWidth * .4f), additive: true);
         }
 
         void SyncEnemies(RunState r, float dt)
@@ -235,16 +398,62 @@ namespace TOD
             painter.Sprite(layer, needleSprite, at + dir * -.06f * length, angle, length, 5.2f, Color.white);
         }
 
+        // 바늘이 어디에 어떤 각도로 있는지: 날 때는 손 높이(flightLift)로 곧게, 떨어지면 diveTime 동안 바닥으로 수직 낙하해 박힌다.
+        // 반환값: 바늘 끝(바닥에 닿는 점), 바늘 각도(라디안, 캔버스 기준), 바늘 귀(실이 이어지는 점)
+        (Vector2 tip, float angle, Vector2 eye) NeedlePose(RunState r, Strand s, Vector2 ground, float length)
+        {
+            float lift = NV.flightLift;
+            float flightAngle = Mathf.Atan2(s.vy * Space.Proj, s.vx);
+            float stick = NV.stickAngle * Mathf.Deg2Rad;
+            // 박힌 바늘은 날아온 쪽으로 살짝 기운다 (꼬리가 뒤로 남는다).
+            float tilt = NV.stickTilt * Mathf.Deg2Rad * (s.vx >= 0 ? -1 : 1);
+            float angle;
+            Vector2 tip;
+            if (s.state == StrandState.Flight)
+            {
+                angle = flightAngle;
+                tip = ground - new Vector2(0, lift);
+            }
+            else
+            {
+                float age = r.time - s.landed;
+                float k = NV.diveTime > 0 ? Mathf.Clamp01(age / NV.diveTime) : 1;
+                float fall = k * k;                                   // 떨어질수록 빨라진다
+                float quiver = Mathf.Sin(age * 46) * Mathf.Exp(-age * 7) * .42f;
+                angle = Mathf.LerpAngle(flightAngle * Mathf.Rad2Deg, (stick + tilt) * Mathf.Rad2Deg, Mathf.SmoothStep(0, 1, k)) * Mathf.Deg2Rad + (k >= 1 ? quiver : 0);
+                tip = ground - new Vector2(0, lift * (1 - fall)) + new Vector2(0, 2 * fall);   // 끝이 바닥에 조금 묻힌다
+            }
+            var dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+            return (tip, angle, tip - dir * length * .9f);
+        }
+
+        // 박힌 자리의 원: 숨쉬듯 커졌다 작아지는 고리 + 가산 빛.
+        void DrawStuckRing(RunState r, Strand s, Vector2 at, ElementTone t)
+        {
+            float alpha = NV.ringAlpha > 0 ? NV.ringAlpha : .74f;
+            float radius = NV.ringRadius > 0 ? NV.ringRadius : 7;
+            float width = NV.ringWidth > 0 ? NV.ringWidth : 1.15f;
+            float age = r.time - s.landed;
+            float appear = NV.diveTime > 0 ? Mathf.Clamp01((age - NV.diveTime) / .12f + 1) : 1;
+            radius *= .6f + .4f * appear;
+            radius += NV.ringPulse * Mathf.Sin(r.time * NV.ringPulseSpeed + s.birth * 7);
+            if (NV.ringGlow > 0) painter.Ellipse(Layer.Ground, at, radius, radius * Space.Proj, Painter.Alpha(t.glow, alpha * .45f * appear), NV.ringGlow, additive: true);
+            painter.Ellipse(Layer.Ground, at, radius, radius * Space.Proj, Painter.Alpha(t.color, alpha * appear), width);
+        }
+
         void DrawThread(RunState r, Strand s, Vector2 hand, float dt)
         {
             var (start, end) = Combat.Endpoints(r.player, s);
             Vector2 from = s.anchor != null ? new Vector2(start.x, start.y) : hand;
             Element element = s.element ?? Element.Plain;
             ElementTone t = Tone(element);
-            var a = C(from.x, from.y);
-            var b = C(end.x, end.y) - new Vector2(0, s.target != null ? 23 : 4);
-            float seed = s.birth * 13;
             bool flight = s.state == StrandState.Flight;
+            float speed = Mathf.Clamp01((s.speed > 0 ? s.speed : 1400) / 2700);
+            float needleLength = flight ? 29 + speed * 14 : 24;      // 나는 바늘은 속도만큼 늘어난다 (모션 스미어)
+            var pose = s.target == null ? NeedlePose(r, s, C(end), needleLength) : default;
+            var a = C(from.x, from.y);
+            var b = s.target != null ? C(end.x, end.y) - new Vector2(0, 23) : pose.eye;
+            float seed = s.birth * 13;
             // 막 꽂힌 실은 퉁긴 현처럼 떨리다가 팽팽해진다.
             float twang = s.state == StrandState.Stuck ? 7 * Mathf.Exp(-(r.time - s.landed) * 9) : 0;
             List<Vector2> points = DrawStrand(Layer.Ground, a, b, element, seed, r.time, s.anchor != null ? 1.45f : 1.7f, s.anchor != null ? .82f : 1, twang, flight);
@@ -254,22 +463,25 @@ namespace TOD
             painter.Rect(Layer.Ground, p.x - 1.2f, p.y - 1.2f, 2.6f, 2.6f, Painter.Alpha(t.core, .816f));
             if (s.state == StrandState.Ground)
             {
-                float age = r.time - s.landed;
-                float quiver = Mathf.Sin(age * 46) * Mathf.Exp(-age * 7) * .42f;
-                painter.Ellipse(Layer.Ground, C(end), 7, 7 * Space.Proj, Painter.Alpha(t.color, .737f), 1.15f);
-                if (element == Element.Despair)
+                bool planted = r.time - s.landed >= NV.diveTime;
+                if (planted)
                 {
-                    float wave = (r.time * .8f + s.birth) % 1;
-                    float radius = 7 + wave * 16;
-                    painter.Ellipse(Layer.Ground, C(end), radius, radius * Space.Proj, Painter.Alpha(t.color, (1 - wave) * 120 / 255f), 1);
+                    DrawStuckRing(r, s, C(end), t);
+                    if (element == Element.Despair)
+                    {
+                        float wave = (r.time * .8f + s.birth) % 1;
+                        float radius = (NV.ringRadius > 0 ? NV.ringRadius : 7) + wave * 16;
+                        painter.Ellipse(Layer.Ground, C(end), radius, radius * Space.Proj, Painter.Alpha(t.color, (1 - wave) * 120 / 255f), 1);
+                    }
                 }
-                DrawNeedle(Layer.Ground, C(end) - new Vector2(0, 8), 1.07f + quiver, 24, t.color);
+                // 공중에서 떨어지는 동안에는 바닥에 그림자 점만 남는다.
+                else painter.Ellipse(Layer.Ground, C(end), 4, 4 * Space.Proj, Pal.shadow);
+                DrawNeedleAt(pose, needleLength, t.color);
             }
             if (flight)
             {
-                float angle = Mathf.Atan2(s.vy * Space.Proj, s.vx);
-                float speed = Mathf.Clamp01((s.speed > 0 ? s.speed : 1400) / 2700);
-                Vector2 head = C(end) - new Vector2(0, 3);
+                float angle = pose.angle;
+                Vector2 head = pose.tip;
                 var dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
                 float length = 46 + speed * 104;
                 SpriteRenderer streak = painter.Sprite(Layer.Ground, streakSprite, head + dir * -.46f * length, angle, length, 18 + speed * 10,
@@ -280,9 +492,17 @@ namespace TOD
                     for (int n = 0; n < 2; n++)
                         particles.Emit(ParticleKind.Glint, head - dir * Rand() * 18, -dir * 40 + new Vector2((Rand() - .5f) * 40, (Rand() - .5f) * 40), .28f, t.core, 1.6f);
                 }
-                // 바늘은 속도만큼 늘어난다 (모션 스미어).
-                DrawNeedle(Layer.Ground, head, angle, 29 + speed * 14, t.color);
+                // 손 높이로 나는 바늘 아래 바닥에 작은 그림자를 둬서 높이를 읽히게 한다.
+                painter.Ellipse(Layer.Ground, C(end), 4, 4 * Space.Proj, Pal.shadow);
+                DrawNeedleAt(pose, needleLength, t.color);
             }
+        }
+
+        // NeedlePose 의 끝점 기준으로 바늘을 그린다 (DrawNeedle 은 바늘 몸통 기준점을 받는다).
+        void DrawNeedleAt((Vector2 tip, float angle, Vector2 eye) pose, float length, Color color)
+        {
+            var dir = new Vector2(Mathf.Cos(pose.angle), Mathf.Sin(pose.angle));
+            DrawNeedle(Layer.Ground, pose.tip - dir * length * .44f, pose.angle, length, color);
         }
 
         // ---------------------------------------------------------------- effects
@@ -405,7 +625,7 @@ namespace TOD
         {
             float t = 1 - fade;
             Color color = Tone(fx.element).color;
-            Vector2 a = C(fx.x, fx.y) - new Vector2(0, 8);
+            Vector2 a = fx.followHero ? C(handNow.x, handNow.y) : C(fx.x, fx.y) - new Vector2(0, 8);
             Vector2 b0 = C(fx.toX, fx.toY) - new Vector2(0, 22);
             float len = Vector2.Distance(a, b0);
             if (len == 0) len = 1;
@@ -466,11 +686,13 @@ namespace TOD
         void DrawPullSnap(Fx fx, float fade)
         {
             float t = 1 - fade;
-            Vector2 a = C(fx.x, fx.y) - new Vector2(0, 6);
+            // 손에 든 실은 당긴 순간의 자리가 아니라 지금 손 위치로 감겨 든다 (맵에 실이 남지 않게).
+            Vector2 a = fx.followHero ? C(handNow.x, handNow.y) : C(fx.x, fx.y) - new Vector2(0, 6);
             Vector2 b = C(fx.toX, fx.toY) - new Vector2(0, 18);
             ElementTone tone = Tone(fx.rage ? Element.Chaos : fx.element);
-            float snap = Mathf.Clamp01((t - .16f) / .84f);
-            float pulled = Mathf.Pow(snap, 2.4f);
+            float delay = Mathf.Clamp(NV.pullSnapDelay, 0, .95f);
+            float snap = Mathf.Clamp01((t - delay) / (1 - delay));
+            float pulled = Mathf.Pow(snap, NV.pullSnapPower > 0 ? NV.pullSnapPower : 2.4f);
             Vector2 lead = b + (a - b) * pulled;
             float tension = (1 - snap) * 3.2f;
             DrawStrand(Layer.Effects, a, lead, fx.element, fx.seed, fx.time * 3 + fx.seed, 2.6f + 2.8f * fade, Mathf.Min(1, fade * 1.6f), tension, false);
@@ -483,7 +705,7 @@ namespace TOD
             if (t > .9f)
             {
                 float radius = 10 + t * 26;
-                painter.Ellipse(Layer.Effects, C(fx.x, fx.y), radius, radius * Space.Proj, Painter.Alpha(tone.color, .53f), 1.5f);
+                painter.Ellipse(Layer.Effects, fx.followHero ? a : C(fx.x, fx.y), radius, radius * Space.Proj, Painter.Alpha(tone.color, .53f), 1.5f);
             }
         }
 

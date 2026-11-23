@@ -36,7 +36,9 @@ namespace TOD
 
         static readonly int EnabledId = Shader.PropertyToID("_TOD_Enabled"), DesireId = Shader.PropertyToID("_TOD_Desire"), MotionId = Shader.PropertyToID("_TOD_Motion"),
             FlashId = Shader.PropertyToID("_TOD_Flash"), SnapId = Shader.PropertyToID("_TOD_Snap"), HurtId = Shader.PropertyToID("_TOD_Hurt"),
-            BorderId = Shader.PropertyToID("_TOD_Border"), CanvasHeightId = Shader.PropertyToID("_TOD_CanvasHeight");
+            BorderId = Shader.PropertyToID("_TOD_Border"), CanvasHeightId = Shader.PropertyToID("_TOD_CanvasHeight"),
+            PurifiedId = Shader.PropertyToID("_TOD_Purified"), WarpId = Shader.PropertyToID("_TOD_Warp"), WarpTintId = Shader.PropertyToID("_TOD_WarpTint"),
+            WarpParamsId = Shader.PropertyToID("_TOD_WarpParams");
 
         float Clock => Time.unscaledTime;
         string Opened => ui.Opened;
@@ -48,7 +50,7 @@ namespace TOD
             Combat = new Combat(db);
             Profile = Gear.Load(db);
             arena.Text = ui;
-            arena.Init();
+            arena.Init(Combat);
             sound.Init(db.sounds);
             sound.Enabled = true;
             ui.Init(this);
@@ -96,6 +98,7 @@ namespace TOD
             arena.Clear();
             Combat.BeginFloor(Run);
             ShowScreen(UiScreen.Combat);
+            arena.BeginRound(Run);
         }
 
         public void Finish(Outcome outcome)
@@ -112,24 +115,27 @@ namespace TOD
             ShowScreen(UiScreen.Summary);
         }
 
-        bool IsCombat => Run != null && Run.phase == Phase.Combat && !paused && Opened == "" && Run.outcome == Outcome.None && Run.augmentQueue == 0;
+        // 플레이어가 움직일 수 있는 상태 (전투·정화·라운드 종료 모두 포함, 대화 상자·일시 정지 제외)
+        bool IsCombat => Run != null && Run.phase != Phase.Victory && !paused && Opened == "" && Run.outcome == Outcome.None;
 
         public void TogglePause()
         {
-            if (Run == null || Run.phase != Phase.Combat || Run.outcome != Outcome.None || (Opened != "" && Opened != "pause")) return;
+            if (Run == null || Run.phase == Phase.Victory || Run.outcome != Outcome.None || (Opened != "" && Opened != "pause")) return;
             paused = !paused;
             if (paused) ui.ShowDialog("pause"); else ui.CloseDialog();
         }
 
-        public void AskRetreat() => ui.ShowDialog("retreat");
+        public void AskRetreat() { shopOpenedBeforeRetreat = Opened == "shop"; ui.ShowDialog("retreat"); }
 
         public void CancelRetreat()
         {
+            bool fromShop = shopOpenedBeforeRetreat;
             ui.CloseDialog();
             if (paused) { paused = false; TogglePause(); }
-            else if (Run?.phase == Phase.Shop) ShowShop();
+            else if (fromShop) ShowShop();
         }
 
+        bool shopOpenedBeforeRetreat;
         List<AugmentDef> offered;
 
         void ShowAugments()
@@ -146,6 +152,38 @@ namespace TOD
             sound.Play("upgrade");
         }
 
+        // E: 라운드가 끝난 뒤 쌓인 증강 → 가까운 계단·제단·상인 순으로 상호작용한다.
+        public void Interact()
+        {
+            if (Run == null || Opened != "" || paused) return;
+            if (Run.phase != Phase.Combat && Run.augmentQueue > 0) { ShowAugments(); return; }
+            switch (Combat.Nearest(Run))
+            {
+                case Interactable.Stairs:
+                    if (Run.roundKind == RoundKind.Boss && Run.desirePending) ui.ShowDesire(Run.offer, Run.floor, Run.offer.id == db.desire.refine.id);
+                    else Ascend();
+                    break;
+                case Interactable.Altar: ui.ShowArtifacts(Run.floor, Run.artifactOffer, PickArtifact); break;
+                case Interactable.Merchant: ShowShop(); break;
+            }
+        }
+
+        void PickArtifact(int kind)
+        {
+            Combat.TakeArtifact(Run, kind);
+            ui.CloseDialog();
+            sound.Play("loot");
+        }
+
+        void Ascend()
+        {
+            ui.CloseDialog();
+            shop = null;
+            sound.Play("round");
+            Combat.Ascend(Run);
+            if (Run.phase != Phase.Victory) arena.BeginRound(Run);
+        }
+
         // 자동 진행(검증용 AutoPilot): 열린 대화 상자의 기본 선택을 고른다.
         public void AutoChoose()
         {
@@ -154,8 +192,8 @@ namespace TOD
             {
                 case "augment": PickAugment(offered[0].id); break;
                 case "desire": Absorb(); break;
-                case "shop": NextFloor(); break;
-                case "rest": NextRound(); break;
+                case "artifact": PickArtifact(Run.artifactOffer[0]); break;
+                case "shop": ui.CloseDialog(); break;
                 case "pause": TogglePause(); break;
             }
         }
@@ -165,26 +203,17 @@ namespace TOD
             Run.effects.Add(new Fx { kind = FxKind.Sprite, sprite = sprite, x = Run.player.x, y = Run.player.y, size = spec.size, time = spec.time, max = spec.time, lift = spec.lift, alpha = spec.alpha });
         }
 
+        // 보스 정화 뒤 계단에서: 욕망 흡수/거절 후 바로 다음 층으로 올라간다.
         public void Absorb()
         {
             Combat.ChooseDesire(Run, Run.offer.id);
             AddPlayerFx(FxSprite.Boss, db.fx.absorb);
             sound.Play("desire");
             ui.CloseDialog();
+            if (Run.outcome == Outcome.None) Ascend();
         }
 
-        public void Refuse() { Combat.ChooseDesire(Run, null); ui.CloseDialog(); }
-
-        public void NextRound() { ui.CloseDialog(); Run.round++; Combat.BeginRound(Run); }
-
-        public void NextFloor()
-        {
-            ui.CloseDialog();
-            shop = null;
-            Run.floor++;
-            Combat.BeginFloor(Run);
-        }
-
+        public void Refuse() { Combat.ChooseDesire(Run, null); Ascend(); }
         // ---------------------------------------------------------------- shop (단추)
 
         int Price(WareDef ware)
@@ -205,7 +234,7 @@ namespace TOD
         void ShowShop()
         {
             shop ??= new Shop { sale = db.shop.wares[Mathf.FloorToInt(Run.random() * db.shop.wares.Length) % db.shop.wares.Length].id, end = Clock + db.shop.saleSeconds };
-            ui.ShowShop(db.shop, Price, w => shop.sold.Contains(w.id), Run.gold, SaleLabel(), Run.floor + 1, Buy);
+            ui.ShowShop(db.shop, Price, w => shop.sold.Contains(w.id), Run.gold, SaleLabel(), Buy);
         }
 
         void Buy(string id)
@@ -330,12 +359,7 @@ namespace TOD
                 return;
             }
             if (Run.outcome != Outcome.None) { Finish(Run.outcome); return; }
-            if (Opened != "" || paused) return;
-            if (Run.augmentQueue > 0) ShowAugments();
-            else if (Run.phase == Phase.Desire) ui.ShowDesire(Run.offer, Run.floor, Run.offer.id == db.desire.refine.id);
-            else if (Run.phase == Phase.Shop) ShowShop();
-            else if (Run.phase == Phase.Rest) ui.ShowRest(Run.floor, Run.round, Run.round == Combat.BossRound - 1);
-            else if (Run.phase == Phase.Victory) Finish(Outcome.Clear);
+            if (Run.phase == Phase.Victory) Finish(Outcome.Clear);
         }
 
         void ReadKeys()
@@ -351,6 +375,7 @@ namespace TOD
             if (k.enterKey.wasPressedThisFrame && screen == UiScreen.Lobby && Run == null && Opened == "") StartRun();
             if (k.rKey.wasPressedThisFrame && screen == UiScreen.Inventory) Rotate();
             if (IsCombat && k.spaceKey.wasPressedThisFrame) dashRequested = true;
+            if (k.eKey.wasPressedThisFrame) Interact();
         }
 
         CombatInput ReadCombatInput()
@@ -404,7 +429,7 @@ namespace TOD
                 }
                 Run.events.Clear();
                 float heroTime = Run.outcome == Outcome.Dead ? Mathf.Min(deathDuration, Clock - (animatingDeath ? deathClock : Clock)) : Run.player.actionTime;
-                arena.Render(Run, aim, Clock, IsCombat, heroTime);
+                arena.Render(Run, aim, Clock, IsCombat, heroTime, Combat.Nearest(Run));
                 ApplyPostFx();
                 ui.UpdateHud(Run, Combat);
                 ui.UpdateMeta(Profile);
@@ -429,7 +454,19 @@ namespace TOD
             Shader.SetGlobalVector(FlashId, new Vector4(tint.r, tint.g, tint.b, Mathf.Min(.07f, r.flash * .5f)));
             Shader.SetGlobalFloat(SnapId, r.snapFlash > 0 ? .12f * Mathf.Pow(r.snapFlash / db.feel.cutFlash, 1.6f) : 0);
             Shader.SetGlobalFloat(HurtId, r.hurtFlash > 0 ? Mathf.Pow(r.hurtFlash / db.hero.hurtFlash, 1.5f) : 0);
-            Shader.SetGlobalFloat(BorderId, fraction >= db.desire.highFraction ? Mathf.Clamp((fraction - .3f) * .81f, 0, .65f) + Mathf.Sin(Clock * 3) * .055f : 0);
+            // 정화된 화면은 비네트·욕망 테두리가 약해진다 (고리가 화면을 덮은 정도만큼).
+            float purified = arena.PurifiedCoverage(r);
+            float border = fraction >= db.desire.highFraction ? Mathf.Clamp((fraction - .3f) * .81f, 0, .65f) + Mathf.Sin(Clock * 3) * .055f : 0;
+            Shader.SetGlobalFloat(BorderId, border * (1 - purified));
+            Shader.SetGlobalFloat(PurifiedId, purified * db.purify.vignetteCut);
+            // 욕망이 warpFrom(80%) 이상이면 화면이 붉게 일렁인다.
+            DesireConfig d = db.desire;
+            float warp = d.warpFrom < 1 ? Mathf.Clamp01((fraction - d.warpFrom) / (1 - d.warpFrom)) : 0;
+            if (fraction >= d.warpFrom) warp = Mathf.Max(warp, .15f);
+            Shader.SetGlobalFloat(WarpId, warp * (1 - purified));
+            Shader.SetGlobalColor(WarpTintId, d.warpTint);
+            Shader.SetGlobalVector(WarpParamsId, new Vector4(d.warpAmplitude, d.warpFrequency, d.warpSpeed, 0));
+            Shader.SetGlobalFloat(CanvasHeightId, db.arena.canvasHeight * arena.Zoom);
         }
 
         void OnApplicationFocus(bool focus)

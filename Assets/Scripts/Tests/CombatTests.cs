@@ -103,19 +103,25 @@ namespace TOD.Tests
             Assert.AreEqual(Outcome.Absorbed, r.outcome, "폭주 중 다시 100% → 탑에 동화");
         }
 
+        // 증강은 능력치 전용: 규칙형은 데이터에 없고, 고르면 바늘 능력치가 오른다.
         [Test]
-        public void AugmentChoicesAreUniqueAndSkipOwnedRules()
+        public void AugmentChoicesAreUniqueStatOnly()
         {
-            RunState r = NewRun();
-            r.rules.Add("bounce");
             for (int i = 0; i < 50; i++)
             {
                 RunState run = combat.CreateRun(EmptyProfile(), () => Random.value);
-                run.rules.Add("bounce");
                 var picks = combat.AugmentChoices(run);
                 Assert.AreEqual(3, picks.Select(p => p.id).Distinct().Count());
-                Assert.IsFalse(picks.Any(p => p.id == "bounce"));
+                Assert.IsTrue(picks.All(p => !p.rule && p.effects != null && p.effects.Length > 0), "능력치형 증강만 나온다");
             }
+            RunState r = NewRun();
+            float interval = r.fireInterval, reach = r.reach;
+            r.augmentQueue = 2;
+            combat.ApplyAugment(r, "fire");
+            combat.ApplyAugment(r, "reach");
+            Assert.Less(r.fireInterval, interval, "발사 간격이 줄어든다");
+            Assert.Greater(r.reach, reach, "사거리가 늘어난다");
+            Assert.AreEqual(0, r.augmentQueue);
         }
 
         // 자동 조작으로 5층 끝(엔딩)까지 진행되는지: 라운드·보스·욕망 제안·상점 흐름을 모두 통과해야 한다.
@@ -131,11 +137,12 @@ namespace TOD.Tests
                 r.hp = r.maxHp = 100000;                       // 생존을 보장해 진행 흐름만 본다
                 if (r.desire > r.maxDesire * .8f) r.desire = 0;   // 동화 엔딩 대신 등반 흐름을 본다
                 while (r.augmentQueue > 0) combat.ApplyAugment(r, combat.AugmentChoices(r)[0].id);
-                switch (r.phase)
+                // 라운드가 끝나 계단이 다 나타나면 올라간다 (보스 뒤에는 욕망 제안을 거절).
+                if (r.phase == Phase.Cleared && r.stairs != null && r.stairsAge >= db.rounds.stairsRevealTime)
                 {
-                    case Phase.Rest: r.round++; combat.BeginRound(r); continue;
-                    case Phase.Desire: combat.ChooseDesire(r, null); continue;
-                    case Phase.Shop: r.floor++; combat.BeginFloor(r); continue;
+                    if (r.desirePending) combat.ChooseDesire(r, null);
+                    combat.Ascend(r);
+                    continue;
                 }
                 Enemy target = r.enemies.OrderBy(e => (e.x - r.player.x) * (e.x - r.player.x) + (e.y - r.player.y) * (e.y - r.player.y)).FirstOrDefault();
                 var input = new CombatInput

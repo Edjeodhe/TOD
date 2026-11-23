@@ -67,15 +67,18 @@
                     <ui:Label name="floor-label" text="01F" class="tag" />
                 </ui:VisualElement>
                 <ui:VisualElement name="rounds" picking-mode="Ignore">
-                    <ui:VisualElement class="round current"><ui:Label text="1" class="num" /><ui:Label name="round-name-1" text="첫 번째 라운드" /></ui:VisualElement>
-                    <ui:VisualElement class="round"><ui:Label text="2" class="num" /><ui:Label name="round-name-2" text="두 번째 라운드" /></ui:VisualElement>
-                    <ui:VisualElement class="round"><ui:Label text="♜" class="num" /><ui:Label name="round-name-3" text="층 보스" /></ui:VisualElement>
+                    <ui:VisualElement class="round current"><ui:Label text="1" class="num" /><ui:Label name="round-name-1" text="생존" /></ui:VisualElement>
+                    <ui:VisualElement class="round"><ui:Label text="2" class="num" /><ui:Label name="round-name-2" text="생존" /></ui:VisualElement>
+                    <ui:VisualElement class="round"><ui:Label text="✧" class="num" /><ui:Label name="round-name-3" text="쉬어가기" /></ui:VisualElement>
+                    <ui:VisualElement class="round"><ui:Label text="♜" class="num" /><ui:Label name="round-name-4" text="층 보스" /></ui:VisualElement>
                 </ui:VisualElement>
                 <ui:Label name="route-info" text="층마다 세 라운드를 돌파하세요." class="route-info" />
             </ui:VisualElement>
 
             <ui:Button name="pause" text="Ⅱ" class="icon-button pause-button" tooltip="일시 정지 (Esc)" />
             <ui:VisualElement name="banner" class="banner hidden" picking-mode="Ignore"><ui:Label name="banner-text" /></ui:VisualElement>
+            <ui:VisualElement name="timer" class="round-timer hidden" picking-mode="Ignore"><ui:Label name="timer-text" /></ui:VisualElement>
+            <ui:VisualElement name="hint" class="hint-bar hidden" picking-mode="Ignore"><ui:Label name="hint-text" /></ui:VisualElement>
             <ui:VisualElement name="boss-hud" class="boss-hud hidden" picking-mode="Ignore">
                 <ui:Label text="실타래의 지배자" />
                 <ui:VisualElement class="meter"><ui:VisualElement name="boss-bar" class="meter-fill boss" /></ui:VisualElement>
@@ -85,6 +88,7 @@
                 <ui:Label text="좌클릭 바늘 발사" />
                 <ui:Label text="우클릭 실 당기기" />
                 <ui:Label text="Space 대쉬" />
+                <ui:Label text="E 상호작용" />
                 <ui:Label text="Esc 일시 정지" />
             </ui:VisualElement>
         </ui:VisualElement>
@@ -220,15 +224,16 @@
                 <ui:Label name="sale-label" class="dialog-text" />
                 <ui:VisualElement name="wares" class="choice-grid shop-grid" />
                 <ui:VisualElement class="actions">
-                    <ui:Button name="next-floor" class="primary" />
+                    <ui:Button name="close-shop" text="닫기" class="primary" />
                     <ui:Button name="shop-retreat" text="귀환" />
                 </ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement name="dialog-rest" class="dialog hidden">
-                <ui:Label name="rest-eyebrow" class="eyebrow" />
-                <ui:Label text="잠깐의 숨 고르기" class="dialog-title" />
-                <ui:Label name="rest-text" class="dialog-text" />
-                <ui:VisualElement class="actions"><ui:Button name="next-round" class="primary" /></ui:VisualElement>
+            <ui:VisualElement name="dialog-artifact" class="dialog hidden">
+                <ui:Label name="artifact-eyebrow" class="eyebrow" />
+                <ui:Label text="아티팩트 선택" class="dialog-title" />
+                <ui:Label text="이 층에서 얻을 수 있는 재봉 조각은 하나뿐입니다. 하나를 고르면 재봉 상자에 들어갑니다." class="dialog-text" />
+                <ui:VisualElement name="artifacts" class="choice-grid" />
+                <ui:VisualElement class="actions"><ui:Button name="close-artifact" text="나중에 고르기" /></ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="dialog-upgrade" class="dialog hidden">
                 <ui:Label text="모이라의 의식" class="eyebrow" />
