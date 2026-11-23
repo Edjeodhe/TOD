@@ -30,6 +30,54 @@ namespace TOD
 
         void Ensure() => block ??= new MaterialPropertyBlock();
 
+        // ---------------------------------------------------------------- 16차 속성 몬스터: 파츠 그림 교체 (없으면 속성 색을 곱한다)
+
+        static GameDatabase skinDb;
+        static readonly Dictionary<Element, Dictionary<Sprite, Sprite>> skins = new();
+        static readonly Dictionary<Sprite, Sprite> baseOf = new();   // 속성 그림 → 원래 그림 (쌍둥이 리그가 바뀐 그림으로 복제돼도 원래 그림을 찾게)
+        readonly Dictionary<SpriteRenderer, Sprite> originals = new();
+
+        static void BuildSkins(GameDatabase db)
+        {
+            if (skinDb == db) return;
+            skinDb = db;
+            skins.Clear(); baseOf.Clear();
+            ElementDef[] defs = db.elements?.defs;
+            if (defs == null) return;
+            foreach (ElementDef d in defs)
+            {
+                var map = new Dictionary<Sprite, Sprite>();
+                if (d.skins != null)
+                    foreach (SpriteSwap s in d.skins)
+                        if (s != null && s.from != null && s.to != null) { map[s.from] = s.to; baseOf[s.to] = s.from; }
+                skins[d.element] = map;
+            }
+        }
+
+        // 리그 파츠마다: 그 속성 그림이 있으면 바꿔 끼우고, 없으면 원래 그림에 monsterTint 를 곱한다
+        void Skin(MonsterRig rig, Element element, GameDatabase db)
+        {
+            BuildSkins(db);
+            skins.TryGetValue(element, out Dictionary<Sprite, Sprite> map);
+            ElementDef def = element == Element.Plain ? null : db.elements?.Def(element);
+            Color tint = def != null ? Color.Lerp(Color.white, new Color(def.monsterTint.r, def.monsterTint.g, def.monsterTint.b, 1), def.monsterTint.a) : Color.white;
+            foreach (SpriteRenderer sr in rig.Arts)
+            {
+                if (sr == null) continue;
+                if (!originals.TryGetValue(sr, out Sprite original))
+                    originals[sr] = original = sr.sprite != null && baseOf.TryGetValue(sr.sprite, out Sprite b) ? b : sr.sprite;
+                if (original == null) continue;
+                if (map != null && map.TryGetValue(original, out Sprite swap)) { sr.sprite = swap; sr.color = Color.white; }
+                else { sr.sprite = original; sr.color = tint; }
+            }
+        }
+
+        static Color BodyTint(Element element, GameDatabase db)
+        {
+            ElementDef def = element == Element.Plain ? null : db.elements?.Def(element);
+            return def != null ? Color.Lerp(Color.white, new Color(def.monsterTint.r, def.monsterTint.g, def.monsterTint.b, 1), def.monsterTint.a) : Color.white;
+        }
+
         static Vector3 Local(float px, float py) => new(px / Space.Ppu, -py / Space.Ppu, 0);
 
         void Shape(SpriteRenderer sr, float shape, float ringAmount = 0)
@@ -185,6 +233,7 @@ namespace TOD
             foreach (SpriteRenderer half in new[] { bodyA, bodyB })
             {
                 half.sprite = art;
+                half.color = BodyTint(e.element, db);   // 16차: 리그가 없는 종류는 속성 색만
                 half.transform.localScale = new Vector3(w / art.rect.width, h / art.rect.height, 1);
             }
             float bright = e.flash > .15f ? 2.6f : e.flash > 0 ? 1.9f : 1;
@@ -204,12 +253,14 @@ namespace TOD
                 bodyB.gameObject.SetActive(false);
                 ShowRig(rig);
                 rig.Animate(e, time, dt, h / rig.height);
+                Skin(rig, e.element, db);   // 16차: 층 속성 파츠
                 Vector4 cutA = Vector4.zero, cutB = Vector4.zero;
                 if (e.cut != null)
                 {
                     // 두 동강도 리그 그대로: 원본 = 한쪽, 쌍둥이 = 반대쪽 (크기·발 위치·자세가 바뀌지 않는다)
                     ShowTwin(rig, e.type.id);
                     CopyPose(rig, twinShown);
+                    Skin(twinShown, e.element, db);
                     float k = Mathf.Pow(e.cut.time / e.cut.max, 2);
                     float angle = e.facing > 0 ? e.cut.angle : Mathf.PI - e.cut.angle;
                     Vector3 rigBase = rig.transform.localPosition;

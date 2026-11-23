@@ -277,6 +277,10 @@ namespace TOD
         public float effectRange;             // 번개 튐·바람 끌림 반경 (전투장 px)
         public float effectCap;               // 얼음 둔화 상한 · 번개 튀는 마리 수 · 독 최대 겹
         public string effectText;             // 부가 효과 문구. {0} = 이 단계의 값 (예: "화상 초당 {0}")
+        [Header("16차: 부가 세트 주기 발동 (메인이 아닌 켜진 세트)")]
+        public int procCharge;                // 바늘 명중·당기기 타격 몇 번에 한 번 터지는지
+        public float procDamage, procDamagePerTier;   // 발동 피해 = procDamage + procDamagePerTier × 단계 (상성 적용)
+        public float procEffectScale;         // 발동 때 부가 효과 세기 = effectPerTier × 단계 × 이 값
     }
 
     [Serializable] public class PieceDef
@@ -303,6 +307,9 @@ namespace TOD
     [Serializable] public class GearConfig
     {
         public SetDef[] sets;
+        public SetUnlock[] setUnlockFloor;    // 15차: 세트 해금 표 (profile.best 가 floor 이상이면 열림, 표에 없으면 처음부터)
+        public string unlockSound;            // 15차: 해금 알림 효과음 id (sounds)
+        public string starterPlaced;          // 15차: 등반 시작 때 시작 조각이 놓였다는 문구 ("시작 조각을 판에 먼저 놓았습니다: {0}")
         public PieceDef[] pieces;
         public string[] rankNames;            // 코스트 1~4 → 일반·레어·유니크·레전더리
         public int baseColumns, baseRows, baseCostLimit, costLimitStep;
@@ -312,7 +319,7 @@ namespace TOD
         public float[] rankShine;             // 등급별 번쩍임 세기 (0 = 없음)
         public string saveKey;
         public ItemEffectText[] effectTexts;  // 고유 효과 이름·설명
-        public float subSetScale;             // 세트가 여럿 켜졌을 때 주 속성이 아닌 세트의 피해·부가 효과 배율 (.5)
+        public float subSetScale;             // (16차부터 쓰지 않음) 예전 보조 세트 배율 — 부가 세트는 SetDef.procCharge 주기 발동으로 바뀜
     }
 
     [Serializable] public class UpgradeDef
@@ -527,7 +534,7 @@ namespace TOD
         public string dashValue, expText, expLevel, augmentLevel, pieceEffect, pieceShape;
         public string reroll, rerollUsed, threadBonus, inventoryHint, inventoryInRun;
         public string pieceCells, tipSet, setProgress, setProgressMax, ownedAll;   // 재봉 상자 정보 창·세트 패널·상점
-        public string setMain, setSub;        // 세트 패널: 주 속성 / 보조 (예: "주 속성", "보조 {0}")
+        public string setMain, setSub;        // 세트 패널: 메인 속성 / 부가 속성 (16차: setSub 의 {0} = 발동까지 타격 수)
         public string[] statNames;            // StatKind 순서
         public string[] roundNames;           // 첫 번째 라운드, 두 번째 라운드, 층 보스
     }
@@ -565,6 +572,10 @@ namespace TOD
         public VisualConfig visual;
         public RenderPalette palette;
         public DecorConfig decor;
+        public ElementConfig elements;        // 16차: 층 속성 · 상성 · 속성 몬스터 · 부가 발동 · 보스 속성 공격 (ElementData.cs)
+        public DiaryConfig diary;             // 15차: 아버지의 일기 (DiaryData.cs)
+        public HubConfig hub;                 // 15차: 재봉실 허브 (HubData.cs)
+        public MerchantConfig merchant;       // 16차: 상인 단추 자세와 말풍선 (MerchantData.cs)
         public MessageConfig messages;
         public UiTextConfig ui;
         public SynthSound[] sounds;

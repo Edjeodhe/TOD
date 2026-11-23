@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <!-- 16차 상인 단추 말풍선 템플릿 (GameUI.Merchant.cs 가 복제). 모양은 Merchant.uss -->
+
+    <!-- 월드 말풍선: left/top = 상인 머리 위 점, 풍선 아래 가운데 꼬리가 그 점을 가리킨다 -->
+    <ui:VisualElement name="merchant-bubble" class="merchant-bubble" picking-mode="Ignore">
+        <ui:VisualElement class="merchant-bubble-body" picking-mode="Ignore">
+            <ui:Label text="단추" class="merchant-name" picking-mode="Ignore" />
+            <ui:Label name="merchant-text" class="merchant-text" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement class="merchant-tail" picking-mode="Ignore" />
+    </ui:VisualElement>
+
+    <!-- 상점 창 오른쪽 위: 상인 얼굴(지금 자세 그림) + 왼쪽으로 말풍선 -->
+    <ui:VisualElement name="merchant-peek" class="merchant-peek" picking-mode="Ignore">
+        <ui:VisualElement name="merchant-peek-bubble" class="merchant-peek-bubble hidden" picking-mode="Ignore">
+            <ui:Label name="merchant-text" class="merchant-text" picking-mode="Ignore" />
+            <ui:VisualElement class="merchant-tail side" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="merchant-face" class="merchant-face" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,9 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/hub_room.png
+Size: landscape 1536x1024.
+A full-bleed 2D game background: the interior of a small cozy-but-eerie SEWING ROOM at the bottom of a gothic tower, the home base of a mouse tailor. Top-down three-quarter view (camera looking down at about 45 degrees, exactly like the attached floor tile), the room seen from the front, filling the whole image edge to edge.
+Layout (important, the game places characters and furniture on top of this picture):
+- Top 30% of the image: the back wall seen from the front. Dark plum wallpaper with faded stitched patterns, wooden wainscot at the bottom of the wall, two narrow gothic arched windows with cold moonlight, shelves with fabric bolts, spools and jars, hanging measuring tapes, a few framed dress patterns pinned up, a crooked hanging lamp. Nothing big standing in front of the wall.
+- Bottom 70%: a wide EMPTY floor of old worn wooden planks running left to right, with a large faded round rag rug in the middle and a few scattered loose threads, pins and buttons. Keep the floor open and uncluttered (furniture will be added separately); slightly darker toward the left, right and bottom edges like a soft vignette.
+- Left and right edges: the side walls only as thin dark slanted strips.
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outlines, paper-grain texture, low saturation, warm candle light in the middle fading to cold dark plum shadows (#16131B, #2A2230, #4A3D50, warm accents #C9A46A). No characters, no animals, no text, no letters, no UI.

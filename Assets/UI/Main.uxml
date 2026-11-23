@@ -2,6 +2,9 @@
     <Style src="project://database/Assets/UI/Main.uss" />
     <Style src="project://database/Assets/UI/Puzzle.uss" />
     <Style src="project://database/Assets/UI/DevTools.uss" />
+    <Style src="project://database/Assets/UI/Outgame.uss" />
+    <Style src="project://database/Assets/UI/Hub.uss" />
+    <Style src="project://database/Assets/UI/Merchant.uss" />
     <ui:VisualElement name="root" class="root" picking-mode="Ignore">
 
         <!-- 전투 중 글자 (피해 숫자, N HIT, ×N) -->
@@ -123,44 +126,35 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- 로비 (프롤로그) -->
-        <ui:VisualElement name="lobby" class="layer lobby">
-            <ui:VisualElement class="lobby-shade" picking-mode="Ignore" />
+        <!-- 로비 = 15차 재봉실 허브: 방과 시설은 씬 Hub(월드)가 그리고, 여기에는 위쪽 띠와 꼬리표, 아래 안내만 (GameUI.Hub.cs, Hub.uss) -->
+        <ui:VisualElement name="lobby" class="layer lobby hub-layer" picking-mode="Ignore">
+            <ui:VisualElement class="hub-vignette" picking-mode="Ignore" />
             <ui:VisualElement class="topbar">
                 <ui:VisualElement class="brand">
                     <ui:VisualElement class="brand-icon"><ui:VisualElement /></ui:VisualElement>
                     <ui:VisualElement>
-                        <ui:Label text="욕망의 탑" class="brand-name" />
-                        <ui:Label text="TOWER OF DESIRE" class="brand-sub" />
+                        <ui:Label text="재봉실" class="brand-name" />
+                        <ui:Label text="탑 아래 작업실" class="brand-sub" />
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="shards" tooltip="기억의 파편"><ui:VisualElement /><ui:Label name="meta-shards" text="0" /></ui:VisualElement>
                 <ui:Button name="sound" text="♪" class="icon-button" tooltip="소리 켜기/끄기" />
             </ui:VisualElement>
-            <ui:VisualElement class="welcome-copy">
-                <ui:VisualElement class="chapter"><ui:VisualElement /><ui:Label text="프롤로그" /><ui:VisualElement /></ui:VisualElement>
-                <ui:Label text="욕망의 탑" class="welcome-title" />
-                <ui:Label text="사라진 아버지의 흔적을 따라,&#10;견습 재봉사가 탑의 문을 연다." class="welcome-text" />
-                <ui:VisualElement class="menu">
-                    <ui:Button name="start" text="등반 시작  →" class="primary start-button" />
-                    <ui:Button name="open-inventory" text="재봉 상자" />
-                    <ui:Button name="open-attic" text="예견의 다락" />
+            <ui:VisualElement name="hub-prompt" class="hub-prompt hidden" picking-mode="Ignore">
+                <ui:VisualElement class="hub-prompt-tag" picking-mode="Ignore">
+                    <ui:Label text="E" class="kbd" picking-mode="Ignore" />
+                    <ui:Label name="hub-prompt-text" class="hub-prompt-text" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:VisualElement class="hint"><ui:Label text="Enter" class="kbd" /><ui:Label text="로 시작" /></ui:VisualElement>
-                <ui:Label name="best-record" text="◇ 최고 기록  미기록" class="record" />
             </ui:VisualElement>
-            <ui:VisualElement class="lobby-controls">
-                <ui:Label text="조작 안내" class="control-title" />
-                <ui:Label text="WASD 이동" />
-                <ui:Label text="좌클릭 바늘 발사" />
-                <ui:Label text="우클릭 실 당기기" />
-                <ui:Label text="Space 대쉬" />
-                <ui:Label text="Esc 일시 정지" />
+            <ui:VisualElement class="hub-bottom" picking-mode="Ignore">
+                <ui:Label name="hub-hint" class="hub-hint" picking-mode="Ignore" />
+                <ui:Label name="best-record" text="◇ 최고 기록  미기록" class="record hub-record" picking-mode="Ignore" />
             </ui:VisualElement>
-            <ui:VisualElement class="corner tl" picking-mode="Ignore" />
-            <ui:VisualElement class="corner tr" picking-mode="Ignore" />
-            <ui:VisualElement class="corner bl" picking-mode="Ignore" />
-            <ui:VisualElement class="corner br" picking-mode="Ignore" />
+            <ui:VisualElement class="hub-menu">
+                <ui:Button name="start" text="Enter  등반 시작" class="primary start-button hub-start" />
+                <ui:Button name="open-inventory" text="재봉 상자" class="hidden" />
+                <ui:Button name="open-attic" text="예견의 다락" class="hidden" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- 재봉 상자 -->
@@ -223,6 +217,14 @@
                 <ui:Label text="예견의 다락" class="room-title" />
                 <ui:Label text="기억의 파편을 내밀면 모이라가 다음 등반의 미래를 읽습니다." class="room-text" />
                 <ui:VisualElement name="upgrades" class="choice-grid" />
+                <!-- 15차: 다락 강화 '시작 조각' (강화를 산 뒤에 보임). GameUI.Outgame.cs -->
+                <ui:VisualElement name="attic-starter" class="attic-starter hidden">
+                    <ui:Label text="시작 조각" class="attic-starter-head" />
+                    <ui:VisualElement name="starter-icon" class="attic-starter-icon" />
+                    <ui:Label name="starter-name" class="attic-starter-name" />
+                    <ui:Label name="starter-none" text="아직 고르지 않았습니다" class="attic-starter-none" />
+                    <ui:Button name="starter-pick" text="조각 고르기" />
+                </ui:VisualElement>
                 <ui:VisualElement class="actions"><ui:Button name="attic-back" text="돌아가기" /></ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
@@ -238,12 +240,15 @@
                     <ui:Button name="restart" text="다시 등반" class="primary" />
                     <ui:Button name="summary-inventory" text="재봉 상자" />
                     <ui:Button name="summary-attic" text="예견의 다락" />
-                    <ui:Button name="summary-lobby" text="프롤로그" />
+                    <ui:Button name="summary-lobby" text="재봉실로" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- 대화 상자 -->
+        <!-- 16차 상인 단추 월드 말풍선 (GameUI.Merchant.cs) -->
+        <ui:VisualElement name="merchant-world" class="layer" picking-mode="Ignore" />
+
         <ui:VisualElement name="overlay" class="layer overlay hidden">
             <ui:VisualElement name="dialog-pause" class="dialog hidden">
                 <ui:Label text="등반 중" class="eyebrow" />
@@ -282,6 +287,7 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="dialog-shop" class="dialog hidden">
+                <ui:VisualElement class="merchant-peek-slot" picking-mode="Ignore" />
                 <ui:Label text="층 사이 휴식처" class="eyebrow" />
                 <ui:Label text="떠돌이 상인 단추" class="dialog-title" />
                 <ui:Label text="금화를 내고 다음 층에 들고 갈 물품을 고르세요." class="dialog-text" />
@@ -299,6 +305,26 @@
                 <ui:VisualElement name="artifacts" class="puzzle-grid" />
                 <ui:VisualElement class="actions reroll-row"><ui:Button name="reroll-artifact" text="다시 굴리기" class="reroll" /><ui:Button name="close-artifact" text="나중에 고르기" /></ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="dialog-starter" class="dialog hidden">
+                <ui:Label text="모이라의 예견" class="eyebrow" />
+                <ui:Label text="시작 조각 고르기" class="dialog-title" />
+                <ui:Label text="등반을 시작할 때 이 조각이 판의 빈자리에 먼저 놓입니다. 시작 조각은 등급 합 한도에 들지 않습니다." class="dialog-text" />
+                <ui:ScrollView name="starter-list" class="starter-list" />
+                <ui:VisualElement class="actions">
+                    <ui:Button name="close-starter" text="닫기" class="primary" />
+                    <ui:Button name="starter-clear" text="고르지 않기" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="dialog-hubshop" class="dialog hidden">
+                <ui:VisualElement class="merchant-peek-slot" picking-mode="Ignore" />
+                <ui:Label text="재봉실 한쪽 구석" class="eyebrow" />
+                <ui:Label name="hubshop-title" class="dialog-title" />
+                <ui:Label name="hubshop-text" class="dialog-text" />
+                <ui:VisualElement class="shards hubshop-shards" tooltip="기억의 파편"><ui:VisualElement /><ui:Label name="hubshop-shards" text="0" /></ui:VisualElement>
+                <ui:VisualElement name="hub-wares" class="puzzle-grid hub-wares" />
+                <ui:Label name="hubshop-empty" class="dialog-text hidden" />
+                <ui:VisualElement class="actions"><ui:Button name="close-hubshop" text="닫기" class="primary" /></ui:VisualElement>
+            </ui:VisualElement>
             <ui:VisualElement name="dialog-upgrade" class="dialog hidden">
                 <ui:Label text="모이라의 의식" class="eyebrow" />
                 <ui:Label text="미래를 읽을까요?" class="dialog-title" />
@@ -312,6 +338,28 @@
 
         <ui:VisualElement name="room-flash" class="room-flash hidden" picking-mode="Ignore"><ui:VisualElement picking-mode="Ignore" /></ui:VisualElement>
         <ui:VisualElement name="notice" class="notice hidden" picking-mode="Ignore"><ui:Label name="notice-text" /></ui:VisualElement>
+
+        <!-- 15차: 세트 해금 알림 (세트 색 종이 띠 + 이름 + 반짝임, 클릭하면 넘김). GameUI.Outgame.cs, Outgame.uss -->
+        <ui:VisualElement name="unlock-notice" class="unlock-notice hidden">
+            <ui:VisualElement name="unlock-flash" class="unlock-flash" picking-mode="Ignore" />
+            <ui:VisualElement name="unlock-ribbon" class="unlock-ribbon" picking-mode="Ignore">
+                <ui:VisualElement class="unlock-shine-clip" picking-mode="Ignore"><ui:VisualElement name="unlock-shine" class="unlock-shine" picking-mode="Ignore" /></ui:VisualElement>
+                <ui:Label text="새 세트가 열렸습니다" class="unlock-eyebrow" picking-mode="Ignore" />
+                <ui:Label name="unlock-name" class="unlock-name" picking-mode="Ignore" />
+                <ui:Label name="unlock-text" class="unlock-text" picking-mode="Ignore" />
+                <ui:Label text="이제 탑과 상인에게서 이 세트의 조각이 나옵니다" class="unlock-foot" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement class="unlock-sparks" picking-mode="Ignore">
+                <ui:Label text="✧" class="unlock-spark s1" picking-mode="Ignore" />
+                <ui:Label text="✧" class="unlock-spark s2" picking-mode="Ignore" />
+                <ui:Label text="✧" class="unlock-spark s3" picking-mode="Ignore" />
+                <ui:Label text="✧" class="unlock-spark s4" picking-mode="Ignore" />
+                <ui:Label text="✧" class="unlock-spark s5" picking-mode="Ignore" />
+                <ui:Label text="✧" class="unlock-spark s6" picking-mode="Ignore" />
+                <ui:Label text="✧" class="unlock-spark s7" picking-mode="Ignore" />
+                <ui:Label text="✧" class="unlock-spark s8" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
 
         <!-- 개발자 모드 (F1, 에디터·개발 빌드만). DevTools 가 버튼을 연결하고, 세트 버튼은 DevSetButton.uxml 을 복제한다. -->
         <ui:VisualElement name="dev-panel" class="dev-panel hidden">
@@ -343,12 +391,21 @@
                 <ui:Button name="dev-end-round" text="라운드 끝내기" class="dev-btn" />
                 <ui:Button name="dev-freeze" text="적 멈춤" class="dev-btn" />
             </ui:VisualElement>
+            <ui:Label text="층 속성 (16차, 누르면 지금 층이 그 속성으로)" class="dev-head" />
+            <ui:VisualElement name="dev-floor-elements" class="dev-row" />
             <ui:Label text="재봉 상자 (세트 조각을 판에 바로 붙임)" class="dev-head" />
             <ui:VisualElement name="dev-sets" class="dev-row" />
             <ui:VisualElement class="dev-row">
                 <ui:Button name="dev-all-items" text="모든 조각 지급" class="dev-btn" />
                 <ui:Button name="dev-clear-board" text="판 비우기" class="dev-btn" />
                 <ui:Button name="dev-clear-items" text="조각 전부 버리기" class="dev-btn" />
+            </ui:VisualElement>
+            <ui:Label text="해금 (15차)" class="dev-head" />
+            <ui:VisualElement class="dev-row">
+                <ui:Button name="dev-ignore-locks" text="세트 잠금 무시" class="dev-btn" />
+                <ui:Button name="dev-best-up" text="최고 층 +1" class="dev-btn" />
+                <ui:Button name="dev-best-reset" text="최고 층, 해금 알림 초기화" class="dev-btn" />
+                <ui:Button name="dev-unlock-notice" text="해금 알림 보기" class="dev-btn" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

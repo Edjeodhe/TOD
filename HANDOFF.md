@@ -85,7 +85,7 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
-## 예약 작업: 15차 — 재봉실 허브 + 이야기 해금 (2026-11-24 00:30 자동 시작)
+## 예약 작업: 15차 — 재봉실 허브 + 이야기 해금 (2026-11-24 00:30 자동 시작) — 15차 완료
 
 > 사용자는 자는 중입니다. **질문 없이 임의로 판단해 끝까지 진행**하고, 결정한 내용은 이 절에 적습니다. 끝나면 "15차 완료"로 바꿉니다.
 
@@ -104,6 +104,193 @@
   - 게시판 UI는 UXML 템플릿 복제로 만들고, 저장은 `Profile`에 필드를 추가합니다.
 - **반복 동기:** 다락 강화에 '시작 조각 선택'(등반 시작 때 가진 조각 중 1개가 판에 미리 놓임) 또는 '시작 세트 1단계' 같은 강화를 하나 추가합니다.
 - **지킬 것:** 이 문서 맨 위 작업 규칙, 게임 문구에 가운뎃점 금지, 사용자에게 보이는 글은 한국어, 아이콘·그림은 Codex CLI, 움직이는 이펙트는 Blender 5.3, 단계마다 이 절 갱신, 커밋하지 않음, EditMode 테스트 통과, 플레이 캡처로 확인.
+
+### 15차-outgame-unlock (세트 해금, 다락 강화 시작 조각) — 완료
+
+> 이 세션이 맡는 일: 세트 해금, 해금 알림, 다락 강화 '시작 조각'. 허브 본체는 15차 허브 세션, 일기는 `diary-story` 세션.
+
+- **결정:**
+  - 해금 표는 `gear.setUnlockFloor`(`SetUnlock { set, floor }` 배열)입니다. `floor` = 필요한 `profile.best`(처음 돌파한 가장 높은 층). 화염, 얼음, 번개 0 / 빛, 바람 2 / 어둠, 피 3 / 독 4. 표에 없는 세트는 처음부터 열림.
+  - 잠긴 세트 조각은 `Gear.Unowned`(탑 보상, 다시 굴리기, 상점 조각, 무작위 `AddItem`)에서 빠집니다. 이미 가진 잠긴 세트 조각은 그대로 둡니다(판에도 놓을 수 있음).
+  - 개발자 모드: `Unlocks.ignoreLocks`(정적, 저장 안 함)를 "잠금 무시" 토글로 켜고 끕니다. 꺼져 있으면 세트 +1, 모든 조각 지급도 잠긴 세트를 건너뜁니다.
+  - 해금 알림: `Profile.seenUnlocks`(세트 id 목록). 처음부터 열린 세트는 알림 없이 본 것으로 칩니다. 로비(허브)로 돌아올 때 새로 열린 세트가 있으면 `GameUI.ShowUnlockNotice`로 하나씩 띄웁니다.
+  - 다락 강화 '시작 조각'(`upgrades` key `starter`, 단계는 데이터 `max`): 다락에서 가진 조각 중 1개를 작은 창으로 고릅니다(`Profile.starterKind`). 등반을 시작할 때 그 조각이 판에 없으면 같은 세트와 가장 많이 맞닿는 빈자리에 놓입니다. 시작 조각은 등급 합 한도에 들어가지 않습니다(판이 저장되므로 자리 확보만으로는 의미가 약해서).
+- **진행:**
+  - [x] 코드: `Sim/Unlocks.cs`(해금 표 계산, 알림 기록, 시작 조각 자리 찾기와 비용 0), `Gear.Unowned`가 잠긴 세트를 뺌, `Profile.seenUnlocks/starter/starterKind`, `GearConfig.setUnlockFloor/unlockSound/starterPlaced`.
+  - [x] 다른 세션과 겹치지 않게 `GameController`, `GameUI`를 partial 로 바꾸고 새 코드는 `GameController.Outgame.cs`, `GameUI.Outgame.cs`에 둠. 원래 파일에는 연결 줄만(ShowScreen 로비 → `ShowUnlocks`, StartRun → `PlaceStarterPiece`, 다락 Level/Confirm 에 `starter`, Esc, Init → `InitOutgame`, 판 머리글 비용).
+  - [x] UI: `Main.uxml`에 `unlock-notice`(띠, 빛줄기, 별 8개), 다락 `attic-starter` 줄, `dialog-starter` 창, 개발자 패널 "해금 (15차)" 줄(잠금 무시, 최고 층 +1, 초기화, 알림 보기). 스타일은 새 `Assets/UI/Outgame.uss`.
+  - [x] MCP 데이터 입력(씬 저장함): `gear.setUnlockFloor` 8줄, `gear.unlockSound` "unlock", `gear.starterPlaced`, `sounds`에 `unlock`(사인 700→1760Hz, .55초, 음량 .12), `upgrades`에 `starter`(시작 조각, 파편 12, 1단계, 아이콘 `icon_needle`). 컴파일 오류 없음.
+  - [x] 테스트 `Tests/OutgameTests.cs` 4개(해금 표, 잠긴 세트 제외(탑 보상 포함, 잠금 무시), 알림 한 번만, 시작 조각 배치와 비용 0). `CombatTests.ItemsAreUnique`는 `best = 99`로 모두 열고 검사하게 고침.
+  - [x] EditMode 34개 전부 통과(05:32, 새 4개 포함).
+  - [x] 플레이 캡처: `Temp/Shots/unlock_notice_2.png`(허브에서 "빛" 해금 띠, 1단계 효과 "빛 피해 +2, 결박, 정예 +20%"). 처음에는 띠가 화면 위(top 150)에서 일기 알림과 겹쳐서(`unlock_notice_1.png`) 주인공 아래(top 560)로 옮기고, 효과 수치를 세트 패널과 같은 `Amount` 표기로 바꿈.
+  - [x] 다락 캡처: `starter_attic_none.png`(시작 조각 카드 "최대 단계"와 아래 줄 "아직 고르지 않았습니다"), `starter_picker.png`(고르는 창, 재봉 상자 줄 모양). 등반 시작: 시작 조각(피 묻은 가위, 등급 3)을 판에서 뺀 뒤 `StartRun` → 다시 놓이고 판 등급 합은 7 그대로(비용 0), 알림 문구 확인. 문구 조사가 어색해서 `gear.starterPlaced`를 "시작 조각을 판에 먼저 놓았습니다: {0}"로 바꿈(씬 저장).
+  - [x] 실제 프로필을 백업(`Temp/outgame_profile_backup.json`)에서 되돌림(같은 JSON 확인). EditMode 34개 다시 통과.
+- **남은 것:**
+  - 전투 화면 캡처에는 HUD와 알림 글자가 빠집니다(UI 층이 캡처에 안 잡힘, 이 작업과 무관한 캡처 경로 문제). 등반 시작 알림은 코드로만 확인했습니다.
+  - 해금 띠 움직임(튀어나옴, 빛줄기, 별)은 정지 캡처라 실제 속도로 사람 눈 확인이 필요합니다. 빛(상아색) 세트는 띠가 밝아 세트 색이 약하게 보입니다.
+  - 허브 진입점이 로비 화면과 달라지면 그 자리에서 `ShowUnlocks()`를 불러야 합니다(지금은 `ShowScreen(UiScreen.Lobby)` 끝).
+  - 시작 조각 강화는 1단계(데이터 `max` 1, 파편 12)만 있습니다. 값 다듬기와, 고른 조각을 재봉 상자 목록에서 표시하는 것은 하지 않았습니다.
+
+### 15차-outgame-hub (재봉실 허브 본체) 완료
+> 이 세션이 맡는 일: 방, 걷기, 카메라, 시설 5곳, 상인 단추 조각 상점, 시설 그림. 해금 알림은 `outgame-unlock`(`ShowUnlocks`가 로비 진입 때 이미 불림), 일기는 `diary-story`(`ui.ShowDiary()`).
+- **결정:**
+  - 허브 = 로비 화면. `UiScreen.Lobby`일 때 씬 `Hub` 루트(MCP)가 켜지고 `Arena`는 꺼집니다. 로비 UI 층은 투명해지고(배경 그림, 큰 메뉴 제거) 위쪽 띠(파편, 소리)와 아래 안내만 남습니다. `start/open-inventory/open-attic` 버튼은 Bind 때문에 남기되 작게(Enter 등반 버튼만 보임).
+  - 좌표: 허브도 전투장과 같은 바닥 좌표(x, y 아래로 +, `Space.Ground`로 투영)를 씁니다. 주인공은 `Arena/Hero`를 **런타임에 한 번 복제**(템플릿 복제 예외)해 `Hub` 아래에 두고 `HeroView`로 그립니다(같은 리그와 동작). 걷기는 전투의 이동 계산을 흉내 낸 간단한 코드(`HubView`)이고 대쉬, 공격은 없습니다.
+  - 데이터 = `GameDatabase.hub`(`Runtime/Data/HubData.cs`의 `HubConfig`): 배경 그림과 캔버스 영역, 걷는 영역, 시작/귀환 자리, 걷기 속도, 상호작용 거리, 카메라 줌, 시설 5개(`HubFacility`: 종류, 이름, 안내 문구, 바닥 위치, 그림, 높이, 막는 타원), 상점 진열 수와 등급별 파편 가격, 문구.
+  - 시설: E = 가장 가까운 시설(거리 안). 재봉 상자 → 재봉 상자 화면, 예견의 다락 → 다락 화면, 상인 단추 → 조각 상점 창(`dialog-hubshop`), 탑 입구 → 등반 시작(Enter도 그대로), 일기 게시판 → `ui.ShowDiary()`. 가까우면 시설 위에 "E 문구" 꼬리표, 시설 그림이 살짝 밝아짐.
+  - 상인 단추 상점: 파편으로 **아직 없는 조각**(`Gear.Unowned`, 잠긴 세트 제외)을 삽니다. 진열 = `Profile.hubStock`(조각 종류 목록, 기본 3개), 등반이 끝날 때마다 새로 진열하고 비어 있으면 채움. 산 조각은 "팔림". 가격 = `hub.piecePrices[등급 코스트]`. 로직은 `Sim/HubShop.cs`(테스트 대상).
+  - 상인 그림은 `merchant_idle.png`(시설 `Merchant`의 sprite). `merchant` 세션이 자세를 바꿔 끼울 수 있게 `HubView.FacilityRenderer(HubStation)`을 둡니다.
+  - 새 코드는 `GameController.Hub.cs`, `GameUI.Hub.cs`, `View/HubView.cs`에 두고 공유 파일에는 연결 줄만 넣습니다.
+- **진행:**
+  - [x] Codex 그림: `tools/codex_prompts/hub_room.txt`(재봉실 배경), `hub_facilities.txt`(초록 키 2×2) → `sh tools/codex_prompts/run_hub.sh` → 굽기 `python tools/bake_hub_art.py`. 시설 4장 `Assets/sprites/hub_sewing_box/attic/tower_door/diary_board.png`(피벗 아래 가운데).
+  - [x] 코드: `Data/HubData.cs`(HubConfig, HubFacility, HubStation), `Sim/HubShop.cs`, `View/HubView.cs`, `Game/GameController.Hub.cs`, `UI/GameUI.Hub.cs`, 테스트 `Tests/HubTests.cs`(3개). 공유 파일 연결 줄: GameController(Start `InitHub`, ShowScreen `SyncHub`, Finish `HubAfterRun`, Interact `Run == null → HubInteract`, Esc `hubshop`, Update `TickHub`), GameUI(Init `InitHub`, 탑 아이템 카드를 `PieceOfferCard`로 뽑아 상점과 같이 씀), GameDatabase(`hub`), Profile(`hubStock`).
+  - [x] UI: 로비 층을 허브 HUD로(위 띠 "재봉실", 꼬리표 `hub-prompt`, 아래 안내 `hub-hint`, 오른쪽 아래 등반 버튼), `dialog-hubshop`, 결과 화면 버튼 "재봉실로". 스타일 `Assets/UI/Hub.uss`, 가격 띠 템플릿 `Assets/UI/HubSlots.uxml`.
+  - [x] 그림 완료: 배경 `Assets/sprites/hub_room.png`(1536×1024, 벽 아래 끝이 위에서 31%), 시설 4장. 상인 `merchant_idle~farewell` 6장을 Sprite로 임포트(피벗 아래 가운데 (0.5, 8/475)).
+  - [x] MCP: 씬 `Hub`(HubView) > `Backdrop`(Background 층) + `Facilities/FacilityTemplate`(Actors 층, 피벗 기준 Y 정렬, 꺼 둠). 주인공은 런타임 복제라 씬에 없음. `GameController.hub/hubRoot`, `GameUI.hubSlots` 연결. `diary.showLobbyButton` = false.
+  - [x] 데이터(임시, `GameDatabase.hub`, 플레이로 한 번 고침): 배경 캔버스 0~1000 × 0~667(방 전체가 거의 한 화면, 줌 0.95), 걷는 영역 x 60~940 / y 205~850, 시작 (500, 560) 깔개 위, 귀환 (500, 290) 탑 문 앞, 걷기 220, 거리 110. 시설(바닥 좌표, 높이 px): 탑 입구 (500, 197) 175 / 다락 (225, 207) 180 / 게시판 (775, 207) 140 / 재봉 상자 (175, 580) 110 / 상인 (825, 580) 105. 진열 3, 가격 일반 4, 레어 7, 유니크 11, 레전더리 16 파편. 꼬리표는 위 띠에 가리지 않게 화면 위 150px 아래로 제한.
+  - [x] 씬 저장, EditMode 34개 통과(허브 3개 포함), 프로필은 테스트 전 값으로 되돌림.
+  - [x] 플레이 캡처 `Temp/Shots/hub_*.png`: 시작(`hub_start-2`), 걷기(`hub_walk`), 꼬리표(`hub_prompt_sewing/merchant/diary/tower-2`), 재봉 상자(`hub_sewing_box-1`), 상인 상점(`hub_shop`, 산 뒤 `hub_shop_bought`: 팔림과 파편 부족 흐림), 일기(`hub_diary`), 다락(`hub_attic`), 탑 입구 E → 등반(`hub_run_start`), 귀환 → 탑 문 앞, 새 진열(`hub_return`).
+  - 남은 것(다음 세션): 상인 자세 교체와 말풍선은 `merchant` 세션(`HubView.FacilityRenderer(HubStation.Merchant)`로 그림 교체, `UseFacility(Merchant)`가 상점을 엶). 사람이 직접 걸어 본 느낌, 시설 앞 발자국이나 먼지 같은 작은 연출 없음. 허브 효과음은 상점 열 때 `loot` 하나뿐.
+- 허브 본체 완료 (2026-11-24 05:37)
+
+### 15차-diary-story (아버지의 일기) 완료
+> 이 세션은 이야기 해금만 맡습니다. 허브 본체는 15차 허브 세션, 세트 해금은 `outgame-unlock`.
+- **결정:**
+  - 일기 조각 = 층당 1개, 5개. `profile.best`(처음 돌파한 최고 층) 이하의 조각이 풀립니다. 조각 문구는 데이터 `GameDatabase.diary`(`Runtime/Data/DiaryData.cs`의 `DiaryConfig`, 조각마다 제목, 본문 여러 줄, 흡수 줄, 거절 줄).
+  - 흡수 기록 = `Profile.floorChoices`(층 번호 - 1 자리, 0 아직, 1 흡수, 2 거절). 같은 층을 다시 깨면 **가장 최근 선택**으로 덮습니다(일기가 지금의 재봉사를 비추는 느낌). 잔향(이미 셋 다 흡수)도 흡수로 칩니다. 아직 고르지 않은 층은 마지막 줄 대신 "번져서 읽을 수 없다" 줄(데이터).
+  - 읽음 = `Profile.diaryRead`(읽은 층 번호 목록). 풀렸는데 안 읽은 조각에 반짝 표시. 알림 = `Profile.diaryNoticed`(알린 조각 수). 등반이 끝나 `Run == null`이 되면(결과 화면, 허브) 새 조각이 있으면 한 번 알립니다.
+  - 공유 파일 충돌을 줄이려고 게시판은 **따로 만든 UIDocument `Game/Diary`**(`Assets/UI/Diary.uxml/uss`, 쪽지 템플릿 `DiaryNote.uxml`)와 컴포넌트 `DiaryBoard`가 그립니다. `GameUI`는 `partial`로 바꾸고 `GameUI.Diary.cs`에 `ShowDiary()`/`HideDiary()`만 둡니다(열린 동안 `Opened == "diary"`라 Enter 시작과 E가 막힘). 판정 로직은 `Sim/Diary.cs`(Unity 객체 무관, 테스트 대상).
+  - 허브가 아직이면 로비에 임시 "아버지의 일기" 버튼(Diary 문서 안, 로비가 보일 때만)으로 엽니다. 허브의 게시판 E가 `ShowDiary()`를 부르면 임시 버튼은 데이터 `diary.showLobbyButton`으로 끕니다.
+- **진행:**
+  - [x] 데이터/Profile/Diary 로직: `Data/DiaryData.cs`(DiaryEntry, DiaryConfig), `GameDatabase.diary`, `Profile.floorChoices/diaryRead/diaryNoticed`, `Sim/Diary.cs`, `Combat.ChooseDesire`에서 `Diary.RecordChoice` + 저장.
+  - [x] 게시판 UI 코드: `UI/DiaryBoard.cs`, `UI/GameUI.Diary.cs`(GameUI는 outgame-unlock이 이미 partial로 바꿈), `Assets/UI/Diary.uxml/uss`, `DiaryNote.uxml`, 찢긴 쪽지 `Assets/UI/Paper/note_torn.png`(`tools/bake_diary_paper.py`). 알림도 DiaryBoard가 `Run == null`일 때 띄움(GameController 안 건드림).
+  - [x] 알림 (DiaryBoard.Update)
+  - [x] MCP: `Game/Diary` 오브젝트(UIDocument Diary.uxml, PanelSettings 공용, sortingOrder 5, DiaryBoard 참조), `GameUI.diary` 연결, `GameDatabase.diary` 임시 문구 5조각 입력, 씬 저장.
+  - [x] 테스트: `Tests/DiaryTests.cs` 3개 통과(조각 5개와 두 결말과 가운뎃점 없음, 1층 돌파 → 해금과 알림 한 번과 읽음, 흡수/거절 → 마지막 줄과 최근 선택으로 덮기와 저장 후 불러오기). 전체 EditMode 34개 중 실패 5개는 다른 세션 것(element-combat 데이터 미입력 3개, HubTests 2개)이라 손대지 않음.
+  - [x] 플레이 캡처 `Temp/Shots/`: `diary_notice.png`(로비 알림과 임시 버튼), `diary_board2.png`(게시판: 읽은 조각, 새 조각 반짝임과 "새 조각" 띠, 찢긴 빈 쪽지), `diary_read_refused.png`(거절 줄 청록 잉크), `diary_read_absorbed.png`(흡수 줄 포도주 잉크), `diary_notice_summary-2.png`(결과 화면 알림). 번진 줄(미선택)은 코드로 확인. 테스트와 캡처 뒤 실제 프로필을 백업본으로 되돌림.
+- **데이터 위치:** `Game/GameDatabase` 인스펙터 `diary`(조각 5개 제목, 본문 4줄, 흡수 줄, 거절 줄, 기울기, 게시판 문구, 알림 4.5초, 잉크 색). 마지막 줄은 주인공이 여백에 적은 글("(내 글씨) ...")이라 아버지 글과 잉크 색이 다릅니다.
+- **남은 것:**
+  - 허브 게시판 시설의 E에서 `ui.ShowDiary()` 호출(허브 세션). 붙으면 `diary.showLobbyButton = false`로 임시 버튼을 끕니다. 허브 걷기 입력은 `ui.Opened != ""`일 때 막아야 합니다.
+  - 문구는 임시입니다(기획서 톤으로 쓴 초안). 사람이 다듬을 것.
+  - 쪽지 열 때 종이 바스락 효과음은 없고 기존 `loot`/`upgrade` 소리를 씁니다.
+
+## 16차 — 메인/부가 세트, 층 속성 상성, 속성 몬스터, 상인 대사 (2026-11-24 자동 작업) 완료
+
+> 사용자 지시: **질문 없이 임의로 판단해 인게임에 구현**합니다. 분할 세션으로 나눠 진행하고, 세션마다 이 절 아래에 자기 절(`### 16차-<세션 이름>`)을 붙여 진행을 적습니다. 커밋하지 않습니다. 끝나면 제목 줄 끝에 "완료"를 붙입니다.
+
+### 결정 (조율 세션이 정함)
+- **메인 세트 = 판에 놓인 조각 수가 가장 많은 켜진 세트**입니다(동률이면 단계, 그다음 연결 조각 수, 그다음 세트 순서). 켜진 세트가 없으면 무속성입니다. 13차의 "단계 높은 쪽이 주 속성, 나머지 50%"를 대신합니다.
+- **메인 속성:** 바늘 공격, 당기기, 결박 폭발의 피해와 이펙트가 모두 메인 속성입니다. 메인 세트가 있으면 그 타격의 피해 전체가 메인 속성 피해로 계산됩니다.
+- **부가 세트 = 스태틱식 주기 발동:** 메인이 아닌 켜진 세트는 각자 충전 게이지를 가집니다. 바늘 명중과 당기기 타격마다 충전되고, 다 차면 다음 타격에 그 속성이 터집니다(피해 + 부가 효과 + 전용 이펙트). 상시 50% 보조는 없앱니다. 충전 수, 발동 피해는 데이터(`gear`/`SetDef`)입니다.
+- **층 속성:** 층마다 8속성 중 하나를 무작위로 고릅니다(한 등반 안에서 겹치지 않게). 그 층의 몬스터는 모두 그 속성입니다. 라운드 컨셉은 그대로 두되, 색조는 층 속성이 우선합니다.
+- **상성 고리:** 화염 → 얼음 → 바람 → 번개 → 독 → 피 → 빛 → 어둠 → 화염 (화살표 앞이 뒤에 강함). 화염이 얼음을 녹이고, 얼음이 바람을 얼리고, 바람이 번개 구름을 흩고, 번개가 독을 태우고, 독이 피를 썩히고, 피가 빛을 더럽히고, 빛이 어둠을 몰아내고, 어둠이 불을 삼킵니다.
+  - 공격 속성이 대상 속성에 강하면 ×1.5(약점), 대상 속성이 공격 속성에 강하면 ×0.5(저항), 나머지와 무속성은 ×1입니다. 값은 데이터입니다.
+  - 상성은 **무기 속성 → 몬스터** 방향에만 씁니다. 플레이어가 받는 피해에는 상성이 없습니다.
+  - 피해 숫자 옆에 "약점"/"저항" 작은 글자를 띄웁니다.
+- **층 암시:** 라운드가 시작할 때마다 화면 가운데에 층 속성 문구를 띄웁니다(예: "화염의 기운이 가득한 것 같다..."). 문구는 데이터입니다.
+- **층 맵:** 바닥, 등불, 안개 색조가 층 속성을 따릅니다. 속성 장식은 정적 소품(Codex)과 움직이는 장식(Blender: 불꽃 일렁임, 눈발, 전기 불꽃, 빛 알갱이, 어둠 연기, 핏방울 웅덩이, 바람 먼지, 독 거품)입니다.
+- **속성 몬스터:** 스토커, 차저, 슈터, 보스 4종 × 8속성의 파츠 그림(Codex)으로 리그 그림만 바꿔 끼웁니다(뼈대와 동작은 그대로).
+- **보스 속성 공격:** 일반 몬스터는 공격 이펙트를 바꾸지 않습니다. 보스만 공격에 속성 이펙트(Blender)와 속성 효과가 붙습니다. 화염 = 화상 도트, 얼음 = 둔화, 번개 = 감전 연쇄 피해, 빛 = 눈부심(잠깐 시야 밝게 번짐), 어둠 = 시야 좁힘, 피 = 준 피해만큼 보스 회복, 바람 = 밀쳐냄, 독 = 중독 도트.
+- **상인:** Codex로 다시 뽑은 통그림 자세(기본, 인사, 말하기, 구매 기쁨, 돈 부족 거절, 작별)를 바꿔 끼우고, 코드 트윈(통통 튐, 눌림, 기울기)으로 움직입니다. 리그는 만들지 않습니다. 말 걸기, 구매, 돈 부족, 다시 굴리기, 떠나기마다 말풍선 대사가 뜹니다(대사는 데이터, 상황마다 여러 줄 중 무작위).
+
+### 세션 나누기
+| 세션 | 맡는 일 | 시작 |
+|---|---|---|
+| 조율(이 세션) | 그림 생성(Codex CLI, 한도가 차면 ChatGPT 웹): 상인 자세, 속성 몬스터 파츠, 속성 정적 장식. 세션 시작과 확인 | 바로 |
+| `element-combat` | 메인/부가 세트, 층 속성, 상성, 층 암시, 층 맵 색조, 보스 속성 공격, 그림·이펙트 연결 (Unity) | 바로 |
+| `element-vfx` | Blender 이펙트: 보스 속성 공격 8종, 부가 발동 8종, 움직이는 맵 장식 8종, 결박 폭발 4종 (파일만) | 바로 |
+| `merchant` | 상인 자세 연결, 말풍선 대사, 상호작용 동작 (Unity). **허브 본체 세션(`15차: 재봉실 허브 본체`)이 이어서 맡음** (05:40) | 허브 본체 완료 뒤 |
+
+- **Unity 잠금:** 에디터는 하나라서 플레이 모드, 테스트 실행, 씬 저장 전에 `Temp/claude_unity.lock`을 확인합니다. 없거나 20분 넘게 갱신되지 않았으면 자기 세션 이름과 시각을 써서 잡고, 끝나면 지웁니다. 다른 세션이 잡고 있으면 코드 작업을 하며 기다립니다.
+- **MCP 끊김:** Unity가 백그라운드에서 멈칫하면 MCP가 끊깁니다(instances 0, Editor.log에 "WebSocket is not initialised"). 00:47에 한 번 있었고, Unity 창을 앞으로 가져오니 20초 안에 다시 붙었습니다. PowerShell에서 user32 `ShowWindow(h,9)` + `SetForegroundWindow(h)`를 `(Get-Process Unity).MainWindowHandle`에 호출하면 됩니다.
+- **같은 파일 편집:** `GameDatabase.cs`, `Combat.cs`, `GameUI.cs`는 15차와 겹칠 수 있습니다. 고치기 직전에 다시 읽고, 작은 단위로 고칩니다. 다른 세션이 만든 컴파일 오류는 고치지 말고 잠시 기다립니다.
+- **그림 경로:** 속성 몬스터 `art_src/raw/enemy_<종류>_parts_<속성>.png` → `Assets/sprites/enemy_<종류>_<파츠>_<속성>.png`. 정적 장식 `art_src/raw/decor_<속성>.png` → `Assets/sprites/decor_<속성>_<이름>.png`. 상인 `art_src/raw/merchant_poses.png` → `Assets/sprites/merchant_<자세>.png`. 진행 상황은 아래 "16차-그림"에 적습니다.
+
+### 16차-element-combat (게임플레이) 완료
+- **설계(이 세션이 정함):**
+  - 데이터는 새 파일 `Runtime/Data/ElementData.cs`의 `ElementConfig`(GameDatabase `elements` 한 필드)에 모읍니다. 상성 고리, 층 암시 문구, 층 색조, 속성 장식, 몬스터 파츠 교체, 부가 발동 이펙트, 보스 속성 공격 값이 속성마다 `ElementDef` 한 줄입니다. 충전 수와 발동 값은 결정대로 `SetDef`(`procCharge`, `procDamage`, `procDamagePerTier`, `procEffectScale`)에 둡니다.
+  - 메인 세트 정렬: 판에 놓인 조각 수 → 단계 → 연결 조각 수 → 세트 순서(`gear.sets` 순). `GearStats.sets[0]`이 메인입니다.
+  - 메인 속성: 당기기 한 타의 피해 = 실 피해 + 메인 세트 `damagePerTier × 단계`를 **한 숫자**로 합쳐 메인 속성 글꼴로 띄웁니다(치명타는 합친 피해 전체에 걸리고 치명타 글꼴). 메인 세트의 부가 효과(화상, 둔화 등)는 예전처럼 당기기마다 100%로 겁니다.
+  - 부가 세트: 바늘이 적에 꽂힐 때 +1, 당기기에 맞은 적 하나마다 +1 충전합니다. `procCharge`만큼 차면 "준비" 상태가 되고, **다음 타격**의 적에게 터진 뒤 0으로 돌아갑니다. 발동 = 피해(`procDamage + procDamagePerTier × 단계`, 상성 적용) + 그 속성 효과 한 번(`effectPerTier × 단계 × procEffectScale`) + 발동 이펙트(`ElementDef.procFx`, 없으면 `ElementTone.hit`을 크게).
+  - 상성은 무기 → 몬스터에만 씁니다. 실 피해, 부가 발동, 번개 튐, 화상과 중독 도트 모두 그 피해의 속성으로 배율을 겁니다. 무속성은 ×1입니다.
+  - 층 속성: `BeginFloor`에서 `elements.defs` 중 이번 등반에 안 나온 것을 뽑습니다(8층을 넘으면 다시 처음부터). 그 층 몬스터 전원 `Enemy.element`.
+  - 층 암시, 부가 충전 게이지는 `Main.uxml`과 겹치지 않게 따로 만든 UIDocument `ElementHud`(`Assets/UI/ElementHud.uxml/uss`, 게이지 템플릿 `ProcGauge.uxml`)가 그립니다.
+  - 보스 속성 공격은 보스의 돌진 접촉과 보스 탄이 실제로 피해를 줬을 때만 겁니다(회피 중이면 없음). 화상, 중독, 감전 피해는 피격 무적과 경직 없이 체력만 깎습니다. 상태는 라운드가 바뀌면 풀립니다.
+- **코드:** `Sim/CombatElements.cs`(partial `Combat`: 메인/부가, 발동, 상성, 층 속성, 보스 속성 공격, 주인공 상태), `View/ArenaRenderer.Elements.cs`(partial: 상성 글자, 발동, 보스 피격, 주인공 상태와 눈부심/어둠, 속성 장식, 보스 탄, 결박 폭발 시트), `UI/ElementHud.cs`, `Editor/ElementArtSetup.cs`. 기존 파일은 고리만 걸었습니다(`Combat.Pull/Attach/DamageEnemy/EnemyShots`, `BackgroundView` 색조, `EnemyView.Skin`, `GameUI` 세트 패널 문구와 순서, `DevTools` 층 속성 버튼, `Main.uxml` 개발자 줄 하나).
+- **그림 연결 메뉴 `TOD/Setup/16. Element Art`** (그림이 들어올 때마다 MCP `execute_menu_item`으로 다시 실행):
+  - `Assets/Art/VFX/16/*.png`를 정사각 칸으로 자르고 피벗을 `art_src/vfx/16/sheets.json`에서 읽습니다. `proc_<속성>` → `procFx`, `boss_<속성>_slam/bullet/pool` → `boss.fx/bullet/pool`, `decor_<속성>_loop` → `animated`, `bind_<속성>_burst` → `bindBurst`. `_glow` 짝은 가산 빛으로 같은 클립에 들어갑니다.
+  - `Assets/sprites/enemy_<종류>_<파츠>_<속성>.png`는 원래 파츠와 같은 가져오기 설정(피벗, PPU는 그림 높이 비율로)으로 맞추고 `skins`에 넣습니다. **속성 파츠는 원래 파츠와 같은 구도(같은 캔버스 비율, 같은 피벗 자리)여야 리그에 맞습니다.**
+  - `Assets/sprites/decor_<속성>_<이름>.png` → `props`. 크기와 세기 같은 수치는 건드리지 않고(fps만 시트 메타), 씬도 저장하지 않습니다.
+- 어둠 시야 마스크: `python tools/make_vision_mask.py` → `Assets/sprites/fx_vision_mask.png`.
+- **씬 (MCP):** `Game/ElementHud`(UIDocument `ElementHud.uxml`, 정렬 -1 = Main 아래, `ElementHud` 컴포넌트)를 만들었습니다. 게이지는 상태 패널 바로 아래(`top: 452px`)입니다(아래쪽은 조작 안내와 경험치 줄이 덮음).
+- **데이터 (MCP `execute_code`, 모두 임시값):**
+  - 상성: 고리는 결정 그대로, 약점 ×1.5 / 저항 ×.5, 글자 "약점"(노랑) "저항"(회청), 15px.
+  - 부가 발동: 번개와 바람 5타, 나머지 6타. 피해 8 + 단계당 4, 효과 세기 ×2. 발동 이펙트 크기 190, 길이 .55초. 게이지 문구 "{0}/{1}", 다 차면 "준비!".
+  - 세트 패널: `ui.setMain` "메인 속성 (모든 공격)", `ui.setSub` "부가 속성 ({0}타마다 발동)". 세트 목록은 메인, 부가, 꺼진 세트 순서입니다.
+  - 층 암시(라운드 시작 .5초 뒤, .5초 나타나 2.2초 유지, .9초 사라짐): 화염 "화염의 기운이 가득한 것 같다...", 얼음 "살을 에는 냉기가 감도는 것 같다...", 번개 "공기가 찌릿찌릿 떨리는 것 같다...", 빛 "눈부신 빛이 스며든 것 같다...", 어둠 "짙은 어둠이 깔린 것 같다...", 피 "비릿한 피 냄새가 나는 것 같다...", 바람 "거센 바람이 휘도는 것 같다...", 독 "매캐한 독기가 서린 것 같다...".
+  - 층 색조: 속성마다 바닥 덮개(.24~.40), 등불 색, 안개(.55), 그림 없는 파츠에 곱하는 색(.45). 속성 소품 밀도 2.2, 움직이는 장식 3(100만 px²당), 크기 130.
+  - 보스 공격: 화염 화상 초당 6, 3초 / 얼음 둔화 35%, 2.5초 / 번개 감전 5 × 3번, .35초 간격 / 빛 눈부심 1.6초, 세기 .5 / 어둠 시야 반지름 170, 3.5초 / 피 준 피해 ×1 회복 / 바람 160 밀침, .35초 / 독 겹당 초당 3, 5초, 최대 4겹. 맞은 이펙트 200, .67초, 보스 탄 48.
+- **그림 연결 현황 (05:30):** Blender 시트 76장 모두 연결(발동 8, 보스 슬램 8, 보스 탄 8, 화염과 독 웅덩이, 움직이는 장식 8, 결박 폭발 4). 몬스터 파츠는 화염, 얼음, 번개, 독(각 23장)만 들어와 연결했고 빛, 어둠, 피, 바람은 색만 입힙니다. 속성 정적 소품(`decor_<속성>_*.png`)은 아직 0장입니다.
+- **주의:** `TOD/Setup/1. Texture Imports`가 `Assets/Art/VFX/16`을 Single로 되돌리지 않게 건너뛰도록 고쳤습니다. 플레이 중에 에셋을 새로 고치면 Main.uxml이 다시 불려 `GameUI` 참조가 끊깁니다(화면이 로비로 보임). 캡처 전에는 플레이를 다시 시작하세요.
+- **확인:** EditMode 34개 통과(새 테스트 `MainSetHasMostPieces`, `SubSetProcFiresAfterCharge`, `AffinityRingMultipliers`, `FloorElementsDoNotRepeat`, `BossAttacksCarryElement`, 옛 `SecondSetIsHalf`는 지움). 플레이 캡처 `Temp/Shots/`: `e16_hint_poison`(독 층 문구, 색조, 독 장식), `e16_ice_floor`(얼음 층, 얼음 스토커 파츠, 번개 게이지), `e16_proc_weak2`(화염 메인 115 + "약점", 번개 발동 12, 게이지 1/5), `e16_boss_dark3`(어둠 시야 좁힘), `e16_boss_fire`(화염 층 파츠, 화상 웅덩이), `e16_boss_light_blind`(눈부심 최고점). 개발자 모드(F1) "층 속성" 줄로 층 속성을 바로 바꿀 수 있습니다.
+- **남은 것:** 수치 균형(모두 임시값), 실제 속도로 보는 발동과 보스 공격 손맛, 빛, 어둠, 피, 바람 몬스터 파츠와 속성 정적 소품이 들어오면 `TOD/Setup/16. Element Art` 다시 실행(크기가 0인 새 클립은 위 크기로 맞춰 줄 것), 발동과 보스 속성 공격 효과음(`proc`, `bosselement` 이벤트에 소리 없음), 결박 폭발 시트를 쓰는 4속성은 기존 속도선을 그리지 않습니다.
+- **그림 전부 연결 확인 (06:20):**
+  - 조율 세션이 8속성 몬스터 파츠(속성마다 23장)와 정적 소품(속성마다 4개)을 연결해 둔 상태를 확인했습니다. 모든 속성이 "파츠 23, 소품 4"입니다. 움직이는 장식 클립 중 크기 0인 것은 없습니다.
+  - 개발자 모드 층 속성 줄과 같은 방법(`DevSetFloorElement` + `arena.BeginRound`)으로 8속성을 하나씩 바꾸고, 스토커, 차저, 슈터, 보스를 같은 자리에 세워 찍었습니다(`Temp/Shots/e16_all_<속성>.png`). 8속성 모두 파츠가 리그에 맞게 붙었고 관절 어긋남이나 크기 차이는 없습니다. 원본 해상도로 확대한 `e16_joints_poison.png`, `e16_joints_wind.png`과 걷는 자세 `e16_all_poison_move.png`로도 확인했습니다.
+  - 데이터 수정 2가지: 속성 소품 기본 높이 `elements.propHeight` 110 → 64(기존 장식 높이 40~72에 맞춤), 어둠 바닥 덮개 `floorFill.a` .40 → .30(어두운 파츠가 바닥에 묻혀 보였음). 씬을 저장했습니다.
+  - EditMode 38개 통과(다른 세션 테스트 포함).
+
+### 16차-그림 (조율 세션) 완료
+- 흐름: `python tools/make_element_enemy_prompts.py`, `python tools/make_element_decor_prompts.py`(프롬프트 생성) → `sh tools/codex_prompts/run_16.sh`(상인 + 몬스터 32장), `sh tools/codex_prompts/run_16b.sh`(장식 8장). 둘 다 이미 있는 그림은 건너뛰고, Codex 한도에 걸리면 `QUOTA`를 찍고 멈춥니다. 진행 기록은 `tools/codex_prompts/run_16.out`. 한도가 차면 브라우저 패널의 ChatGPT 웹으로 같은 프롬프트를 넣어 뽑고 같은 경로에 저장합니다.
+- 굽기: `python tools/bake_16_art.py`. 속성 몬스터 파츠는 **기존 파츠와 같은 픽셀 크기**로 맞춰 저장하므로 리그 관절과 피벗은 그대로 두고 스프라이트만 바꿔 끼우면 됩니다. 상인 자세 6장은 같은 캔버스 크기, 발이 캔버스 아래(아래 가운데 피벗). 장식은 긴 변 320px.
+- [x] 상인 자세 6장 (`Assets/sprites/merchant_idle/greet/talk/happy/refuse/farewell.png`, 487×475, 발이 아래 끝에서 약 8px 위). 단추는 두더지 수인 떠돌이 상인: 찢긴 보라 외투, 분홍 리본 모자, 단추 안대, 실패와 가위가 든 큰 배낭. 미리보기 `Temp/Shots/merchant_poses_baked.png`. 기존 임시 `Assets/Art/Generated/merchant.png`를 대신합니다.
+- [x] 속성 몬스터 파츠 32장 — **8속성 모두 구움, `TOD/Setup/16. Element Art` 실행해 속성마다 파츠 23장 연결, Main 씬 저장(06:2x)**. 확인 그림 `Temp/Shots/enemy_<속성>_check.png`. 이전 기록: 화염, 얼음, 번개, 독 16장 먼저 구움(`Assets/sprites/enemy_<종류>_<파츠>_<속성>.png`, 확인 `Temp/Shots/enemy_fire_check*.png`, `enemy_fire_boss.png`, `enemy_elements_heads.png`). 05:13쯤 Codex 한도에 걸려 바람부터 멈췄고, 05:46에 `run_16.sh` → `run_16b.sh`가 다시 돌도록 걸어 둠(기록 `tools/codex_prompts/run_16c.out`).
+- [x] 속성 정적 장식 8장 → 32개 (`Assets/sprites/decor_<속성>_<이름>.png`, 미리보기 `Temp/Shots/decor_elements.png`). `TOD/Setup/1. Texture Imports`(스프라이트로 임포트) → `TOD/Setup/16. Element Art` 순서로 돌려 속성마다 소품 4개 연결, Main 씬 저장. **주의:** Codex가 칸 순서를 프롬프트와 다르게 놓은 시트가 있어 파일 이름과 그림이 어긋난 것이 있습니다(예: 얼음 `snow_yarn`이 실제로는 촛대). 소품은 속성별로 무작위 배치라 게임에는 영향 없고, 이름이 필요하면 미리보기로 확인하세요.
+- **16차-그림 완료** (06:5x). Codex 한도는 05:13에 한 번 걸렸고 05:45 초기화 뒤 이어서 끝냄(ChatGPT 웹은 쓰지 않음).
+
+### 15차 세션 나누기 (사용자 요청, 2026-11-24)
+- 허브 본체(방, 걷기, 시설, 상인 단추 상점, 시설 그림) = 기존 15차 세션. 세트 해금과 다락 '시작 조각 선택' = `outgame-unlock`. 아버지의 일기 = `diary-story`. 각자 15차 절 아래 `### 15차-<이름>` 절에 진행을 적습니다.
+- 토큰이 다 떨어져 멈추면 05:30 예약 작업(`tod-resume-0530`)이 멈춘 세션들을 다시 깨웁니다.
+
+### 16차-element-vfx (Blender 이펙트 시트) 완료
+> 스크립트 `tools/render_element_vfx.py`(Blender 5.3), 미리보기 `tools/preview_element_vfx.py`. 출력 `Assets/Art/VFX/16/` 38시트 × 2장 = PNG 76장. Unity는 건드리지 않았습니다(임포트, 자르기, 연결은 element-combat).
+> 다시 굽기: `"C:/Program Files/Blender Foundation/Blender 5.3/blender.exe" -b -P tools/render_element_vfx.py -- C:/Project/TOD [boss|proc|decor|bind|시트 이름...]` (전부 약 5분, 그룹별로 4개 동시에 돌리면 빠름) → `python tools/preview_element_vfx.py` → `Temp/Shots/vfx16_boss/proc/decor/bind.png`.
+- **진행:** [x] 공용 뼈대 [x] 보스 내려찍기 8 + 탄 8 + 장판 2 [x] 부가 발동 8 [x] 맵 장식 8 [x] 결박 폭발 4 [x] 미리보기로 확인하고 다듬기(바닥 웅덩이를 둥글게, 빛 장판의 탁한 바닥 판 제거, 김과 독기와 먼지는 외곽 없는 번짐, 피 발동 할퀴기를 크게, 어둠 결박이 끝에 사라지게, 번개 발동 굵게).
+- **결정 (형식):**
+  - 시트마다 두 장: `<이름>.png` 본체(속성 색을 칠한 종이 컷아웃 + 거친 검은 잉크 외곽 + 옅은 종이 얼룩, 칸마다 외곽과 모양이 들썩임) = **보통 알파 합성**(SrcAlpha, OneMinusSrcAlpha), 틴트 흰색. `<이름>_glow.png` 빛(속성 색 번짐만) = **가산 합성**(SrcAlpha, One), 본체보다 **먼저(아래에)** 같은 칸을 그립니다.
+  - 기존 플립북의 core/rim 회색 틴트 방식이 아니라 **색이 구워져 있습니다**(어둠과 피는 가산으로는 표현이 안 돼서). 속성 색은 `bind.looks` 색조를 채도만 낮춘 것입니다.
+  - 빛 세기: 빛 알파 상한 .6, 실제 가산 최댓값 .09(바람 장식)~.54(화염 내려찍기). 한 장으로는 하얗게 날아가지 않습니다. 같은 자리에 여러 개 겹치면 빛 시트 색에 .6~.8을 곱해 쓰세요.
+  - **시트 형식:** 가로 1줄 스트립, 정사각 칸 N장, 왼쪽이 0번. 칸 수 = 폭 / 높이 → 기존 `ProjectSetup.SliceFlipbook`이 그대로 맞습니다(지금은 `Assets/vfx/flip`만 자르니 `Assets/Art/VFX/16`을 더하면 `<이름>_0..N-1`). 밉맵 끔, Clamp, 필터 Bilinear 권장(플립북과 같음).
+  - **좌표:** 한 칸 = 월드 4×4(x, y ∈ [-2, 2]). **바닥 피벗 (0.5, 0.2)** = 바닥 접점(그림자 자리), 바닥 원과 고리는 PROJECTION_Y .67로 납작하게 구워 둠(회전 금지). **가운데 피벗 (0.5, 0.5)** = 적 몸 가운데. 장판은 (0.5, 0.35)가 웅덩이 가운데.
+  - **재생:** 터지는 시트는 0번 → 마지막 칸을 한 번 재생하고 끝(마지막 칸은 거의 비어 있음, 페이드 없이 칸 단위, `DrawFlip`과 같음). 반복 시트는 마지막 칸 → 0번이 이어지므로 `(시간 × fps) mod N`. 장식 여러 개를 놓을 때는 시작 칸을 무작위로 어긋나게.
+  - 메타는 `art_src/vfx/16/sheets.json`(그룹, 속성, 칸 수, 칸 px, fps, 길이, 반복, 피벗)에도 있습니다.
+
+  | 시트 (`Assets/Art/VFX/16/`) | 칸 | 칸 px | fps (길이) | 반복 | 피벗 | 내용 / 연결 메모 |
+  |---|---|---|---|---|---|---|
+  | `boss_<속성>_slam` ×8 | 16 | 256 | 24 (0.67초) | 아니오 | (.5, .2) | 보스 근접 내려찍기 자리에 덮음. 바닥 고리 반지름이 칸 폭의 약 45% → **그리기 폭 ≈ 내려찍기 반경 × 2.2**. 화염 불기둥과 불씨, 얼음 가시와 서리 파편, 번개 낙뢰와 바닥 전기, 빛 십자 섬광과 빛 기둥, 어둠 그림자 웅덩이와 연기 촉수, 피 핏물 파도 둘과 핏방울, 바람 회오리와 잎, 독 가시 튐과 독방울과 거품. 번개는 위로 칸 끝까지 줄기가 뻗음. |
+  | `boss_<속성>_bullet` ×8 | 8 | 128 | 16 (0.5초) | 예 | (.5, .5) | 보스 탄에 덮음. **+x = 진행 방향**(탄 각도만큼 회전). 몸통 반지름 ≈ 칸 폭의 14% → **그리기 폭 ≈ 탄 반지름 × 7**. 꼬리가 −x로 칸 끝까지. 탄막이 많으면 빛 시트는 생략해도 됨. |
+  | `boss_fire_pool`, `boss_poison_pool` | 12 | 256 | 12 (1.0초) | 예 | (.5, .35) | 바닥 장판 지속 효과(화상, 중독 장판). 웅덩이 반지름 ≈ 칸 폭의 44% → **그리기 폭 ≈ 장판 반경 × 2.3**. 불꽃과 독기는 웅덩이 위로 솟음. 사라질 때는 알파를 줄여 페이드. |
+  | `proc_<속성>` ×8 | 12 | 256 | 24 (0.5초) | 아니오 | (.5, .5) | 부가 세트 발동(스태틱식). 적 몸 가운데. 주 무늬 반지름 ≈ 칸 폭의 40% → **그리기 폭 ≈ 140~200 캔버스 px**(적 크기 × 2.5 정도). 메인 타격(Codex `fx_*` 그림)과 구분되게 날 선 별 모양과 강한 빛: 화염 불꽃 가시 별, 얼음 눈꽃 결정이 펼쳐졌다 산산조각, 번개 지그재그 가지와 전기 고리, 빛 여덟 갈래 성광과 무늬 고리, 어둠 가시가 빨려 들었다 검은 구멍과 가시 고리로 터짐, 피 할퀴기 세 줄과 핏방울, 바람 초승달 칼날 셋 회전, 독 가시 독 덩이 폭발과 꼬리 독방울. |
+  | `decor_<속성>_loop` ×8 | 16 | 256 | 10 (1.6초) | 예 | (.5, .2) | 움직이는 맵 장식(바닥 정렬, Y정렬 대상). 내용 폭 ≈ 칸 폭의 60~80% → **그리기 폭 ≈ 180~240 캔버스 px**. 화염 촛불 다섯 자루(촛농 웅덩이 포함), 얼음 언 웅덩이와 서리 결정과 눈발과 김, 번개 철판과 구리 막대 잔해에서 전기 불꽃(4칸 중 1칸 꺼짐), 빛 옅은 빛 웅덩이(빛 시트만)와 떠오르는 빛 알갱이, 어둠 바닥을 굴러가는 연기와 가는 연기, 피 웅덩이에 핏방울이 떨어져 튀고 물결, 바람 작은 회오리와 먼지와 잎, 독 끓는 거품 웅덩이와 독기. 눈발과 핏방울, 빛 알갱이는 칸 위쪽까지 씀. |
+  | `bind_<dark/blood/wind/poison>_burst` ×4 | 14 | 256 | 30 (0.47초) | 아니오 | (.5, .2) | 결박 폭발(`DrawBind`)의 남은 4종. 적 발밑(ground)에 바닥 피벗, 적 몸 가운데는 피벗 위 칸 높이의 25%. 바닥 고리 반지름 ≈ 칸 폭의 45% → **그리기 폭 ≈ R × 2.2**(R 기본 90이면 약 200 px). 기존 화염/번개/얼음/빛처럼 `Fx.follow`를 따라가면 됨. 어둠 촉수 여섯이 나선으로 휘감아 조이고 보랏빛 가시, 피 가시 왕관과 핏줄기와 핏방울, 바람 회오리 고리가 감겨 조이고 엇갈린 칼바람과 잎, 독 독액 기둥이 솟아 꼭대기에서 왕관처럼 터짐. 코드의 바닥 고리와 속도선은 그대로 두고 그 위에 얹어도 어울림. |
+
+- **남은 것:** 실제 게임 속도와 크기로 본 느낌(Unity 연결 뒤 element-combat가 확인). 탄 8칸은 128px이라 아주 크게 그리면 흐릴 수 있음(그때는 `size` 256으로 다시 굽기, 시트 표 한 줄). 맵 장식 화염의 초는 Codex 정적 장식과 겹치면 불꽃만 쓰는 판이 필요할 수 있음.
+
+### 16차-merchant (상인 단추 자세와 말풍선) 완료
+> 허브 세션(15차-outgame-hub)이 이어 맡음. 허브 상인과 쉬어가기 라운드 상인이 같은 구조를 씁니다.
+- **결정:**
+  - 데이터 = `GameDatabase.merchant`(`Runtime/Data/MerchantData.cs`의 `MerchantConfig`): 자세 6장(`MerchantMood` Idle, Greet, Talk, Happy, Refuse, Farewell → 스프라이트), 트윈 값(숨쉬기, 바꿀 때 튐과 눌림, 기울기, 깡충, 좌우 흔들기, 자세 유지 시간), 상황별 대사(`MerchantCue` Approach, Greet, Buy, NoMoney, SoldOut, Farewell → 3~5줄과 자세), 말풍선(글자 속도, 유지 시간, 높이), 효과음 id.
+  - 상태와 트윈 계산 = `Sim/MerchantTalk.cs`(Unity 그리기 무관, 테스트 대상): 지금 자세, 자세 시작 시각, 지금 대사, 다가옴 혼잣말 쿨다운. `Pose(...)`가 스프라이트 대신 자세, 가로세로 배율, 기울기, 뜀 높이를 돌려줍니다. GameController가 하나를 갖고 허브와 쉬어가기 라운드가 같이 씁니다.
+  - 그리기: 허브는 `HubView`가 상인 시설 렌더러에 자세 그림과 트윈을 입힘. 쉬어가기 라운드는 `ArenaRenderer.Merchant.cs`의 `DrawMerchant`(기존 `DrawProp(merchantSprite…)` 한 줄을 바꿈). 상인 그림은 피벗이 발밑이라 기울기와 눌림이 발을 축으로 일어납니다.
+  - 말풍선: 상점 창이 닫혀 있으면 상인 머리 위 월드 말풍선(`merchant-world` 층), 상점 창(`dialog-shop`, `dialog-hubshop`)이 열려 있으면 창 오른쪽 위에 상인 얼굴(지금 자세 그림)과 말풍선(`merchant-peek`). 둘 다 템플릿 `Assets/UI/MerchantBubble.uxml`, 스타일 `Assets/UI/Merchant.uss`(양피지 `panel_light`). 글자는 한 자씩 찍히고 두 자마다 짧은 소리(`merchantBlip`), 새 대사마다 `merchantTalk`.
+  - 계기: 다가옴(상호작용 거리 안에 처음 들어옴, 쿨다운), 말 걸기(E로 상점 열기), 구매, 돈 부족, 이미 팔림(산 카드를 누름), 작별(상점 창 닫기, `GameUI.DialogClosed` 이벤트). 돈 부족과 팔림을 누를 수 있게 상점 카드는 누를 수 있게 두고 흐리게만 합니다.
+- **진행:**
+  - [x] 코드: `Data/MerchantData.cs`, `Sim/MerchantTalk.cs`, `Game/GameController.Merchant.cs`, `UI/GameUI.Merchant.cs`, `View/ArenaRenderer.Merchant.cs`, HubView `AnimateMerchant/MerchantHead`, 테스트 `Tests/MerchantTests.cs`(4개). 공유 파일 연결 줄: GameController(Interact 상인 → 인사, Buy 의 팔림/부족/구매 대사, Update `TickMerchant`), GameUI(`CloseDialog`가 `DialogClosed` 이벤트, 쉬어가기 상점 카드는 누를 수 있게 두고 `ware-dim`으로 흐리게), ArenaRenderer(`DrawProp(merchantSprite…)` → `DrawMerchant`), GameDatabase(`merchant`).
+  - [x] UI: 템플릿 `Assets/UI/MerchantBubble.uxml`(월드 말풍선, 상점 창 얼굴+말풍선), `Assets/UI/Merchant.uss`, Main.uxml에 `merchant-world` 층과 두 상점 창의 `merchant-peek-slot`.
+  - [x] MCP 데이터(`GameDatabase.merchant`, 임시): 자세 6장, 자세 유지 1.6초, 숨쉬기 0.022 × 0.55회/초, 바꿀 때 0.32초 눌림 0.14 튐 9px, 인사/작별 기울기 9도 0.7초, 기쁨 깡충 16px 2번 0.75초, 거절 흔들기 8도 3번 0.6초, 말할 때 까딱 1.6도. 대사 6상황 × 4~5줄(능청스럽고 수상한 두더지 말투). 글자 24자/초, 다 찍힌 뒤 2.2초, 머리 위 58px, 혼잣말 쿨다운 12초. 효과음 `merchantTalk`(삼각파 330→470Hz 0.09초), `merchantBlip`(사각파 560→500Hz 0.035초, 두 자마다). 쉬어가기 상인 그림 `ArenaRenderer.merchantSprite` = `merchant_idle`, `palette.merchantHeight` = 105.
+  - [x] EditMode 38개 통과(상인 4개 포함). 프로필은 테스트 전 값으로 되돌림.
+  - [x] 플레이 캡처 `Temp/Shots/merchant_*.png`: 다가옴 혼잣말(`merchant_approach`, 말하기 자세), 상점 열기 인사(`merchant_greet_shop`), 파편 부족 거절(`merchant_refuse`), 구매 기쁨(`merchant_happy`, 팔림 흐림), 작별(`merchant_farewell`, 손 흔들기), 글자 찍히는 중(`merchant_typing-1`), 쉬어가기 라운드 상인 인사(`merchant_rest_round`), 쉬어가기 상점과 구매(`merchant_rest_shop-2`, `merchant_rest_buy`), 넓힌 상점 말풍선(`merchant_shop_peek-1`).
+  - 남은 것: 트윈 움직임(튐, 흔들기)은 정지 화면으로만 봤습니다. 효과음 청취는 못 함. MCP 캡처가 가끔 UI 없이 찍혀 같은 장면을 두 번 찍은 것이 있음(게임 문제 아님).
 
 ## 14차 요청 (2026-11-23) — 게임 글꼴 주아, 속성별·치명타 피해 숫자, 치명타
 

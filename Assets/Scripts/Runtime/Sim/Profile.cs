@@ -17,6 +17,15 @@ namespace TOD
         public List<OwnedItem> items = new();
         public List<Placement> placements = new();
         public int nextId;
+        // 15차-outgame-unlock: 알림을 본 해금 세트 id, 다락 '시작 조각' 강화 단계와 고른 조각 종류
+        public List<string> seenUnlocks = new();
+        public int starter, starterKind = -1;
+        // 15차 아버지의 일기 (Diary.cs): 층 번호 - 1 자리에 보스 욕망 선택(0 아직, 1 흡수, 2 거절), 읽은 조각의 층 번호, 알린 조각 수
+        public List<int> floorChoices = new();
+        public List<int> diaryRead = new();
+        public int diaryNoticed;
+        // 15차 재봉실 허브: 상인 단추 조각 상점 진열 (조각 종류, HubShop.cs)
+        public List<int> hubStock = new();
     }
 
     public class PlacedPiece
@@ -29,8 +38,9 @@ namespace TOD
 
     public class SetGroup { public int size, threshold, tier; }
 
-    // 켜진 세트 (단계 1 이상). 단계 높은 순.
-    public class ActiveSet { public SetDef def; public int tier, size; }
+    // 켜진 세트 (단계 1 이상). 16차: 메인 세트(판에 놓인 조각 수가 가장 많은 것)가 맨 앞.
+    // count = 판에 놓인 그 세트 조각 수, size = 가장 큰 연결 덩어리 조각 수, order = gear.sets 순서
+    public class ActiveSet { public SetDef def; public int tier, size, count, order; }
 
     public class GearStats
     {
@@ -78,9 +88,9 @@ namespace TOD
         // 아이템은 모두 고유하다: 같은 종류는 한 번만 가진다 (개수 표시 없음).
         public static bool Owns(Profile profile, int kind) => profile != null && profile.items.Any(i => i.kind == kind);
 
-        // 아직 갖지 않은 종류 (쉬어가기 탑 선택지·상점 조각이 여기서 뽑는다).
+        // 아직 갖지 않은 종류 (쉬어가기 탑 선택지·상점 조각이 여기서 뽑는다). 15차: 잠긴 세트 조각은 빠진다 (Unlocks).
         public static List<int> Unowned(GameDatabase db, Profile profile) =>
-            Enumerable.Range(0, db.gear.pieces.Length).Where(k => !Owns(profile, k)).ToList();
+            Enumerable.Range(0, db.gear.pieces.Length).Where(k => !Owns(profile, k) && Unlocks.KindOpen(db, profile, k)).ToList();
 
         // 저장된 프로필에 같은 종류가 여럿이면 처음 것만 남긴다 (빠진 것의 배치도 지움).
         static Profile Dedupe(GameDatabase db, Profile profile)
@@ -135,9 +145,9 @@ namespace TOD
                 OwnedItem item = profile.items.Find(i => i.id == p.id);
                 if (item == null) return true;
                 List<Vector2Int> cells = Shape(db, item, p.turns).Select(c => c + new Vector2Int(p.x, p.y)).ToList();
-                bool bad = cost + Def(db, item).cost > limit || cells.Any(c => c.x < 0 || c.y < 0 || c.x >= width || c.y >= height || used.Contains(c));
+                bool bad = cost + Unlocks.Cost(db, profile, item) > limit || cells.Any(c => c.x < 0 || c.y < 0 || c.x >= width || c.y >= height || used.Contains(c));
                 if (bad) return true;
-                cost += Def(db, item).cost;
+                cost += Unlocks.Cost(db, profile, item);
                 foreach (Vector2Int c in cells) used.Add(c);
                 return false;
             });
@@ -164,7 +174,7 @@ namespace TOD
         {
             var (width, height, limit) = Dimensions(db, profile);
             List<PlacedPiece> occupied = Placed(db, profile).Where(p => p.Id != item.id).ToList();
-            if (occupied.Sum(p => p.def.cost) + Def(db, item).cost > limit) return false;
+            if (occupied.Sum(p => Unlocks.Cost(db, profile, p)) + Unlocks.Cost(db, profile, item) > limit) return false;   // 시작 조각은 0
             foreach (Vector2Int c in Shape(db, item, turns))
             {
                 int col = x + c.x, row = y + c.y;
@@ -206,16 +216,27 @@ namespace TOD
                 int[] tiers = set.thresholds.Where(t => t <= size).ToArray();
                 result.groups[set.id] = new SetGroup { size = size, threshold = tiers.Length > 0 ? tiers[^1] : 0, tier = tiers.Length };
                 // 12차: 세트는 능력치 대신 속성(피해 + 부가 효과)을 준다 → Combat 이 r.sets 로 읽는다
-                if (tiers.Length > 0) result.sets.Add(new ActiveSet { def = set, tier = tiers.Length, size = size });
+                if (tiers.Length > 0)
+                    result.sets.Add(new ActiveSet { def = set, tier = tiers.Length, size = size, count = pieces.Count(p => p.def.set == set.id), order = Array.IndexOf(db.gear.sets, set) });
             }
             // 장착한 조각의 고유 효과 (같은 효과가 여럿이면 값을 더한다)
             foreach (PlacedPiece piece in pieces)
                 if (piece.def.effect != ItemEffect.None) result.effects.Add(piece.def);
-            result.sets.Sort((a, b) => (b.tier * 100 + b.size).CompareTo(a.tier * 100 + a.size));
+            result.sets.Sort(MainFirst);
             return result;
         }
 
-        // 재봉 상자에서 가장 높은 단계의 세트가 실의 속성(모습)이 된다 (동률이면 연결 크기). 속성 피해는 켜진 세트 모두가 준다.
+        // 16차 메인 세트 순서: 판에 놓인 조각 수 → 단계 → 연결 조각 수 → 세트 순서
+        public static int MainFirst(ActiveSet a, ActiveSet b)
+        {
+            int c = b.count.CompareTo(a.count);
+            if (c == 0) c = b.tier.CompareTo(a.tier);
+            if (c == 0) c = b.size.CompareTo(a.size);
+            if (c == 0) c = a.order.CompareTo(b.order);
+            return c;
+        }
+
+        // 메인 세트(sets[0])가 실의 속성(모습)이 된다. 바늘·당기기·결박 폭발이 모두 이 속성이다.
         public static Element ThreadElement(GearStats gear) => gear.sets.Count > 0 ? gear.sets[0].def.element : Element.Plain;
     }
 }

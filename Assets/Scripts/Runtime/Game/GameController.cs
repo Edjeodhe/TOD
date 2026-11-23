@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 
 namespace TOD
 {
-    public class GameController : MonoBehaviour
+    public partial class GameController : MonoBehaviour   // 15차 해금, 시작 조각: GameController.Outgame.cs
     {
         public GameDatabase db;
         public ArenaRenderer arena;
@@ -54,6 +54,7 @@ namespace TOD
             sound.Init(db.sounds);
             sound.Enabled = true;
             ui.Init(this);
+            InitHub();   // 15차 재봉실 허브: GameController.Hub.cs
             aim = Center;
             Shader.SetGlobalFloat(CanvasHeightId, db.arena.canvasHeight);
             ShowScreen(UiScreen.Lobby);
@@ -69,10 +70,12 @@ namespace TOD
             if (next == UiScreen.Lobby) summary = null;
             ui.ShowScreen(next);
             arenaRoot.SetActive(next == UiScreen.Combat);
+            SyncHub(next);   // 15차: 로비 = 재봉실 허브
             if (next == UiScreen.Inventory) RenderInventory();
             if (next == UiScreen.Attic) RenderAttic();
             if (next == UiScreen.Summary && summary is { } s) ui.RenderSummary(s.outcome, s.floor, s.kills, Profile.shards);
             ui.UpdateMeta(Profile);
+            if (next == UiScreen.Lobby) ShowUnlocks();   // 15차: 새로 열린 세트 알림
         }
 
         public void BackFromRoom()
@@ -96,6 +99,7 @@ namespace TOD
             ui.CloseDialog();
             summary = null;
             paused = false;
+            PlaceStarterPiece();   // 15차 다락 '시작 조각'
             Run = Combat.CreateRun(Profile, () => Random.value);
             offered = null;
             augmentRerolled = false;
@@ -112,6 +116,7 @@ namespace TOD
         {
             if (Run == null) return;
             summary = (outcome, Run.floor, Run.kills);
+            HubAfterRun();   // 15차: 귀환 자리, 상인 새 진열
             Gear.Save(db, Profile);
             Run = null;
             paused = false;
@@ -210,7 +215,8 @@ namespace TOD
         // E: 라운드가 끝난 뒤 쌓인 증강 → 가까운 계단·제단·상인 순으로 상호작용한다.
         public void Interact()
         {
-            if (Run == null || Opened != "" || paused) return;
+            if (Run == null) { HubInteract(); return; }   // 15차: 허브 시설
+            if (Opened != "" || paused) return;
             if (Run.phase != Phase.Combat && Run.augmentQueue > 0) { ShowAugments(); return; }
             switch (Combat.Nearest(Run))
             {
@@ -219,7 +225,7 @@ namespace TOD
                     else Ascend();
                     break;
                 case Interactable.Altar: ui.ShowArtifacts(Run.floor, Run.artifactOffer, PickArtifact, !Run.artifactRerolled); break;
-                case Interactable.Merchant: ShowShop(); break;
+                case Interactable.Merchant: ShowShop(); MerchantSay(MerchantCue.Greet); break;   // 16차 상인 대사
             }
         }
 
@@ -295,8 +301,9 @@ namespace TOD
         void Buy(string id)
         {
             WareDef ware = db.shop.wares.First(w => w.id == id);
-            if (shop.sold.Contains(id) || Run.gold < Price(ware)) return;
-            if (id == "piece" && Gear.Unowned(db, Profile).Count == 0) { ui.Say(db.ui.ownedAll); return; }   // 아이템은 고유: 다 가졌으면 팔지 않는다
+            if (shop.sold.Contains(id)) { MerchantSay(MerchantCue.SoldOut); return; }
+            if (Run.gold < Price(ware)) { MerchantSay(MerchantCue.NoMoney); return; }
+            if (id == "piece" && Gear.Unowned(db, Profile).Count == 0) { ui.Say(db.ui.ownedAll); MerchantSay(MerchantCue.SoldOut); return; }   // 아이템은 고유: 다 가졌으면 팔지 않는다
             Run.gold -= Price(ware);
             shop.sold.Add(id);
             float potion = Run.desires.Contains("hunger") ? db.desire.hungerPotion : 1;
@@ -309,6 +316,7 @@ namespace TOD
             }
             Gear.Save(db, Profile);
             sound.Play("loot");
+            MerchantSay(MerchantCue.Buy);
             ShowShop();
         }
 
@@ -408,16 +416,20 @@ namespace TOD
 
         // ---------------------------------------------------------------- 예견의 다락
 
-        int Level(UpgradeDef u) => u.key switch { "expansion" => Profile.expansion, "rows" => Profile.rows, _ => Profile.capacity };
+        int Level(UpgradeDef u) => u.key switch { "expansion" => Profile.expansion, "rows" => Profile.rows, Unlocks.StarterKey => Profile.starter, _ => Profile.capacity };
         int Cost(UpgradeDef u) => u.price + u.priceStep * Level(u);
         bool Maxed(UpgradeDef u) => Level(u) >= (u.max >= 0 ? u.max : Gear.Dimensions(db, Profile).height / 2);
 
-        void RenderAttic() => ui.RenderAttic(Profile, Cost, Maxed, Level, key =>
+        void RenderAttic()
         {
-            pendingUpgrade = key;
-            UpgradeDef u = db.upgrades.First(x => x.key == key);
-            ui.ShowUpgradeConfirm(u, Cost(u));
-        });
+            ui.RenderAttic(Profile, Cost, Maxed, Level, key =>
+            {
+                pendingUpgrade = key;
+                UpgradeDef u = db.upgrades.First(x => x.key == key);
+                ui.ShowUpgradeConfirm(u, Cost(u));
+            });
+            RenderStarterRow();
+        }
 
         public void ConfirmUpgrade()
         {
@@ -428,6 +440,7 @@ namespace TOD
             {
                 case "expansion": Profile.expansion++; break;
                 case "rows": Profile.rows++; break;
+                case Unlocks.StarterKey: Profile.starter++; break;
                 default: Profile.capacity++; break;
             }
             Gear.Save(db, Profile);
@@ -466,7 +479,7 @@ namespace TOD
             if (k.escapeKey.wasPressedThisFrame)
             {
                 if (runInventory) CloseRunInventory();
-                else if (Opened is "upgrade" or "augment" or "artifact" or "shop") ui.CloseDialog();   // 증강·아이템은 나중에 E 로 다시 연다
+                else if (Opened is "upgrade" or "augment" or "artifact" or "shop" or "starter" or "hubshop") ui.CloseDialog();   // 증강·아이템은 나중에 E 로 다시 연다
                 else if (Opened == "retreat") CancelRetreat();
                 else TogglePause();
             }
@@ -509,6 +522,8 @@ namespace TOD
             float dt = Mathf.Min(Time.unscaledDeltaTime, .032f);
             ui.Tick();
             ReadKeys();
+            TickHub(dt);   // 15차: 허브 걷기 (로비일 때만)
+            TickMerchant();   // 16차: 상인 단추 자세와 말풍선 (GameController.Merchant.cs)
             ui.BeginLabels();
             if (IsCombat)
             {

@@ -38,6 +38,7 @@ namespace TOD.EditorTools
             foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", folders))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (path.StartsWith("Assets/Art/VFX/16/")) continue;   // 16차 Blender 시트는 TOD/Setup/16. Element Art 가 자른다 (여기서 Single 로 되돌리지 않게)
                 if (AssetImporter.GetAtPath(path) is TextureImporter importer && Configure(importer, path))
                 {
                     importer.SaveAndReimport();

@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <!-- 게시판 쪽지 하나 (DiaryBoard 가 복제). locked 클래스면 찢긴 빈 쪽지, fresh 클래스면 반짝 표시. -->
+    <ui:Button name="note" class="diary-note">
+        <ui:VisualElement name="paper" class="diary-note-paper" picking-mode="Ignore">
+            <ui:Label name="note-title" class="diary-note-title" picking-mode="Ignore" />
+            <ui:Label name="note-preview" class="diary-note-preview" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement class="diary-pin" picking-mode="Ignore" />
+        <ui:Label name="note-new" class="diary-note-new" picking-mode="Ignore" />
+        <ui:VisualElement name="spark-a" class="diary-spark a" picking-mode="Ignore" />
+        <ui:VisualElement name="spark-b" class="diary-spark b" picking-mode="Ignore" />
+        <ui:VisualElement name="spark-c" class="diary-spark c" picking-mode="Ignore" />
+    </ui:Button>
+</ui:UXML>

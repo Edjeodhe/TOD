@@ -38,6 +38,18 @@ namespace TOD
         public float sinceDash = 99;         // 마지막 대쉬 끝난 뒤 지난 시간 (고유 효과 '도약 일격')
         public bool leapUsed;                // 그 대쉬 뒤 첫 당기기에 이미 썼는지
         public bool spiteReady;              // 고유 효과 '분풀이': 다음 당기기 강화 대기
+        // 16차 보스 속성 공격이 건 상태: 화상·중독 = 초당 피해, 둔화 = 이동 감소 비율, 감전 = 남은 번개 수, 눈부심·어둠 = 남은 시간
+        public float burnDps, burnTime, slow, slowTime, poisonDps, poisonTime, dotTick, dotPending;
+        public int poisonStacks, shockLeft;
+        public float shockDamage, shockInterval, shockTimer;
+        public float blind, blindMax, blindPower, dark, darkMax, darkRadius;
+        public Timed push;                   // 바람: 밀쳐짐 (전투장 px)
+        public void ClearStatus()
+        {
+            burnDps = burnTime = slow = slowTime = poisonDps = poisonTime = dotTick = dotPending = 0;
+            poisonStacks = shockLeft = 0; shockDamage = shockInterval = shockTimer = 0;
+            blind = blindMax = blindPower = dark = darkMax = darkRadius = 0; push = null;
+        }
     }
 
     public class Cut { public float angle, time, max, side; }
@@ -55,8 +67,10 @@ namespace TOD
         // 속성 상태 (세트 부가 효과): 화상·중독 = 초당 피해, 둔화 = 이동 감소 비율, 저주 = 받는 피해 증가 비율
         public float burnDps, burnTime, slow, slowTime, curse, curseTime, poisonDps, poisonTime, dotTick, dotPending;
         public int poisonStacks;
+        public Element element;              // 16차: 층 속성 (그 층 몬스터는 모두 같은 속성)
         public bool IsBoss => type.id == "boss";
-        public void ClearStatus() { burnDps = burnTime = slow = slowTime = curse = curseTime = poisonDps = poisonTime = dotTick = dotPending = 0; poisonStacks = 0; }
+        public bool killed;                  // 처치 처리를 이미 했는지 (풀에서 꺼낼 때 ClearStatus 가 지운다)
+        public void ClearStatus() { burnDps = burnTime = slow = slowTime = curse = curseTime = poisonDps = poisonTime = dotTick = dotPending = 0; poisonStacks = 0; killed = false; }
     }
 
     public class Strand : Point
@@ -75,7 +89,7 @@ namespace TOD
     // 보스가 실에 묶여 종이처럼 잘리는 연출 상태. 뷰가 time 으로 단계를 나눠 그린다.
     public class BossDeath : Point { public EnemyType type; public bool elite; public float facing = 1, time, height, cutAngle; }
 
-    public class Bullet : Point { public float vx, vy, hit, age; public bool spent; }
+    public class Bullet : Point { public float vx, vy, hit, age; public bool spent; public Enemy boss; public Element element; }   // boss = 보스가 쏜 속성 탄
 
     // 처치 때 튀어나오는 보상. 잠깐 튀어 오른 뒤(age < popTime) 몸으로 빨려 든다.
     public class Drop : Point { public int xp, gold, shard; public bool item; public float heal, vx, vy, age, speed; }
@@ -85,7 +99,7 @@ namespace TOD
     public class Echo { public float until; public List<Strand> strands; }
 
     // ElementHit = 속성 피해 그림(ElementTone.hit), Chain = 번개가 옆 적에게 튀는 줄기 (x,y → toX,toY)
-    public enum FxKind { Sprite, Flip, Number, Combo, Burst, Slash, Dust, Pull, Cut, Sliced, Transfer, Afterimage, Bind, ElementHit, Chain }
+    public enum FxKind { Sprite, Flip, Number, Combo, Burst, Slash, Dust, Pull, Cut, Sliced, Transfer, Afterimage, Bind, ElementHit, Chain, Proc, BossHit }   // Proc = 부가 세트 발동, BossHit = 보스 속성 공격이 주인공에 맞음
     public enum FxSprite { None, Pull, Dash, Boss, Needle, Stitch, Streak, Launch, Dodge, Shock }
     public enum FlipSheet { Puncture, Slash, Snip, Flash, Muzzle, Thunk }
 
@@ -101,6 +115,7 @@ namespace TOD
         public bool squash, mirror, burst, rage, elite, useElement, followHero;
         public bool bound;                    // 결박 당기기의 실 (속성 모습으로 그린다)
         public bool crit;                     // 치명타 피해 숫자 (치명타 글꼴 + 아이콘)
+        public int affinity;                  // 16차 상성: +1 약점 · -1 저항 (피해 숫자 옆 작은 글자)
         public Point follow;                  // 이 점을 따라 그린다 (결박 폭발 → 끌려가는 적)
         public string text;
         public int pop;
@@ -157,6 +172,11 @@ namespace TOD
         public Outcome outcome;
         public Phase phase = Phase.Combat;
         public DesireDef offer;
+        // 16차 층 속성 · 부가 세트 충전
+        public Element floorElement;
+        public readonly List<Element> floorElements = new();   // 이번 등반에서 이미 나온 층 속성 (겹치지 않게)
+        public int hintSerial;               // 층 암시 문구를 다시 띄울 때마다 +1 (라운드 시작 · 개발자 모드)
+        public readonly Dictionary<SetDef, int> procCharges = new();   // 부가 세트 → 충전 수 (procCharge 이상 = 준비)
         public readonly List<GameEvent> events = new();
 
         public float Gear(StatKind kind) => gearStats[kind];

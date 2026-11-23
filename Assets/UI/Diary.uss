@@ -1,0 +1,136 @@
+/* 15차 아버지의 일기 게시판. 종이 키트 Assets/UI/Paper 를 그대로 쓴다 (Main.uss 와 같은 팔레트).
+   게시판 = 어두운 종이를 코르크 색으로 물들인 판, 쪽지 = 밝은 양피지, 핀 = 밀랍 인장을 작게, 잠긴 쪽지 = note_torn.png */
+:root {
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    font-size: 24px;
+    color: #eadcc4;
+}
+.diary-layer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.hidden { display: none; }
+Label { margin: 0; padding: 0; white-space: normal; }
+
+Button {
+    margin: 0; border-radius: 0; border-width: 0;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* ---------- 핀 (밀랍 인장 축소) ---------- */
+.diary-pin {
+    position: absolute; width: 38px; height: 38px; left: 50%; top: -12px; translate: -19px 0;
+    background-image: url("project://database/Assets/UI/Paper/seal.png");
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: #c9504f;
+}
+.diary-pin.big { width: 64px; height: 64px; top: -22px; translate: -32px 0; }
+
+/* ---------- 임시 로비 버튼 ---------- */
+.diary-lobby-button {
+    position: absolute; right: 70px; bottom: 300px; width: 250px; min-height: 120px; padding: 30px 26px 22px 26px;
+    background-image: url("project://database/Assets/UI/Paper/panel_light.png");
+    -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72;
+    -unity-slice-scale: 0.45px;
+    -unity-background-image-tint-color: #e8d8b8;
+    rotate: -3deg; color: #2e2120; font-size: 26px; -unity-text-align: middle-center; align-items: center; justify-content: center;
+    transition-property: rotate, scale, -unity-background-image-tint-color; transition-duration: 0.14s;
+}
+.diary-lobby-button:hover { rotate: 0deg; scale: 1.04 1.04; -unity-background-image-tint-color: #ffffff; }
+.diary-lobby-button Label { color: #2e2120; -unity-text-align: middle-center; }
+.diary-dot { position: absolute; right: 6px; top: 6px; width: 34px; height: 34px; background-image: url("project://database/Assets/UI/Puzzle/sparkle.png"); -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: #ffe9a8; }
+
+/* ---------- 새 조각 알림 ---------- */
+.diary-toast { position: absolute; top: 120px; left: 0; right: 0; align-items: center; }
+.diary-toast-paper {
+    padding: 34px 56px 22px 56px; min-width: 420px; align-items: center;
+    background-image: url("project://database/Assets/UI/Paper/panel_light.png");
+    -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72;
+    -unity-slice-scale: 0.45px;
+    rotate: -1.5deg;
+}
+.diary-toast-paper Label { color: #2e2120; font-size: 28px; -unity-text-align: middle-center; }
+.diary-toast.show { translate: 0 0; opacity: 1; }
+
+/* ---------- 게시판 ---------- */
+.diary-shade { align-items: center; justify-content: center; background-color: rgba(14, 8, 11, 0.78); }
+.diary-board {
+    width: 1640px; height: 860px; padding: 56px 70px 44px 70px;
+    background-image: url("project://database/Assets/UI/Paper/panel_dark.png");
+    -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 64; -unity-slice-bottom: 64;
+    -unity-slice-scale: 0.9px;
+    -unity-background-image-tint-color: #c08a5e;   /* 코르크 색 */
+}
+.diary-head { align-items: center; margin-bottom: 18px; }
+.diary-title { font-size: 46px; color: #f3e2c8; -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
+.diary-subtitle { font-size: 18px; color: #e3c9a0; margin-top: 6px; }
+.diary-notes { flex-grow: 1; flex-direction: row; flex-wrap: wrap; justify-content: center; align-content: center; align-items: center; }
+.diary-foot { flex-direction: row; align-items: center; justify-content: space-between; margin-top: 12px; }
+.diary-hint { color: #e9d2b0; font-size: 18px; }
+.diary-close {
+    padding: 10px 40px 12px 40px; min-height: 54px; font-size: 24px; color: #2e2120;
+    background-image: url("project://database/Assets/UI/Paper/button.png");
+    -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: #ddcdb0;
+    transition-property: -unity-background-image-tint-color, translate; transition-duration: 0.12s;
+}
+.diary-close:hover { -unity-background-image-tint-color: #ffffff; translate: 0 -2px; }
+.diary-close.page { position: absolute; right: 60px; bottom: 44px; }
+/* 게시판 모서리를 가로지르는 실 (장식) */
+.diary-thread { position: absolute; height: 3px; width: 180px; background-color: rgba(201, 80, 79, 0.75); top: 46px; }
+.diary-thread.tl { left: 30px; rotate: -24deg; }
+.diary-thread.tr { right: 30px; rotate: 24deg; }
+
+/* ---------- 쪽지 ---------- */
+.diary-note {
+    width: 270px; height: 350px; margin: 14px 14px 14px 14px; padding: 0;
+    background-image: none; overflow: visible;
+    transition-property: scale, translate; transition-duration: 0.14s;
+}
+.diary-note:hover { scale: 1.06 1.06; translate: 0 -6px; }
+.diary-note-paper {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0; padding: 46px 32px 26px 32px;
+    background-image: url("project://database/Assets/UI/Paper/panel_light.png");
+    -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72;
+    -unity-slice-scale: 0.5px;
+    overflow: hidden;
+}
+.diary-note-title { font-size: 21px; white-space: nowrap; color: #7d2f3e; -unity-text-align: upper-center; margin-bottom: 10px; }
+.diary-note-preview { font-size: 18px; color: #4a382e; -unity-text-align: upper-left; }
+.diary-note-new {
+    position: absolute; right: -14px; top: 12px; padding: 4px 12px 6px 12px; font-size: 17px; color: #fbeedd;
+    background-image: url("project://database/Assets/UI/Paper/button.png");
+    -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
+    -unity-slice-scale: 0.26px;
+    -unity-background-image-tint-color: #b5596c; rotate: 8deg; display: none;
+}
+.diary-note-glow { position: absolute; left: -22px; top: -22px; right: -22px; bottom: -22px; border-radius: 30px; background-color: rgba(255, 228, 150, 0.22); display: none; }
+.diary-spark { position: absolute; width: 34px; height: 34px; background-image: url("project://database/Assets/UI/Puzzle/sparkle.png"); -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: #fff1c0; display: none; }
+.diary-spark.a { left: -8px; top: 30px; }
+.diary-spark.b { right: 6px; bottom: -6px; width: 26px; height: 26px; }
+.diary-spark.c { right: -10px; top: 120px; width: 22px; height: 22px; }
+.diary-note.fresh .diary-note-new, .diary-note.fresh .diary-spark { display: flex; }
+
+/* 잠긴 조각: 찢긴 빈 쪽지 */
+.diary-note.locked .diary-note-paper {
+    background-image: url("project://database/Assets/UI/Paper/note_torn.png");
+    -unity-slice-left: 0; -unity-slice-right: 0; -unity-slice-top: 0; -unity-slice-bottom: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+.diary-note.locked .diary-note-title { color: #5f4a3c; }
+.diary-note.locked .diary-note-preview { color: #6a5848; -unity-text-align: upper-center; }
+.diary-note.locked .diary-pin { -unity-background-image-tint-color: #7a6a62; }
+.diary-note.locked:hover { scale: 1 1; translate: 0 0; }
+
+/* ---------- 크게 읽기 ---------- */
+.diary-reader-shade { align-items: center; justify-content: center; background-color: rgba(14, 8, 11, 0.6); }
+.diary-page {
+    width: 980px; min-height: 480px; padding: 76px 96px 118px 96px; color: #2e2120;
+    background-image: url("project://database/Assets/UI/Paper/panel_light.png");
+    -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72;
+    -unity-slice-scale: 0.9px;
+    rotate: -1deg;
+}
+.diary-page-title { font-size: 40px; color: #7d2f3e; margin-bottom: 26px; }
+.diary-page-body { font-size: 27px; color: #2e2120; -unity-paragraph-spacing: 12px; }
+.diary-rule { height: 2px; background-color: rgba(46, 33, 32, 0.35); margin: 26px 0 20px 0; }
+.diary-page-last { font-size: 28px; color: #7d2f3e; }

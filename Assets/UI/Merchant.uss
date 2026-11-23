@@ -1,0 +1,54 @@
+/* 16차 상인 단추 말풍선: 양피지 종이(panel_light) + 잉크 글자 + 작은 꼬리. Main.uxml 이 불러온다. */
+
+/* ---------- 월드 말풍선 (상인 머리 위) ---------- */
+.merchant-bubble {
+    position: absolute; width: 0; height: 0; overflow: visible;
+}
+.merchant-bubble-body {
+    position: absolute; left: 0; bottom: 14px; translate: -50% 0;
+    min-width: 220px; max-width: 520px;
+    padding: 14px 26px 16px 26px;
+    background-image: url("project://database/Assets/UI/Paper/panel_light.png");
+    -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72;
+    -unity-slice-scale: 0.32px;
+    rotate: -1.5deg;
+}
+.merchant-tail {
+    position: absolute; left: -9px; bottom: 6px; width: 18px; height: 18px;
+    background-color: #e9d8b4;
+    border-right-width: 3px; border-bottom-width: 3px; border-color: #2a1d1c;
+    rotate: 45deg;
+}
+.merchant-name {
+    font-size: 15px; color: #7d2f3e; margin-bottom: 2px;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.merchant-text {
+    font-size: 21px; color: #2e2120; white-space: normal;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+
+/* ---------- 상점 창 안 (오른쪽 위에서 고개를 내민 상인) ---------- */
+.merchant-peek-slot { position: absolute; right: -40px; top: -96px; width: 0; height: 0; overflow: visible; }
+.merchant-peek {
+    position: absolute; right: 0; top: 0;
+    flex-direction: row; align-items: center;
+}
+.merchant-face {
+    width: 170px; height: 166px;
+    background-image: url("project://database/Assets/sprites/merchant_idle.png");
+    -unity-background-scale-mode: scale-to-fit;
+    transform-origin: 50% 100%;
+}
+.merchant-peek-bubble {
+    min-width: 260px; max-width: 560px; margin-right: -6px; margin-top: 30px;
+    padding: 12px 24px 14px 24px;
+    background-image: url("project://database/Assets/UI/Paper/panel_light.png");
+    -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72;
+    -unity-slice-scale: 0.3px;
+    rotate: 1.5deg;
+}
+.merchant-tail.side { left: auto; right: -9px; bottom: auto; top: 40%; border-right-width: 3px; border-bottom-width: 0; border-top-width: 3px; }
+
+/* 상점 카드: 팔림, 돈 부족도 누를 수 있게 두고 흐리게만 (상인이 대답함) */
+.ware-dim { opacity: 0.55; }

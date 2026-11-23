@@ -16,7 +16,7 @@ namespace TOD
     // 결박 리본 그림 (tools/render_bind_ribbons.py → Assets/vfx/bind). thread·trail 은 세로로 frames 장 쌓인 아틀라스.
     [Serializable] public class BindArt { public BindStyle style; public Sprite threadCore, threadRim, trailCore, trailRim, headCore, headRim; public int frames = 8; }
 
-    public class ArenaRenderer : MonoBehaviour
+    public partial class ArenaRenderer : MonoBehaviour   // 16차 속성 그리기는 ArenaRenderer.Elements.cs
     {
         public GameDatabase db;
         public Painter painter;
@@ -61,6 +61,7 @@ namespace TOD
             int seed = UnityEngine.Random.Range(1, 1 << 30);
             background.BeginRound(seed);
             ScatterDecor(r, seed);
+            ScatterElementDecor(r, seed);   // 16차: 층 속성 소품 + 움직이는 장식
             enemyPool?.ReleaseAll();
             enemyViews.Clear();
             particles.Clear();
@@ -111,7 +112,9 @@ namespace TOD
             particleClock = r.time;
             particles.SetRunning(dt > 0);
 
-            DrawDecor(r);   // 장식이 Ground 층에서 가장 먼저 → 공격 예고·드롭·계단·탑이 위, 캐릭터·몬스터(Actors 층)는 항상 더 위
+            DrawDecor(r);
+            DrawElementDecor(r, clock);   // 16차: 움직이는 속성 장식 (불꽃, 눈발 ...)
+            // 장식이 Ground 층에서 가장 먼저 → 공격 예고·드롭·계단·탑이 위, 캐릭터·몬스터(Actors 층)는 항상 더 위
             DrawDrops(r, clock);
             // 공격 예고(돌진 길·근접/탄막 고리)는 Ground 층: 캐릭터·몬스터 뒤에 깔린다
             foreach (Enemy e in r.enemies)
@@ -165,14 +168,18 @@ namespace TOD
             }
             foreach (Bullet b in r.bullets)
             {
-                painter.Ellipse(Layer.Ground, C(b), 12, 10, Painter.Alpha(Pal.bulletGlow, .35f), additive: true);
-                painter.Ellipse(Layer.Ground, C(b), 6, 5, b.spent ? Pal.bulletSpent : Pal.bullet);
+                if (DrawBossBullet(b)) continue;   // 16차: Blender 보스 탄 그림
+                // 16차: 보스 탄은 층 속성 색 (bulletTint.a 만큼 섞음)
+                Color tint = b.boss != null ? (db.elements?.Def(b.element)?.boss?.bulletTint ?? default) : default;
+                painter.Ellipse(Layer.Ground, C(b), 12, 10, Painter.Alpha(Color.Lerp(Pal.bulletGlow, tint, tint.a), .35f), additive: true);
+                painter.Ellipse(Layer.Ground, C(b), 6, 5, Color.Lerp(b.spent ? Pal.bulletSpent : Pal.bullet, new Color(tint.r, tint.g, tint.b, 1), tint.a));
             }
             DrawAfterimages(r);
             SyncEnemies(r, dt);
             hero.Render(player, r.outcome == Outcome.Absorbed ? .55f : 1, Pal.shadow);
             DrawLevelUp(player, dt);
             DrawHeal(player, dt);
+            DrawPlayerStatus(r, player, dt);   // 16차: 보스 속성 공격이 건 상태 (입자, 눈부심, 시야 좁힘)
             effectsDt = dt;
             renderClock = clock;
             DrawEffects(r);
@@ -303,7 +310,7 @@ namespace TOD
                 if (r.altarAge < db.rounds.towerRiseTime && altarSprite != null) DrawTowerRise(r, dt);
                 else DrawProp(altarSprite, Pal.altarHeight, r.altar, r.artifactTaken ? null : db.ui.promptAltar, nearest == Interactable.Altar, r.artifactTaken ? .55f : 1);
             }
-            if (r.merchant != null) DrawProp(merchantSprite, Pal.merchantHeight, r.merchant, db.ui.promptMerchant, nearest == Interactable.Merchant, 1);
+            DrawMerchant(r, nearest, clock);   // 16차: 자세와 트윈 (ArenaRenderer.Merchant.cs)
             if (r.stairs == null) return;
             if (stairPieces != null && stairPieces.Length > 0) { DrawStairCascade(r, nearest, clock, dt); return; }
             if (stairsSprite == null) return;
@@ -368,6 +375,7 @@ namespace TOD
                 Vector2 center = new(at.x, bottom - h / 2 - drop * (1 - ease));
                 SpriteRenderer sr = painter.Sprite(Layer.Ground, piece, center, 0, w, h * squash, new Color(1, 1, 1, Mathf.Min(1, u * 2.2f)));
                 if (r.purified) painter.Style(sr, bright: pc.floorBright, sat: pc.floorSat, fill: pc.floorFill, fillAmount: pc.floorFill.a);
+                else if (ElementLook.HasFloor(db, r)) { Color f = ElementLook.FloorFill(db, r); painter.Style(sr, fill: f, fillAmount: f.a); }   // 16차: 층 속성 색 우선
                 else if (concept != null) painter.Style(sr, fill: concept.floorFill, fillAmount: concept.floorFill.a);
                 // 자리 잡는 순간 앞 모서리에서 먼지·빛 부스러기
                 if (dt > 0 && t >= 1 && t - dt / settle < 1)
@@ -1061,7 +1069,12 @@ namespace TOD
                                 painter.Sprite(Layer.Effects, vc.critIcon, corner + vc.critIconOffset * h, -.25f + Mathf.Sin(age * 18) * .08f, size, size, Painter.Alpha(Color.white, fade));
                             }
                         }
-                        else Text?.Label(fx.text, spot, 24, Painter.Alpha(color, fade), Painter.Alpha(Pal.textStroke, fade), 4, scale, 0, false);
+                        else
+                        {
+                            Text?.Label(fx.text, spot, 24, Painter.Alpha(color, fade), Painter.Alpha(Pal.textStroke, fade), 4, scale, 0, false);
+                            textWidth = (fx.text?.Length ?? 0) * 13 * scale;
+                        }
+                        if (fx.affinity != 0) DrawAffinityTag(fx.affinity, spot, textWidth, scale, fade);   // 16차: "약점" / "저항"
                         break;
                     }
                     case FxKind.Combo:
@@ -1090,6 +1103,8 @@ namespace TOD
                     case FxKind.Bind: DrawBind(fx, fade); break;
                     case FxKind.ElementHit: DrawElementHit(fx, fade, at); break;
                     case FxKind.Chain: DrawChain(fx, fade, at); break;
+                    case FxKind.Proc: DrawProc(fx, fade); break;
+                    case FxKind.BossHit: DrawBossHit(fx, fade); break;
                     case FxKind.Transfer:
                     {
                         float t = 1 - fade;
@@ -1544,6 +1559,7 @@ namespace TOD
                 SpriteRenderer sr = painter.Sprite(Layer.Ground, s, center, 0, o.flip ? -w : w, h, Color.white);
                 // 바닥과 같은 색감 (라운드 컨셉 덮개 · 정화된 층은 정화 밝기) + 캐릭터보다 덜 눈에 띄게
                 if (r.purified) painter.Style(sr, bright: pc.floorBright * d.bright, sat: pc.floorSat * d.sat, fill: pc.floorFill, fillAmount: pc.floorFill.a);
+                else if (ElementLook.HasFloor(db, r)) { Color f = ElementLook.FloorFill(db, r); painter.Style(sr, bright: d.bright, sat: d.sat, fill: f, fillAmount: f.a); }
                 else if (concept != null) painter.Style(sr, bright: d.bright, sat: d.sat, fill: concept.floorFill, fillAmount: concept.floorFill.a);
                 else painter.Style(sr, bright: d.bright, sat: d.sat);
             }
@@ -1917,6 +1933,7 @@ namespace TOD
         // 결박 폭발: 바닥 충격 고리 두 겹 + 가운데 섬광 + 속성별 (화염 기둥 · 낙뢰 · 얼음 가시 · 빛살)
         void DrawBind(Fx fx, float fade)
         {
+            if (DrawBindClip(fx, fade)) return;   // 16차: 어둠, 피, 바람, 독 결박 폭발 (Blender)
             BindLook look = LookOf(fx);
             if (look == null) return;
             float t = 1 - fade;

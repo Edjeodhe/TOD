@@ -9,7 +9,7 @@ namespace TOD
 {
     public enum UiScreen { Lobby, Inventory, Attic, Summary, Combat }
 
-    public class GameUI : MonoBehaviour, IWorldText
+    public partial class GameUI : MonoBehaviour, IWorldText   // 15차 해금 알림, 시작 조각 창: GameUI.Outgame.cs
     {
         public UIDocument document;
         public VisualTreeAsset choiceCard, pieceButton, slots;
@@ -80,6 +80,8 @@ namespace TOD
             inventory.RegisterCallback<PointerDownEvent>(OnPressDown, TrickleDown.TrickleDown);
             inventory.RegisterCallback<PointerMoveEvent>(OnPressMove, TrickleDown.TrickleDown);
             inventory.RegisterCallback<PointerUpEvent>(OnPressUp, TrickleDown.TrickleDown);
+            InitOutgame();
+            InitHub();   // 15차 재봉실 허브: GameUI.Hub.cs
         }
 
         void Bind(string name, Action action) => root.Q<Button>(name).clicked += action;
@@ -329,8 +331,10 @@ namespace TOD
 
         public void CloseDialog()
         {
+            string was = Opened;
             Opened = "";
             Show(overlay, false);
+            if (was != "") DialogClosed?.Invoke(was);   // 16차 상인 작별 인사 (GameUI.Merchant.cs)
         }
 
         Button Card(VisualElement container, Sprite icon, string tag, string name, string text, string foot, Action onClick, bool enabled = true)
@@ -420,7 +424,8 @@ namespace TOD
             {
                 bool done = sold(w);
                 int cost = price(w);
-                Card(container, w.icon, null, w.name, w.text, done ? T.soldOut : string.Format(T.price, cost), () => buy(w.id), !done && gold >= cost);
+                // 16차: 팔림, 금화 부족도 눌러서 상인이 대답하게 (누를 수는 있고 흐리게만)
+                Card(container, w.icon, null, w.name, w.text, done ? T.soldOut : string.Format(T.price, cost), () => buy(w.id)).EnableInClassList("ware-dim", done || gold < cost);
             }
             ShowDialog("shop");
         }
@@ -450,34 +455,38 @@ namespace TOD
             Text(root, "artifact-eyebrow", string.Format(T.artifactEyebrow, floor));
             VisualElement container = root.Q("artifacts");
             container.Clear();
-            foreach (int kind in kinds)
-            {
-                PieceDef def = db.gear.pieces[kind];
-                SetDef set = db.Set(def.set);
-                string value = def.value < 1 ? $"{Mathf.RoundToInt(def.value * 100)}%" : def.value.ToString("0.##");
-                string effect = string.Format(T.pieceEffect, T.statNames[(int)def.stat], value);
-                string unique = UniqueText(def);
-                if (unique != null) effect += "\n" + unique;
-                string text = string.Format(T.pieceShape, def.shape.Length, set.name, set.bonus) + (string.IsNullOrEmpty(def.flavor) ? "" : "\n" + def.flavor);
-                // 카드 색은 등급(코스트) 색: 일반 회색 · 레어 하늘색 · 유니크 노란색 · 레전더리 붉은색. 세트 색은 조각 모양에 남긴다.
-                Color[] ranks = db.gear.rankColors;
-                Color rankColor = ranks != null && def.cost < ranks.Length ? ranks[def.cost] : set.color;
-                // 띠: 등급 + 세트 이름(세트 색 글씨, 리치 텍스트)
-                string setTag = $"<color=#{ColorUtility.ToHtmlStringRGB(Color.Lerp(set.color, Color.black, .35f))}>{set.name}</color>";
-                Button card = PuzzleCard(container, rankColor, def.icon, $"{db.gear.rankNames[def.cost]}  {setTag}", def.name, effect, text, () => pick(kind));
-                card.AddToClassList($"rank-{def.cost}");
-                float shine = db.gear.rankShine != null && def.cost < db.gear.rankShine.Length ? db.gear.rankShine[def.cost] : 0;
-                VisualElement band = card.Q("shine");
-                band.style.display = shine > 0 ? DisplayStyle.Flex : DisplayStyle.None;
-                if (shine > 0) shines.Add((card, band, shine, shines.Count * .37f, rankColor));
-                VisualElement shape = card.Q("shape");
-                shape.style.display = DisplayStyle.Flex;
-                PieceIcon(shape, def.shape.ToList(), set.color);
-                shape.style.scale = new Scale(new Vector2(1.6f, 1.6f));
-                // 아이콘이 아직 없으면 조각 모양만 크게 보여 준다
-                if (def.icon == null) card.Q("frame").style.display = DisplayStyle.None;
-            }
+            foreach (int kind in kinds) PieceOfferCard(container, kind, () => pick(kind));
             ShowDialog("artifact");
+        }
+
+        // 조각 하나를 퍼즐 카드로 (쉬어가기 탑 아이템 창, 15차 허브 상인 단추 상점이 같이 쓴다)
+        Button PieceOfferCard(VisualElement container, int kind, Action onClick)
+        {
+            PieceDef def = db.gear.pieces[kind];
+            SetDef set = db.Set(def.set);
+            string value = def.value < 1 ? $"{Mathf.RoundToInt(def.value * 100)}%" : def.value.ToString("0.##");
+            string effect = string.Format(T.pieceEffect, T.statNames[(int)def.stat], value);
+            string unique = UniqueText(def);
+            if (unique != null) effect += "\n" + unique;
+            string text = string.Format(T.pieceShape, def.shape.Length, set.name, set.bonus) + (string.IsNullOrEmpty(def.flavor) ? "" : "\n" + def.flavor);
+            // 카드 색은 등급(코스트) 색: 일반 회색 · 레어 하늘색 · 유니크 노란색 · 레전더리 붉은색. 세트 색은 조각 모양에 남긴다.
+            Color[] ranks = db.gear.rankColors;
+            Color rankColor = ranks != null && def.cost < ranks.Length ? ranks[def.cost] : set.color;
+            // 띠: 등급 + 세트 이름(세트 색 글씨, 리치 텍스트)
+            string setTag = $"<color=#{ColorUtility.ToHtmlStringRGB(Color.Lerp(set.color, Color.black, .35f))}>{set.name}</color>";
+            Button card = PuzzleCard(container, rankColor, def.icon, $"{db.gear.rankNames[def.cost]}  {setTag}", def.name, effect, text, onClick);
+            card.AddToClassList($"rank-{def.cost}");
+            float shine = db.gear.rankShine != null && def.cost < db.gear.rankShine.Length ? db.gear.rankShine[def.cost] : 0;
+            VisualElement band = card.Q("shine");
+            band.style.display = shine > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            if (shine > 0) shines.Add((card, band, shine, shines.Count * .37f, rankColor));
+            VisualElement shape = card.Q("shape");
+            shape.style.display = DisplayStyle.Flex;
+            PieceIcon(shape, def.shape.ToList(), set.color);
+            shape.style.scale = new Scale(new Vector2(1.6f, 1.6f));
+            // 아이콘이 아직 없으면 조각 모양만 크게 보여 준다
+            if (def.icon == null) card.Q("frame").style.display = DisplayStyle.None;
+            return card;
         }
 
         public void ShowUpgradeConfirm(UpgradeDef upgrade, int cost)
@@ -592,7 +601,7 @@ namespace TOD
         {
             var (width, height, limit) = Gear.Dimensions(db, profile);
             List<PlacedPiece> placed = Gear.Placed(db, profile);
-            Text(inventory, "inventory-header", string.Format(T.inventoryHeader, width, height, placed.Sum(p => p.def.cost), limit));
+            Text(inventory, "inventory-header", string.Format(T.inventoryHeader, width, height, placed.Sum(p => Unlocks.Cost(db, profile, p)), limit));   // 시작 조각은 한도에 들지 않음
             OwnedItem holding = profile.items.FirstOrDefault(i => i.id == selected);
             holdingPiece = holding != null;
             dragTurns = turns;
@@ -741,15 +750,17 @@ namespace TOD
         {
             VisualElement list = inventory.Q("set-list");
             list.Clear();
-            foreach (SetDef set in db.gear.sets.OrderByDescending(s => stats.groups[s.id].tier).ThenByDescending(s => stats.groups[s.id].size))
+            // 16차: 켜진 세트는 메인 → 부가 순서(Gear.MainFirst), 그 뒤 꺼진 세트
+            foreach (SetDef set in db.gear.sets.OrderBy(s => { int i = stats.sets.FindIndex(a => a.def == s); return i < 0 ? 99 : i; })
+                .ThenByDescending(s => stats.groups[s.id].tier).ThenByDescending(s => stats.groups[s.id].size))
             {
                 SetGroup group = stats.groups[set.id];
                 VisualElement entry = Slot(slots, "set-entry");
                 entry.EnableInClassList("active", group.tier > 0);
                 entry.Q("swatch").style.backgroundColor = set.color;
-                // 주 속성 / 보조 (12차: 단계가 가장 높은 세트가 100%, 나머지는 subSetScale)
+                // 16차: 메인 속성(판에 조각이 가장 많은 켜진 세트, 모든 공격) / 부가 속성(procCharge 타마다 발동)
                 int rank = stats.sets.FindIndex(s => s.def == set);
-                string role = rank < 0 ? "" : rank == 0 ? T.setMain : string.Format(T.setSub, Amount(db.gear.subSetScale));
+                string role = rank < 0 ? "" : rank == 0 ? T.setMain : string.Format(T.setSub, set.procCharge);
                 Text(entry, "set-name", set.name);
                 Text(entry, "set-role", role);   // 이름 아래 한 줄 (이름 옆에 두면 연결 수와 겹친다)
                 entry.Q("set-role").style.display = string.IsNullOrEmpty(role) ? DisplayStyle.None : DisplayStyle.Flex;

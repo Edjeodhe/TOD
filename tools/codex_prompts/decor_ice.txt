@@ -1,0 +1,8 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/decor_ice.png
+Size: landscape 1536x1024.
+The attached image is the floor tile of the game, for color and style reference. Create FOUR separate decorative map props for a top-down-ish 3/4 view gothic arena floor, laid out in a 2 columns x 2 rows grid, each prop centered in its own cell, nothing touching the cell edges, wide empty gaps. Props in reading order:
+(1) a dress mannequin frozen inside a block of ice  (2) an iron candlestick hung with long icicles, frozen candle  (3) a small snow drift with frozen yarn balls sticking out  (4) a cluster of sharp ice crystals growing from the floor
+They sit on the floor in 3/4 front view (decals are flat, seen from above). Medium size, readable silhouettes.
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline, slightly paper-grain texture INSIDE the shapes, low saturation, low brightness, dark navy / frost blue / pale ice palette. Cute but eerie mood.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels, no numbers, no grid lines. Do not use any bright green color inside the artwork itself.

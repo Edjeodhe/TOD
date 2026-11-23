@@ -1,0 +1,64 @@
+/* 15차 재봉실 허브: 로비 층을 투명하게 (방은 월드의 Hub 가 그림), 시설 꼬리표, 아래 안내, 상인 단추 조각 상점 창.
+   Main.uxml 이 Main.uss 뒤에 불러오므로 같은 선택자는 여기 값이 이깁니다. */
+
+/* ---------- 로비 층 = 허브 위 HUD ---------- */
+.lobby.hub-layer { background-image: none; background-color: rgba(0, 0, 0, 0); }
+.hub-vignette {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    background-image: url("project://database/Assets/Art/Generated/lobby_shade.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    opacity: 0.35;
+}
+.hub-layer .topbar { height: 92px; padding-top: 10px; }
+
+/* 시설 꼬리표: left/top = 시설 그림 위쪽 끝 (GameUI.ShowHubPrompt). 가운데 아래가 그 점에 오게 옮긴다. */
+.hub-prompt { position: absolute; width: 0; height: 0; overflow: visible; }
+.hub-prompt-tag {
+    position: absolute; left: 0; bottom: 0; translate: -50% 0; flex-direction: row; align-items: center;
+    padding: 10px 30px 12px 26px;
+    background-image: url("project://database/Assets/UI/Paper/button.png");
+    -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
+    -unity-slice-scale: 0.45px;
+    -unity-background-image-tint-color: #ecdcbc;
+    rotate: -2deg;
+}
+.hub-prompt-tag > .kbd { font-size: 18px; margin-right: 10px; }
+.hub-prompt-text {
+    font-size: 22px; color: #2e2120; white-space: nowrap;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+
+/* 아래 안내 줄 */
+.hub-bottom { position: absolute; left: 0; right: 0; bottom: 26px; align-items: center; }
+.hub-hint {
+    padding: 10px 38px 12px 38px; color: #f3e2c8; font-size: 18px;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013;
+    background-image: url("project://database/Assets/UI/Paper/panel_dark.png");
+    -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 64; -unity-slice-bottom: 64;
+    -unity-slice-scale: 0.35px;
+}
+.hub-record { margin-top: 8px; color: #d6c3a6; -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
+
+/* 오른쪽 아래 등반 버튼 (Enter 와 같음) */
+.hub-menu { position: absolute; right: 40px; bottom: 30px; }
+.hub-start { min-width: 260px; min-height: 58px; font-size: 22px; }
+
+/* ---------- 상인 단추 조각 상점 ---------- */
+#dialog-hubshop { width: 1200px; }
+.hubshop-shards { position: absolute; right: 60px; top: 46px; margin-right: 0; color: #2f6f63; }
+.hub-wares { min-height: 120px; }
+.hub-price {
+    position: absolute; left: 0; right: 0; bottom: -18px;
+    -unity-text-align: middle-center; font-size: 20px; color: #fbeedd;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013;
+    padding: 6px 0 8px 0; margin: 0 40px;
+    background-image: url("project://database/Assets/UI/Paper/button.png");
+    -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
+    -unity-slice-scale: 0.4px;
+    -unity-background-image-tint-color: #3d7c70;
+}
+.hub-price.short { -unity-background-image-tint-color: #7a5d5a; color: #e8cfc4; }
+.hub-sold { opacity: 0.55; }
+.hub-sold .hub-price { -unity-background-image-tint-color: #5a4d55; }

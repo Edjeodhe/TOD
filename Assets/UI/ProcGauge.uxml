@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <!-- 부가 세트 하나의 충전 게이지 (ElementHud 가 복제) -->
+    <ui:VisualElement name="gauge" class="proc-gauge" picking-mode="Ignore">
+        <ui:VisualElement name="swatch" class="proc-swatch" picking-mode="Ignore" />
+        <ui:Label name="name" class="proc-name" picking-mode="Ignore" />
+        <ui:VisualElement class="proc-track" picking-mode="Ignore">
+            <ui:VisualElement name="fill" class="proc-fill" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:Label name="count" class="proc-count" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -19,6 +19,8 @@ namespace TOD
         readonly List<Vector3> moteSeeds = new();
         int seed;
         ConceptDef concept;
+        Element floorElement;                  // 16차: 층 속성 색조가 컨셉보다 우선
+        Color? shadeBase;
         MaterialPropertyBlock block;
         static readonly int FillId = Shader.PropertyToID("_Fill"), PurifyId = Shader.PropertyToID("_Purify");
 
@@ -56,8 +58,10 @@ namespace TOD
             int cols = Mathf.CeilToInt(db.arena.width / size), rows = Mathf.CeilToInt(db.arena.height / size);
             int i0 = Mathf.Max(0, Mathf.FloorToInt(ax0 / size)), i1 = Mathf.Min(cols - 1, Mathf.FloorToInt(ax1 / size));
             int j0 = Mathf.Max(0, Mathf.FloorToInt(ay0 / size)), j1 = Mathf.Min(rows - 1, Mathf.FloorToInt(ay1 / size));
-            bool recolor = concept != r.concept;
+            bool recolor = concept != r.concept || floorElement != r.floorElement;
             concept = r.concept;
+            floorElement = r.floorElement;
+            ElementDef look = ElementLook.HasFloor(db, r) ? db.elements.Def(r.floorElement) : null;
 
             stale.Clear();
             foreach (var key in live.Keys) if (key.x < i0 || key.x > i1 || key.y < j0 || key.y > j1) stale.Add(key);
@@ -76,7 +80,7 @@ namespace TOD
             }
 
             // 떠다니는 불씨: 카메라 화면 안에서 맴돈다.
-            Color tint = concept != null ? concept.lampTint : Color.white;
+            Color tint = look != null && look.lampTint.a > 0 ? look.lampTint : concept != null ? concept.lampTint : Color.white;
             RenderPalette pal = db.palette;
             for (int k = 0; k < motes.Count; k++)
             {
@@ -95,6 +99,12 @@ namespace TOD
                 Vector3 at = Space.Canvas(visibleCanvas.center);
                 shade.transform.position = new Vector3(at.x, at.y, shade.transform.position.z);
                 shade.transform.localScale = new Vector3(zoom, zoom, 1);
+                // 16차: 가장자리 안개를 층 속성 색으로 (fogTint.a 만큼)
+                shadeBase ??= shade.color;
+                Color baseColor = shadeBase.Value;
+                shade.color = look != null && look.fogTint.a > 0
+                    ? new Color(Mathf.Lerp(baseColor.r, look.fogTint.r, look.fogTint.a), Mathf.Lerp(baseColor.g, look.fogTint.g, look.fogTint.a), Mathf.Lerp(baseColor.b, look.fogTint.b, look.fogTint.a), baseColor.a)
+                    : baseColor;
             }
         }
 
@@ -123,11 +133,13 @@ namespace TOD
         {
             ConceptDef c = concept;
             RenderPalette pal = db.palette;
+            ElementDef look = floorElement != Element.Plain ? db.elements?.Def(floorElement) : null;
             block.Clear();
-            if (c != null) block.SetColor(FillId, c.floorFill);
+            if (look != null && look.floorFill.a > 0) block.SetColor(FillId, look.floorFill);   // 16차: 층 속성 바닥
+            else if (c != null) block.SetColor(FillId, c.floorFill);
             block.SetFloat(PurifyId, 1);          // 정화 고리 안쪽 바닥은 SpriteFX 가 되살린다
             chunk.floor.SetPropertyBlock(block);
-            Color tint = c != null ? c.lampTint : Color.white;
+            Color tint = look != null && look.lampTint.a > 0 ? look.lampTint : c != null ? c.lampTint : Color.white;
             foreach (SpriteRenderer glow in chunk.lampGlows) glow.color = Painter.Alpha(tint, pal.lampGlowAlpha);
             foreach (SpriteRenderer flame in chunk.lampFlames) flame.color = Painter.Alpha(tint, pal.lampFlameAlpha);
         }

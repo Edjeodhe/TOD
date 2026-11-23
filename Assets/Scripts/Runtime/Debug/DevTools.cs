@@ -19,7 +19,7 @@ namespace TOD
 
         VisualElement panel;
         Label status;
-        Button god, freeze;
+        Button god, freeze, ignoreLocks;
         float statusUntil;
         string flash;
 
@@ -36,6 +36,7 @@ namespace TOD
             status = panel.Q<Label>("dev-status");
             god = panel.Q<Button>("dev-god");
             freeze = panel.Q<Button>("dev-freeze");
+            ignoreLocks = panel.Q<Button>("dev-ignore-locks");
 
             Bind("dev-god", () => { if (Run != null) Run.devGod = !Run.devGod; });
             Bind("dev-heal", () => { if (Run != null) Run.hp = Run.maxHp; });
@@ -54,6 +55,34 @@ namespace TOD
             Bind("dev-all-items", GiveAll);
             Bind("dev-clear-board", () => { Profile.placements.Clear(); game.DevGearChanged(); });
             Bind("dev-clear-items", () => { Profile.placements.Clear(); Profile.items.Clear(); game.DevGearChanged(); });
+            // 15차 해금: 잠금 무시(저장 안 함), 최고 층 조절, 알림 다시 보기
+            Bind("dev-ignore-locks", () => { Unlocks.ignoreLocks = !Unlocks.ignoreLocks; Say(Unlocks.ignoreLocks ? "잠긴 세트도 나옵니다" : "세트 잠금을 다시 지킵니다"); });
+            Bind("dev-best-up", () => { Profile.best++; game.DevGearChanged(); Say($"최고 층 {Profile.best} (로비로 돌아오면 해금 알림)"); });
+            Bind("dev-best-reset", () => { Profile.best = 0; Profile.seenUnlocks.Clear(); game.DevGearChanged(); Say("최고 층과 해금 알림 기록을 지웠습니다"); });
+            Bind("dev-unlock-notice", game.DevShowUnlocks);
+
+            // 16차: 층 속성 바꾸기 (몬스터, 바닥 색조, 장식, 암시 문구가 함께 바뀐다)
+            VisualElement floors = panel.Q("dev-floor-elements");
+            if (floors != null && Db.elements?.defs != null)
+            {
+                floors.Clear();
+                foreach (ElementDef def in Db.elements.defs)
+                {
+                    SetDef owner = Db.gear.sets.FirstOrDefault(s => s.element == def.element);
+                    var button = (Button)setButton.Instantiate().Q("set");
+                    button.Q("dot").style.backgroundColor = owner != null ? owner.color : Db.Tone(def.element).color;
+                    button.Q<Label>("label").text = owner != null ? owner.name : def.element.ToString();
+                    Element element = def.element;
+                    button.clicked += () =>
+                    {
+                        if (Run == null) { Say("등반 중에만 바꿀 수 있습니다"); return; }
+                        game.Combat.DevSetFloorElement(Run, element);
+                        game.arena.BeginRound(Run);   // 바닥 색조, 속성 장식 다시 깔기
+                        Say($"층 속성: {button.Q<Label>("label").text}");
+                    };
+                    floors.Add(button);
+                }
+            }
 
             VisualElement sets = panel.Q("dev-sets");
             sets.Clear();
@@ -83,6 +112,7 @@ namespace TOD
             if (panel.ClassListContains("hidden")) return;
             god.EnableInClassList("on", Run != null && Run.devGod);
             freeze.EnableInClassList("on", Run != null && Run.devFreeze);
+            ignoreLocks?.EnableInClassList("on", Unlocks.ignoreLocks);
             if (Time.unscaledTime < statusUntil) { status.text = flash; return; }
             GearStats gear = Run?.gearStats ?? Gear.Stats(Db, Profile);
             string sets = gear.sets.Count == 0 ? "없음" : string.Join(", ", gear.sets.Select(s => $"{s.def.name} {s.tier}단계"));
@@ -93,9 +123,11 @@ namespace TOD
         // 모든 종류의 조각을 하나씩 (판에는 놓지 않음)
         void GiveAll()
         {
-            for (int kind = 0; kind < Db.gear.pieces.Length; kind++) Gear.AddItem(Db, Profile, kind);
+            int given = 0;
+            for (int kind = 0; kind < Db.gear.pieces.Length; kind++)
+                if (Unlocks.KindOpen(Db, Profile, kind)) { Gear.AddItem(Db, Profile, kind); given++; }   // 잠긴 세트는 '잠금 무시'일 때만
             game.DevGearChanged();
-            Say($"조각 {Db.gear.pieces.Length}종을 하나씩 지급했습니다");
+            Say($"조각 {given}종을 하나씩 지급했습니다");
         }
 
         // 그 세트 조각 하나를 지급하고, 같은 세트 조각과 맞닿는 자리에 바로 놓는다 (세트 단계가 하나씩 오르게)
@@ -103,6 +135,7 @@ namespace TOD
         {
             int[] kinds = Enumerable.Range(0, Db.gear.pieces.Length).Where(k => Db.gear.pieces[k].set == setId).OrderBy(k => Db.gear.pieces[k].cost).ToArray();
             if (kinds.Length == 0) return;
+            if (!Unlocks.IsOpen(Db, Profile, setId)) { Say($"{Db.Set(setId).name} 세트는 아직 잠겨 있습니다 (잠금 무시로 지급)"); return; }
             int owned = Profile.items.Count(i => Db.gear.pieces[i.kind].set == setId);
             PieceDef def = Gear.AddItem(Db, Profile, kinds[owned % kinds.Length]);
             OwnedItem item = Profile.items[^1];

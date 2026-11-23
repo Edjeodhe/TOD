@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <!-- 15차 재봉실 허브 템플릿: 상인 단추 상점 카드 아래 가격 띠 (GameUI.Hub.cs 가 복제) -->
+    <ui:Label name="hub-price" class="hub-price" picking-mode="Ignore" />
+</ui:UXML>

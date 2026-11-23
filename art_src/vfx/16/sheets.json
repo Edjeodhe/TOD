@@ -1,0 +1,496 @@
+{
+ "boss_fire_slam": {
+  "group": "boss",
+  "element": "fire",
+  "frames": 16,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.667,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "boss_fire_bullet": {
+  "group": "boss",
+  "element": "fire",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "boss_ice_slam": {
+  "group": "boss",
+  "element": "ice",
+  "frames": 16,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.667,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "boss_ice_bullet": {
+  "group": "boss",
+  "element": "ice",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "boss_lightning_slam": {
+  "group": "boss",
+  "element": "lightning",
+  "frames": 16,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.667,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "boss_lightning_bullet": {
+  "group": "boss",
+  "element": "lightning",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "boss_light_slam": {
+  "group": "boss",
+  "element": "light",
+  "frames": 16,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.667,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "boss_light_bullet": {
+  "group": "boss",
+  "element": "light",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "boss_dark_slam": {
+  "group": "boss",
+  "element": "dark",
+  "frames": 16,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.667,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "boss_dark_bullet": {
+  "group": "boss",
+  "element": "dark",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "boss_blood_slam": {
+  "group": "boss",
+  "element": "blood",
+  "frames": 16,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.667,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "boss_blood_bullet": {
+  "group": "boss",
+  "element": "blood",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "boss_wind_slam": {
+  "group": "boss",
+  "element": "wind",
+  "frames": 16,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.667,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "boss_wind_bullet": {
+  "group": "boss",
+  "element": "wind",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "boss_poison_slam": {
+  "group": "boss",
+  "element": "poison",
+  "frames": 16,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.667,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "boss_poison_bullet": {
+  "group": "boss",
+  "element": "poison",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "boss_fire_pool": {
+  "group": "boss",
+  "element": "fire",
+  "frames": 12,
+  "size": 256,
+  "fps": 12,
+  "duration": 1.0,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.35
+  ]
+ },
+ "boss_poison_pool": {
+  "group": "boss",
+  "element": "poison",
+  "frames": 12,
+  "size": 256,
+  "fps": 12,
+  "duration": 1.0,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.35
+  ]
+ },
+ "proc_fire": {
+  "group": "proc",
+  "element": "fire",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "proc_ice": {
+  "group": "proc",
+  "element": "ice",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "proc_lightning": {
+  "group": "proc",
+  "element": "lightning",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "proc_light": {
+  "group": "proc",
+  "element": "light",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "proc_dark": {
+  "group": "proc",
+  "element": "dark",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "proc_blood": {
+  "group": "proc",
+  "element": "blood",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "proc_wind": {
+  "group": "proc",
+  "element": "wind",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "proc_poison": {
+  "group": "proc",
+  "element": "poison",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "decor_fire_loop": {
+  "group": "decor",
+  "element": "fire",
+  "frames": 16,
+  "size": 256,
+  "fps": 10,
+  "duration": 1.6,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "decor_ice_loop": {
+  "group": "decor",
+  "element": "ice",
+  "frames": 16,
+  "size": 256,
+  "fps": 10,
+  "duration": 1.6,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "decor_lightning_loop": {
+  "group": "decor",
+  "element": "lightning",
+  "frames": 16,
+  "size": 256,
+  "fps": 10,
+  "duration": 1.6,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "decor_light_loop": {
+  "group": "decor",
+  "element": "light",
+  "frames": 16,
+  "size": 256,
+  "fps": 10,
+  "duration": 1.6,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "decor_dark_loop": {
+  "group": "decor",
+  "element": "dark",
+  "frames": 16,
+  "size": 256,
+  "fps": 10,
+  "duration": 1.6,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "decor_blood_loop": {
+  "group": "decor",
+  "element": "blood",
+  "frames": 16,
+  "size": 256,
+  "fps": 10,
+  "duration": 1.6,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "decor_wind_loop": {
+  "group": "decor",
+  "element": "wind",
+  "frames": 16,
+  "size": 256,
+  "fps": 10,
+  "duration": 1.6,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "decor_poison_loop": {
+  "group": "decor",
+  "element": "poison",
+  "frames": 16,
+  "size": 256,
+  "fps": 10,
+  "duration": 1.6,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "bind_dark_burst": {
+  "group": "bind",
+  "element": "dark",
+  "frames": 14,
+  "size": 256,
+  "fps": 30,
+  "duration": 0.467,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "bind_blood_burst": {
+  "group": "bind",
+  "element": "blood",
+  "frames": 14,
+  "size": 256,
+  "fps": 30,
+  "duration": 0.467,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "bind_wind_burst": {
+  "group": "bind",
+  "element": "wind",
+  "frames": 14,
+  "size": 256,
+  "fps": 30,
+  "duration": 0.467,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ },
+ "bind_poison_burst": {
+  "group": "bind",
+  "element": "poison",
+  "frames": 14,
+  "size": 256,
+  "fps": 30,
+  "duration": 0.467,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.2
+  ]
+ }
+}

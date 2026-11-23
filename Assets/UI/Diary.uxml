@@ -1,0 +1,50 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <!-- 15차 아버지의 일기 (Game/Diary UIDocument, DiaryBoard 가 채운다). 쪽지는 DiaryNote.uxml 을 복제한다. -->
+    <Style src="project://database/Assets/UI/Diary.uss" />
+    <ui:VisualElement name="diary-root" class="diary-layer" picking-mode="Ignore">
+
+        <!-- 허브 전 임시 로비 버튼 (data diary.showLobbyButton) -->
+        <ui:Button name="diary-lobby-button" class="diary-lobby-button hidden">
+            <ui:VisualElement name="diary-lobby-pin" class="diary-pin" picking-mode="Ignore" />
+            <ui:Label name="diary-lobby-label" picking-mode="Ignore" />
+            <ui:VisualElement name="diary-lobby-new" class="diary-dot hidden" picking-mode="Ignore" />
+        </ui:Button>
+
+        <!-- 새 조각 알림 -->
+        <ui:VisualElement name="diary-toast" class="diary-toast hidden" picking-mode="Ignore">
+            <ui:VisualElement class="diary-toast-paper" picking-mode="Ignore">
+                <ui:VisualElement class="diary-pin" picking-mode="Ignore" />
+                <ui:Label name="diary-toast-text" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 게시판 -->
+        <ui:VisualElement name="diary-board" class="diary-layer diary-shade hidden">
+            <ui:VisualElement class="diary-board">
+                <ui:VisualElement class="diary-head" picking-mode="Ignore">
+                    <ui:Label name="diary-title" class="diary-title" picking-mode="Ignore" />
+                    <ui:Label name="diary-subtitle" class="diary-subtitle" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="diary-notes" class="diary-notes" />
+                <ui:VisualElement class="diary-foot">
+                    <ui:Label name="diary-hint" class="diary-hint" picking-mode="Ignore" />
+                    <ui:Button name="diary-close" class="diary-close" />
+                </ui:VisualElement>
+                <ui:VisualElement class="diary-thread tl" picking-mode="Ignore" />
+                <ui:VisualElement class="diary-thread tr" picking-mode="Ignore" />
+            </ui:VisualElement>
+
+            <!-- 크게 읽기 -->
+            <ui:VisualElement name="diary-reader" class="diary-layer diary-reader-shade hidden">
+                <ui:VisualElement name="diary-page" class="diary-page">
+                    <ui:VisualElement class="diary-pin big" picking-mode="Ignore" />
+                    <ui:Label name="diary-page-title" class="diary-page-title" picking-mode="Ignore" />
+                    <ui:Label name="diary-page-body" class="diary-page-body" picking-mode="Ignore" />
+                    <ui:VisualElement class="diary-rule" picking-mode="Ignore" />
+                    <ui:Label name="diary-page-last" class="diary-page-last" picking-mode="Ignore" />
+                    <ui:Button name="diary-page-close" class="diary-close page" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

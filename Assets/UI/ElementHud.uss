@@ -1,0 +1,32 @@
+/* 16차 ElementHud: 층 암시 문구 + 부가 세트 충전 게이지 */
+.element-root {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.hidden { display: none; }
+
+.floor-hint { position: absolute; left: 0; right: 0; top: 36%; align-items: center; }
+.floor-hint-text {
+    font-size: 34px; color: #f3e2c8; -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.5px; -unity-text-outline-color: #120a0d;
+    text-shadow: 0 3px 8px rgba(0, 0, 0, 0.85);
+    padding: 10px 40px 12px 40px;
+    background-color: rgba(12, 7, 9, 0.55);
+    border-radius: 6px;
+}
+
+/* 상태 패널(왼쪽 위) 바로 아래. 아래쪽은 조작 안내와 경험치 줄이 덮는다 */
+.proc-gauges { position: absolute; left: 18px; top: 452px; flex-direction: column; }
+.proc-gauge {
+    flex-direction: row; align-items: center; margin-top: 6px;
+    padding: 5px 12px 6px 10px; border-radius: 4px;
+    background-color: rgba(18, 11, 14, 0.78);
+    border-width: 2px; border-color: rgba(10, 5, 8, 0.9);
+}
+.proc-gauge.ready { border-color: #f3e2c8; }
+.proc-swatch { width: 14px; height: 14px; border-radius: 7px; margin-right: 8px; border-width: 2px; border-color: #120a0d; }
+.proc-name { font-size: 17px; color: #f0e2c8; min-width: 46px; -unity-text-outline-width: 1px; -unity-text-outline-color: #120a0d; }
+.proc-track { width: 120px; height: 12px; margin-left: 8px; background-color: #241a1e; border-width: 2px; border-color: #120a0d; border-radius: 3px; overflow: hidden; }
+.proc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; }
+.proc-count { font-size: 15px; color: #a8968a; margin-left: 8px; min-width: 40px; }
+.proc-gauge.ready .proc-count { color: #f3e2c8; }
