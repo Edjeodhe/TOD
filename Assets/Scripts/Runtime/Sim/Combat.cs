@@ -38,6 +38,8 @@ namespace TOD
         public int XpNeeded(RunState r) => db.rewards.xpBase + (r.level - 1) * db.rewards.xpStep;
         // 당길 때 걸린 실 가닥 수에 따른 피해 증가 (0 = 없음). 첫 가닥은 기본, 둘째부터 strandBonus 씩.
         public float StrandBonus(int strands) => Mathf.Min(H.strandBonusMax, H.strandBonus * Mathf.Max(0, strands - 1));
+        // 결박: 같은 적 하나에 바늘이 db.bind.strands 개 이상 꽂힌 채 당기면 그 적은 추가 피해 + 속성 연출
+        public bool Bound(int strandsOnTarget) => db.bind.strands > 0 && strandsOnTarget >= db.bind.strands;
 
         // 재봉 조각 '여러 갈래 바늘': 한 번 쏠 때 더 나가는 바늘 수 (0 = 한 개만). 줄 강화로 값이 조금 늘어도 정수로 끊는다.
         public int ExtraNeedles(RunState r) => Mathf.Clamp(Mathf.FloorToInt(r.Gear(StatKind.Multishot) + 1e-3f), 0, Mathf.Max(0, H.multishotMax));
@@ -800,11 +802,14 @@ namespace TOD
 
             List<Enemy> living = r.enemies.Where(e => e.hp > 0).ToList();
             var pinned = new HashSet<Enemy>(strands.Where(s => s.target != null).Select(s => s.target));
+            // 결박: 같은 적에게 꽂힌 바늘 수
+            var bound = new HashSet<Enemy>(strands.Where(s => s.target != null).GroupBy(s => s.target).Where(g => Bound(g.Count())).Select(g => g.Key));
             var direct = new Dictionary<Enemy, int>();
             var order = new List<Enemy>();
             var cutAngle = new Dictionary<Enemy, float>();
             int impacts = 0;
             float hitPad = ThreadHitPad(r);   // 굵은 실일수록 실 선분 둘레가 넓게 벤다
+            var boundOrder = new Dictionary<Enemy, int>();
             foreach (Strand s in strands)
             {
                 var (start, end) = Endpoints(p, s);
@@ -812,9 +817,19 @@ namespace TOD
                 Fx snap = Spawn(r, FxKind.Pull, start.x, start.y, X.pullStrand);
                 snap.toX = end.x; snap.toY = end.y; snap.element = element; snap.rage = rage; snap.seed = r.random() * 100;
                 snap.followHero = s.anchor == null;   // 손에 든 실은 지금 손 위치로 감겨 들어온다 (당긴 자리에 실이 남지 않게)
+                snap.bound = s.target != null && bound.Contains(s.target);   // 결박된 적에게 걸린 실은 속성 모습(화염·번개·서리)으로
+                if (snap.bound && db.bind.pullTime > 0) snap.time = snap.max = db.bind.pullTime;   // 가감속이 보이게 길게
+                if (snap.bound)
+                {
+                    // 아크: 같은 적에 걸린 가닥마다 다른 쪽·높이로 휘어 부채꼴로 감겨 든다
+                    int nth = boundOrder.TryGetValue(s.target, out int k) ? k : 0;
+                    boundOrder[s.target] = nth + 1;
+                    float[] sides = db.bind.arcSides;
+                    snap.side = sides != null && sides.Length > 0 ? sides[nth % sides.Length] : 1;
+                }
                 float along = Mathf.Atan2((end.y - start.y) * A.projectionY, end.x - start.x);
                 Fx blade = Spawn(r, FxKind.Cut, start.x, start.y, new FxSpec { time = F.cutTime, alpha = 1 });
-                blade.toX = end.x; blade.toY = end.y; blade.angle = along; blade.element = element; blade.followHero = s.anchor == null;
+                blade.toX = end.x; blade.toY = end.y; blade.angle = along; blade.element = element; blade.followHero = s.anchor == null; blade.bound = snap.bound; blade.rage = rage;
                 var a = new Point(start.x, start.y / WorldVertical);
                 var b = new Point(end.x, end.y / WorldVertical);
                 foreach (Enemy e in living)
@@ -838,7 +853,8 @@ namespace TOD
                 if (count == 0) continue;
                 wounded.Add(e);
                 if (transferred > 0) transfers++;
-                float dealt = Round(damage * count);
+                bool binding = bound.Contains(e);
+                float dealt = Round(damage * count * (binding ? 1 + db.bind.damageBonus : 1));
                 e.hp = Mathf.Max(0, e.hp - dealt);
                 e.flash = F.pullEnemyFlash;
                 float gap = Hypot(p.x - e.x, (p.y - e.y) * A.projectionY);
@@ -847,10 +863,34 @@ namespace TOD
                 var toward = new Vector2((p.x - e.x) / gap, (p.y - e.y) / gap);
                 e.yank = new Timed { x = toward.x * yank, y = toward.y * yank, time = F.yankTime };
                 e.stretch = new Timed { x = toward.x, y = toward.y * A.projectionY, time = F.stretchTime };
+                if (bound.Contains(e))
+                {
+                    // 결박: 더 멀리, 가감속으로 확 끌려오고 몸이 크게 늘어난다
+                    float far = Mathf.Min(gap - F.yankMinGap, yank * Mathf.Max(1, db.bind.yankScale));
+                    float time = db.bind.yankTime > 0 ? db.bind.yankTime : F.yankTime;
+                    e.yank = new Timed { x = toward.x * Mathf.Max(0, far), y = toward.y * Mathf.Max(0, far), time = time, max = time, smooth = true };
+                    e.stretch.power = Mathf.Max(1, db.bind.stretchPower);
+                }
                 Element element = strands.FirstOrDefault(s => s.target == e)?.element ?? r.element;
                 float angle = Mathf.Atan2(toward.y * A.projectionY, toward.x);
                 Fx number = Spawn(r, FxKind.Number, e.x, e.y, X.damageNumber);
                 number.text = dealt.ToString("0"); number.color = transferred > 0 ? X.transferColor : X.damageColor; number.pop = Mathf.Min(count, F.maxPopCount);
+                if (binding)
+                {
+                    // 결박 폭발: 적 자리에서 속성 폭발(뷰가 화염 기둥·낙뢰·얼음 가시로 그림) + 머리 위 글자, 숫자는 최대 크기로 튄다
+                    number.pop = F.maxPopCount;
+                    Fx burst = Spawn(r, FxKind.Bind, e.x, e.y, db.bind.burst);
+                    burst.element = element; burst.rage = rage; burst.lift = EnemyHeight(e) * .5f; burst.seed = r.random() * 100;
+                    burst.angle = angle;   // 주인공 쪽 (속도선 방향)
+                    burst.follow = e;      // 끌려가는 적을 따라 터진다
+                    burst.size = db.bind.burst.size * (e.IsBoss ? X.bossScale : 1);
+                    BindLook look = db.Look(db.Tone(rage ? Element.Chaos : element).bindStyle);
+                    if (look != null && !string.IsNullOrEmpty(look.text))
+                    {
+                        Fx title = Spawn(r, FxKind.Combo, e.x, e.y, X.combo);
+                        title.text = look.text; title.color = look.core;
+                    }
+                }
                 float cut = cutAngle.TryGetValue(e, out float c) ? c : angle;
                 bool heavy = count >= 2 || e.hp <= 0;
                 float big = e.IsBoss ? X.bossScale : 1;
@@ -884,15 +924,32 @@ namespace TOD
             r.combo = impacts;
             r.freeze = impacts > 0 ? Mathf.Min(F.freezeMax, F.freezeBase + impacts * F.freezePerHit) : 0;
             r.shake = impacts > 0 ? Mathf.Min(F.shakeMax, F.shakeBase + impacts * F.shakePerHit) : F.shakeEmpty;
+            bool anyBound = wounded.Any(bound.Contains);
+            if (anyBound)
+            {
+                // 결박: 히트스톱·흔들림을 상한 위로 더 얹는다 (화면 번쩍임·반동은 아래에서)
+                r.freeze += db.bind.freezeBonus;
+                r.shake += db.bind.shakeBonus;
+            }
             if (impacts > 0)
             {
                 float kx = 0, ky = 0;
                 foreach (Enemy e in wounded) { Vector2 u = Unit(p.x - e.x, (p.y - e.y) * A.projectionY); kx += u.x; ky += u.y; }
                 Vector2 k = Unit(kx, ky);
                 float power = Mathf.Min(F.kickMax, F.kickBase + impacts * F.kickPerHit);
+                if (anyBound) power += db.bind.kickBonus;
                 r.kick = new Timed { x = k.x * power, y = k.y * power, time = F.kickTime, max = F.kickTime };
                 r.flash = Mathf.Min(F.flashMax, F.flashBase + impacts * F.flashPerHit);
                 r.flashTint = X.pullFlashColor;
+                if (anyBound)
+                {
+                    Enemy first = wounded.First(bound.Contains);
+                    Element boundElement = strands.First(s => s.target == first).element ?? r.element;
+                    BindLook look = db.Look(db.Tone(rage ? Element.Chaos : boundElement).bindStyle);
+                    r.flash += db.bind.flashBonus;
+                    if (look != null) r.flashTint = look.glow;   // 화면이 속성 빛으로 번쩍
+                    Event(r, "bind");
+                }
                 r.snapFlash = F.cutFlash;
                 Fx glow = Flip(r, FlipSheet.Flash, p.x, p.y, X.heroFlash, 0, r.element);
                 glow.size = X.heroFlash.size + Mathf.Min(impacts, X.maxFlashHits) * X.heroFlashGrowth;
@@ -938,7 +995,10 @@ namespace TOD
 
         static void Ease(Enemy e, Timed motion, float duration, float dt)
         {
-            float eased = 1 - Mathf.Pow(Mathf.Clamp01((motion.time - dt) / duration), 3);
+            float left = Mathf.Clamp01((motion.time - dt) / duration);
+            float k = 1 - left;
+            // 보통: 처음이 가장 빠르게 감속 / smooth: 천천히 출발해 가속했다가 감속하며 멈춘다
+            float eased = motion.smooth ? (k < .5f ? 4 * k * k * k : 1 - Mathf.Pow(-2 * k + 2, 3) / 2) : 1 - Mathf.Pow(left, 3);
             e.x += motion.x * (eased - motion.done);
             e.y += motion.y * (eased - motion.done);
             motion.done = eased;
@@ -957,7 +1017,7 @@ namespace TOD
             if (e.jolt != null && (e.jolt.time -= dt) <= 0) e.jolt = null;
             if (e.push != null) { Ease(e, e.push, F.stickTime, dt); if (e.push.time <= 0) e.push = null; }
             if (e.cut != null && (e.cut.time -= dt) <= 0) e.cut = null;
-            if (e.yank != null) { Ease(e, e.yank, F.yankTime, dt); if (e.yank.time <= 0) e.yank = null; }
+            if (e.yank != null) { Ease(e, e.yank, e.yank.max > 0 ? e.yank.max : F.yankTime, dt); if (e.yank.time <= 0) e.yank = null; }
             e.timer -= dt;
             if (e.action == EnemyAction.Move)
             {

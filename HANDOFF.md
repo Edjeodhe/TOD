@@ -83,6 +83,24 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 10차 요청 (2026-11-23) — 결박 당기기(같은 적에 실 5가닥)·속성 리본·실 움직임 원칙
+
+- [x] **결박 당기기:** 같은 적 하나에 바늘이 `bind.strands`(5)개 꽂힌 채 당기면 그 적에게 피해가 `bind.damageBonus`(+100%)만큼 더 들어갑니다(`Combat.Bound`, 테스트 `BindingFiveStrandsHitsHarder`). 히트스톱·흔들림·번쩍임·반동이 더해지고, 화면은 속성 빛으로 번쩍이며 효과음 `bind`가 납니다.
+  - 적 자리 폭발(`FxKind.Bind`)이 끌려가는 적을 따라갑니다(`Fx.follow`). 종류는 화염 기둥, 낙뢰, 얼음 가시, 금빛 빛살이고, 머리 위에 "화염 결박!" 같은 글자가 뜹니다. 적 둘레에는 주인공 쪽으로 흐르는 속도선이 생깁니다.
+  - 적은 `bind.yankScale`(2.4배)만큼, `yankTime` 0.3초 동안 가감속(`Timed.smooth`)으로 끌려옵니다. 몸은 `stretchPower`만큼 늘어납니다.
+- [x] **속성 연결(데이터):** `visual.tones[].bindStyle`로 정합니다. 혼돈 → 화염, 좌절 → 번개, 절망 → 서리, 기본·회피 → 금실입니다. 색과 글자는 `bind.looks[]`(glow·color·core·text)에 있습니다. 불·번개 세트가 따로 없어서 기존 세트 색과 입자에 맞췄고, 인스펙터에서 바꿀 수 있습니다.
+- [x] **Blender 리본:** `tools/render_bind_ribbons.py`(Blender 5.3, 6초)가 속성 4종을 굽습니다. 결과물은 실 몸통(가로 타일, 세로 8프레임 아틀라스), 궤적 꼬리(8프레임), 머리 광구이고, 각각 core(흰색)와 rim(회색) 두 장입니다. 출력 위치는 `Assets/vfx/bind`입니다.
+  - 미리보기는 `python tools/preview_bind_ribbons.py`로 만들고, `art_src/vfx/bind/preview.png`에 저장됩니다.
+  - 임포트는 메뉴 `TOD/Setup/1`에서 합니다. `bind_*_thread`는 Repeat로 설정됩니다. 그림 연결은 `ArenaRenderer.bindArt[]`(MCP)에 있습니다.
+  - 그리기는 `Painter.Ribbon`이 맡습니다. 가산 선에 `_MainTex`·`_MainTex_ST` 프로퍼티 블록으로 프레임을 고르고 손 쪽으로 흐르게 합니다. 일반 `Line`은 블록을 비웁니다.
+- [x] **실 움직임 (꽂혀 있을 때는 이전처럼 일직선):**
+  - **가감속:** `BindCurve`는 뒤로 감김(`windup`·`windupTime`) → 가속 → 감속(`accelSplit`) 순서입니다. `arriveAt`(0.72)에 손에 닿고, 결박 실은 `bind.pullTime` 0.7초 동안 감깁니다.
+  - **아크:** 머리가 2차 베지어 호를 따라옵니다. 가닥마다 `arcSides`(1, −1, .55, −.55, .25)로 부채꼴을 그립니다. 호 높이는 `arcHeight × sin(π·진행)`이라 붙어 있을 때와 손에 닿을 때는 일직선입니다. 실 몸통과 꼬리도 같은 호를 따릅니다. 일반 당기기는 `needleVisual.pullBend`, 날아가는 실은 `flightBend`(속도 비례, 바늘 뒤로 처짐)로 휩니다.
+  - **스쿼시 앤 스트레치:** 머리 광구는 속도(`stretchSpeed`)에 따라 진행 방향으로 `stretchAmount`배 늘어나고, 부피는 유지됩니다. 실 몸통은 빠르거나 뒤로 감길수록 가늘어집니다. 손에 닿으면 `squashAmount`만큼 찌그러졌다가 출렁입니다. 바늘은 바닥에 꽂힐 때 `stickSquash`만큼 짧아졌다 돌아옵니다.
+  - **팔로우 스루:** 머리가 멈춘 뒤 꼬리가 손을 지나 채찍처럼 휘감기고(`followLength` 140, `followCurl`), 꼬리가 줄어들며 따라 들어옵니다. 손에서는 고리 두 겹이 퍼집니다. 꽂힌 실은 반대편으로 한 번 출렁인 뒤(`settleDamp`·`settleFreq`) 펴집니다.
+- 확인: EditMode 16개 통과. 플레이에서 속성 3종과 시간 순 장면을 캡처했습니다(`Temp/Shots/v_pull_sheet.png`, `arc_fire_sheet.png`, `arc_other_sheet.png`, `v_flight_sheet.png`). 에디터가 포커스를 잃으면 화면 캡처가 늦게 찍혀서, 같은 호출 안에서 `GameController.Update` → `Camera.Render`로 찍었습니다.
+- 남은 것: 실제 속도로 보는 손맛과 소리 확인. `followLength`·`flightBend` 상향 이후 모습은 캡처하지 않았습니다. 같은 적에 5가닥이 겹치면 가산 합성이라 가운데가 많이 밝습니다.
+
 ## 9차 요청 (2026-11-23) — 재봉 상자 끌어 놓기·맞닿은 경계 바느질
 
 - [x] **꾹 눌러 끌기:** 판 위 조각이나 목록 줄을 0.28초 누르고 있거나 14px 넘게 끌면 집어 듭니다(`GameUI.HoldTime/DragSlop`).

@@ -18,7 +18,7 @@ namespace TOD
 
     public class Knot : Point { public int index; }
 
-    public class Timed { public float x, y, time, max, done; }
+    public class Timed { public float x, y, time, max, done, power = 1; public bool smooth; }   // smooth: 가감속(천천히 → 빠르게 → 천천히), power: 늘어남 배율
 
     public class PoseSnapshot { public HeroAction action; public float actionTime, strideTime, angle, motion; }
 
@@ -77,7 +77,7 @@ namespace TOD
 
     public class Echo { public float until; public List<Strand> strands; }
 
-    public enum FxKind { Sprite, Flip, Number, Combo, Burst, Slash, Dust, Pull, Cut, Sliced, Transfer, Afterimage }
+    public enum FxKind { Sprite, Flip, Number, Combo, Burst, Slash, Dust, Pull, Cut, Sliced, Transfer, Afterimage, Bind }
     public enum FxSprite { None, Pull, Dash, Boss, Needle, Stitch, Streak, Launch, Dodge, Shock }
     public enum FlipSheet { Puncture, Slash, Snip, Flash, Muzzle, Thunk }
 
@@ -91,6 +91,8 @@ namespace TOD
         public Element element;
         public Color? color;                  // tint 를 색으로 지정할 때
         public bool squash, mirror, burst, rage, elite, useElement, followHero;
+        public bool bound;                    // 결박 당기기의 실 (속성 모습으로 그린다)
+        public Point follow;                  // 이 점을 따라 그린다 (결박 폭발 → 끌려가는 적)
         public string text;
         public int pop;
         public EnemyType type;

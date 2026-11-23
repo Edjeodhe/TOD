@@ -175,7 +175,7 @@ namespace TOD
                 float k = e.stretch.time / db.feel.stretchTime;
                 float pulse = Mathf.Sin(Mathf.PI * Mathf.Min(1, (1 - k) * 1.6f + .25f)) * k;
                 stretchAngle = Mathf.Atan2(e.stretch.y, e.stretch.x);
-                sx = 1 + .34f * pulse; sy = 1 - .2f * pulse;
+                sx = 1 + .34f * pulse * e.stretch.power; sy = Mathf.Max(.4f, 1 - .2f * pulse * e.stretch.power);
             }
             rot.localRotation = Quaternion.Euler(0, 0, Space.Degrees(stretchAngle));
             squash.localScale = new Vector3(sx, sy, 1);

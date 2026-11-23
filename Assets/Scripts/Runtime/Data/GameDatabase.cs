@@ -108,6 +108,11 @@ namespace TOD
         public float flightLift, diveTime, stickAngle, stickTilt;
         public float ringRadius, ringWidth, ringGlow, ringPulse, ringPulseSpeed, ringAlpha;
         public float pullSnapDelay, pullSnapPower;
+        [Header("실 움직임: 아크 · 스쿼시 앤 스트레치 · 팔로우 스루 (꽂혀 있을 때는 일직선)")]
+        public float flightBend;              // 날아가는 동안 실이 뒤로 처져 휘는 정도 (실 길이 비율, 빠를수록)
+        public float settleDamp, settleFreq;  // 꽂힌 뒤 반대편으로 출렁이다 펴지는 감쇠·진동수
+        public float stickSquash;             // 바늘이 꽂히는 순간 짧아지는 정도 (0~1)
+        public float pullBend;                // 보통 당기기: 감겨 드는 동안 휘는 정도 (실 길이 비율)
     }
 
     [Serializable] public class HeroConfig
@@ -301,6 +306,50 @@ namespace TOD
     {
         public Element element;
         public Color color, glow, core;
+        public BindStyle bindStyle;           // 결박 당기기 때 실이 변하는 모습 (혼돈 → 화염 등, 데이터로 바꿀 수 있음)
+    }
+
+    // 결박 당기기 때 실·폭발의 모습
+    public enum BindStyle { Plain, Fire, Lightning, Frost }
+
+    [Serializable] public class BindLook
+    {
+        public BindStyle style;
+        public Color glow, color, core;       // 바깥 빛 · 몸통 · 가운데 심 (가산)
+        public string text;                   // 적 머리 위 글자 (예: "화염 결박!")
+    }
+
+    // 결박 당기기: 같은 적 하나에 실이 strands 가닥 이상 걸린 채 당기면 그 적에게 추가 피해 + 속성 연출.
+    [Serializable] public class BindConfig
+    {
+        public int strands;                   // 같은 적에게 걸린 가닥 수 (0 = 끔)
+        public float damageBonus;             // 그 적에게 주는 피해 추가 배율 (1 = +100%)
+        public float freezeBonus, shakeBonus, flashBonus, kickBonus;   // 히트스톱·흔들림·번쩍임·반동 추가
+        public float strandWidth;             // 속성 실 굵기 배율 (보통 당기기 실 대비)
+        public FxSpec burst;                  // 적 자리 폭발 (size = 폭발 반지름 px, time = 길이)
+        public int bolts, tongues, spikes;    // 번개 줄기 · 불길 혀 · 얼음 가시 수
+        public float particleRate;            // 속성 실을 따라 뿜는 입자 (초당, 점 하나당)
+        [Header("리본 (Blender: tools/render_bind_ribbons.py)")]
+        public float ribbonWidth;             // 실 몸통 리본 굵기 (캔버스 px)
+        public float ribbonFps, flowSpeed;    // 리본 프레임 넘김 속도, 손 쪽으로 흐르는 속도 (타일/초)
+        public float trailWidth, trailTime;   // 궤적 꼬리 굵기 (px), 꼬리 길이 = 머리 속도 × trailTime
+        public float headSize;                // 머리 광구 지름 (px)
+        [Header("가감속: 반동(뒤로 감김) → 가속 → 손 앞에서 감속")]
+        public float pullTime;                // 결박 실이 감겨 드는 시간 (보통 당기기 fx.pullStrand.time 대신)
+        public float windup, windupTime;      // 처음 windupTime(0~1) 동안 적 쪽으로 windup(실 길이 비율)만큼 뒤로 감긴다
+        public float accelSplit;              // 가속 구간 끝(0~1, 그 뒤는 감속)
+        public float arriveAt;                // 머리가 손에 닿는 때 (당기기 진행 0~1). 그 뒤는 팔로우 스루
+        [Header("아크 · 스쿼시 앤 스트레치 · 팔로우 스루")]
+        public float arcHeight;               // 호가 휘는 높이 (적~손 거리 비율). 가닥마다 fx.side(-1~1)를 곱한다
+        public float[] arcSides;              // 같은 적에 걸린 n번째 가닥의 휘는 쪽·정도
+        public float stretchAmount, stretchSpeed;   // 머리 속도가 stretchSpeed(px/초)일 때 진행 방향으로 stretchAmount 배
+        public float squashAmount;            // 손에 닿는 순간 찌그러짐 (0~1)
+        public float followLength, followCurl; // 팔로우 스루 채찍 길이(px)·휘감기는 각도(라디안)
+        [Header("끌려옴 강조")]
+        public float yankScale, yankTime;     // 적이 끌려오는 거리 배율·시간 (가감속)
+        public float stretchPower;            // 끌려올 때 몸이 늘어나는 정도 배율
+        public int speedLines;                // 적 둘레 속도선 수
+        public BindLook[] looks;
     }
 
     // 이펙트 한 종류의 크기·수명 (웹판 effects.push 의 size/time).
@@ -430,6 +479,7 @@ namespace TOD
         public FxConfig fx;
         public PurifyConfig purify;
         public BossDeathConfig bossDeath;
+        public BindConfig bind;
         public NeedleVisual needleVisual;
         public VisualConfig visual;
         public RenderPalette palette;
@@ -440,6 +490,9 @@ namespace TOD
         public EnemyType Enemy(string id) => Array.Find(enemies.types, t => t.id == id);
         public AugmentDef Augment(string id) => Array.Find(augments.augments, a => a.id == id);
         public SetDef Set(string id) => Array.Find(gear.sets, s => s.id == id);
+
+        public BindLook Look(BindStyle style) =>
+            bind.looks == null ? null : Array.Find(bind.looks, l => l.style == style) ?? Array.Find(bind.looks, l => l.style == BindStyle.Plain);
 
         public ElementTone Tone(Element element)
         {

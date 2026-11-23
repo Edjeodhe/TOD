@@ -75,6 +75,29 @@ namespace TOD.Tests
             Assert.AreEqual(0, r.strands.Count, "당기면 실을 모두 회수");
         }
 
+        // 결박: 같은 적에게 바늘이 db.bind.strands 개 꽂힌 채 당기면 추가 피해 + 결박 폭발, 하나 모자라면 없음.
+        [Test]
+        public void BindingFiveStrandsHitsHarder()
+        {
+            Assert.Greater(db.bind.strands, 1, "결박 가닥 수 데이터");
+            foreach (int n in new[] { db.bind.strands - 1, db.bind.strands })
+            {
+                RunState r = NewRun();
+                r.player.x = 500; r.player.y = 350;
+                Enemy a = Add(r, "boss", 700, 350);
+                for (int i = 0; i < n; i++)
+                    r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Chaos });
+                bool binding = n >= db.bind.strands;
+                float hit = r.damage * (1 + combat.StrandBonus(n)) * (binding ? 1 + db.bind.damageBonus : 1);
+                combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
+                Assert.AreEqual(a.maxHp - Combat.Round(hit * n), a.hp, $"{n}가닥 피해");
+                Assert.AreEqual(binding, r.effects.Any(f => f.kind == FxKind.Bind), $"{n}가닥 결박 폭발");
+                Assert.AreEqual(binding, r.effects.Any(f => f.kind == FxKind.Pull && f.bound), $"{n}가닥 속성 실");
+            }
+            Assert.AreEqual(BindStyle.Fire, db.Tone(Element.Chaos).bindStyle, "혼돈 = 화염");
+            Assert.IsNotNull(db.Look(BindStyle.Fire));
+        }
+
         [Test]
         public void SetGroupsUseLargestConnectedCluster()
         {

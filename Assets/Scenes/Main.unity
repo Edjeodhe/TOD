@@ -27325,6 +27325,71 @@ MonoBehaviour:
     threadColor: {r: 1, g: 0.45, b: 0.65, a: 1}
     cutColor: {r: 1, g: 0.95, b: 0.9, a: 1}
     flakeColor: {r: 0.92, g: 0.86, b: 0.74, a: 1}
+  bind:
+    strands: 5
+    damageBonus: 1
+    freezeBonus: 0.1
+    shakeBonus: 0.2
+    flashBonus: 0.1
+    kickBonus: 8
+    strandWidth: 1.6
+    burst:
+      size: 95
+      time: 0.9
+      lift: 0
+      alpha: 1
+    bolts: 5
+    tongues: 9
+    spikes: 10
+    particleRate: 6
+    ribbonWidth: 30
+    ribbonFps: 14
+    flowSpeed: 1.6
+    trailWidth: 34
+    trailTime: 0.09
+    headSize: 46
+    pullTime: 0.7
+    windup: 0.06
+    windupTime: 0.18
+    accelSplit: 0.55
+    arriveAt: 0.72
+    arcHeight: 0.28
+    arcSides:
+    - 1
+    - -1
+    - 0.55
+    - -0.55
+    - 0.25
+    stretchAmount: 2
+    stretchSpeed: 2200
+    squashAmount: 0.5
+    followLength: 140
+    followCurl: 2.6
+    yankScale: 2.4
+    yankTime: 0.3
+    stretchPower: 1.9
+    speedLines: 7
+    looks:
+    - style: 0
+      glow: {r: 1, g: 0.85, b: 0.4, a: 1}
+      color: {r: 1, g: 0.82, b: 0.35, a: 1}
+      core: {r: 1, g: 0.98, b: 0.85, a: 1}
+      text: "\uACB0\uBC15!"
+    - style: 1
+      glow: {r: 1, g: 0.35, b: 0.05, a: 1}
+      color: {r: 1, g: 0.55, b: 0.12, a: 1}
+      core: {r: 1, g: 0.93, b: 0.6, a: 1}
+      text: "\uD654\uC5FC \uACB0\uBC15!"
+    - style: 2
+      glow: {r: 1, g: 0.8, b: 0.2, a: 1}
+      color: {r: 1, g: 0.96, b: 0.6, a: 1}
+      core: {r: 1, g: 1, b: 1, a: 1}
+      text: "\uBC88\uAC1C \uACB0\uBC15!"
+    - style: 3
+      glow: {r: 0.35, g: 0.8, b: 1, a: 1}
+      color: {r: 0.7, g: 0.95, b: 1, a: 1}
+      core: {r: 0.95, g: 1, b: 1, a: 1}
+      text: "\uC11C\uB9AC \uACB0\uBC15!"
   needleVisual:
     flightLift: 15
     diveTime: 0.09
@@ -27338,28 +27403,38 @@ MonoBehaviour:
     ringAlpha: 0.9
     pullSnapDelay: 0.16
     pullSnapPower: 2.4
+    flightBend: 0.22
+    settleDamp: 9
+    settleFreq: 26
+    stickSquash: 0.3
+    pullBend: 0.12
   visual:
     tones:
     - element: 0
       color: {r: 0.949, g: 0.6627, b: 0.7647, a: 1}
       glow: {r: 1, g: 0.5255, b: 0.7216, a: 1}
       core: {r: 1, g: 0.9412, b: 0.9647, a: 1}
+      bindStyle: 0
     - element: 1
       color: {r: 1, g: 0.3725, b: 0.6353, a: 1}
       glow: {r: 1, g: 0.1647, b: 0.498, a: 1}
       core: {r: 1, g: 0.8824, b: 0.9373, a: 1}
+      bindStyle: 1
     - element: 2
       color: {r: 0.3098, g: 0.8784, b: 0.8157, a: 1}
       glow: {r: 0.098, g: 0.7373, b: 0.8392, a: 1}
       core: {r: 0.8863, g: 1, b: 0.9843, a: 1}
+      bindStyle: 3
     - element: 3
       color: {r: 1, g: 0.8235, b: 0.2471, a: 1}
       glow: {r: 1, g: 0.651, b: 0, a: 1}
       core: {r: 1, g: 0.9725, b: 0.8392, a: 1}
+      bindStyle: 2
     - element: 4
       color: {r: 0.498, g: 0.8157, b: 1, a: 1}
       glow: {r: 0.2471, g: 0.6627, b: 1, a: 1}
       core: {r: 0.9098, g: 0.9686, b: 1, a: 1}
+      bindStyle: 0
     floorPalette:
     - {r: 0.8471, g: 0.549, b: 0.6627, a: 1}
     - {r: 0.6824, g: 0.5961, b: 0.8078, a: 1}
@@ -27702,6 +27777,13 @@ MonoBehaviour:
     duration: 0.06
     volume: 0.16
     wave: 1
+    sample: {fileID: 0}
+  - id: bind
+    from: 220
+    to: 38
+    duration: 0.5
+    volume: 0.17
+    wave: 2
     sample: {fileID: 0}
 --- !u!1 &1610423764
 GameObject:
@@ -28314,6 +28396,39 @@ MonoBehaviour:
   enemyTemplate: {fileID: 148905347}
   enemyRoot: {fileID: 1867067398}
   particles: {fileID: 1042367773}
+  bindArt:
+  - style: 0
+    threadCore: {fileID: 21300000, guid: 91c460d3a2334d645a73ce52bcd4a4c0, type: 3}
+    threadRim: {fileID: 21300000, guid: ec02f4861cf534443a9d81719835049a, type: 3}
+    trailCore: {fileID: 21300000, guid: b966ef05b5c36924aa67d008f32a1e2f, type: 3}
+    trailRim: {fileID: 21300000, guid: 317c98e112de3d34f9a2a88b6e5c1b17, type: 3}
+    headCore: {fileID: 21300000, guid: 2f8d7908a9c2a574cb5f9fef06b825a5, type: 3}
+    headRim: {fileID: 21300000, guid: ada3f3ed779d9ed4592ff71cb7037471, type: 3}
+    frames: 8
+  - style: 1
+    threadCore: {fileID: 21300000, guid: f04f05ae3fdc238428181557ea9f5b99, type: 3}
+    threadRim: {fileID: 21300000, guid: 1f76b3c4f544af148b1ad514bb6329d6, type: 3}
+    trailCore: {fileID: 21300000, guid: b1efbbd6afe2ff040ad6a5c398cbe755, type: 3}
+    trailRim: {fileID: 21300000, guid: eebbbfaa475d3bc42a5f2b7dbb64be88, type: 3}
+    headCore: {fileID: 21300000, guid: a3d577c9530ab6e4e8c0fe1966bc69d3, type: 3}
+    headRim: {fileID: 21300000, guid: 1cdec3e65bb709a42a1f4b2d0741a952, type: 3}
+    frames: 8
+  - style: 2
+    threadCore: {fileID: 21300000, guid: 5435e6dbc466dfc4ab30ea14c868fcd0, type: 3}
+    threadRim: {fileID: 21300000, guid: 4c54762670a27fe4bbd29416e0a91b4e, type: 3}
+    trailCore: {fileID: 21300000, guid: e8aee06c04aafb5448c1283ae2c37942, type: 3}
+    trailRim: {fileID: 21300000, guid: 8ee6c340e4fccdd41af59419c513ac2c, type: 3}
+    headCore: {fileID: 21300000, guid: bfcd9385d91934545a4f25986fdb8dd7, type: 3}
+    headRim: {fileID: 21300000, guid: 727f1e4099fbefe499b4608431910ffa, type: 3}
+    frames: 8
+  - style: 3
+    threadCore: {fileID: 21300000, guid: d90f3377e5101a24ba2176b406b86ac2, type: 3}
+    threadRim: {fileID: 21300000, guid: 1656cac4087dec34da4b1568c7f9a64d, type: 3}
+    trailCore: {fileID: 21300000, guid: 02d34c385a9036542bda4df9dde9bf00, type: 3}
+    trailRim: {fileID: 21300000, guid: 7a1c646a23fe6e64196a3de561e66527, type: 3}
+    headCore: {fileID: 21300000, guid: 5715f1259e3c62243bb5d860a994d6e9, type: 3}
+    headRim: {fileID: 21300000, guid: 075100f3fba8ed34baf84a3a4f780609, type: 3}
+    frames: 8
   background: {fileID: 922448547}
   cameraRig: {fileID: 1203403049}
   goldIcon: {fileID: 21300000, guid: c613c6eda6d74734bb94e46c01e70e1b, type: 3}

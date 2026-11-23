@@ -23,7 +23,8 @@ namespace TOD
         readonly List<Vector3> scratch = new();
         static AnimationCurve blade;
         static readonly int BrightId = Shader.PropertyToID("_Bright"), SatId = Shader.PropertyToID("_Sat"), FillId = Shader.PropertyToID("_Fill"),
-            CutId = Shader.PropertyToID("_CutPlane"), Cut2Id = Shader.PropertyToID("_CutPlane2"), ShapeId = Shader.PropertyToID("_Shape"), RingId = Shader.PropertyToID("_Ring");
+            CutId = Shader.PropertyToID("_CutPlane"), Cut2Id = Shader.PropertyToID("_CutPlane2"), ShapeId = Shader.PropertyToID("_Shape"), RingId = Shader.PropertyToID("_Ring"),
+            MainTexId = Shader.PropertyToID("_MainTex"), MainTexStId = Shader.PropertyToID("_MainTex_ST");
 
         void Awake()
         {
@@ -106,6 +107,20 @@ namespace TOD
             lr.positionCount = scratch.Count;
             lr.SetPositions(scratch.ToArray());
             Sort(lr, layer);
+            block.Clear();
+            lr.SetPropertyBlock(block);   // 풀에서 꺼낸 선에 남은 리본 텍스처를 지운다
+            return lr;
+        }
+
+        // 텍스처 리본: 가산 선에 texture 를 입힌다. st = _MainTex_ST (가로 반복·세로 프레임 고르기). 길이 방향 u 는 첫 점 0 → 끝 점 1.
+        public LineRenderer Ribbon(Layer layer, IList<Vector2> canvasPoints, float widthPx, Color color, Texture texture, Vector4 st, AnimationCurve width = null)
+        {
+            LineRenderer lr = Line(layer, canvasPoints, widthPx, color, additive: true);
+            if (width != null) lr.widthCurve = width;
+            block.Clear();
+            block.SetTexture(MainTexId, texture);
+            block.SetVector(MainTexStId, st);
+            lr.SetPropertyBlock(block);
             return lr;
         }
 

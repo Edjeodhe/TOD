@@ -57,7 +57,7 @@ namespace TOD.EditorTools
         {
             string name = Path.GetFileNameWithoutExtension(path);
             bool flip = path.StartsWith("Assets/vfx/flip/");
-            bool tiled = name == "floor" || name == "dash";
+            bool tiled = name == "floor" || name == "dash" || (name.StartsWith("bind_") && name.Contains("_thread"));   // 결박 실 몸통 리본은 길이 방향으로 반복
 
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = flip || name == "damage_font" ? SpriteImportMode.Multiple : SpriteImportMode.Single;   // 그림 글꼴 아틀라스는 여러 장(잘라 둔 글자 유지)
