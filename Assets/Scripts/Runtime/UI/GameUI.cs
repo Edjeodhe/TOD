@@ -75,7 +75,11 @@ namespace TOD
             Bind("attic-back", game.BackFromRoom);
             Bind("rotate", game.Rotate);
             Bind("unequip", game.Unequip);
-            root.Q("board").RegisterCallback<PointerLeaveEvent>(_ => game.HoverCell(null));
+            root.Q("board").RegisterCallback<PointerLeaveEvent>(_ => { if (!dragging) game.HoverCell(null); });
+            // 꾹 눌러 끌기: 판 위 조각·목록 줄을 누른 채 기다리거나 끌면 집어 들고, 놓은 칸에 다시 장착한다.
+            inventory.RegisterCallback<PointerDownEvent>(OnPressDown, TrickleDown.TrickleDown);
+            inventory.RegisterCallback<PointerMoveEvent>(OnPressMove, TrickleDown.TrickleDown);
+            inventory.RegisterCallback<PointerUpEvent>(OnPressUp, TrickleDown.TrickleDown);
         }
 
         void Bind(string name, Action action) => root.Q<Button>(name).clicked += action;
@@ -498,7 +502,9 @@ namespace TOD
         // 판 = 칸 버튼(누르기·호버) 위에 조각 그림 층(board-pieces)과 반투명 미리보기 층(board-ghost)을 겹친다.
         // 조각 한 칸 = Slots.uxml piece-tile 복제: 종이·테두리 마스크(k{n}, MaskKey) · 바깥 변 바늘땀 · 매듭 · 아이콘.
 
-        const float SewDuration = .9f;   // 장착 바느질: 바늘이 둘레를 한 바퀴 도는 시간
+        // 장착 바느질: 조각이 툭 놓이고(Drop) → 바늘이 한 땀(StitchPx)씩 종이를 들락날락하며 둘레를 돌고 → 매듭이 톡(Knot)
+        const float SewDrop = .16f, SewStitch = .05f, SewKnot = .32f, StitchPx = 18f;
+        const float HoldTime = .28f, DragSlop = 14f;   // 꾹 누르기: 이만큼 누르고 있거나 이만큼 끌면 집어 든다
         static readonly Vector2Int[] Normal = { new(0, -1), new(1, 0), new(0, 1), new(-1, 0) };   // 위·오른·아래·왼 (판 아래로 y 증가)
         static readonly Vector2Int[] Tangent = { new(1, 0), new(0, 1), new(-1, 0), new(0, -1) };  // 시계 방향으로 도는 방향
         static readonly string[] SeamNames = { "seam-t", "seam-r", "seam-b", "seam-l" };
@@ -519,14 +525,37 @@ namespace TOD
             public readonly List<Seam> seams = new();    // 둘레를 도는 순서
             public readonly List<(VisualElement shine, float x)> shines = new();
             public readonly List<VisualElement> sparkles = new();
-            public VisualElement mark;   // 무게 중심의 아이템 아이콘
-            public float width;
+            public VisualElement mark;   // 회전 중심 칸의 아이템 아이콘
+            public float width, perimeter;
+            public Vector2 center;       // 조각 가운데(판 좌표) — 놓일 때·당길 때 이 점을 기준으로 움직인다
+            public readonly List<VisualElement> parts = new();   // 함께 움직이는 칸 그림·아이콘
+        }
+
+        // 서로 다른 두 조각이 맞닿은 한 칸 길이의 경계 (홈 + 건너 잇는 땀). from → to 가 바느질 방향.
+        sealed class Join
+        {
+            public int a, b;
+            public VisualElement box, art;
+            public Vector2 from, to;
+            public bool vertical;
+            public float length;
         }
 
         readonly List<PieceArt> boardArt = new();
-        int sewId = -1;
+        readonly List<Join> joins = new();
+        readonly List<VisualElement> sparks = new();
+        Vector2 dropFrom, pendingDrop;   // 끌어 놓은 조각이 손끝 자리 → 칸 자리로 미끄러져 들어가는 시작 어긋남
+        int dragTurns, dragBuiltId = -1, dragBuiltTurns = -1;
+        float dragBuiltPitch;
+        readonly Dictionary<Vector2Int, int> boardIds = new();   // 판 칸 → 그 칸의 조각 id
+        int sewId = -1, boardWidth, boardHeight;
         float sewStart, pitch;
         bool holdingPiece;
+        // 꾹 눌러 끌기 상태
+        int pressId = -1, dragId = -1, pressPointer;
+        float pressTime;
+        Vector2 pressPos, pointerPos;
+        bool dragging;
 
         Color RankColor(PieceDef def)
         {
@@ -543,6 +572,7 @@ namespace TOD
             Text(inventory, "inventory-header", string.Format(T.inventoryHeader, width, height, placed.Sum(p => p.def.cost), limit));
             OwnedItem holding = profile.items.FirstOrDefault(i => i.id == selected);
             holdingPiece = holding != null;
+            dragTurns = turns;
             HideTip();
 
             // 칸: 누르기·호버만 맡는 바탕 (조각 그림은 위 층)
@@ -550,6 +580,10 @@ namespace TOD
             board.Clear();
             cells.Clear();
             pitch = Mathf.Floor(560f / width);
+            boardWidth = width;
+            boardHeight = height;
+            boardIds.Clear();
+            foreach (PlacedPiece p in placed) foreach (Vector2Int c in p.cells) boardIds[c] = p.Id;
             board.style.width = pitch * width;
             board.style.height = pitch * height;
             for (int y = 0; y < height; y++)
@@ -567,6 +601,7 @@ namespace TOD
                     cell.clicked += () => game.ClickCell(at.x, at.y);
                     cell.RegisterCallback<PointerEnterEvent>(e =>
                     {
+                        if (dragging) return;
                         game.HoverCell(at);
                         if (occupying != null && !holdingPiece) ShowTip(occupying.def, e.position);
                     });
@@ -581,11 +616,49 @@ namespace TOD
             VisualElement layer = inventory.Q("board-pieces");
             layer.Clear();
             boardArt.Clear();
+            // 같은 등급 조각이 맞닿으면 종이 명암을 달리해 서로 다른 영역으로 보이게 한다 (이웃과 겹치지 않는 명암 고르기)
+            var tone = new Dictionary<int, int>();
             foreach (PlacedPiece piece in placed)
             {
-                PieceArt art = BuildPiece(layer, piece.def, piece.cells, piece.Id, new Vector2Int(piece.placement.x, piece.placement.y));
+                var used = new HashSet<int>();
+                foreach (Vector2Int c in piece.cells)
+                    for (int d = 0; d < 4; d++)
+                        if (boardIds.TryGetValue(c + Normal[d], out int other) && other != piece.Id && tone.TryGetValue(other, out int t)
+                            && placed.First(p => p.Id == other).def.cost == piece.def.cost) used.Add(t);
+                tone[piece.Id] = Enumerable.Range(0, 3).First(t => !used.Contains(t) || t == 2);
+            }
+            foreach (PlacedPiece piece in placed)
+            {
+                PieceArt art = BuildPiece(layer, piece.def, piece.cells, piece.Id, new Vector2Int(piece.placement.x, piece.placement.y), tone[piece.Id]);
                 if (piece.Id == selected) foreach (VisualElement tile in art.tiles) tile.AddToClassList("selected");
+                if (piece.Id == dragId) foreach (VisualElement part in art.parts) part.style.opacity = .3f;   // 끌고 있는 조각의 원래 자리는 흐리게
                 boardArt.Add(art);
+            }
+            // 서로 다른 조각이 맞닿은 경계: 어두운 홈 + 건너 잇는 땀 (붙어 있지만 다른 영역)
+            float joinWidth = Mathf.Round(pitch / 3f);
+            joins.Clear();
+            foreach (var (c, id) in boardIds)
+            {
+                for (int d = 1; d <= 2; d++)
+                {
+                    if (!boardIds.TryGetValue(c + Normal[d], out int other) || other == id) continue;
+                    if (dragging && (id == dragId || other == dragId)) continue;   // 집어 든 조각은 이음이 풀린 채
+                    VisualElement box = Slot(slots, "piece-join");
+                    bool vertical = d == 1;
+                    box.AddToClassList(vertical ? "piece-join-v" : "piece-join-h");
+                    VisualElement art = box.Q("join-art");
+                    art.style.width = vertical ? joinWidth : pitch;
+                    art.style.height = vertical ? pitch : joinWidth;
+                    var join = new Join
+                    {
+                        a = id, b = other, box = box, art = art, vertical = vertical, length = pitch,
+                        from = vertical ? new Vector2((c.x + 1) * pitch, c.y * pitch) : new Vector2(c.x * pitch, (c.y + 1) * pitch),
+                    };
+                    join.to = join.from + (vertical ? new Vector2(0, pitch) : new Vector2(pitch, 0));
+                    SetJoin(join, 1, joinWidth);
+                    joins.Add(join);
+                    layer.Add(box);
+                }
             }
             if (boardArt.All(a => a.id != sewId)) sewId = -1;
             ApplySew();
@@ -617,6 +690,7 @@ namespace TOD
                 rankTag.style.backgroundColor = RankColor(def);
                 rankTag.style.color = def.cost >= 4 ? new Color(1f, .95f, .88f) : Color.Lerp(RankColor(def), Color.black, .72f);
                 int id = item.id;
+                button.userData = id;   // 꾹 눌러 끌기에서 어떤 아이템인지
                 button.clicked += () => game.SelectPiece(id);
                 button.RegisterCallback<PointerEnterEvent>(e => ShowTip(def, e.position));
                 button.RegisterCallback<PointerMoveEvent>(e => MoveTip(e.position));
@@ -625,6 +699,11 @@ namespace TOD
             }
 
             RenderSets(Gear.Stats(db, profile));
+            if (dragging)   // 끄는 중 회전(R)해도 손끝 조각·미리보기 유지
+            {
+                RenderDragPiece();
+                game.HoverCell(BoardCell(pointerPos));
+            }
             inventory.Q<Button>("rotate").SetEnabled(holding != null);
             inventory.Q<Button>("unequip").SetEnabled(placed.Any(p => p.Id == selected));
         }
@@ -664,15 +743,20 @@ namespace TOD
 
         // 조각 그림 한 벌을 판 좌표(칸 목록)로 만든다.
         // pivot = 회전 중심 칸의 판 좌표 (아이콘이 이 칸 슬롯 가운데에 놓인다)
-        PieceArt BuildPiece(VisualElement layer, PieceDef def, List<Vector2Int> cellList, int id, Vector2Int pivot)
+        // tone: 0 그대로 · 1 밝게 · 2 어둡게 (맞닿은 같은 등급 조각끼리 구분)
+        PieceArt BuildPiece(VisualElement layer, PieceDef def, List<Vector2Int> cellList, int id, Vector2Int pivot, int tone = 0)
         {
             var art = new PieceArt { id = id };
             var set = new HashSet<Vector2Int>(cellList);
             float inset = Mathf.Round(pitch * .14f);   // 바늘땀: 찢긴 가장자리와 칸 슬롯(slot_frame) 사이
             float thick = Mathf.Max(3, Mathf.Round(pitch * .055f));
             Color fill = RankColor(def);
+            if (tone == 1) fill = Color.Lerp(fill, Color.white, .2f);
+            else if (tone == 2) fill = Color.Lerp(fill, Color.black, .16f);
             int minX = cellList.Min(c => c.x), maxX = cellList.Max(c => c.x);
+            int minY = cellList.Min(c => c.y), maxY = cellList.Max(c => c.y);
             art.width = (maxX - minX + 1) * pitch;
+            art.center = new Vector2((minX + maxX + 1) * .5f * pitch, (minY + maxY + 1) * .5f * pitch);
             // 매듭은 맨 위·왼쪽 칸, 아이콘은 회전 중심 칸 슬롯의 정사각형 가운데
             Vector2Int knotCell = cellList.OrderBy(c => c.y).ThenBy(c => c.x).First();
             Vector2 center = new((pivot.x + .5f) * pitch, (pivot.y + .5f) * pitch);
@@ -730,7 +814,9 @@ namespace TOD
                 VisualElement shine = tile.Q("shine");
                 shine.style.display = def.cost >= 4 ? DisplayStyle.Flex : DisplayStyle.None;
                 if (def.cost >= 4) art.shines.Add((shine, (c.x - minX) * pitch));
+                tile.style.transformOrigin = new TransformOrigin(art.center.x - origin.x, art.center.y - origin.y);
                 art.tiles.Add(tile);
+                art.parts.Add(tile);
                 layer.Add(tile);
             }
             if (def.icon != null)
@@ -742,6 +828,8 @@ namespace TOD
                 art.mark.style.left = center.x - size * .5f;
                 art.mark.style.top = center.y - size * .5f;
                 Icon(art.mark, def.icon);
+                art.mark.style.transformOrigin = new TransformOrigin(art.center.x - (center.x - size * .5f), art.center.y - (center.y - size * .5f));
+                art.parts.Add(art.mark);
                 layer.Add(art.mark);
             }
             // 둘레 순서: 격자 꼭짓점을 따라 시계 방향으로 잇는다 (맨 위 왼쪽 윗변에서 시작)
@@ -761,6 +849,7 @@ namespace TOD
                     art.seams.Add(current);
                 }
             }
+            art.perimeter = art.seams.Sum(sm => sm.length);
             return art;
         }
 
@@ -790,42 +879,300 @@ namespace TOD
             }
         }
 
-        // 조각을 판에 놓은 직후: 바늘이 둘레를 땀땀이 한 바퀴 돈다.
+        // 조각을 판에 놓은 직후: 조각이 제자리로 툭 들어앉으며 불투명해지고(끌어 놓았으면 손끝 자리에서 미끄러져 들어감),
+        // 이웃 조각과 맞닿았으면 그 경계만 땀땀이 꿰매고, 혼자면 둘레를 한 바퀴 꿰맨 뒤 매듭이 톡 튄다.
         public void Sew(int id)
         {
             sewId = id;
             sewStart = Now;
+            dropFrom = pendingDrop;
+            pendingDrop = Vector2.zero;
             ApplySew();
+        }
+
+        static float EaseOut(float t) => 1 - Mathf.Pow(1 - Mathf.Clamp01(t), 3);
+
+        // 둘레를 따라 dist 만큼 간 점과 그 자리의 진행 방향
+        static (Vector2 point, Vector2 dir) AlongPerimeter(PieceArt art, float dist)
+        {
+            foreach (Seam seam in art.seams)
+            {
+                if (dist <= seam.length || seam == art.seams[^1])
+                {
+                    Vector2 dir = (seam.to - seam.from).normalized;
+                    return (Vector2.Lerp(seam.from, seam.to, Mathf.Clamp01(dist / Mathf.Max(1, seam.length))), dir);
+                }
+                dist -= seam.length;
+            }
+            return (art.center, Vector2.right);
+        }
+
+        // 경계 이음을 from → to 방향으로 f(0~1)만큼 드러낸다. 그림(join-art)은 제자리에 두고 바깥 창만 늘린다.
+        void SetJoin(Join join, float f, float width = -1)
+        {
+            if (width < 0) width = Mathf.Round(pitch / 3f);
+            float shown = join.length * Mathf.Clamp01(f);
+            Vector2 start = Vector2.Min(join.from, join.to);
+            bool forward = join.vertical ? join.to.y >= join.from.y : join.to.x >= join.from.x;
+            float offset = forward ? 0 : join.length - shown;
+            join.box.style.display = shown > .5f ? DisplayStyle.Flex : DisplayStyle.None;
+            if (join.vertical)
+            {
+                join.box.style.left = start.x - width * .5f;
+                join.box.style.top = start.y + offset;
+                join.box.style.width = width;
+                join.box.style.height = shown;
+                join.art.style.left = 0;
+                join.art.style.top = -offset;
+            }
+            else
+            {
+                join.box.style.left = start.x + offset;
+                join.box.style.top = start.y - width * .5f;
+                join.box.style.width = shown;
+                join.box.style.height = width;
+                join.art.style.left = -offset;
+                join.art.style.top = 0;
+            }
+        }
+
+        // 꿰맬 이음들을 바늘이 이어서 지나가는 순서로 (맨 위 왼쪽부터, 다음은 지금 끝점에서 가장 가까운 이음)
+        List<Join> SewJoins(int id)
+        {
+            var left = joins.Where(j => j.a == id || j.b == id).ToList();
+            var order = new List<Join>();
+            Vector2 at = left.Count > 0 ? left.Select(j => Vector2.Min(j.from, j.to)).OrderBy(v => v.y).ThenBy(v => v.x).First() : Vector2.zero;
+            while (left.Count > 0)
+            {
+                Join next = left.OrderBy(j => Mathf.Min(Vector2.Distance(at, j.from), Vector2.Distance(at, j.to))).First();
+                left.Remove(next);
+                if (Vector2.Distance(at, next.to) < Vector2.Distance(at, next.from)) (next.from, next.to) = (next.to, next.from);
+                order.Add(next);
+                at = next.to;
+            }
+            return order;
         }
 
         void ApplySew()
         {
             VisualElement needle = inventory.Q("needle");
             PieceArt art = sewId >= 0 ? boardArt.FirstOrDefault(a => a.id == sewId) : null;
-            if (art == null || art.seams.Count == 0) { Show(needle, false); sewId = -1; return; }
-            float t = (Now - sewStart) / SewDuration;
-            int n = art.seams.Count;
-            for (int i = 0; i < n; i++) SetSeam(art.seams[i], t * n - i);
-            // 다 꿰매면 조각이 살짝 부풀었다 돌아온다
-            float pop = t < 1 ? 1 : 1 + .06f * Mathf.Sin(Mathf.Clamp01((t - 1) / .25f) * Mathf.PI);
-            foreach (VisualElement tile in art.tiles) tile.style.scale = new Scale(new Vector2(pop, pop));
-            if (art.mark != null) art.mark.style.scale = new Scale(new Vector2(pop, pop));
-            Show(needle, t < 1);
-            if (t >= 1.25f) { sewId = -1; return; }
-            if (t >= 1) return;
-            int index = Mathf.Clamp(Mathf.FloorToInt(t * n), 0, n - 1);
-            Seam seam = art.seams[index];
-            Vector2 tip = Vector2.Lerp(seam.from, seam.to, Mathf.Clamp01(t * n - index));
-            Vector2 dir = seam.to - seam.from;
-            needle.style.left = tip.x;
-            needle.style.top = tip.y;
-            needle.style.rotate = new Rotate(Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
+            if (art == null || art.seams.Count == 0) { Show(needle, false); HideSparks(); sewId = -1; return; }
+            List<Join> sewJoins = SewJoins(art.id);
+            bool joining = sewJoins.Count > 0;   // 이웃과 맞닿았으면 그 경계만 꿰맨다
+            int stitches = joining ? sewJoins.Count * 2 : Mathf.Max(6, Mathf.RoundToInt(art.perimeter / StitchPx));
+            float sewTime = joining ? Mathf.Clamp(stitches * .07f, .35f, 1.1f) : Mathf.Clamp(stitches * SewStitch, .6f, 1.2f);
+            float t = Now - sewStart;
+            float scale = 1, rotate = 0, opacity = 1, revealed = 0, sewn = 0;
+            Vector2 shift = Vector2.zero, knotAt = joining ? sewJoins[^1].to : art.seams[^1].to;
+            if (t < SewDrop)
+            {
+                // 1) 손끝 자리에서 칸 자리로 미끄러져 툭 들어앉으며 반투명이 풀린다
+                float u = EaseOut(t / SewDrop);
+                shift = Vector2.Lerp(dropFrom, Vector2.zero, u);
+                scale = Mathf.Lerp(1.06f, 1f, u);
+                rotate = Mathf.Lerp(-3f, 0f, u);
+                opacity = Mathf.Lerp(.62f, 1f, u);
+                Show(needle, false);
+            }
+            else if (t < SewDrop + sewTime)
+            {
+                // 2) 한 땀씩: 바늘이 종이를 뚫고 들어갔다 나오고(번갈아 이쪽·저쪽), 땀이 생길 때마다 조각이 당겨지며 움찔한다
+                float p = (t - SewDrop) / sewTime * stitches;
+                int k = Mathf.Min(stitches - 1, Mathf.FloorToInt(p));
+                float f = p - k;
+                float hop = Mathf.Sin(f * Mathf.PI);
+                float side = k % 2 == 0 ? 1 : -1;
+                Vector2 point, dir;
+                float reach;
+                if (joining)
+                {
+                    // 경계 한 칸 = 두 땀. 바늘이 경계를 가로질러 두 조각을 건너 잇는다.
+                    sewn = (k + EaseOut(f)) / 2f;
+                    int index = Mathf.Min(sewJoins.Count - 1, k / 2);
+                    Join join = sewJoins[index];
+                    point = Vector2.Lerp(join.from, join.to, Mathf.Clamp01(sewn - index));
+                    dir = (join.to - join.from).normalized;
+                    reach = pitch * .2f;
+                }
+                else
+                {
+                    revealed = (k + EaseOut(f)) * art.perimeter / stitches;
+                    (point, dir) = AlongPerimeter(art, revealed);
+                    reach = 7f;
+                }
+                Vector2 inward = new(-dir.y, dir.x);   // 시계 방향으로 도니 오른쪽이 조각 안쪽
+                Vector2 tip = point + inward * (hop * reach * side);
+                needle.style.left = tip.x;
+                needle.style.top = tip.y;
+                needle.style.rotate = new Rotate(Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg + side * hop * (joining ? 40f : 30f));
+                needle.style.scale = new Scale(new Vector2(1 - .3f * hop, 1));
+                Show(needle, true);
+                scale = 1 + .03f * hop;
+                rotate = side * .9f * hop;
+            }
+            else
+            {
+                // 3) 매듭: 조각이 한 번 부풀었다 가라앉고, 마지막 땀 자리에서 불티가 튄다
+                float u = (t - SewDrop - sewTime) / SewKnot;
+                revealed = art.perimeter;
+                sewn = sewJoins.Count;
+                Show(needle, false);
+                scale = 1 + .08f * Mathf.Sin(Mathf.Clamp01(u) * Mathf.PI);
+                Burst(knotAt, Mathf.Clamp01(u));
+                if (u >= 1) { sewId = -1; HideSparks(); scale = 1; }
+            }
+            if (joining && t >= SewDrop) revealed = art.perimeter;   // 이을 때 바깥 둘레는 이미 꿰매진 채, 경계만 꿰맨다
+            float walked = 0;
+            foreach (Seam seam in art.seams)
+            {
+                SetSeam(seam, (revealed - walked) / Mathf.Max(1, seam.length));
+                walked += seam.length;
+            }
+            for (int i = 0; i < sewJoins.Count; i++) SetJoin(sewJoins[i], sewn - i);
+            foreach (VisualElement part in art.parts)
+            {
+                part.style.scale = new Scale(new Vector2(scale, scale));
+                part.style.rotate = new Rotate(rotate);
+                part.style.translate = new Translate(shift.x, shift.y);
+                part.style.opacity = opacity;
+            }
+        }
+
+        // 매듭 불티: 마지막 땀 자리에서 다섯 개가 바깥으로 튀며 사라진다
+        void Burst(Vector2 at, float u)
+        {
+            VisualElement parent = inventory.Q("needle").parent;
+            while (sparks.Count < 5) { VisualElement spark = Slot(slots, "sew-spark"); parent.Add(spark); sparks.Add(spark); }
+            for (int i = 0; i < sparks.Count; i++)
+            {
+                float angle = (i * 72 - 90) * Mathf.Deg2Rad;
+                float r = EaseOut(u) * pitch * .38f;
+                VisualElement spark = sparks[i];
+                spark.style.display = DisplayStyle.Flex;
+                spark.style.left = at.x + Mathf.Cos(angle) * r;
+                spark.style.top = at.y + Mathf.Sin(angle) * r;
+                spark.style.opacity = 1 - u;
+                spark.style.scale = new Scale(new Vector2(1.2f - u * .6f, 1.2f - u * .6f));
+            }
+        }
+
+        void HideSparks()
+        {
+            foreach (VisualElement spark in sparks) spark.style.display = DisplayStyle.None;
+        }
+
+        // ---------------------------------------------------------------- 꾹 눌러 끌기
+        // 누른 채 끌면 조각 전체가 반투명하게 손끝(회전 중심 칸 가운데)을 따라오고, 판 위에서는 놓일 칸이 옅게 표시된다.
+        // 떼면 그 칸에 들어가며 반투명이 풀린다 (못 놓는 자리·판 밖이면 원래대로).
+
+        // 판 좌표의 칸 (판 밖이면 null)
+        Vector2Int? BoardCell(Vector2 panelPos)
+        {
+            VisualElement board = inventory.Q("board");
+            if (board.panel == null || pitch <= 0) return null;
+            Vector2 local = board.WorldToLocal(panelPos);
+            int x = Mathf.FloorToInt(local.x / pitch), y = Mathf.FloorToInt(local.y / pitch);
+            if (local.x < 0 || local.y < 0 || x >= boardWidth || y >= boardHeight) return null;
+            return new Vector2Int(x, y);
+        }
+
+        void OnPressDown(PointerDownEvent e)
+        {
+            if (e.button != 0 || dragging) return;
+            pointerPos = pressPos = e.position;
+            pressPointer = e.pointerId;
+            pressTime = Now;
+            pressId = -1;
+            Vector2Int? cell = BoardCell(e.position);
+            if (cell != null && boardIds.TryGetValue(cell.Value, out int onBoard)) { pressId = onBoard; return; }
+            for (var element = e.target as VisualElement; element != null && element != inventory; element = element.parent)
+                if (element.ClassListContains("piece-row") && element.userData is int id) { pressId = id; return; }
+        }
+
+        void OnPressMove(PointerMoveEvent e)
+        {
+            pointerPos = e.position;
+            if (pressId >= 0 && !dragging && Vector2.Distance(pressPos, pointerPos) > DragSlop) BeginDrag();
+            if (!dragging) return;
+            MoveDragPiece();
+            game.HoverCell(BoardCell(pointerPos));
+        }
+
+        void OnPressUp(PointerUpEvent e)
+        {
+            if (!dragging) { pressId = -1; return; }
+            // 끌어서 놓기: 버튼 눌림(클릭)이 따로 일어나지 않게 여기서 멈춘다. 화면은 곧 다시 그려져 포인터 붙잡기도 풀린다.
+            e.StopImmediatePropagation();
+            inventory.ReleasePointer(e.pointerId);
+            int id = dragId;
+            Vector2Int? cell = BoardCell(e.position);
+            // 놓인 조각이 손끝 자리에서 칸 자리로 미끄러져 들어가도록 어긋남을 기억해 둔다 (Sew 가 씀)
+            pendingDrop = cell is Vector2Int at
+                ? (Vector2)inventory.Q("board").WorldToLocal(e.position) - new Vector2((at.x + .5f) * pitch, (at.y + .5f) * pitch)
+                : Vector2.zero;
+            CancelPress();
+            game.DropDrag(id, cell);
+            pendingDrop = Vector2.zero;   // 못 놓았으면 버린다
+        }
+
+        void BeginDrag()
+        {
+            dragging = true;
+            dragId = pressId;
+            // 판이 다시 그려지며 눌린 칸이 사라져도 이동·놓기를 계속 받도록 화면 자체가 포인터를 붙잡는다
+            inventory.CapturePointer(pressPointer);
+            HideTip();
+            inventory.Q("board-ghost").AddToClassList("drag");
+            Show(inventory.Q("drag-piece"), true);
+            game.BeginDrag(dragId);   // 고른 조각으로 삼고 다시 그림 (원래 자리는 흐리게, 손끝 조각도 여기서 만들어짐)
+            MoveDragPiece();
+            game.HoverCell(BoardCell(pointerPos));
+        }
+
+        // 손끝 조각: 회전 중심 칸을 (0,0)에 두고 조각 그림을 한 벌 만든다. 조각·회전·칸 크기가 바뀔 때만 다시 만든다.
+        void RenderDragPiece()
+        {
+            VisualElement holder = inventory.Q("drag-piece");
+            if (dragBuiltId == dragId && dragBuiltTurns == dragTurns && Mathf.Approximately(dragBuiltPitch, pitch)) return;
+            holder.Clear();
+            dragBuiltId = dragId;
+            dragBuiltTurns = dragTurns;
+            dragBuiltPitch = pitch;
+            OwnedItem item = game.Profile.items.FirstOrDefault(i => i.id == dragId);
+            if (item == null) return;
+            BuildPiece(holder, Gear.Def(db, item), Gear.Shape(db, item, dragTurns).ToList(), -1, Vector2Int.zero);
+        }
+
+        void MoveDragPiece()
+        {
+            RenderDragPiece();
+            VisualElement holder = inventory.Q("drag-piece");
+            Vector2 p = inventory.WorldToLocal(pointerPos);
+            holder.style.left = p.x - pitch * .5f;
+            holder.style.top = p.y - pitch * .5f;
+        }
+
+        void CancelPress()
+        {
+            pressId = -1;
+            if (!dragging && dragId < 0) return;
+            dragging = false;
+            dragId = -1;
+            if (inventory == null) return;
+            if (inventory.HasPointerCapture(pressPointer)) inventory.ReleasePointer(pressPointer);
+            VisualElement holder = inventory.Q("drag-piece");
+            holder.Clear();
+            dragBuiltId = -1;
+            Show(holder, false);
+            inventory.Q("board-ghost").RemoveFromClassList("drag");
         }
 
         // 재봉 상자가 열려 있을 때 매 프레임: 바느질 · 레전더리 빛 줄기와 반짝임
         void TickInventory()
         {
-            if (inventory == null || inventory.ClassListContains("hidden")) return;
+            if (inventory == null || inventory.ClassListContains("hidden")) { CancelPress(); return; }
+            if (pressId >= 0 && !dragging && Now - pressTime >= HoldTime) BeginDrag();
             if (sewId >= 0) ApplySew();
             for (int p = 0; p < boardArt.Count; p++)
             {
@@ -897,7 +1244,9 @@ namespace TOD
             ghost.EnableInClassList("invalid", !valid);
             List<Vector2Int> shape = Gear.Shape(db, item, turns).Select(c => c + at.Value).ToList();
             PieceArt art = BuildPiece(ghost, Gear.Def(db, item), shape, -1, at.Value);
+            // 끄는 중에는 손끝 조각과 겹쳐 보이므로 놓일 자리를 밝은 상아색(못 놓으면 붉은색) 영역으로 칠한다
             if (!valid) foreach (VisualElement tile in art.tiles) tile.Q("paper").style.unityBackgroundImageTintColor = new Color(.86f, .24f, .26f);
+            else if (dragging) foreach (VisualElement tile in art.tiles) tile.Q("paper").style.unityBackgroundImageTintColor = new Color(1f, .96f, .84f);
             foreach (Vector2Int c in shape) if (cells.TryGetValue(c, out Button cell)) cell.AddToClassList("preview");
         }
 
@@ -929,7 +1278,7 @@ namespace TOD
             VisualElement tip = inventory.Q("piece-tip");
             if (tip.ClassListContains("hidden")) return;
             Vector2 p = inventory.WorldToLocal(panelPos);
-            float w = float.IsNaN(tip.layout.width) || tip.layout.width < 1 ? 380 : tip.layout.width;
+            float w = float.IsNaN(tip.layout.width) || tip.layout.width < 1 ? 440 : tip.layout.width;
             float h = float.IsNaN(tip.layout.height) || tip.layout.height < 1 ? 220 : tip.layout.height;
             float x = p.x + 28, y = p.y + 20;
             if (x + w > inventory.layout.width - 8) x = p.x - w - 20;

@@ -8,7 +8,8 @@ python tools/bake_puzzle_tiles.py
 색은 전부 밝은 회색/흰색으로 굽고 USS·코드의 tint 로 등급 색을 입힌다.
 mini_N = 종이 + 잉크를 합친 것(목록·정보 창의 작은 모양용).
 덤: stitch_h/v(바늘땀 한 땀, 반복), ornament(유니크 금실 십자수), sparkle(레전더리 반짝임), shine(빛 줄기), needle(장착 바늘),
-slot_empty(빈 판 칸: 움푹 들어간 슬롯) · slot_frame(조각 칸마다 얹는 슬롯 테두리) · slot_corners(슬롯 모서리 땀, 등급 실 색으로 물들임).
+slot_empty(빈 판 칸: 움푹 들어간 슬롯) · slot_frame(조각 칸마다 얹는 슬롯 테두리) · slot_corners(슬롯 모서리 땀, 등급 실 색으로 물들임),
+join_h/v(서로 다른 조각이 맞닿은 경계: 어두운 홈 + 건너 잇는 땀 두 개).
 """
 from pathlib import Path
 import math
@@ -261,6 +262,42 @@ def slot_empty(base):
     return Image.fromarray(arr.clip(0, 255).astype(np.uint8), "RGBA")
 
 
+JW, JH = 32, 96   # 조각 사이 이음(세로): 가운데 줄이 두 조각의 경계, 길이 = 칸 한 변
+
+
+def join():
+    """서로 다른 조각이 맞닿은 경계: 어두운 홈(다른 영역) + 두 조각을 건너 잇는 땀 두 개(붙어 있음). 색까지 구워 tint 없음."""
+    y, x = np.mgrid[0:JH, 0:JW].astype(np.float32) + .5
+    cx = JW / 2
+    fade = np.clip(np.minimum(y, JH - y) / 9.0, 0, 1)
+    groove = soft(1.6 - np.abs(x - cx), 1.0) * fade * .95
+    shade = np.exp(-((x - cx) / 3.6) ** 2) * .4 * fade
+    base = compose_layers(JW, JH, [(INK_RGB, shade), (INK_RGB, groove)])
+    k = 4
+    im = Image.new("RGBA", (JW * k, JH * k), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    for yy in (30, 66):
+        a, b = (cx - 12, yy - 1.5), (cx + 12, yy + 1.5)
+        d.line([((a[0] + .6) * k, (a[1] + 1.3) * k), ((b[0] + .6) * k, (b[1] + 1.3) * k)], fill=(26, 16, 19, 190), width=int(4.2 * k))
+        d.line([(a[0] * k, a[1] * k), (b[0] * k, b[1] * k)], fill=(240, 228, 200, 255), width=int(3.2 * k))
+        d.line([((a[0] + 3) * k, (a[1] - .2) * k), ((b[0] - 5) * k, (b[1] - 1.4) * k)], fill=(255, 250, 236, 255), width=int(1 * k))
+        for px, py in (a, b):
+            d.ellipse(((px - 1.5) * k, (py - 1.5) * k, (px + 1.5) * k, (py + 1.5) * k), fill=(26, 16, 19, 235))
+    v = base.copy()
+    v.alpha_composite(im.resize((JW, JH), Image.LANCZOS))
+    return v.rotate(90, expand=True), v
+
+
+def compose_layers(w, h, layers):
+    rgb = np.zeros((h, w, 3), np.float32)
+    a = np.zeros((h, w), np.float32)
+    for col, al in layers:
+        al = np.clip(al, 0, 1)
+        rgb = (rgb * a[..., None] * (1 - al[..., None]) + np.array(col, np.float32) * al[..., None]) / np.maximum(a + al * (1 - a), 1e-4)[..., None]
+        a = a + al * (1 - a)
+    return Image.fromarray(np.dstack([rgb, a * 255]).clip(0, 255).astype(np.uint8), "RGBA")
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     base = grain()
@@ -292,6 +329,9 @@ def main():
     slot_frame(base).save(OUT / "slot_frame.png")
     slot_corners().save(OUT / "slot_corners.png")
     slot_empty(base).save(OUT / "slot_empty.png")
+    h, v = join()
+    h.save(OUT / "join_h.png")
+    v.save(OUT / "join_v.png")
     print("baked", OUT)
 
 

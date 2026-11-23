@@ -360,6 +360,37 @@ namespace TOD
             }
         }
 
+        // 꾹 눌러 끌기 시작: 그 조각을 고른 상태로 (원래 회전 그대로)
+        public void BeginDrag(int id)
+        {
+            selected = id;
+            turns = Profile.placements.FirstOrDefault(p => p.id == id)?.turns ?? 0;
+            RenderInventory();
+        }
+
+        // 끌어서 놓기: 판 칸에 놓을 수 있으면 옮겨 장착(바느질), 못 놓으면 안내 후 원래대로. 판 밖이면 취소.
+        public void DropDrag(int id, Vector2Int? cell)
+        {
+            OwnedItem item = Profile.items.FirstOrDefault(i => i.id == id);
+            Placement old = Profile.placements.FirstOrDefault(p => p.id == id);
+            selected = null;
+            if (item != null && cell is Vector2Int at && !(old != null && old.x == at.x && old.y == at.y && old.turns == turns))
+            {
+                if (Gear.CanPlace(db, Profile, item, turns, at.x, at.y))
+                {
+                    Profile.placements.RemoveAll(p => p.id == id);
+                    Profile.placements.Add(new Placement { id = id, x = at.x, y = at.y, turns = turns });
+                    Gear.Save(db, Profile);
+                    RenderInventory();
+                    ui.Sew(id);
+                    sound.Play("loot");
+                    return;
+                }
+                ui.Say(db.ui.invalidPlacement);
+            }
+            RenderInventory();
+        }
+
         public void HoverCell(Vector2Int? at)
         {
             if (screen != UiScreen.Inventory) return;

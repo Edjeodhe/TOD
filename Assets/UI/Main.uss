@@ -311,6 +311,17 @@ Button:disabled { opacity: 0.5; }
 .rank-4 .tile-ornament { -unity-background-image-tint-color: #f6e3a1; }
 /* 조각 무게 중심의 아이템 아이콘 (코드가 위치·크기 지정) */
 .piece-mark { position: absolute; -unity-background-scale-mode: scale-to-fit; }
+/* 서로 다른 조각이 맞닿은 경계: 어두운 홈 + 건너 잇는 땀 두 개 (join_h/v) */
+/* 바깥(piece-join)이 잘라 내는 창, 안(join-art)이 그림: 바느질할 때 바깥 길이만 늘려 땀이 차례로 드러난다 */
+.piece-join { position: absolute; overflow: hidden; }
+.join-art { position: absolute; left: 0; top: 0; -unity-background-scale-mode: stretch-to-fill; }
+.piece-join-v .join-art { background-image: url("project://database/Assets/UI/Puzzle/join_v.png"); }
+.piece-join-h .join-art { background-image: url("project://database/Assets/UI/Puzzle/join_h.png"); }
+/* 장착 매듭 불티 · 끄는 중인 반투명 조각(자식 조각 칸은 코드가 배치) · 끄는 동안 놓일 자리 미리보기는 더 옅게 */
+.sew-spark { position: absolute; width: 22px; height: 22px; translate: -11px -11px; background-image: url("project://database/Assets/UI/Puzzle/sparkle.png"); -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: #fff1c0; display: none; }
+.drag-piece { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0.62; }
+.board-ghost.drag { opacity: 0.45; }
+.board-ghost.drag.invalid { opacity: 0.6; }
 .tile-sparkle { position: absolute; right: 4%; top: 4%; width: 30%; height: 30%; background-image: url("project://database/Assets/UI/Puzzle/sparkle.png"); -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: #fff7d6; }
 .tile-shine { position: absolute; top: 0; bottom: 0; width: 60%; background-image: url("project://database/Assets/UI/Puzzle/shine.png"); -unity-background-scale-mode: stretch-to-fill; opacity: 0.55; }
 .sew-needle { position: absolute; width: 84px; height: 21px; translate: -84px -10px; transform-origin: 100% 50%; background-image: url("project://database/Assets/UI/Puzzle/needle.png"); -unity-background-scale-mode: stretch-to-fill; }
@@ -352,7 +363,7 @@ Button:disabled { opacity: 0.5; }
 .set-tier.on .tier-effect { color: #fff4dc; }
 /* 아이템 정보 창: 양피지(등급 색으로 살짝 물듦), 마우스를 따라다님 */
 .piece-tip {
-    position: absolute; width: 380px; padding: 24px 28px;
+    position: absolute; width: 440px; padding: 24px 28px;
     background-image: url("project://database/Assets/UI/Paper/panel_light.png");
     -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72; -unity-slice-scale: 0.6px;
     color: #2e2120;

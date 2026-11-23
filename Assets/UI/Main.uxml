@@ -190,6 +190,8 @@
                     <ui:Button name="inventory-back" text="돌아가기" class="primary" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <!-- 꾹 눌러 끌 때 손끝을 따라오는 반투명 조각 (GameUI 가 조각 그림을 채움, 놓으면 사라짐) -->
+            <ui:VisualElement name="drag-piece" class="drag-piece hidden" picking-mode="Ignore" />
             <!-- 아이템 정보 창 (목록·판의 조각에 마우스를 올리면 따라다니고, 떼면 사라짐) -->
             <ui:VisualElement name="piece-tip" class="piece-tip hidden" picking-mode="Ignore">
                 <ui:VisualElement class="tip-head" picking-mode="Ignore">

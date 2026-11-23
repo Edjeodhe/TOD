@@ -19,7 +19,11 @@
         <ui:VisualElement name="knot" class="tile-knot" picking-mode="Ignore" />
         <ui:VisualElement name="sparkle" class="tile-sparkle" picking-mode="Ignore" />
     </ui:VisualElement>
-    <!-- 판 위 조각의 아이템 아이콘 (조각 무게 중심에 하나) -->
+    <!-- 서로 다른 조각이 맞닿은 경계: 홈 + 건너 잇는 땀 -->
+    <ui:VisualElement name="piece-join" class="piece-join" picking-mode="Ignore"><ui:VisualElement name="join-art" class="join-art" picking-mode="Ignore" /></ui:VisualElement>
+    <!-- 장착 바느질 끝의 매듭 불티 -->
+    <ui:VisualElement name="sew-spark" class="sew-spark" picking-mode="Ignore" />
+    <!-- 판 위 조각의 아이템 아이콘 (회전 중심 칸에 하나) -->
     <ui:VisualElement name="piece-mark" class="piece-mark" picking-mode="Ignore" />
     <!-- 세트 효과 패널 항목과 단계 줄 -->
     <ui:VisualElement name="set-entry" class="set-entry">
