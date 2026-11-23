@@ -6,6 +6,7 @@ python tools/bake_stage2_art.py
 - item_icons.png (초록 키, 4×3) → item_*.png        쉬어가기 탑의 아이템(재봉 조각) 아이콘
 - tower.png      (초록 키, 1개) → prop_tower.png     쉬어가기 라운드의 탑 (창문처럼 안쪽에 갇힌 키 색 구멍은 빛으로 채운다)
 - xp_orb.png     (자홍 키, 1개) → xp_orb.png         경험치 구
+- heart_pickup.png (초록 키, 1개) → heart_pickup.png 체력 회복 하트
 """
 from pathlib import Path
 
@@ -93,3 +94,7 @@ col, a = fill_holes(col, a, (214, 238, 228))
 save(col, a, "prop_tower", 512)
 (col, a), = pieces(RAW / "xp_orb.png", "magenta", 1, 8)
 save(col, a, "xp_orb", 128)
+# 체력 회복 하트 (초록 키) — 4차 이후 추가
+if (RAW / "heart_pickup.png").exists():
+    (col, a), = pieces(RAW / "heart_pickup.png", "green", 1, 8)
+    save(col, a, "heart_pickup", 128)

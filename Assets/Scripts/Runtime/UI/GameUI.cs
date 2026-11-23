@@ -25,6 +25,7 @@ namespace TOD
         int labelsUsed;
         readonly List<VisualElement> pips = new();
         readonly List<VisualElement> dashPips = new();
+        float shownHp = -1;   // 회복 때 체력 게이지가 차오르는 표시값
         readonly List<(VisualElement card, VisualElement shine, float strength, float phase, Color color)> shines = new();
         VisualElement[] rounds;
         readonly Dictionary<Vector2Int, Button> cells = new();
@@ -212,7 +213,6 @@ namespace TOD
             int maxYarn = combat.YarnMax(r);
             int yarn = Mathf.FloorToInt(r.yarn);
             Text(hud, "level", string.Format(T.level, r.level));
-            Text(hud, "hp-value", string.Format(T.ratio, r.hp, r.maxHp));
             Text(hud, "yarn-value", string.Format(T.ratio, yarn, maxYarn));
             float bonus = combat.StrandBonus(r.strands.Count);
             Text(hud, "thread-count", bonus > 0 ? string.Format(T.threadBonus, r.strands.Count, Mathf.RoundToInt(bonus * 100)) : string.Format(T.threadCount, r.strands.Count));
@@ -221,7 +221,16 @@ namespace TOD
             Text(hud, "desire-value", string.Format(T.desireValue, Mathf.FloorToInt(r.desire), r.maxDesire, mood));
             Text(hud, "gold", r.gold.ToString());
             Text(hud, "knots", r.knots.Count.ToString());
-            Meter(hud, "hp-bar", r.hp / r.maxHp);
+            // 회복은 게이지가 천천히 차오르고(숫자도 같이 올라감), 피해는 바로 줄어든다.
+            if (shownHp < 0 || r.time < .05f) shownHp = r.hp;   // 새 등반은 꽉 찬 상태로 시작
+            if (r.hp > shownHp) shownHp = Mathf.MoveTowards(shownHp, r.hp, r.maxHp * Time.unscaledDeltaTime * .22f);   // 15% 회복이 약 0.7초에 걸쳐 차오른다
+            else shownHp = r.hp;
+            bool filling = shownHp < r.hp - .01f;
+            Meter(hud, "hp-bar", shownHp / r.maxHp);
+            VisualElement heal = hud.Q("hp-heal");
+            heal.style.width = Length.Percent(Mathf.Clamp01(r.hp / r.maxHp) * 100);
+            heal.style.opacity = filling ? .6f + .4f * Mathf.Sin(Now * 18) : 0;
+            Text(hud, "hp-value", string.Format(T.ratio, Mathf.Round(shownHp), r.maxHp));
             Meter(hud, "desire-bar", r.desire / r.maxDesire);
 
             // 하단 경험치 바 (메이플식: 레벨 · EXP 현재/필요 [퍼센트])

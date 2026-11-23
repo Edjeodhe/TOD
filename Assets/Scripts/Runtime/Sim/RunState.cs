@@ -31,6 +31,7 @@ namespace TOD
         public float dx, dy, dashDone, dashFacing = 1;
         public int dashCharges;              // 남은 대쉬 칸
         public float levelUp;                // 레벨업 초록 기운 남은 시간
+        public float heal;                   // 하트를 먹고 몸에 피가 차오르는 연출 남은 시간
         public float dashCharge;             // 다음 칸이 차오른 정도 (0~1)
         public Point dashFrom;
         public bool dodged;
@@ -69,7 +70,7 @@ namespace TOD
     public class Bullet : Point { public float vx, vy, hit, age; public bool spent; }
 
     // 처치 때 튀어나오는 보상. 잠깐 튀어 오른 뒤(age < popTime) 몸으로 빨려 든다.
-    public class Drop : Point { public int xp, gold, shard; public bool item; public float vx, vy, age, speed; }
+    public class Drop : Point { public int xp, gold, shard; public bool item; public float heal, vx, vy, age, speed; }
 
     public class Trail { public Point a, b; public float time; public HashSet<Enemy> used = new(); }
 

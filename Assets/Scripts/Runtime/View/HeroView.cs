@@ -148,7 +148,9 @@ namespace TOD
             // 레벨업: 몸이 초록 기운으로 은은하게 물들었다 빠진다 (피격이 우선).
             VisualConfig v = db.visual;
             float level = p.levelUp > 0 && v.levelUpTime > 0 ? p.levelUp / v.levelUpTime : 0;
-            float levelFill = level > 0 ? v.levelUpFill * Mathf.Min(1, level * 3) * (.75f + .25f * Mathf.Sin(Time.time * 9)) : 0;
+            float levelElapsed = v.levelUpTime - p.levelUp;
+            float flash = level > 0 && v.levelUpFlash > 0 ? Mathf.Clamp01(1 - levelElapsed / v.levelUpFlash) : 0;
+            float levelFill = level > 0 ? Mathf.Max(v.levelUpFill * Mathf.Min(1, level * 3) * (.75f + .25f * Mathf.Sin(Time.time * 9)), .9f * flash) : 0;
             foreach (HeroBone b in rig.bones)
             {
                 SpriteRenderer sr = b != null ? b.art : null;

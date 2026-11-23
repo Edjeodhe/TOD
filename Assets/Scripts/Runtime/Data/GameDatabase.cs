@@ -178,6 +178,11 @@ namespace TOD
         public float eliteItemChance;
         public bool bossDropsItem;            // 아이템은 쉬어가는 라운드에서만 얻으므로 보통 false
         public int xpBase, xpStep;
+        [Header("체력 회복 하트 (낮은 확률로 떨어짐)")]
+        public float healChance, healEliteChance;   // 처치 한 번에 하트가 떨어질 확률 (일반·정예)
+        public float healAmount;              // 최대 체력 대비 회복량 (0.15 = 15%)
+        public float heartSize, healTime;     // 하트 그리기 크기(캔버스 px), 몸에 피가 차오르는 연출 시간
+        public Color healColor;
         [Header("떨어지는 경험치 구·골드")]
         public int maxXpOrbs, maxCoins;       // 처치 한 번에 나오는 최대 개수 (값은 나눠 담는다)
         public float dropPopSpeed, dropPopTime, dropHop;          // 튀어나오는 속도·시간·높이(캔버스 px)
@@ -313,6 +318,8 @@ namespace TOD
         public float heroSize = 1;            // 주인공 전체 크기 배율 (그림자·회피 통그림 포함)
         [Header("레벨업: 몸에 초록 기운")]
         public float levelUpTime, levelUpFill, levelUpGlow, levelUpRate;
+        public float levelUpBeam, levelUpFlash;   // 발밑에서 솟는 빛 기둥 높이(캔버스 px), 처음 번쩍이는 시간
+        public int levelUpChevrons;               // 위로 솟는 화살표(▲) 수
         public Color levelUpColor;
         public float dodgeScale, dodgeLaunchEnd, dodgeAirEnd, dodgeHop;
         public float strandSegment, frustrationSegment;

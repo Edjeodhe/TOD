@@ -130,6 +130,30 @@ namespace TOD.Tests
             Assert.AreEqual(0, r.augmentQueue);
         }
 
+        // 하트: 처치 때 확률로 떨어지고, 몸에 빨려 들면 최대 체력 비율만큼 회복하며 피가 차오르는 연출을 켠다.
+        [Test]
+        public void HeartDropHeals()
+        {
+            float chance = db.rewards.healChance;
+            db.rewards.healChance = 1;   // 이 테스트에서만 반드시 떨어지게
+            try
+            {
+                RunState r = NewRun();
+                r.player.x = 500; r.player.y = 350;
+                r.hp = r.maxHp * .5f;
+                Enemy e = Add(r, "stalker", 620, 350);
+                r.strands.Add(new Strand { x = e.x, y = e.y, target = e, state = StrandState.Stuck, element = Element.Plain });
+                e.hp = 1;
+                combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(620, 350) });
+                Assert.IsTrue(r.drops.Exists(d => d.heal > 0), "하트가 떨어진다");
+                float before = r.hp;
+                for (int i = 0; i < 60 * 4 && r.drops.Count > 0; i++) combat.Update(r, 1 / 60f, new CombatInput());
+                Assert.AreEqual(before + Combat.Round(r.maxHp * db.rewards.healAmount), r.hp, 1e-3, "최대 체력 비율만큼 회복");
+                Assert.Greater(r.player.heal, 0, "피가 차오르는 연출");
+            }
+            finally { db.rewards.healChance = chance; }
+        }
+
         // 실을 많이 걸어 둘수록 당길 때 한 타의 피해가 커진다 (상한 있음).
         [Test]
         public void MoreStrandsHitHarder()

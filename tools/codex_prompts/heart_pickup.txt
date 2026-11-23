@@ -1,0 +1,5 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/heart_pickup.png
+Size: square 1024x1024.
+Create ONE small game pickup icon centered, about 560px wide: a plump glossy RED heart (healing item), made of stitched cloth like a little pincushion, bright cherry red (#E0344A to #A3172E) with a white glossy highlight in the upper left, a row of cream cross-stitches along one edge, a tiny cream plus-shaped stitch in the middle, thick rough black outline around the heart. Simple, bold and readable at tiny sizes. Don't Starve Together-like hand-drawn 2D look with paper grain inside the shape.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no glow onto the background, no shadow, no text. Do not use any green color inside the artwork.

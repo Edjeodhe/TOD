@@ -26728,6 +26728,12 @@ MonoBehaviour:
     bossDropsItem: 0
     xpBase: 5
     xpStep: 3
+    healChance: 0.03
+    healEliteChance: 0.15
+    healAmount: 0.15
+    heartSize: 26
+    healTime: 1.1
+    healColor: {r: 1, g: 0.3, b: 0.38, a: 1}
     maxXpOrbs: 3
     maxCoins: 3
     dropPopSpeed: 260
@@ -27346,10 +27352,13 @@ MonoBehaviour:
     heroScaleFar: 0.12
     heroSize: 0.75
     levelUpTime: 1.6
-    levelUpFill: 0.35
-    levelUpGlow: 120
-    levelUpRate: 40
-    levelUpColor: {r: 0.45, g: 0.95, b: 0.55, a: 1}
+    levelUpFill: 0.45
+    levelUpGlow: 150
+    levelUpRate: 70
+    levelUpBeam: 200
+    levelUpFlash: 0.3
+    levelUpChevrons: 3
+    levelUpColor: {r: 0.38, g: 1, b: 0.5, a: 1}
     dodgeScale: 0.178
     dodgeLaunchEnd: 0.055
     dodgeAirEnd: 0.2
@@ -27629,6 +27638,13 @@ MonoBehaviour:
     duration: 0.22
     volume: 0.22
     wave: 2
+    sample: {fileID: 0}
+  - id: heal
+    from: 520
+    to: 1040
+    duration: 0.3
+    volume: 0.16
+    wave: 0
     sample: {fileID: 0}
 --- !u!1 &1610423764
 GameObject:
@@ -28251,6 +28267,7 @@ MonoBehaviour:
   barbSprite: {fileID: 21300000, guid: ed81726a10fe0864286d7182f4169a0e, type: 3}
   xpOrbSprite: {fileID: 21300000, guid: 49667b4b8385da342a2031ee9c56bd75, type: 3}
   softSprite: {fileID: 21300000, guid: 95332e2c7566b1c4697d39490e6af24d, type: 3}
+  heartSprite: {fileID: 21300000, guid: 7a502f8ab56dbf946bd3c9f34e4a49b0, type: 3}
   stairsSprite: {fileID: 21300000, guid: 6b6018c3af409414ea0e8dac4df93234, type: 3}
   altarSprite: {fileID: 21300000, guid: b2df8e71992b8ec47a0f34c8207a973c, type: 3}
   merchantSprite: {fileID: 21300000, guid: 4be0e663ad3112f4e99e3ff55868e514, type: 3}

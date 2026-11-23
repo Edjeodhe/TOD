@@ -561,6 +561,17 @@ namespace TOD
                 glint.lift = 20;
             }
             if (drop.xp > 0 || drop.gold > 0) Event(r, drop.xp > 0 ? "xp" : "gold");
+            if (drop.heal > 0)
+            {
+                // 하트: 최대 체력 비율만큼 회복하고, 몸에 피가 차오르는 연출을 켠다.
+                float amount = Round(r.maxHp * drop.heal);
+                float healed = Mathf.Min(r.maxHp, r.hp + amount) - r.hp;
+                r.hp += healed;
+                r.player.heal = rw.healTime;
+                Fx number = Spawn(r, FxKind.Number, r.player.x, r.player.y, X.damageNumber);
+                number.text = "+" + Mathf.Max(0, healed).ToString("0"); number.color = rw.healColor; number.lift = 44;
+                Event(r, "heal");
+            }
             GainXp(r, drop.xp);
             r.gold += drop.gold;
             if (drop.shard > 0) r.profile.shards += drop.shard;
@@ -580,6 +591,8 @@ namespace TOD
             for (int i = 0; i < orbs; i++) DropPiece(r, e, new Drop { xp = xp / orbs + (i < xp % orbs ? 1 : 0) });
             int coins = Mathf.Clamp(gold, gold > 0 ? 1 : 0, Mathf.Max(1, rw.maxCoins));
             for (int i = 0; i < coins; i++) DropPiece(r, e, new Drop { gold = gold / coins + (i < gold % coins ? 1 : 0) });
+            // 낮은 확률로 체력 회복 하트 (정예는 조금 더 자주)
+            if (r.random() < (e.elite ? rw.healEliteChance : rw.healChance)) DropPiece(r, e, new Drop { heal = rw.healAmount });
             int shard = boss ? rw.shardBoss : e.elite ? rw.shardElite : 0;
             bool item = (boss && rw.bossDropsItem) || (e.elite && r.random() < rw.eliteItemChance);
             if (shard > 0 || item) DropPiece(r, e, new Drop { shard = shard, item = item });
@@ -992,6 +1005,7 @@ namespace TOD
             p.actionTime += dt;
             p.dashCooldown = Mathf.Max(0, p.dashCooldown - dt);
             p.levelUp = Mathf.Max(0, p.levelUp - dt);
+            p.heal = Mathf.Max(0, p.heal - dt);
             p.dashGrace = Mathf.Max(0, p.dashGrace - dt);
             p.hurt = Mathf.Max(0, p.hurt - dt);
             p.shotCooldown = Mathf.Max(0, p.shotCooldown - dt);

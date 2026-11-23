@@ -24,7 +24,7 @@ namespace TOD
         public ParticleFx particles;
         public BackgroundView background;
         public CameraRig cameraRig;
-        public Sprite goldIcon, shardIcon, knotIcon, needleSprite, streakSprite, barbSprite, xpOrbSprite, softSprite;
+        public Sprite goldIcon, shardIcon, knotIcon, needleSprite, streakSprite, barbSprite, xpOrbSprite, softSprite, heartSprite;
         public Sprite stairsSprite, altarSprite, merchantSprite, archSprite;
         public FxSpriteEntry[] fxSprites;
         public FlipbookEntry[] flipbooks;
@@ -162,6 +162,7 @@ namespace TOD
             SyncEnemies(r, dt);
             hero.Render(player, r.outcome == Outcome.Absorbed ? .55f : 1, Pal.shadow);
             DrawLevelUp(player, dt);
+            DrawHeal(player, dt);
             DrawEffects(r);
             if (active && aim.x >= 0 && aim.x <= db.arena.width && aim.y >= 0 && aim.y <= db.arena.height)
             {
@@ -204,11 +205,20 @@ namespace TOD
                     float spin = .55f + .45f * Mathf.Abs(Mathf.Cos(clock * 5 + d.x));
                     painter.Sprite(Layer.Effects, goldIcon, at + new Vector2(0, bob), 0, size * spin, size, Color.white);
                 }
+                else if (d.heal > 0)
+                {
+                    // 하트: 붉은 빛을 두르고 심장처럼 두근거린다.
+                    float size = rw.heartSize > 0 ? rw.heartSize : 18;
+                    float beat = 1 + .12f * Mathf.Pow(Mathf.Max(0, Mathf.Sin(clock * 7 + d.x)), 8);
+                    if (softSprite != null)
+                        painter.Sprite(Layer.Effects, softSprite, at, 0, size * rw.dropGlow, size * rw.dropGlow, Painter.Alpha(rw.healColor, .55f), additive: true);
+                    painter.Sprite(Layer.Effects, heartSprite != null ? heartSprite : goldIcon, at + new Vector2(0, bob), 0, size * beat, size * beat, Color.white);
+                }
                 else painter.Sprite(Layer.Effects, shardIcon, at, 0, 20, 20, Color.white);
                 if (flying)
                 {
                     Vector2 dir = (hero - ground).normalized;
-                    Color tail = d.xp > 0 ? rw.xpColor : rw.goldColor;
+                    Color tail = d.xp > 0 ? rw.xpColor : d.heal > 0 ? rw.healColor : rw.goldColor;
                     painter.Line(Layer.Effects, at, at - dir * 14, 2, Painter.Alpha(tail, .5f), additive: true);
                 }
             }
@@ -470,34 +480,109 @@ namespace TOD
             return new Vector4(nw.x, nw.y, Vector2.Dot(nw, world), 1);
         }
 
-        // 레벨업: 몸 주위에 초록 기운이 감돌며 빛 알갱이가 피어오른다 (숫자 대신 간접 표현).
+        // 레벨업: 발밑에서 초록 빛 기둥이 솟고, 충격파 고리 두 겹이 퍼지며, ▲ 화살표가 몸을 타고 올라간다.
+        // 몸은 처음에 밝은 초록으로 번쩍였다가(HeroView) 은은한 기운이 감돈다. 숫자·글자 없이 "올라갔다"가 보이게.
         void DrawLevelUp(Player p, float dt)
         {
             VisualConfig v = db.visual;
             if (p.levelUp <= 0 || v.levelUpTime <= 0) return;
+            float elapsed = v.levelUpTime - p.levelUp;
             float k = p.levelUp / v.levelUpTime;
-            float fade = Mathf.Min(1, k * 3) * Mathf.Min(1, (1 - k) * 8 + .2f);
+            float fade = Mathf.Min(1, k * 3);
+            Color c = v.levelUpColor;
             Vector2 foot = C(p.x, p.y);
-            float body = 46 * hero.Scale(p.y) / Mathf.Max(.001f, db.visual.heroScaleBase);
+            float body = 50 * hero.Scale(p.y) / Mathf.Max(.001f, db.visual.heroScaleBase);
+            float beamH = v.levelUpBeam > 0 ? v.levelUpBeam : 180;
+            // 빛 기둥: 처음 0.15초에 위로 쭉 뻗고, 천천히 가늘어지며 사라진다
+            float rise = Mathf.Clamp01(elapsed / .15f);
+            float beamFade = Mathf.Clamp01(1 - elapsed / (v.levelUpTime * .7f));
+            if (softSprite != null && beamFade > 0)
+            {
+                float width = 34 * (.5f + .5f * beamFade);
+                Vector2 mid = foot - new Vector2(0, beamH * rise * .5f);
+                painter.Sprite(Layer.Effects, softSprite, mid, 0, width * 2.4f, beamH * rise * 1.1f, Painter.Alpha(c, .45f * beamFade), additive: true);
+                painter.Sprite(Layer.Effects, softSprite, mid, 0, width * .9f, beamH * rise, Painter.Alpha(Color.Lerp(c, Color.white, .6f), .8f * beamFade), additive: true);
+            }
+            // 충격파 고리 두 겹 (발밑, 0.45초)
+            for (int i = 0; i < 2; i++)
+            {
+                float t = (elapsed - i * .12f) / .45f;
+                if (t <= 0 || t >= 1) continue;
+                float rr = 10 + (1 - Mathf.Pow(1 - t, 2)) * 85;
+                painter.Ellipse(Layer.Ground, foot, rr, rr * Space.Proj, Painter.Alpha(c, (1 - t) * .95f), 4 - i * 1.5f, additive: true);
+            }
+            // ▲ 화살표: 발밑에서 머리 위로 차례로 솟는다
+            int chevrons = Mathf.Max(0, v.levelUpChevrons);
+            for (int i = 0; i < chevrons; i++)
+            {
+                float t = (elapsed - i * .18f) / .7f;
+                if (t <= 0 || t >= 1) continue;
+                float y = foot.y - body * .1f - t * (body * 1.4f + 30);
+                float a = Mathf.Sin(Mathf.PI * t);
+                float w = 18 - i * 2f;
+                var tip = new Vector2(foot.x, y - w * .7f);
+                var pts = new List<Vector2> { new(foot.x - w, y), tip, new(foot.x + w, y) };
+                painter.Line(Layer.Effects, pts, 14, Painter.Alpha(c, .55f * a), additive: true);
+                painter.Line(Layer.Effects, pts, 5.5f, Painter.Alpha(Color.Lerp(c, Color.white, .2f), a));
+            }
+            // 은은하게 남는 기운
             if (softSprite != null)
             {
-                float pulse = .8f + .2f * Mathf.Sin((1 - k) * v.levelUpTime * 9);
-                painter.Sprite(Layer.Effects, softSprite, foot - new Vector2(0, body * .5f), 0, v.levelUpGlow * pulse, v.levelUpGlow * 1.3f * pulse,
-                    Painter.Alpha(v.levelUpColor, .4f * fade), additive: true);
-            }
-            // 발밑에서 퍼지는 고리 (처음 0.5초)
-            float ring = 1 - k;
-            if (ring * v.levelUpTime < .5f)
-            {
-                float rr = 14 + ring * v.levelUpTime * 70;
-                painter.Ellipse(Layer.Ground, foot, rr, rr * Space.Proj, Painter.Alpha(v.levelUpColor, (1 - ring * v.levelUpTime / .5f) * .7f), 2, additive: true);
+                float pulse = .8f + .2f * Mathf.Sin(elapsed * 9);
+                float aura = v.levelUpGlow > 0 ? v.levelUpGlow : 120;
+                painter.Sprite(Layer.Effects, softSprite, foot - new Vector2(0, body * .5f), 0, aura * pulse, aura * 1.35f * pulse, Painter.Alpha(c, .5f * fade), additive: true);
             }
             if (dt <= 0) return;
             int count = Mathf.FloorToInt(v.levelUpRate * dt * fade) + (Rand() < v.levelUpRate * dt * fade % 1 ? 1 : 0);
             for (int i = 0; i < count; i++)
             {
-                Vector2 at = foot + new Vector2((Rand() - .5f) * 30, -Rand() * body);
-                particles.Emit(ParticleKind.Glint, at, new Vector2((Rand() - .5f) * 10, -40 - Rand() * 40), .6f + Rand() * .4f, v.levelUpColor, 1.6f + Rand() * 1.4f);
+                float ang = Rand() * Mathf.PI * 2;
+                Vector2 at = foot + new Vector2(Mathf.Cos(ang) * 16, -Rand() * body);
+                particles.Emit(ParticleKind.Glint, at, new Vector2(Mathf.Cos(ang) * 14, -70 - Rand() * 60), .7f + Rand() * .4f, Color.Lerp(c, Color.white, Rand() * .5f), 2.4f + Rand() * 1.8f);
+            }
+        }
+
+        // 하트를 먹으면: 몸 실루엣이 발끝부터 머리까지 붉게 차오르고(피가 차는 듯), 차오르는 선이 빛나며 거품이 떠오른다.
+        void DrawHeal(Player p, float dt)
+        {
+            RewardConfig rw = db.rewards;
+            if (p.heal <= 0 || rw.healTime <= 0) return;
+            float elapsed = rw.healTime - p.heal;
+            float fillT = Mathf.Clamp01(elapsed / (rw.healTime * .55f));
+            float level01 = 1 - Mathf.Pow(1 - fillT, 2);
+            float fade = Mathf.Clamp01(p.heal / (rw.healTime * .35f));
+            List<PartSnap> parts = hero.Snapshot();
+            if (parts.Count == 0) return;
+            float top = float.MaxValue, bottom = float.MinValue, left = float.MaxValue, right = float.MinValue;
+            foreach (PartSnap part in parts)
+            {
+                float r = Mathf.Max(Mathf.Abs(part.w), Mathf.Abs(part.h)) * .5f;
+                top = Mathf.Min(top, part.center.y - r); bottom = Mathf.Max(bottom, part.center.y + r);
+                left = Mathf.Min(left, part.center.x - r); right = Mathf.Max(right, part.center.x + r);
+            }
+            // 실루엣 범위를 조금 안쪽으로 (그림 여백 제외)
+            float span = bottom - top;
+            top += span * .12f; bottom -= span * .08f;
+            float line = Mathf.Lerp(bottom, top, level01);
+            Vector3 world = Space.Canvas(new Vector2(0, line));
+            var keepBelow = new Vector4(0, -1, -world.y, 1);    // 월드 y 가 선보다 아래인 부분만 남긴다
+            Color col = rw.healColor;
+            foreach (PartSnap part in parts)
+            {
+                SpriteRenderer sr = painter.Sprite(Layer.Effects, part.sprite, part.center, part.angle, part.w, part.h, new Color(1, 1, 1, .78f * fade));
+                painter.Style(sr, fill: col, fillAmount: 1, cut: keepBelow);
+            }
+            // 차오르는 선: 가로로 빛나는 수면
+            if (fillT < 1)
+            {
+                float cx = (left + right) * .5f, half = (right - left) * .32f;
+                painter.Line(Layer.Effects, new Vector2(cx - half, line), new Vector2(cx + half, line), 6, Painter.Alpha(col, .5f), additive: true);
+                painter.Line(Layer.Effects, new Vector2(cx - half, line), new Vector2(cx + half, line), 2, Painter.Alpha(Color.Lerp(col, Color.white, .6f), .9f));
+            }
+            if (dt > 0 && Rand() < 30 * dt * fade)
+            {
+                var at = new Vector2(Mathf.Lerp(left, right, .3f + Rand() * .4f), Mathf.Lerp(bottom, line, Rand()));
+                particles.Emit(ParticleKind.Glint, at, new Vector2((Rand() - .5f) * 10, -50 - Rand() * 40), .6f, Color.Lerp(col, Color.white, .3f), 2f + Rand() * 1.5f);
             }
         }
 

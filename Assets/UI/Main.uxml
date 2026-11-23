@@ -20,7 +20,7 @@
                         <ui:Label name="hp-value" text="100 / 100" class="value" />
                     </ui:VisualElement>
                     <ui:VisualElement class="bar-frame small" picking-mode="Ignore">
-                        <ui:VisualElement class="bar-track meter" picking-mode="Ignore"><ui:VisualElement name="hp-bar" class="meter-fill health" picking-mode="Ignore" /></ui:VisualElement>
+                        <ui:VisualElement class="bar-track meter" picking-mode="Ignore"><ui:VisualElement name="hp-heal" class="meter-fill heal" picking-mode="Ignore" /><ui:VisualElement name="hp-bar" class="meter-fill health" picking-mode="Ignore" /></ui:VisualElement>
                         <ui:VisualElement class="bar-ink" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>

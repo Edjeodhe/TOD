@@ -411,3 +411,7 @@ Button:disabled { opacity: 0.5; }
 .puzzle.rank-3 .shine { background-color: rgba(255, 236, 160, 0.20); }
 .puzzle.rank-4 .shine { width: 90px; background-color: rgba(255, 226, 170, 0.34); }
 .room-note { color: #e2c48a; font-size: 15px; margin-top: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Baked/Galmuri14-15px.asset");}
+
+/* 체력 회복: 새로 찰 몫이 밝게 먼저 보이고, 체력 게이지가 그 위로 차오른다 */
+.meter-fill.heal { position: absolute; left: 0; top: 0; bottom: 0; -unity-background-image-tint-color: #ffb3c0; border-right-width: 0; }
+.meter-fill.health { position: absolute; left: 0; top: 0; bottom: 0; }
