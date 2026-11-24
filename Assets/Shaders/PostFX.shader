@@ -78,7 +78,8 @@ Shader "TOD/PostFX"
                     c = lerp(c, LinearToSRGB(_TOD_WarpTint.rgb), _TOD_WarpTint.a * warp * breathe * (.45 + .55 * rim));
                 }
 
-                // 잉크 외곽: 밝기 Sobel → 경계를 어둡게 덧칠, 종이결로 끊어져 거친 붓 느낌.
+                // 잉크 외곽: 밝기 Sobel → 경계를 어둡게 덧칠.
+                // (2026-11-24) 붓결(fbm + beat)로 1초에 8번 끊던 것을 뺐다: 윤곽선이 지글거렸다. 이제 고정된 세기로만 덧칠한다.
                 float2 px = 1. / _ScreenParams.xy;            // 화면 픽셀 단위 (캔버스 단위면 1080p 에서 외곽이 두껍고 흐려진다)
                 float tl = lum(Fetch(q + px * float2(-1, 1))), tc = lum(Fetch(q + px * float2(0, 1)));
                 float tr = lum(Fetch(q + px * float2(1, 1))), ml = lum(Fetch(q + px * float2(-1, 0)));
@@ -87,8 +88,7 @@ Shader "TOD/PostFX"
                 float gx = -tl - 2. * ml - bl + tr + 2. * mr + br;
                 float gy = -tl - 2. * tc - tr + bl + 2. * bc + br;
                 float edge = smoothstep(.12, .42, length(float2(gx, gy)));
-                float scratch = smoothstep(.25, .75, fbm(st * float2(180., 60.) + beat));
-                c = lerp(c, float3(.07, .05, .08), edge * (.28 + .3 * scratch));
+                c = lerp(c, float3(.07, .05, .08), edge * .43);
 
                 // 유령 신부 톤: 채도 낮추고 그림자는 청회색, 밝은 곳은 바랜 분홍/상아.
                 float l = lum(c);
@@ -108,9 +108,7 @@ Shader "TOD/PostFX"
                 float vig = smoothstep(.4, .95, length(d)) * (1. - saturate(_TOD_Purified));
                 c = lerp(c, float3(.05, .03, .06) + float3(.18, 0., .07) * desire, vig * (.55 + .25 * desire));
 
-                // 필름 그레인 (12fps) + 촛불 깜빡임
-                float g = hash(floor(st * _ScreenParams.xy) + floor(time * 12.)) - .5;
-                c += g * .045 * motion;
+                // 촛불 깜빡임 (화면 전체 밝기가 천천히 조금). (2026-11-24) 픽셀마다 1초에 12번 바뀌던 필름 그레인은 지글거려서 뺐다.
                 c *= 1. + (noise(float2(time * 2.3, 0.)) - .5) * .035 * motion;
                 return half4(SRGBToLinear(saturate(c)), 1);
             }

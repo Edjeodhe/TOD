@@ -66,9 +66,9 @@ namespace TOD.EditorTools
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = flip || name.StartsWith("damage_font") ? SpriteImportMode.Multiple : SpriteImportMode.Single;   // 그림 글꼴 아틀라스는 여러 장(잘라 둔 글자 유지)
             importer.spritePixelsPerUnit = PixelsPerUnit;
-            // 스프라이트는 화면에서 3~7배 줄여 그리므로 밉맵 + 살짝 날카로운 바이어스로 뭉개짐·자글거림을 막는다.
+            // 스프라이트는 화면에서 3~7배 줄여 그리므로 밉맵으로 자글거림을 막는다 (바이어스는 0, 음수로 날카롭게 하면 움직일 때 지글거림).
             importer.mipmapEnabled = !flip && name != "dash" && name != "white";
-            importer.mipMapBias = -0.6f;
+            importer.mipMapBias = 0f;   // (2026-11-24) -0.6 → 0: 줄여 그린 배경의 가는 선이 카메라가 움직일 때 지글거렸다
             importer.mipmapFilter = TextureImporterMipFilter.KaiserFilter;
             importer.alphaIsTransparency = true;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
