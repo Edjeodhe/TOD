@@ -124,7 +124,7 @@ Button {
 /* ---------- 크게 읽기 ---------- */
 .diary-reader-shade { align-items: center; justify-content: center; background-color: rgba(14, 8, 11, 0.6); }
 .diary-page {
-    width: 980px; min-height: 480px; padding: 76px 96px 118px 96px; color: #2e2120;
+    width: 980px; min-height: 480px; padding: 76px 96px 150px 96px; color: #2e2120;
     background-image: url("project://database/Assets/UI/Paper/panel_light.png");
     -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72;
     -unity-slice-scale: 0.9px;
@@ -139,3 +139,19 @@ Button {
 /* 18차: 쪽지 핏자국 (DiaryBoard.Stain 이 종이 맨 아래에 깐다) */
 .diary-blood { position: absolute; left: 6%; right: 6%; top: 6%; bottom: 6%; overflow: hidden; }
 .diary-stain { position: absolute; -unity-background-scale-mode: scale-to-fit; }
+
+/* 22차 신화 도안 들고 가기 */
+/* 아래 버튼 줄: 쪽지 아래 여백 안에서 오른쪽으로 나란히 (도안 버튼은 줄어들며 두 줄로 접힘, 닫기는 그대로) */
+.diary-page-actions {
+    position: absolute; left: 60px; right: 60px; bottom: 40px;
+    flex-direction: row; justify-content: flex-end; align-items: center;
+}
+.diary-close.page { position: relative; right: auto; bottom: auto; flex-shrink: 0; }
+.diary-close.page.mythic {
+    flex-shrink: 1; max-width: 600px; min-height: 82px; margin-right: 18px; padding: 13px 40px 15px 40px; -unity-paragraph-spacing: 2px;
+    font-size: 21px; white-space: normal; -unity-text-align: middle-center; color: #7a4d0a;
+    -unity-background-image-tint-color: #ecd9a4;
+}
+.diary-close.page.mythic:hover { -unity-background-image-tint-color: #fff3cc; }
+.diary-close.page.mythic.carried { color: #fff4d6; -unity-background-image-tint-color: #b8862c; }
+.diary-close.page.mythic.carried:hover { -unity-background-image-tint-color: #d29d3a; }

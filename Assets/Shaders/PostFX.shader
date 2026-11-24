@@ -28,6 +28,9 @@ Shader "TOD/PostFX"
             float4 _TOD_Flash;
             float _TOD_Purified, _TOD_Warp;
             float4 _TOD_WarpTint, _TOD_WarpParams;
+            float4 _TOD_FateSwirl, _TOD_FateTint;   // 22차 미래 보기: 구슬(xy = 화면 uv 중심, z = 반지름(화면 높이 비율), w = 당김 세기), 바깥 물들임(rgb Linear, a = 양)
+            float _TOD_FateBlur;                    // 22차 2차: 줌 속도만큼 구슬 바깥이 방사형으로 번지는 양 (반지름 비율)
+            float _TOD_FateStill;                   // 22차 2차: 1 이면 화면이 미동도 없게 (촛불 깜빡임까지 멈춤)
 
             float hash(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
             float noise(float2 p)
@@ -55,11 +58,58 @@ Shader "TOD/PostFX"
                 return c;
             }
 
+            // 22차 미래 보기 (2차): 정면으로 빨려 드는 당김. 구슬 바깥 화소가 구슬에서 더 먼 곳을 가져와 둘레가 구슬 쪽으로 곧게 당겨 보인다.
+            // 회전(휘감김)과 시간에 따른 일렁임은 없다: 값이 그대로면 화면도 그대로.
+            float2 FateWarp(float2 uv)
+            {
+                float s = _TOD_FateSwirl.w;
+                if (s <= 0.) return uv;
+                float aspect = _ScreenParams.x / _ScreenParams.y;
+                float2 c = _TOD_FateSwirl.xy;
+                float2 d = (uv - c) * float2(aspect, 1.);
+                float r = length(d), R = max(_TOD_FateSwirl.z, .01);
+                float out_ = smoothstep(R * .97, R * 1.12, r);              // 구슬 안은 그대로
+                float near = exp(-max(r - R, 0.) / (R * .9 + .08));        // 구슬에 가까울수록 1
+                d *= 1. + s * near * out_ * 1.35;
+                return c + d / float2(aspect, 1.);
+            }
+
+            // 줌 블러: 구슬 중심을 향한 직선을 따라 여러 번 가져와 섞는다(앞으로 달려드는 속도감). 구슬에서 멀수록 더 번진다. screen = 일그러지기 전 화면 uv
+            float3 FateFetch(float2 uv, float2 screen)
+            {
+                float b = _TOD_FateBlur;
+                if (b <= 0.) return Fetch(uv);
+                float aspect = _ScreenParams.x / _ScreenParams.y;
+                float2 c = _TOD_FateSwirl.xy;
+                float r = length((screen - c) * float2(aspect, 1.)), R = max(_TOD_FateSwirl.z, .01);
+                float k = b * smoothstep(R * .97, R * 1.12, r) * saturate(.25 + (r - R) / R * .75);
+                if (k <= 0.) return Fetch(uv);
+                float2 d = uv - c;
+                float3 acc = 0.;
+                float j = frac(52.9829189 * frac(dot(screen * _ScreenParams.xy, float2(.06711056, .00583715))));   // 화소마다 고정된 어긋남 (겹 잔상 대신 고른 번짐, 시간에 따라 바뀌지 않음)
+                [unroll] for (int i = 0; i < 12; i++) acc += Fetch(c + d * (1. - k * ((i + j) / 12. - .35)));
+                return acc / 12.;
+            }
+
+            // 구슬 바깥 주변을 죄종 색으로: 구슬 가장자리가 가장 짙고 화면 끝으로 갈수록 옅다
+            float3 FateTint(float3 c, float2 uv)
+            {
+                if (_TOD_FateTint.a <= 0.) return c;
+                float aspect = _ScreenParams.x / _ScreenParams.y;
+                float r = length((uv - _TOD_FateSwirl.xy) * float2(aspect, 1.)), R = max(_TOD_FateSwirl.z, .01);
+                float out_ = smoothstep(R * .98, R * 1.06, r);
+                float halo = exp(-max(r - R, 0.) / (R * .55 + .05));
+                float3 tint = LinearToSRGB(_TOD_FateTint.rgb);
+                float3 dyed = lum(c) * tint * 1.25 + tint * .12;
+                c = lerp(c, dyed, _TOD_FateTint.a * out_ * (.55 + .45 * halo));
+                return c + tint * halo * out_ * .35 * _TOD_FateTint.a;
+            }
+
             half4 frag(Varyings input) : SV_Target
             {
-                float2 uv = input.texcoord;
-                float3 source = Fetch(uv);
-                if (_TOD_Enabled < .5) return half4(SRGBToLinear(source), 1);
+                float2 uv = FateWarp(input.texcoord);
+                float3 source = FateTint(FateFetch(uv, input.texcoord), input.texcoord);
+                if (_TOD_Enabled < .5) return half4(SRGBToLinear(saturate(source)), 1);
                 float aspect = _ScreenParams.x / _ScreenParams.y;
                 float2 res = float2(_TOD_CanvasHeight * aspect, _TOD_CanvasHeight);
                 float2 st = float2(uv.x, 1. - uv.y);
@@ -69,7 +119,7 @@ Shader "TOD/PostFX"
                 // (2026-11-23) 화면을 흔드는 효과(손그림 보일링·욕망 물결)는 뺐다: 서브픽셀로 흔들면 화면 전체가 흐려진다.
                 float2 q = uv;
                 float warp = saturate(_TOD_Warp);
-                float3 c = Overlays(Fetch(q), canvas);
+                float3 c = Overlays(FateTint(FateFetch(q, input.texcoord), input.texcoord), canvas);
                 if (warp > 0.)
                 {
                     // 욕망 80% 이상: 붉은 막만 남긴다 (가장자리가 더 짙고 숨 쉬듯 진해졌다 옅어진다). SetGlobalColor 는 Linear 로 넘기므로 sRGB 로 되돌린다.
@@ -109,7 +159,7 @@ Shader "TOD/PostFX"
                 c = lerp(c, float3(.05, .03, .06) + float3(.18, 0., .07) * desire, vig * (.55 + .25 * desire));
 
                 // 촛불 깜빡임 (화면 전체 밝기가 천천히 조금). (2026-11-24) 픽셀마다 1초에 12번 바뀌던 필름 그레인은 지글거려서 뺐다.
-                c *= 1. + (noise(float2(time * 2.3, 0.)) - .5) * .035 * motion;
+                c *= 1. + (noise(float2(time * 2.3, 0.)) - .5) * .035 * motion * (1. - saturate(_TOD_FateStill));   // 미래 보기 영상 동안은 멈춤
                 return half4(SRGBToLinear(saturate(c)), 1);
             }
             ENDHLSL

@@ -1,0 +1,13 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/sin_icons_d.png
+Size: landscape 1536x1024.
+Create a game item icon sheet: 5 separate item icons in a one row of 5 columns (centered vertically) grid, each icon about 220px, fully separated with wide empty gaps (at least 70px), nothing touching, each with its own thick black outline, three-quarter view, sewing-themed cursed trinkets of the seven deadly sins. Read order left to right, top to bottom:
+ROW 1 = ENVY (sickly envious green #4FA34A accents, sideways glancing jealous eyes):
+(1) a green sewing button with one eye in its center glancing jealously sideways
+(2) a little tangle of loose green thread snips and frayed ends
+(3) someone else's fancy silver thimble, tied with a green ribbon and a small blank tag, looking stolen
+(4) a bundle of green-headed basting pins jabbed hastily and crookedly into a scrap of cloth
+(5) a long silver needle whose eye holds a tiny hand mirror reflecting a glaring green eye, thin green aura
+In each row the icons get more ornate and precious from left to right (1-2 common, 3 rare, 4 unique, 5 legendary with a faint glow of the set color).
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline around every shape, slightly paper-grain texture INSIDE the shapes, low saturation, low brightness, muted dark palette (#16131B, #4A3D50 plus each set's accent color as the main color of the icon). Cute but eerie mood. Match the style of the reference image (an existing icon sheet from the same game).
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key magenta (#FF00FF) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels, no letters, no numbers, no grid lines. Do not use any magenta, hot pink or pink-purple color inside the artwork itself.

@@ -62,8 +62,8 @@ namespace TOD.Tests
         [Test]
         public void DiaryHasFivePiecesWithBothEndings()
         {
-            Assert.AreEqual(5, db.diary.entries.Length);
-            CollectionAssert.AreEqual(new[] { 1, 2, 3, 4, 5 }, Diary.All(db).Select(e => e.floor).ToArray());
+            Assert.AreEqual(7, db.diary.entries.Length);   // 22차: 7층, 일곱 장
+            CollectionAssert.AreEqual(new[] { 1, 2, 3, 4, 5, 6, 7 }, Diary.All(db).Select(e => e.floor).ToArray());
             foreach (DiaryEntry e in db.diary.entries)
             {
                 Assert.That(e.lines.Length, Is.InRange(3, 5), $"{e.floor}층 본문 줄 수");

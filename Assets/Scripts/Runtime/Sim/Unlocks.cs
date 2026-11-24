@@ -52,8 +52,8 @@ namespace TOD
             Math.Max(0, db.gear.starterSlotsBase + (profile?.starter ?? 0) * db.gear.starterSlotsStep);
 
         // 등급 합 한도에 드는 값 (17차: 시작 조각도 그대로 든다)
-        public static int Cost(GameDatabase db, Profile profile, OwnedItem item) => Gear.Def(db, item).cost;
+        public static int Cost(GameDatabase db, Profile profile, OwnedItem item) => Mythic.IsMythic(Gear.Def(db, item)) ? 0 : Gear.Def(db, item).cost;   // 22차: 신화 도안은 등급 합에 안 듦
 
-        public static int Cost(GameDatabase db, Profile profile, PlacedPiece piece) => piece.def.cost;
+        public static int Cost(GameDatabase db, Profile profile, PlacedPiece piece) => Mythic.IsMythic(piece.def) ? 0 : piece.def.cost;
     }
 }

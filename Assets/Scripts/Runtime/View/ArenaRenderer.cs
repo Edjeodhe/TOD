@@ -801,7 +801,7 @@ namespace TOD
             float length = Mathf.Sqrt(dx * dx + dy * dy);
             if (length == 0) length = 1;
             float nx = -dy / length, ny = dx / length;
-            int segments = Mathf.Max(2, Mathf.CeilToInt(length / (element == Element.Lightning ? db.visual.frustrationSegment : db.visual.strandSegment)));
+            int segments = Mathf.Max(2, Mathf.CeilToInt(length / (element == Element.Unused3 ? db.visual.frustrationSegment : db.visual.strandSegment)));
             float beat = Mathf.Floor(time * 22);
             var points = new List<Vector2>(segments + 1);
             for (int i = 0; i <= segments; i++)
@@ -810,9 +810,9 @@ namespace TOD
                 float envelope = Mathf.Sin(Mathf.PI * f);
                 float offset = element switch
                 {
-                    Element.Ice => Mathf.Sin(f * length / 11 - time * 7 + seed) * 2.6f * envelope,
-                    Element.Lightning => (Noise(beat * 31 + i + seed) - .5f) * 9 * envelope,
-                    Element.Fire => (Noise(beat * 17 + i * 3 + seed) - .5f) * 2.4f * envelope,
+                    Element.Sloth => Mathf.Sin(f * length / 11 - time * 7 + seed) * 2.6f * envelope,
+                    Element.Unused3 => (Noise(beat * 31 + i + seed) - .5f) * 9 * envelope,
+                    Element.Wrath => (Noise(beat * 17 + i * 3 + seed) - .5f) * 2.4f * envelope,
                     _ => 0,
                 };
                 if (tension != 0) offset += Mathf.Sin(f * Mathf.PI * 3 + time * 90) * tension * envelope;
@@ -829,7 +829,7 @@ namespace TOD
             painter.Line(layer, points, width * 3.4f, Painter.Alpha(t.glow, (element == Element.Plain ? .2f : .267f) * alpha), additive: true);
             painter.Line(layer, points, flight ? width * .8f : width, Painter.Alpha(t.color, .9f * alpha));
             painter.Line(layer, points, width * .38f, Painter.Alpha(t.core, .667f * alpha));
-            if (element == Element.Fire)
+            if (element == Element.Wrath)
             {
                 // 가시 실: 실을 따라 엇갈린 가시
                 float length = Vector2.Distance(a, b);
@@ -882,9 +882,9 @@ namespace TOD
                 Vector2 p = points[Mathf.FloorToInt(Rand() * points.Count) % points.Count];
                 switch (element)
                 {
-                    case Element.Fire: particles.Emit(ParticleKind.Ember, p, new Vector2((Rand() - .5f) * 18, -24 - Rand() * 30), .5f + Rand() * .3f, t.color, 1.8f); break;
-                    case Element.Ice: particles.Emit(ParticleKind.Drop, p, new Vector2((Rand() - .5f) * 6, 8), .7f, t.core, 1.9f); break;
-                    case Element.Lightning: particles.Emit(ParticleKind.Spark, p, new Vector2((Rand() - .5f) * 150, (Rand() - .5f) * 150), .14f, t.core, 1.4f); break;
+                    case Element.Wrath: particles.Emit(ParticleKind.Ember, p, new Vector2((Rand() - .5f) * 18, -24 - Rand() * 30), .5f + Rand() * .3f, t.color, 1.8f); break;
+                    case Element.Sloth: particles.Emit(ParticleKind.Drop, p, new Vector2((Rand() - .5f) * 6, 8), .7f, t.core, 1.9f); break;
+                    case Element.Unused3: particles.Emit(ParticleKind.Spark, p, new Vector2((Rand() - .5f) * 150, (Rand() - .5f) * 150), .14f, t.core, 1.4f); break;
                     default: particles.Emit(ParticleKind.Glint, p, new Vector2(0, -8), .4f, t.core, 1.3f); break;
                 }
             }
@@ -969,7 +969,7 @@ namespace TOD
             // 12차: 세트가 켜져 있으면 실이 평소에도 그 속성의 Blender 리본 + 덮개로 (단계가 오를수록 굵게)
             List<Vector2> points = DrawSetStrand(r, a, b, element, seed, s.anchor != null ? .82f : 1, twang, bend)
                 ?? DrawStrand(Layer.Ground, a, b, element, seed, r.time, (s.anchor != null ? 1.45f : 1.7f) * threadScale, s.anchor != null ? .82f : 1, twang, flight, bend);
-            EmitAlong(points, element, element == Element.Lightning ? .5f : element == Element.Plain ? .06f : .16f, dt);
+            EmitAlong(points, element, element == Element.Unused3 ? .5f : element == Element.Plain ? .06f : .16f, dt);
             float bead = (r.time * 2.65f + s.birth) % 1;
             Vector2 p = points[Mathf.FloorToInt(bead * (points.Count - 1))];
             painter.Rect(Layer.Ground, p.x - 1.2f, p.y - 1.2f, 2.6f, 2.6f, Painter.Alpha(t.core, .816f));
@@ -979,7 +979,7 @@ namespace TOD
                 if (planted)
                 {
                     DrawStuckRing(r, s, C(end), t);
-                    if (element == Element.Ice)
+                    if (element == Element.Sloth)
                     {
                         float wave = (r.time * .8f + s.birth) % 1;
                         float radius = (NV.ringRadius > 0 ? NV.ringRadius : 7) + wave * 16;
@@ -1347,7 +1347,7 @@ namespace TOD
             // 손에 든 실은 당긴 순간의 자리가 아니라 지금 손 위치로 감겨 든다 (맵에 실이 남지 않게).
             Vector2 a = fx.followHero ? C(handNow.x, handNow.y) : C(fx.x, fx.y) - new Vector2(0, 6);
             Vector2 b = C(fx.toX, fx.toY) - new Vector2(0, 18);
-            ElementTone tone = Tone(fx.rage ? Element.Fire : fx.element);
+            ElementTone tone = Tone(fx.rage ? Element.Wrath : fx.element);
             float delay = Mathf.Clamp(NV.pullSnapDelay, 0, .95f);
             float snap = Mathf.Clamp01((t - delay) / (1 - delay));
             float pulled = Mathf.Pow(snap, NV.pullSnapPower > 0 ? NV.pullSnapPower : 2.4f);
@@ -1381,7 +1381,7 @@ namespace TOD
         BindConfig BD => db.bind;
         float effectsDt;   // 이번 프레임 게임 시간 (히트스톱 중 0) — 입자 뿜기용
 
-        BindLook LookOf(Fx fx) => db.Look(Tone(fx.rage ? Element.Fire : fx.element).bindStyle);
+        BindLook LookOf(Fx fx) => db.Look(Tone(fx.rage ? Element.Wrath : fx.element).bindStyle);
 
         static float Hash(float x) { float v = Mathf.Sin(x * 12.9898f) * 43758.547f; return v - Mathf.Floor(v); }
 
@@ -1417,7 +1417,7 @@ namespace TOD
             float len = Vector2.Distance(a, b);
             Vector2 u = len > 0 ? (b - a) / len : Vector2.right, n = new(-u.y, u.x);
             float rate = BD.particleRate * effectsDt;
-            switch (look.style)
+            switch (CodeStyle(look.style))
             {
                 case BindStyle.Fire:
                 {
@@ -1507,6 +1507,18 @@ namespace TOD
         }
 
         BindArt ArtOf(BindStyle style) => bindArt == null ? null : Array.Find(bindArt, x => x.style == style);
+
+        // 22차: 죄종 실은 Blender 리본(bindArt)과 결박 폭발 시트(ElementDef.bindBurst)가 모습을 맡고,
+        // 코드로 얹는 덮개 장식, 입자, 예비 그림만 가장 가까운 옛 모습을 빌려 쓴다.
+        static BindStyle CodeStyle(BindStyle style) => style switch
+        {
+            BindStyle.Wrath => BindStyle.Fire,        // 불길 혀, 불씨
+            BindStyle.Sloth => BindStyle.Dark,        // 피어오르는 연기 덩이 (졸음 구름)
+            BindStyle.Gluttony => BindStyle.Blood,    // 아래로 맺혀 떨어지는 방울 (침)
+            BindStyle.Envy => BindStyle.Poison,       // 솟는 거품, 독방울
+            BindStyle.Pride or BindStyle.Greed or BindStyle.Lust => BindStyle.Plain,   // 반짝임 (별, 금화, 하트는 리본 그림에)
+            _ => style,
+        };
 
         // ---------------------------------------------------------------- 맵 장식 (12차)
 
@@ -1607,10 +1619,10 @@ namespace TOD
                 ElementTone t = Tone(el);
                 particles.Emit(kind, p, v, life, Rand() < .5f ? t.color : t.core, size);
             }
-            if (e.burnTime > 0) Emit(Element.Fire, ParticleKind.Ember, new Vector2((Rand() - .5f) * 20, -40 - Rand() * 40), .6f, 2.2f);
-            if (e.slowTime > 0) Emit(Element.Ice, ParticleKind.Glint, new Vector2((Rand() - .5f) * 10, 12), .7f, 1.8f);
-            if (e.curseTime > 0) Emit(Element.Dark, ParticleKind.Drop, new Vector2((Rand() - .5f) * 12, -18), .9f, 2.6f);
-            if (e.poisonTime > 0) Emit(Element.Poison, ParticleKind.Drop, new Vector2((Rand() - .5f) * 8, -22), .8f, 1.6f + .3f * Mathf.Min(5, e.poisonStacks));
+            if (e.burnTime > 0) Emit(Element.Wrath, ParticleKind.Ember, new Vector2((Rand() - .5f) * 20, -40 - Rand() * 40), .6f, 2.2f);
+            if (e.slowTime > 0) Emit(Element.Sloth, ParticleKind.Glint, new Vector2((Rand() - .5f) * 10, 12), .7f, 1.8f);
+            if (e.curseTime > 0) Emit(Element.Greed, ParticleKind.Drop, new Vector2((Rand() - .5f) * 12, -18), .9f, 2.6f);
+            if (e.poisonTime > 0) Emit(Element.Envy, ParticleKind.Drop, new Vector2((Rand() - .5f) * 8, -22), .8f, 1.6f + .3f * Mathf.Min(5, e.poisonStacks));
         }
 
         AnimationCurve trailTaper;
@@ -1800,7 +1812,7 @@ namespace TOD
                 {
                     Vector2 p = p0 + u * (next - walked);
                     float h = Hash(seed + k * 1.37f);
-                    switch (look.style)
+                    switch (CodeStyle(look.style))
                     {
                         case BindStyle.Fire:
                         {
@@ -1901,7 +1913,7 @@ namespace TOD
             {
                 if (Rand() >= rate) continue;
                 Vector2 p = points[i];
-                switch (look.style)
+                switch (CodeStyle(look.style))
                 {
                     case BindStyle.Fire: particles.Emit(ParticleKind.Ember, p, new Vector2((Rand() - .5f) * 30, -40 - Rand() * 60), .5f + Rand() * .4f, look.color, 2.2f); break;
                     case BindStyle.Lightning: particles.Emit(ParticleKind.Spark, p, new Vector2((Rand() - .5f) * 220, (Rand() - .5f) * 220), .16f, look.core, 1.8f); break;
@@ -1960,7 +1972,7 @@ namespace TOD
             }
 
             DrawSpeedLines(fx, look, center, R, t);
-            switch (look.style)
+            switch (CodeStyle(look.style))
             {
                 case BindStyle.Fire:
                 {

@@ -25,7 +25,7 @@ namespace TOD
         public static int Cells(GameDatabase db, int kind) => db.gear.pieces[kind].shape.Length;
 
         // 챙긴 조각(판에 놓았든 안 놓았든) 칸 합
-        public static int PackedCells(GameDatabase db, Profile profile) => profile.items.Sum(i => Cells(db, i.kind));
+        public static int PackedCells(GameDatabase db, Profile profile) => profile.items.Where(i => !Mythic.IsMythic(db, i.kind)).Sum(i => Cells(db, i.kind));   // 22차: 신화 도안은 칸 한도와 따로
 
         public static long RefreshSeconds(GameDatabase db) => db.hub != null && db.hub.shopRefreshHours > 0 ? (long)(db.hub.shopRefreshHours * 3600) : 0;
 
@@ -36,7 +36,6 @@ namespace TOD
         public static List<int> Pool(GameDatabase db, Profile profile)
         {
             List<int> pool = Gear.Unowned(db, profile);
-            foreach (int k in Diary.OpenPatterns(db, profile)) if (!pool.Contains(k) && !Gear.Owns(profile, k)) pool.Add(k);
             return pool;
         }
 

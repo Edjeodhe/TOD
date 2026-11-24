@@ -45,8 +45,14 @@ namespace TOD
         public Element element;
         [TextArea] public string hint;        // 라운드 시작 때 화면 가운데 층 암시 (예: "화염의 기운이 가득한 것 같다...")
         [TextArea] public string fateLine;    // 19차 모이라의 '운명 읽기': 다음 등반 1층이 이 속성일 때 모이라가 하는 암시
+        [Header("22차 칠죄종: 이름과 보스 욕망 창")]
+        public string sinName;                // 죄종 이름 (예: "탐욕")
+        [TextArea] public string desireWhisper;   // 보스 욕망 창의 속삭임 (예: "다 가져도 돼. 원래 네 것이었어.")
         public Color hintColor;
         public Color fateColor;               // 20차 운명 읽기 연출 색: 점성구 유리, 퍼지는 빛, 글자 색조가 이 색을 따른다
+        [Header("22차 미래 보기: 구슬 속 영상과 멘트")]
+        public UnityEngine.Video.VideoClip fateVideo;   // 구슬 안에서 트는 탑의 신화 영상 (Assets/Video/fate_<죄종>.mp4)
+        [TextArea] public string[] fateWhispers;        // 영상과 함께 차례로 나오는 속삭임 자막 (마지막 줄이 1층 죄종을 알려 줌)
         [Header("층 색조 (라운드 컨셉보다 우선)")]
         public Color floorFill;               // 바닥 덮개 (a = 덮는 양)
         public Color lampTint, fogTint;       // 등불·불씨 색, 가장자리 안개 색 (a = 섞는 양)

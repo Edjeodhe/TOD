@@ -416,12 +416,24 @@ namespace TOD
             ShowDialog("augment");
         }
 
-        public void ShowDesire(DesireDef offer, int floor, bool refine)
+        // 22차: 속삭임 말투. 제목 = "[그 층 죄종의 잔향]"(죄종 색), 속삭임, 흡수/거절 버튼 아래 느낌 문구, 맨 아래 흐린 작은 수치
+        public void ShowDesire(DesireDef offer, int floor, bool refine, Element sin)
         {
+            ElementDef def = db.elements?.Def(sin);
+            string sinName = def != null && !string.IsNullOrEmpty(def.sinName) ? def.sinName : "";
             Text(root, "desire-eyebrow", string.Format(T.desireEyebrow, floor));
-            Text(root, "desire-name", offer.name);
-            Text(root, "desire-text", offer.text);
-            Text(root, "desire-penalty", refine ? offer.penalty : string.Format(T.desirePenalty, offer.penalty));
+            Label title = root.Q<Label>("desire-name");
+            title.text = string.IsNullOrEmpty(T.desireTitle) ? offer.name : string.Format(T.desireTitle, sinName);
+            title.style.color = def != null && def.fateColor.a > 0 ? Color.Lerp(def.fateColor, Color.white, .25f) : StyleKeyword.Null;
+            Text(root, "desire-text", def != null && !string.IsNullOrEmpty(def.desireWhisper) ? def.desireWhisper : offer.text);
+            Text(root, "desire-penalty", "");
+            root.Q("desire-penalty").style.display = DisplayStyle.None;
+            if (!string.IsNullOrEmpty(T.absorbButton)) root.Q<Button>("absorb").text = T.absorbButton;
+            if (!string.IsNullOrEmpty(T.refuseButton)) root.Q<Button>("refuse").text = T.refuseButton;
+            Text(root, "absorb-feel", T.absorbFeel ?? "");
+            Text(root, "refuse-feel", T.refuseFeel ?? "");
+            string numbers = refine ? offer.penalty : string.Format(T.desirePenalty, offer.penalty);
+            Text(root, "desire-numbers", string.IsNullOrEmpty(T.desireNumbers) ? numbers : string.Format(T.desireNumbers, db.desire.absorb, offer.name, offer.text, numbers));
             ShowDialog("desire");
         }
 
@@ -473,7 +485,7 @@ namespace TOD
         Button PieceOfferCard(VisualElement container, int kind, Action onClick)
         {
             PieceDef def = db.gear.pieces[kind];
-            SetDef set = db.Set(def.set);
+            SetDef set = PieceSet(def);
             string value = def.value < 1 ? $"{Mathf.RoundToInt(def.value * 100)}%" : def.value.ToString("0.##");
             string effect = string.Format(T.pieceEffect, T.statNames[(int)def.stat], value);
             string unique = UniqueText(def);
@@ -592,7 +604,28 @@ namespace TOD
         Color RankColor(PieceDef def)
         {
             Color[] ranks = db.gear.rankColors;
-            return ranks != null && def.cost < ranks.Length ? ranks[def.cost] : db.Set(def.set).color;
+            return ranks != null && def.cost < ranks.Length ? ranks[def.cost] : PieceSet(def).color;
+        }
+
+        // 22차: 신화 도안은 세트가 없다(set 빈 문자열, 맞닿은 세트마다 1개로 셈). 세트 자리에 등급 이름 '신화'와 등급 색을 쓴다.
+        SetDef mythicSet;
+        SetDef PieceSet(PieceDef def)
+        {
+            SetDef set = db.Set(def.set);
+            if (set != null) return set;
+            if (mythicSet == null)
+            {
+                string[] names = db.gear.rankNames;
+                Color[] colors = db.gear.rankColors;
+                int rank = Mathf.Max(def.cost, Mythic.Rank);
+                mythicSet = new SetDef
+                {
+                    id = "", thresholds = new int[0],
+                    name = names != null && rank < names.Length ? names[rank] : "",
+                    color = colors != null && rank < colors.Length ? colors[rank] : Color.gray,
+                };
+            }
+            return mythicSet;
         }
 
         static string Amount(float value) => value < 1 ? $"{Mathf.RoundToInt(value * 100)}%" : value.ToString("0.##");
@@ -736,14 +769,14 @@ namespace TOD
                 button.EnableInClassList("equipped", placement != null);
                 button.style.height = rowHeight;
                 // 줄 바탕 종이와 퍼즐 모양 = 세트 색, 이름 = 등급 색(잉크 외곽선)
-                Color setColor = db.Set(def.set).color;
+                Color setColor = PieceSet(def).color;
                 button.style.unityBackgroundImageTintColor = SetPaperTint(setColor);
                 Icon(button.Q("icon"), def.icon);
                 List<Vector2Int> shape = Gear.Shape(db, item, item.id == selected ? turns : placement?.placement.turns ?? 0);
                 MiniShape(button.Q("shape"), shape, Color.Lerp(setColor, Color.white, .25f), 16);   // 바탕보다 밝게
                 Text(button, "name", def.name);
                 button.Q<Label>("name").style.color = NameColor(RankColor(def));
-                Text(button, "set", db.Set(def.set).name);   // 이름 위 세트 이름 (세트 색)
+                Text(button, "set", PieceSet(def).name);   // 이름 위 세트 이름 (세트 색)
                 button.Q<Label>("set").style.color = Color.Lerp(setColor, Color.white, .3f);
                 Text(button, "state", offer ? string.Format(db.hub.priceFormat, mode.price?.Invoke(item.kind) ?? 0) : placement != null ? T.equipped : "");
                 button.EnableInClassList("offer", offer);
@@ -774,51 +807,132 @@ namespace TOD
             Show(inventory.Q<Button>("unequip"), mode.pick == null);
         }
 
-        // 세피리아식 세트 목록: 색 매듭 · 이름 · 연결 수 / 다음 단계 · 단계별 효과(켜진 단계는 밝게). 켜진 세트가 위로.
+        // 22차 세트 목록: 판에 가진 세트만(맞닿아 세는 조각 1개 이상, 신화 도안은 맞닿은 세트마다 1개, Gear.Stats 그대로).
+        // 이름은 죄종 색 글씨. 켜진 세트는 "이름 (개수)" + 지금 단계 효과 짧게(set.brief), 첫 단계에 못 미친 세트는 흐린 이름과 회색 "(개수/필요)" 한 줄.
+        // 단계별 긴 효과와 설명은 줄에 마우스를 올리면 뜨는 set-tip 창에. 켜진 세트가 위로(메인 → 부가 → 꺼진 세트).
         void RenderSets(GearStats stats)
         {
+            setTipStats = stats;
             VisualElement list = inventory.Q("set-list");
             list.Clear();
-            // 16차: 켜진 세트는 메인 → 부가 순서(Gear.MainFirst), 그 뒤 꺼진 세트
-            foreach (SetDef set in db.gear.sets.OrderBy(s => { int i = stats.sets.FindIndex(a => a.def == s); return i < 0 ? 99 : i; })
-                .ThenByDescending(s => stats.groups[s.id].tier).ThenByDescending(s => stats.groups[s.id].size))
+            List<SetDef> shown = db.gear.sets.Where(s => stats.groups[s.id].size > 0)
+                .OrderBy(s => { int i = stats.sets.FindIndex(a => a.def == s); return i < 0 ? 99 : i; })
+                .ThenByDescending(s => stats.groups[s.id].tier).ThenByDescending(s => stats.groups[s.id].size).ToList();
+            Show(inventory.Q("set-empty"), shown.Count == 0);
+            foreach (SetDef set in shown)
             {
                 SetGroup group = stats.groups[set.id];
+                bool on = group.tier > 0;
                 VisualElement entry = Slot(slots, "set-entry");
-                entry.EnableInClassList("active", group.tier > 0);
-                entry.Q("swatch").style.backgroundColor = set.color;
-                // 16차: 메인 속성(판에 조각이 가장 많은 켜진 세트, 모든 공격) / 부가 속성(procCharge 타마다 발동)
-                int rank = stats.sets.FindIndex(s => s.def == set);
-                string role = rank < 0 ? "" : rank == 0 ? T.setMain : string.Format(T.setSub, set.procCharge);
+                entry.EnableInClassList("active", on);
+                entry.EnableInClassList("off", !on);
+                entry.style.borderLeftColor = on ? set.color : new Color(0, 0, 0, 0);
                 Text(entry, "set-name", set.name);
-                Text(entry, "set-role", role);   // 이름 아래 한 줄 (이름 옆에 두면 연결 수와 겹친다)
-                entry.Q("set-role").style.display = string.IsNullOrEmpty(role) ? DisplayStyle.None : DisplayStyle.Flex;
-                entry.Q<Label>("set-role").style.color = rank == 0 ? Color.Lerp(set.color, Color.white, .35f) : new Color(.72f, .65f, .6f);
-                int next = set.thresholds.FirstOrDefault(t => t > group.size);
-                Text(entry, "set-count", next > 0 ? string.Format(T.setProgress, group.size, next) : string.Format(T.setProgressMax, group.size));
-                entry.Q<Label>("set-name").style.color = group.tier > 0 ? Color.Lerp(set.color, Color.white, .25f) : new Color(.66f, .59f, .54f);
-                VisualElement tiers = entry.Q("tiers");
-                // 12차: 세트가 8개라 켜진 단계 + 다음 단계 하나만 보인다. 판에 하나도 없는 세트는 이름 줄만.
-                tiers.style.display = group.size > 0 ? DisplayStyle.Flex : DisplayStyle.None;
-                for (int i = 0; i < set.thresholds.Length; i++)
-                {
-                    if (i > group.tier) break;
-                    VisualElement tier = Slot(slots, "set-tier");
-                    bool on = i < group.tier;
-                    tier.EnableInClassList("on", on);
-                    tier.EnableInClassList("next", i == group.tier);
-                    Text(tier, "need", set.thresholds[i].ToString());
-                    // 단계 효과: "화염 피해 +2, 화상 초당 2"
-                    string effect = string.Format(T.pieceEffect, set.bonus, Amount(set.damagePerTier * (i + 1)));
-                    if (!string.IsNullOrEmpty(set.effectText)) effect += ", " + string.Format(set.effectText, Amount(set.effectPerTier * (i + 1)));
-                    Text(tier, "effect", effect);
-                    VisualElement need = tier.Q("need");
-                    need.style.backgroundColor = on ? set.color : new Color(0, 0, 0, 0);
-                    SetBorder(need, on ? set.color : new Color(.42f, .36f, .33f));
-                    tiers.Add(tier);
-                }
+                entry.Q<Label>("set-name").style.color = SetNameColor(set, on);
+                Text(entry, "set-count", on ? string.Format(T.setListCount, group.size) : string.Format(T.setListNeed, group.size, set.thresholds[0]));
+                // 16차: 메인 속성(판에 조각이 가장 많은 켜진 세트, 모든 공격) / 부가 속성(procCharge 타마다 발동). 목록은 짧은 꼬리표, 긴 글은 창에
+                int rank = stats.sets.FindIndex(s => s.def == set);
+                Label role = entry.Q<Label>("set-role");
+                role.text = rank < 0 ? "" : rank == 0 ? T.setMainTag : T.setSubTag;
+                role.style.display = rank < 0 ? DisplayStyle.None : DisplayStyle.Flex;
+                role.style.backgroundColor = rank == 0 ? Color.Lerp(set.color, Color.white, .35f) : new Color(.62f, .56f, .52f);
+                Text(entry, "set-brief", on ? SetTierText(set, group.tier - 1, true) : "");
+                entry.Q("set-brief").style.display = on ? DisplayStyle.Flex : DisplayStyle.None;
+                string id = set.id;
+                entry.RegisterCallback<PointerEnterEvent>(e => ShowSetTip(id, e.position));
+                entry.RegisterCallback<PointerMoveEvent>(e => { if (setTipId != id) ShowSetTip(id, e.position); else MoveSetTip(e.position); });
+                entry.RegisterCallback<PointerLeaveEvent>(_ => HideSetTip());
                 list.Add(entry);
             }
+            // 다시 그려도 올려 둔 창은 새 값으로 (그 세트가 판에서 사라졌으면 닫음)
+            if (setTipId != null)
+            {
+                if (shown.Any(s => s.id == setTipId)) ShowSetTip(setTipId, setTipPos);
+                else HideSetTip();
+            }
+        }
+
+        // 켜진 세트 이름은 죄종 색을 밝혀 또렷하게, 못 미친 세트는 같은 색조를 회색 쪽으로 흐리게
+        static Color SetNameColor(SetDef set, bool on)
+        {
+            Color c = NameColor(Color.Lerp(set.color, Color.white, .3f));
+            return on ? c : Color.Lerp(c, new Color(.36f, .33f, .32f), .6f);
+        }
+
+        // 단계 i(0부터) 효과: "분노 피해 +2, 화상 초당 2". brief = 목록용 짧은 문구(set.brief, 없으면 effectText)
+        string SetTierText(SetDef set, int i, bool brief)
+        {
+            string text = string.Format(T.pieceEffect, set.bonus, Amount(set.damagePerTier * (i + 1)));
+            string extra = brief && !string.IsNullOrEmpty(set.brief) ? set.brief : set.effectText;
+            if (!string.IsNullOrEmpty(extra)) text += ", " + string.Format(extra, Amount(set.effectPerTier * (i + 1)), Amount(set.extra * (i + 1)));   // 22차 {1} = extra × 단계
+            return text;
+        }
+
+        // ---------------------------------------------------------------- 22차 세트 정보 창 (세트 줄에 마우스를 올리면)
+
+        string setTipId;
+        Vector2 setTipPos;
+        GearStats setTipStats;
+        bool setTipHooked;
+
+        void ShowSetTip(string id, Vector2 panelPos)
+        {
+            if (setTipStats == null || !setTipStats.groups.TryGetValue(id, out SetGroup group)) return;
+            VisualElement tip = inventory.Q("set-tip");
+            if (!setTipHooked)   // 글 길이로 창 크기가 바뀌면 다시 화면 안으로
+            {
+                tip.RegisterCallback<GeometryChangedEvent>(_ => { if (setTipId != null) MoveSetTip(setTipPos); });
+                setTipHooked = true;
+            }
+            SetDef set = db.Set(id);
+            setTipId = id;
+            Text(tip, "set-tip-name", set.name);
+            tip.Q<Label>("set-tip-name").style.color = SetNameColor(set, true);
+            int next = set.thresholds.FirstOrDefault(t => t > group.size);
+            Text(tip, "set-tip-count", next > 0 ? string.Format(T.setProgress, group.size, next) : string.Format(T.setProgressMax, group.size));
+            int rank = setTipStats.sets.FindIndex(s => s.def == set);
+            Label role = tip.Q<Label>("set-tip-role");
+            role.text = rank < 0 ? "" : rank == 0 ? T.setMain : string.Format(T.setSub, set.procCharge);
+            role.style.display = rank < 0 ? DisplayStyle.None : DisplayStyle.Flex;
+            role.style.color = rank == 0 ? Color.Lerp(set.color, Color.white, .45f) : new Color(.78f, .71f, .65f);
+            Text(tip, "set-tip-desc", set.description ?? "");
+            tip.Q("set-tip-desc").style.display = string.IsNullOrEmpty(set.description) ? DisplayStyle.None : DisplayStyle.Flex;
+            // 단계마다 한 줄 "(2) 분노 피해 +2, 화상 초당 2, ..." 달성한 단계는 흰색, 못 달성한 단계는 회색
+            VisualElement tiers = tip.Q("set-tip-tiers");
+            tiers.Clear();
+            for (int i = 0; i < set.thresholds.Length; i++)
+            {
+                VisualElement line = Slot(slots, "set-tip-tier");
+                Text(line, "need", string.Format(T.setTierLine, set.thresholds[i]));   // "(2)" 칸 (긴 효과가 줄바꿈돼도 숫자 아래로 안 들어가게 나눔)
+                Text(line, "effect", SetTierText(set, i, false));
+                line.EnableInClassList("done", i < group.tier);
+                tiers.Add(line);
+            }
+            Show(tip, true);
+            MoveSetTip(panelPos);
+        }
+
+        void MoveSetTip(Vector2 panelPos)
+        {
+            setTipPos = panelPos;
+            VisualElement tip = inventory.Q("set-tip");
+            if (tip.ClassListContains("hidden")) return;
+            Vector2 p = inventory.WorldToLocal(panelPos);
+            float w = float.IsNaN(tip.layout.width) || tip.layout.width < 1 ? 540 : tip.layout.width;
+            float h = float.IsNaN(tip.layout.height) || tip.layout.height < 1 ? 260 : tip.layout.height;
+            // 목록을 가리지 않게 세트 패널 오른쪽 바깥에 붙인다 (높이는 마우스 줄에 맞춤)
+            float panelRight = inventory.WorldToLocal(inventory.Q("sets").worldBound.max).x;
+            float x = Mathf.Max(p.x + 28, panelRight + 12), y = p.y - 30;
+            if (x + w > inventory.layout.width - 8) x = p.x - w - 20;
+            if (y + h > inventory.layout.height - 8) y = inventory.layout.height - h - 8;
+            tip.style.left = Mathf.Max(8, x);
+            tip.style.top = Mathf.Max(8, y);
+        }
+
+        void HideSetTip()
+        {
+            setTipId = null;
+            Show(inventory.Q("set-tip"), false);
         }
 
         // 조각 그림 한 벌을 판 좌표(칸 목록)로 만든다.
@@ -830,7 +944,7 @@ namespace TOD
             var set = new HashSet<Vector2Int>(cellList);
             float inset = Mathf.Round(pitch * .14f);   // 바늘땀: 찢긴 가장자리와 칸 슬롯(slot_frame) 사이
             float thick = Mathf.Max(3, Mathf.Round(pitch * .055f));
-            Color fill = db.Set(def.set).color;   // 11차: 판 위 조각 종이 = 세트 색 (등급은 테두리·실·장식이 맡는다)
+            Color fill = PieceSet(def).color;   // 11차: 판 위 조각 종이 = 세트 색 (등급은 테두리·실·장식이 맡는다)
             if (tone == 1) fill = Color.Lerp(fill, Color.white, .2f);
             else if (tone == 2) fill = Color.Lerp(fill, Color.black, .16f);
             int minX = cellList.Min(c => c.x), maxX = cellList.Max(c => c.x);
@@ -914,7 +1028,7 @@ namespace TOD
             }
             // 세트 이름 꼬리표: 조각 맨 윗줄 칸들의 가운데 위 (세트 색 글씨)
             {
-                SetDef setDef = db.Set(def.set);
+                SetDef setDef = PieceSet(def);
                 VisualElement tag = Slot(slots, "board-set-tag");   // 맨 윗줄 폭의 줄 안에 꼬리표를 가운데 정렬
                 Label label = tag.Q<Label>("tag");
                 label.text = setDef.name;
@@ -1354,7 +1468,7 @@ namespace TOD
         void ShowTip(PieceDef def, Vector2 panelPos)
         {
             VisualElement tip = inventory.Q("piece-tip");
-            SetDef set = db.Set(def.set);
+            SetDef set = PieceSet(def);
             Color rank = RankColor(def);
             Icon(tip.Q("tip-icon"), def.icon);
             Text(tip, "tip-name", def.name);

@@ -103,7 +103,7 @@ namespace TOD.Tests
                 r.player.x = 500; r.player.y = 350;
                 Enemy a = Add(r, "boss", 700, 350);
                 for (int i = 0; i < n; i++)
-                    r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Fire });
+                    r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Wrath });
                 bool binding = n >= db.bind.strands;
                 float hit = r.damage * (1 + combat.StrandBonus(n)) * (binding ? 1 + db.bind.damageBonus : 1);
                 combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
@@ -111,8 +111,8 @@ namespace TOD.Tests
                 Assert.AreEqual(binding, r.effects.Any(f => f.kind == FxKind.Bind), $"{n}가닥 결박 폭발");
                 Assert.AreEqual(binding, r.effects.Any(f => f.kind == FxKind.Pull && f.bound), $"{n}가닥 속성 실");
             }
-            Assert.AreEqual(BindStyle.Fire, db.Tone(Element.Fire).bindStyle, "화염 세트 = 화염 리본");
-            Assert.IsNotNull(db.Look(BindStyle.Fire));
+            Assert.AreEqual(BindStyle.Wrath, db.Tone(Element.Wrath).bindStyle, "분노 세트 = 분노 리본 (22차)");
+            Assert.IsNotNull(db.Look(BindStyle.Wrath));
         }
 
         [Test]
@@ -120,18 +120,17 @@ namespace TOD.Tests
         {
             Profile p = EmptyProfile();
             // 8차: 칸 수 = 등급 (일반 1 · 레어 2 · 유니크 3 · 레전더리 4)
-            p.items.Add(new OwnedItem { id = 1, kind = 0 });   // 불씨 골무 (혼돈 일반 1칸)
-            p.items.Add(new OwnedItem { id = 2, kind = 1 });   // 찢어진 리본 (혼돈 레어 2칸, 가로)
-            p.items.Add(new OwnedItem { id = 3, kind = 2 });   // 녹슨 안전핀 (좌절 일반 1칸)
+            p.items.Add(new OwnedItem { id = 1, kind = Kind("wrath", 1) });   // 22차: 그을린 골무 (분노 일반 1칸)
+            p.items.Add(new OwnedItem { id = 2, kind = Kind("wrath", 2) });   // 성난 바늘꽂이 (분노 레어 2칸, 가로)
+            p.items.Add(new OwnedItem { id = 3, kind = Kind("sloth", 1) });   // 늘어진 실타래 (나태 일반 1칸)
             p.placements.Add(new Placement { id = 1, x = 0, y = 0 });
             p.placements.Add(new Placement { id = 2, x = 1, y = 0 });   // (1,0)(2,0) → 골무와 변이 맞닿음
             p.placements.Add(new Placement { id = 3, x = 5, y = 3 });
             GearStats stats = Gear.Stats(db, p);
-            Assert.AreEqual(2, stats.groups["fire"].size);
-            Assert.AreEqual(1, stats.groups["fire"].tier);
-            Assert.AreEqual(1, stats.groups["lightning"].tier);
-            Assert.AreEqual(0, stats.groups["ice"].tier);
-            Assert.AreEqual(Element.Fire, Gear.ThreadElement(stats));
+            Assert.AreEqual(2, stats.groups["wrath"].size);
+            Assert.AreEqual(1, stats.groups["wrath"].tier);
+            Assert.AreEqual(0, stats.groups["sloth"].tier, "나태 1개는 단계 없음");
+            Assert.AreEqual(Element.Wrath, Gear.ThreadElement(stats));
             Assert.IsFalse(Gear.CanPlace(db, p, p.items[0], 0, 2, 0), "겹치는 칸에는 놓을 수 없다");
         }
 
@@ -363,7 +362,7 @@ namespace TOD.Tests
             }
         }
 
-        // 자동 조작으로 5층 끝(엔딩)까지 진행되는지: 라운드·보스·욕망 제안·상점 흐름을 모두 통과해야 한다.
+        // 자동 조작으로 마지막 층(22차: 7층) 끝(엔딩)까지 진행되는지: 라운드·보스·욕망 제안·상점 흐름을 모두 통과해야 한다.
         [Test]
         public void ClimbReachesVictory()
         {
@@ -374,7 +373,7 @@ namespace TOD.Tests
             while (steps++ < 400000 && r.outcome == Outcome.None && r.phase != Phase.Victory)
             {
                 r.hp = r.maxHp = 100000;                       // 생존을 보장해 진행 흐름만 본다
-                if (r.desire > r.maxDesire * .8f) r.desire = 0;   // 동화 엔딩 대신 등반 흐름을 본다
+                if (r.desire > r.maxDesire * .4f) r.desire = 0;   // 동화 엔딩 대신 등반 흐름을 본다 (22차: 7층이라 층 욕망이 커서 일찍 비운다)
                 while (r.augmentQueue > 0) combat.ApplyAugment(r, combat.AugmentChoices(r)[0].id);
                 // 라운드가 끝나 계단이 다 나타나면 올라간다 (보스 뒤에는 욕망 제안을 거절).
                 if (r.phase == Phase.Cleared && r.stairs != null && r.stairsAge >= db.rounds.stairsRevealTime)
@@ -391,7 +390,7 @@ namespace TOD.Tests
                 };
                 combat.Update(r, 1 / 60f, input);
             }
-            Assert.AreEqual(Phase.Victory, r.phase, $"{r.floor}층 {r.round}라운드에서 멈춤 (steps {steps})");
+            Assert.AreEqual(Phase.Victory, r.phase, $"{r.floor}층 {r.round}라운드에서 멈춤 (steps {steps}, outcome {r.outcome}, mood {r.mood}, desire {r.desire}/{r.maxDesire})");
             Assert.AreEqual(db.arena.finalFloor, r.floor);
             Assert.Greater(r.kills, 0);
         }
@@ -409,40 +408,42 @@ namespace TOD.Tests
             return p;
         }
 
-        int Kind(string set, int cost) => System.Array.FindIndex(db.gear.pieces, d => d.set == set && d.cost == cost);
+        int Kind(string set, int cost, int skip = 0) => Enumerable.Range(0, db.gear.pieces.Length).Where(k => db.gear.pieces[k].set == set && db.gear.pieces[k].cost == cost).Skip(skip).DefaultIfEmpty(-1).First();
+
+        // 22차: 분노 3개(2단계, 메인) + 나태 2개(1단계, 부가). 판 6×4
+        Profile WrathMainSlothSub() => WithPieces((Kind("wrath", 1), 0, 0), (Kind("wrath", 2), 1, 0), (Kind("wrath", 1, 1), 0, 1), (Kind("sloth", 1), 4, 0), (Kind("sloth", 2), 5, 0));
 
         // 12차: 세트가 켜지면 실 속성이 그 세트가 되고, 당길 때 한 타마다 속성 피해(damagePerTier × 단계)가 더해진다 + 부가 효과.
         [Test]
         public void SetAddsElementalDamageAndStatus()
         {
-            SetDef fire = db.gear.sets.First(s => s.id == "fire");
-            int one = Kind("fire", 1), two = Kind("fire", 2);
+            SetDef fire = db.gear.sets.First(s => s.id == "wrath");
+            int one = Kind("wrath", 1), two = Kind("wrath", 2);
             RunState r = combat.CreateRun(WithPieces((one, 0, 0), (two, 1, 0)), () => .5f);   // 화염 2개 맞닿음 → 1단계
-            Assert.AreEqual(Element.Fire, r.element, "실 속성 = 화염");
+            Assert.AreEqual(Element.Wrath, r.element, "실 속성 = 화염");
             r.player.x = 500; r.player.y = 350;
             Enemy a = Add(r, "boss", 700, 350);
-            r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Fire });
+            r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Wrath });
             float hit = r.damage * (1 + combat.StrandBonus(1));
             combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
             Assert.AreEqual(a.maxHp - Combat.Round(hit + fire.damagePerTier), a.hp, "실 피해 + 화염 피해 (16차: 한 숫자로 합침)");
             Assert.Greater(a.burnTime, 0, "화상");
             Assert.AreEqual(fire.effectPerTier, a.burnDps, 1e-4f, "화상 초당 피해 = 1단계 값");
-            Assert.IsTrue(r.effects.Any(f => f.kind == FxKind.ElementHit && f.element == Element.Fire), "화염 그림");
+            Assert.IsTrue(r.effects.Any(f => f.kind == FxKind.ElementHit && f.element == Element.Wrath), "화염 그림");
         }
 
         // 16차: 메인 세트 = 판에 놓인 조각 수가 가장 많은 켜진 세트 (동률이면 단계 → 연결 조각 수 → 세트 순서). 부가 세트는 상시 효과 없음.
         [Test]
         public void MainSetHasMostPieces()
         {
-            int f1 = Kind("fire", 1), f2 = Kind("fire", 2), l1 = Kind("lightning", 1);
-            // 화염 2개(1단계) · 번개 1개(1단계) → 조각이 많은 화염이 메인
-            RunState r = combat.CreateRun(WithPieces((f1, 0, 0), (f2, 1, 0), (l1, 5, 3)), () => .5f);
+            // 22차: 분노 3개(2단계) · 나태 2개(1단계) → 조각이 많은 분노가 메인
+            RunState r = combat.CreateRun(WrathMainSlothSub(), () => .5f);
             Assert.AreEqual(2, r.gearStats.sets.Count);
-            Assert.AreEqual(Element.Fire, combat.MainSet(r).def.element, "메인 = 조각이 많은 화염");
-            Assert.AreEqual(Element.Fire, r.element, "실 속성 = 메인");
+            Assert.AreEqual(Element.Wrath, combat.MainSet(r).def.element, "메인 = 조각이 많은 화염");
+            Assert.AreEqual(Element.Wrath, r.element, "실 속성 = 메인");
             Assert.AreEqual(1f, combat.SetScale(r, r.gearStats.sets[0]));
             Assert.AreEqual(0f, combat.SetScale(r, r.gearStats.sets[1]), "부가 세트는 상시 효과 없음");
-            Assert.AreEqual(0f, combat.SetEffect(r, Element.Lightning), "부가 번개는 상시 튐 없음");
+            Assert.AreEqual(0f, combat.SetEffect(r, Element.Sloth), "부가 나태는 상시 둔화 없음");
 
             // 정렬 규칙: 조각 수가 단계보다 먼저, 그다음 단계 → 연결 → 세트 순서
             SetDef a = db.gear.sets[0], b = db.gear.sets[1];
@@ -472,8 +473,7 @@ namespace TOD.Tests
         [Test]
         public void SubSetProcFiresAfterCharge()
         {
-            int f1 = Kind("fire", 1), f2 = Kind("fire", 2), l1 = Kind("lightning", 1);
-            RunState r = combat.CreateRun(WithPieces((f1, 0, 0), (f2, 1, 0), (l1, 5, 3)), () => .5f);
+            RunState r = combat.CreateRun(WrathMainSlothSub(), () => .5f);
             ActiveSet bolt = combat.SubSets(r).Single();
             int need = bolt.def.procCharge;
             Assert.Greater(need, 0, "procCharge 데이터");
@@ -484,7 +484,7 @@ namespace TOD.Tests
             void PullOnce()
             {
                 r.freeze = 0;
-                r.strands.Add(new Strand { x = e.x, y = e.y, target = e, state = StrandState.Stuck, element = Element.Fire });
+                r.strands.Add(new Strand { x = e.x, y = e.y, target = e, state = StrandState.Stuck, element = Element.Wrath });
                 combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
             }
             for (int i = 0; i < need; i++)
@@ -495,9 +495,10 @@ namespace TOD.Tests
             Assert.IsTrue(combat.ProcReady(r, bolt), "다 참 = 준비");
             Assert.IsFalse(r.effects.Any(f => f.kind == FxKind.Proc), "준비만 되고 아직 안 터짐");
             float before = e.hp;
-            float pullOnly = r.damage * (1 + combat.StrandBonus(1)) + db.gear.sets.First(s => s.id == "fire").damagePerTier;
+            ActiveSet main = combat.MainSet(r);
+            float pullOnly = r.damage * (1 + combat.StrandBonus(1)) + main.def.damagePerTier * main.tier;
             PullOnce();
-            Assert.IsTrue(r.effects.Any(f => f.kind == FxKind.Proc && f.element == Element.Lightning), "번개 발동 이펙트");
+            Assert.IsTrue(r.effects.Any(f => f.kind == FxKind.Proc && f.element == Element.Sloth), "나태 발동 이펙트");
             Assert.AreEqual(0, combat.ProcCharge(r, bolt), "발동 뒤 충전 0");
             float procDamage = bolt.def.procDamage + bolt.def.procDamagePerTier * bolt.tier;
             Assert.AreEqual(before - Combat.Round(pullOnly) - Combat.Round(procDamage), e.hp, 1e-3f, "당기기 + 발동 피해");
@@ -509,26 +510,26 @@ namespace TOD.Tests
         {
             ElementConfig ec = db.elements;
             Element[] ring = ec.affinity.ring;
-            Assert.AreEqual(8, ring.Length);
-            CollectionAssert.AreEqual(new[] { Element.Fire, Element.Ice, Element.Wind, Element.Lightning, Element.Poison, Element.Blood, Element.Light, Element.Dark }, ring);
+            Assert.AreEqual(7, ring.Length);
+            CollectionAssert.AreEqual(new[] { Element.Pride, Element.Envy, Element.Wrath, Element.Sloth, Element.Greed, Element.Gluttony, Element.Lust }, ring);
             for (int i = 0; i < ring.Length; i++)
             {
                 Element strong = ring[i], weak = ring[(i + 1) % ring.Length];
                 Assert.AreEqual(1.5f, ec.Multiplier(strong, weak), 1e-4f, $"{strong} → {weak} 약점");
                 Assert.AreEqual(.5f, ec.Multiplier(weak, strong), 1e-4f, $"{weak} → {strong} 저항");
             }
-            Assert.AreEqual(1f, ec.Multiplier(Element.Fire, Element.Wind), "고리에서 이웃이 아니면 보통");
-            Assert.AreEqual(1f, ec.Multiplier(Element.Plain, Element.Fire), "무속성 공격");
-            Assert.AreEqual(1f, ec.Multiplier(Element.Fire, Element.Fire), "같은 속성");
+            Assert.AreEqual(1f, ec.Multiplier(Element.Wrath, Element.Lust), "고리에서 이웃이 아니면 보통");
+            Assert.AreEqual(1f, ec.Multiplier(Element.Plain, Element.Wrath), "무속성 공격");
+            Assert.AreEqual(1f, ec.Multiplier(Element.Wrath, Element.Wrath), "같은 속성");
 
             // 화염 메인으로 얼음 몬스터를 당기면 ×1.5, "약점" 표시
-            int f1 = Kind("fire", 1), f2 = Kind("fire", 2);
+            int f1 = Kind("wrath", 1), f2 = Kind("wrath", 2);
             RunState r = combat.CreateRun(WithPieces((f1, 0, 0), (f2, 1, 0)), () => .5f);
             r.player.x = 500; r.player.y = 350;
             Enemy e = Add(r, "boss", 700, 350);
-            e.element = Element.Ice;
-            r.strands.Add(new Strand { x = e.x, y = e.y, target = e, state = StrandState.Stuck, element = Element.Fire });
-            float hit = r.damage * (1 + combat.StrandBonus(1)) + db.gear.sets.First(s => s.id == "fire").damagePerTier;
+            e.element = Element.Sloth;
+            r.strands.Add(new Strand { x = e.x, y = e.y, target = e, state = StrandState.Stuck, element = Element.Wrath });
+            float hit = r.damage * (1 + combat.StrandBonus(1)) + db.gear.sets.First(s => s.id == "wrath").damagePerTier;
             combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
             Assert.AreEqual(e.maxHp - Combat.Round(hit * ec.affinity.strong), e.hp, "약점 ×1.5");
             Assert.IsTrue(r.effects.Any(f => f.kind == FxKind.Number && f.affinity == 1), "약점 글자");
@@ -570,17 +571,17 @@ namespace TOD.Tests
                 r.bullets.Add(new Bullet { x = r.player.x + 2, y = r.player.y, vx = -1, vy = 0, hit = 5, boss = from, element = element });
                 combat.Update(r, .001f, new CombatInput());
             }
-            Shoot(Element.Fire, boss);
+            Shoot(Element.Wrath, boss);
             Assert.Greater(r.player.burnTime, 0, "화염 보스: 화상");
-            Assert.IsTrue(r.effects.Any(f => f.kind == FxKind.BossHit && f.element == Element.Fire), "보스 속성 이펙트");
+            Assert.IsTrue(r.effects.Any(f => f.kind == FxKind.BossHit && f.element == Element.Wrath), "보스 속성 이펙트");
             boss.hp = boss.maxHp - 100;
             float bossHp = boss.hp;
-            Shoot(Element.Blood, boss);
+            Shoot(Element.Gluttony, boss);
             Assert.Greater(boss.hp, bossHp, "피 보스: 준 피해만큼 회복");
-            Shoot(Element.Wind, boss);
+            Shoot(Element.Lust, boss);
             Assert.IsNotNull(r.player.push, "바람 보스: 밀쳐냄");
             r.player.ClearStatus();
-            Shoot(Element.Fire, null);
+            Shoot(Element.Wrath, null);
             Assert.AreEqual(0f, r.player.burnTime, "일반 탄은 속성 효과 없음");
         }
 
@@ -623,5 +624,55 @@ namespace TOD.Tests
             Assert.IsTrue(combat.Bound(q, db.bind.strands - 1), "성급한 결박: 한 가닥 모자라도 결박");
             Assert.IsFalse(combat.Bound(NewRun(), db.bind.strands - 1), "없으면 결박 아님");
         }
-    }
+    
+        // 22차 칠죄종 메인 효과: 나태 3번 맞으면 잠, 시기 독이 죽을 때 옆 적에게 옮음, 탐욕 저당 잡힌 적 처치 금화
+        [Test]
+        public void SinEffectsApply()
+        {
+            RunState Run(string set)
+            {
+                RunState q = combat.CreateRun(WithPieces((Kind(set, 1), 0, 0), (Kind(set, 2), 1, 0)), () => .5f);
+                Assert.AreEqual(set, combat.MainSet(q).def.id, $"{set} 메인");
+                q.roundLength = 9999;
+                q.player.x = 500; q.player.y = 350;
+                return q;
+            }
+            void Pull(RunState q, Enemy e)
+            {
+                q.freeze = 0;
+                q.strands.Add(new Strand { x = e.x, y = e.y, target = e, state = StrandState.Stuck, element = q.element });
+                combat.Update(q, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
+            }
+
+            RunState r = Run("sloth");
+            Enemy a = Add(r, "stalker", 700, 350);
+            a.hp = a.maxHp = 100000;
+            SetDef sloth = combat.MainSet(r).def;
+            for (int i = 0; i < sloth.extra; i++) { Assert.AreEqual(0f, a.sleepTime, $"{i}타: 아직 안 잠"); Pull(r, a); }
+            Assert.Greater(a.sleepTime, 0f, "나태: 정해진 겹이면 잠듦");
+
+            r = Run("envy");
+            a = Add(r, "stalker", 700, 350);
+            Enemy b = Add(r, "stalker", 760, 350);
+            a.hp = a.maxHp = 100000;
+            Pull(r, a);
+            Assert.Greater(a.poisonStacks, 0, "시기 독");
+            a.hp = 1;
+            b.poisonStacks = 0;
+            Pull(r, a);
+            Assert.LessOrEqual(a.hp, 0f);
+            Assert.Greater(b.poisonStacks, 0, "독 걸린 적이 죽으면 옆 적에게 옮음");
+
+            r = Run("greed");
+            a = Add(r, "stalker", 700, 350);
+            a.hp = a.maxHp = 100000;
+            Pull(r, a);
+            Assert.IsTrue(a.pawned, "탐욕 저당");
+            a.hp = 1;
+            r.drops.Clear();
+            Pull(r, a);
+            ActiveSet greed = combat.MainSet(r);
+            Assert.AreEqual((int)(a.type.gold) + Mathf.RoundToInt(greed.def.extra * greed.tier), r.drops.Sum(d => d.gold), "처치 금화 + 저당 금화");
+        }
+}
 }

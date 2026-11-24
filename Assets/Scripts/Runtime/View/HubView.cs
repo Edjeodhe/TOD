@@ -22,6 +22,7 @@ namespace TOD
         HeroView hero;
         public MerchantTalk merchant { get; set; }   // 16차: 상인 단추 자세와 트윈 (GameController 가 넣음)
         public MoiraRig moira;                // 19차: 다락의 모이라 뼈대 리그 (씬 Hub/Moira). 있으면 Moira 시설 그림 대신 그린다
+        public FateOrbView fateOrb;           // 22차 미래 보기: 점성구 줌, 구슬 속 영상 (씬 Hub/Moira/FateOrb)
         readonly Player player = new();
         readonly Dictionary<HubStation, SpriteRenderer> renderers = new();
         readonly Dictionary<HubStation, SpriteRenderer> shadows = new();

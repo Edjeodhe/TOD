@@ -52,7 +52,7 @@ namespace TOD.Tests
             var items = Enumerable.Range(0, db.gear.pieces.Length).Select(k => new OwnedItem { id = 100 + k, kind = k }).Reverse().ToList();
             int placedKind = items[items.Count / 2].kind;
             bool Placed(OwnedItem i) => i.kind == placedKind;
-            int SetIndex(OwnedItem i) => System.Array.FindIndex(db.gear.sets, s => s.id == Gear.Def(db, i).set);
+            int SetIndex(OwnedItem i) { int k = System.Array.FindIndex(db.gear.sets, s => s.id == Gear.Def(db, i).set); return k < 0 ? int.MaxValue : k; }
 
             List<OwnedItem> grade = Gear.SortStash(db, items, Placed, StashSort.Grade);
             Assert.AreEqual(placedKind, grade[0].kind, "놓인 조각이 맨 위");
@@ -72,18 +72,17 @@ namespace TOD.Tests
         {
             Assert.IsNotNull(db.gear.setUnlockFloor, "gear.setUnlockFloor 데이터가 없습니다");
             string Open(int best) => string.Join(",", db.gear.sets.Where(s => Unlocks.IsOpen(db, EmptyProfile(best), s.id)).Select(s => s.id));
-            Assert.AreEqual("fire,ice,lightning", Open(0));
-            Assert.AreEqual("fire,ice,lightning", Open(1));
-            Assert.AreEqual("fire,ice,lightning,light,wind", Open(2));
-            Assert.AreEqual("fire,ice,lightning,light,dark,blood,wind", Open(3));
-            Assert.AreEqual(db.gear.sets.Length, db.gear.sets.Count(s => Unlocks.IsOpen(db, EmptyProfile(4), s.id)));
+            Assert.AreEqual("wrath,sloth,envy", Open(0));
+            Assert.AreEqual("wrath,sloth,envy", Open(1));
+            Assert.AreEqual("wrath,sloth,envy,greed,gluttony", Open(2));
+            Assert.AreEqual(db.gear.sets.Length, db.gear.sets.Count(s => Unlocks.IsOpen(db, EmptyProfile(3), s.id)));
         }
 
         [Test]
         public void LockedSetsAreLeftOutOfRewards()
         {
             Profile p = EmptyProfile();
-            var open = new[] { "fire", "ice", "lightning" };
+            var open = new[] { "wrath", "sloth", "envy" };
             Assert.IsTrue(Gear.Unowned(db, p).All(k => open.Contains(db.gear.pieces[k].set)), "탑, 상점 후보에 잠긴 세트가 섞였습니다");
             while (Gear.AddItem(db, p) != null) { }
             Assert.IsTrue(p.items.All(i => open.Contains(Gear.Def(db, i).set)), "무작위 지급에 잠긴 세트가 섞였습니다");
@@ -102,9 +101,9 @@ namespace TOD.Tests
             try { Assert.AreEqual(Enumerable.Range(0, db.gear.pieces.Length).Count(k => !Gear.IsPattern(db, k)), Gear.Unowned(db, EmptyProfile()).Count); }   // 도안은 늘 빠짐
             finally { Unlocks.ignoreLocks = false; }
 
-            // 2층을 돌파하면 빛, 바람이 열린다
-            Assert.IsTrue(Gear.Unowned(db, EmptyProfile(2)).Any(k => db.gear.pieces[k].set == "light"));
-            Assert.IsFalse(Gear.Unowned(db, EmptyProfile(2)).Any(k => db.gear.pieces[k].set == "poison"));
+            // 2층을 돌파하면 탐욕, 식탐이 열린다 (22차)
+            Assert.IsTrue(Gear.Unowned(db, EmptyProfile(2)).Any(k => db.gear.pieces[k].set == "greed"));
+            Assert.IsFalse(Gear.Unowned(db, EmptyProfile(2)).Any(k => db.gear.pieces[k].set == "pride"));
         }
 
         [Test]
@@ -112,12 +111,12 @@ namespace TOD.Tests
         {
             Profile p = EmptyProfile(0);
             Assert.AreEqual(0, Unlocks.Fresh(db, p).Count, "처음부터 열린 세트는 알리지 않는다");
-            p.best = 3;
-            CollectionAssert.AreEquivalent(new[] { "light", "wind", "dark", "blood" }, Unlocks.Fresh(db, p).Select(s => s.id).ToArray());
+            p.best = 2;
+            CollectionAssert.AreEquivalent(new[] { "greed", "gluttony" }, Unlocks.Fresh(db, p).Select(s => s.id).ToArray());
             Unlocks.MarkSeen(p, Unlocks.Fresh(db, p));
             Assert.AreEqual(0, Unlocks.Fresh(db, p).Count);
-            p.best = 4;
-            CollectionAssert.AreEqual(new[] { "poison" }, Unlocks.Fresh(db, p).Select(s => s.id).ToArray());
+            p.best = 3;
+            CollectionAssert.AreEquivalent(new[] { "lust", "pride" }, Unlocks.Fresh(db, p).Select(s => s.id).ToArray());
 
             // 저장했다 불러와도 기록이 남는다
             Unlocks.MarkSeen(p, Unlocks.Fresh(db, p));
@@ -146,8 +145,8 @@ namespace TOD.Tests
         {
             Profile p = EmptyProfile();
             p.best = 99;
-            Gear.AddItem(db, p, Kind("fire"));
-            Gear.AddItem(db, p, Kind("fire", 1));
+            Gear.AddItem(db, p, Kind("wrath"));
+            Gear.AddItem(db, p, Kind("wrath", 1));
             p.placements.Add(new Placement { id = p.items[0].id, x = 0, y = 0 });   // 하나만 들고 간다
 
             RunState r = combat.CreateRun(p, () => .5f);
@@ -167,7 +166,7 @@ namespace TOD.Tests
         public void ColumnUpgradeBoostsChosenColumns()
         {
             Profile p = EmptyProfile();
-            Gear.AddItem(db, p, Kind("fire"));
+            Gear.AddItem(db, p, Kind("wrath"));
             PieceDef def = Gear.Def(db, p.items[0]);
             int cells = def.shape.Length;
             p.placements.Add(new Placement { id = p.items[0].id, x = 0, y = 3 });   // 위쪽 줄 강화에는 안 걸리는 아래 줄
@@ -204,29 +203,62 @@ namespace TOD.Tests
             Assert.AreEqual(2, loaded.expansion);
         }
 
-        // 17차 일기 보상: 처음 읽으면 파편 한 번, 그 쪽지의 도안이 상인 진열에 붙고 탑 보상에는 안 나온다
+        // 22차 신화 도안: 일기 장이 풀리면 영구 보유(단추 진열과 탑 보상에는 없음), 하나만 들고 가고, 흡수한 층이면 붉게 물든 모습 + 시작 욕망
         [Test]
-        public void DiaryReadGivesShardsAndPattern()
+        public void MythicPatternFollowsDiaryAndDesire()
         {
-            DiaryEntry entry = db.diary.entries.First(e => e.patternKind >= 0);
+            DiaryEntry entry = db.diary.entries.First(e => e.patternKind >= 0 && e.patternTainted >= 0);
             Profile p = EmptyProfile();
+            Assert.IsFalse(Mythic.Owned(db, p).Contains(entry), "돌파 전에는 없음");
             p.best = entry.floor;
+            Assert.IsTrue(Mythic.Owned(db, p).Contains(entry), "돌파하면 영구 보유");
             Assert.IsFalse(Gear.Unowned(db, p).Contains(entry.patternKind), "도안이 탑 보상 후보에 있습니다");
-            Assert.IsFalse(HubShop.Pool(db, p).Contains(entry.patternKind), "읽기 전인데 도안이 진열 후보에 있음");
+            Assert.IsFalse(HubShop.Pool(db, p).Contains(entry.patternKind), "도안이 단추 진열 후보에 있습니다");
 
             Assert.IsTrue(Diary.MarkRead(p, entry));
             Assert.AreEqual(entry.readShards, p.shards);
-            Assert.Greater(entry.readShards, 0);
             Assert.IsFalse(Diary.MarkRead(p, entry), "두 번 읽어도 보상은 한 번");
-            Assert.AreEqual(entry.readShards, p.shards);
 
-            Assert.IsTrue(HubShop.Pool(db, p).Contains(entry.patternKind), "읽은 쪽지의 도안이 진열 후보에 없음");
-            p.shards = 99;
-            p.starter = 10;
-            p.hubStock = new System.Collections.Generic.List<int> { entry.patternKind };
-            Assert.AreEqual(PackResult.Packed, HubShop.Take(db, p, entry.patternKind, out _));
-            Assert.IsTrue(Gear.Owns(p, entry.patternKind));
-            Assert.IsFalse(HubShop.Pool(db, p).Contains(entry.patternKind), "챙긴 도안은 진열 후보에서 빠진다");
+            Mythic.Toggle(db, p, entry.floor);
+            Assert.IsTrue(Gear.Owns(p, entry.patternKind), "고르면 판 목록에 보통 도안");
+            Assert.AreEqual(0, HubShop.PackedCells(db, p), "신화는 챙기기 칸에 안 듦");
+            Assert.AreEqual(0, Unlocks.Cost(db, p, p.items[0]), "신화는 등급 합에 안 듦");
+            Assert.AreEqual(0f, Mythic.DesireStart(db, p));
+
+            Diary.RecordChoice(p, entry.floor, true);
+            Mythic.Ensure(db, p);
+            Assert.IsFalse(Gear.Owns(p, entry.patternKind));
+            Assert.IsTrue(Gear.Owns(p, entry.patternTainted), "흡수한 층이면 붉게 물든 도안");
+            Assert.Greater(Mythic.DesireStart(db, p), 0f);
+            RunState r = combat.CreateRun(p, () => .5f);
+            Assert.AreEqual(Mythic.DesireStart(db, p), r.desire, 1e-3f, "욕망을 안고 시작");
+
+            Mythic.Toggle(db, p, entry.floor);
+            Assert.AreEqual(0, p.items.Count, "다시 누르면 내려놓음");
+        }
+
+        // 22차: 신화 도안은 맞닿은 세트마다 그 세트 조각 1개로 친다
+        [Test]
+        public void MythicCountsForEveryTouchingSet()
+        {
+            DiaryEntry entry = db.diary.entries.First(e => db.gear.pieces[e.patternKind].shape.Length == 2);
+            Profile p = EmptyProfile();
+            p.best = 99;
+            int w = Kind("wrath"), s = Kind("sloth");
+            Gear.AddItem(db, p, w);
+            Gear.AddItem(db, p, s);
+            p.mythicPick = entry.floor;
+            Mythic.Ensure(db, p);
+            OwnedItem myth = p.items.First(i => Mythic.IsMythic(db, i.kind));
+            p.placements.Add(new Placement { id = p.items[0].id, x = 0, y = 0 });
+            p.placements.Add(new Placement { id = p.items[1].id, x = 3, y = 0 });
+            int turns = db.gear.pieces[myth.kind].shape[1].x != 0 ? 0 : 1;   // 가로 2칸으로
+            p.placements.Add(new Placement { id = myth.id, x = 1, y = 0, turns = turns });   // (1,0)(2,0): 왼쪽 분노, 오른쪽 나태와 맞닿음
+            Assert.AreEqual(3, Gear.Placed(db, p).Count);
+            GearStats stats = Gear.Stats(db, p);
+            Assert.AreEqual(2, stats.groups["wrath"].size, "분노 1 + 도안");
+            Assert.AreEqual(2, stats.groups["sloth"].size, "나태 1 + 도안");
+            Assert.AreEqual(0, stats.groups["envy"].size, "안 맞닿은 세트에는 안 셈");
         }
 
         Vector2Int FreeSpot(Profile p, int kind)
@@ -275,7 +307,7 @@ namespace TOD.Tests
             Assert.AreEqual(2, Moira.Level(p, Moira.Lines), "가로, 세로를 같이 센 단계");
             Assert.AreEqual(999 - lines.price * 2 - lines.priceStep, p.shards);
 
-            Gear.AddItem(db, p, Kind("fire"));
+            Gear.AddItem(db, p, Kind("wrath"));
             p.placements.Add(new Placement { id = p.items[0].id, x = 1, y = 1 });
             var (w0, h0, limit0) = Gear.Dimensions(db, p);
             Assert.IsTrue(Moira.Apply(db, p, expand, Moira.Top));

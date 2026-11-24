@@ -67,10 +67,14 @@ namespace TOD
         // 속성 상태 (세트 부가 효과): 화상·중독 = 초당 피해, 둔화 = 이동 감소 비율, 저주 = 받는 피해 증가 비율
         public float burnDps, burnTime, slow, slowTime, curse, curseTime, poisonDps, poisonTime, dotTick, dotPending;
         public int poisonStacks;
+        // 22차 칠죄종: 나태 겹(다 차면 잠듦) · 잠 남은 시간, 색욕 매혹 남은 시간(공격 안 함), 탐욕 저당(저주가 탐욕에서 왔는지 = 처치 때 금화)
+        public int slothStacks;
+        public float sleepTime, charmTime;
+        public bool pawned;
         public Element element;              // 16차: 층 속성 (그 층 몬스터는 모두 같은 속성)
         public bool IsBoss => type.id == "boss";
         public bool killed;                  // 처치 처리를 이미 했는지 (풀에서 꺼낼 때 ClearStatus 가 지운다)
-        public void ClearStatus() { burnDps = burnTime = slow = slowTime = curse = curseTime = poisonDps = poisonTime = dotTick = dotPending = 0; poisonStacks = 0; killed = false; }
+        public void ClearStatus() { burnDps = burnTime = slow = slowTime = curse = curseTime = poisonDps = poisonTime = dotTick = dotPending = sleepTime = charmTime = 0; poisonStacks = slothStacks = 0; pawned = false; killed = false; }
     }
 
     public class Strand : Point
@@ -132,6 +136,8 @@ namespace TOD
         public Func<float> random;
         public GearStats gearStats;
         public int floor = 1, round = 1, level = 1, xp, gold, kills, spawned, shotCount, nextKnot, augmentQueue, combo;
+        public int feastStacks;              // 22차 고유 효과 만찬: 지금 겹 수 (feastTime 이 끝나면 0)
+        public float feastTime;
         public float time, elapsed, desire, maxDesire, hp, maxHp, yarn, yarnBonus, recharge, damage, dashRate = 1, encumbrance;
         // 바늘·이동 능력치 (증강으로 오른다)
         public float fireInterval, reach, needleSpeed = 1, moveScale = 1;

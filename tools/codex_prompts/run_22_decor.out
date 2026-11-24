@@ -1,0 +1,9 @@
+done decor_pride
+done decor_greed
+done decor_lust
+done decor_envy
+done decor_gluttony
+done decor_wrath
+done decor_sloth
+tools/codex_prompts/run_22.sh: line 34: syntax error near unexpected token `done'
+tools/codex_prompts/run_22.sh: line 34: `ts.png; done'

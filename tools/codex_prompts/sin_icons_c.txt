@@ -1,0 +1,19 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/sin_icons_c.png
+Size: landscape 1536x1024.
+Create a game item icon sheet: 10 separate item icons in a 5 columns x 2 rows grid, each icon about 220px, fully separated with wide empty gaps (at least 70px), nothing touching, each with its own thick black outline, three-quarter view, sewing-themed cursed trinkets of the seven deadly sins. Read order left to right, top to bottom:
+ROW 1 = LUST (deep rose pink #D9418C accents, satin, lace, hearts and lips):
+(1) a deep rose pink satin ribbon bow
+(2) a sewing button shaped like a tiny crystal perfume bottle, pink scent wisps curling out
+(3) a small embroidery hoop with stitched rose pink lips in its center
+(4) a single rose pink satin ballet slipper with its long ribbons twirling as if dancing
+(5) two wooden spools bound together by entangled rose pink thread that forms a heart between them
+ROW 2 = PRIDE (royal purple #7B4FC9 accents with polished gold, crowns and mirrors):
+(6) a polished royal purple sewing button with a gleaming star-shaped highlight
+(7) a dressmaker pin whose head is a tiny golden crown
+(8) a round tape measure case in purple and gold with a small vain hand mirror on its lid
+(9) a purple velvet thimble standing proudly on a tall golden high heel
+(10) a golden needle standing upright on a small purple velvet throne cushion, a tiny crown hanging at its eye
+In each row the icons get more ornate and precious from left to right (1-2 common, 3 rare, 4 unique, 5 legendary with a faint glow of the set color).
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline around every shape, slightly paper-grain texture INSIDE the shapes, low saturation, low brightness, muted dark palette (#16131B, #4A3D50 plus each set's accent color as the main color of the icon). Cute but eerie mood. Match the style of the reference image (an existing icon sheet from the same game).
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels, no letters, no numbers, no grid lines. Do not use any bright green color inside the artwork itself.

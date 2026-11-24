@@ -165,10 +165,11 @@
                 <ui:Label name="inventory-run-note" class="room-note hidden" />
                 <ui:Label name="inventory-help" text="조각을 고르고(R로 회전) 판의 칸을 누르세요. 같은 색의 변을 맞대면 세트 효과가 켜집니다." class="room-text" />
                 <ui:VisualElement class="inventory-layout">
-                    <!-- 세트 효과 패널: 세트마다 색 매듭·이름·연결 수/다음 단계·단계별 효과 (GameUI 가 Slots.uxml set-entry 를 복제) -->
+                    <!-- 세트 효과 패널 (22차): 판에 가진 세트만, 이름 (개수) + 켜진 효과 짧게, 못 미친 세트는 회색. 마우스를 올리면 set-tip (GameUI 가 Slots.uxml set-entry 를 복제) -->
                     <ui:VisualElement name="sets" class="set-panel">
                         <ui:Label text="세트 효과" class="set-panel-title" />
                         <ui:ScrollView name="set-list" class="set-list" mode="Vertical" horizontal-scroller-visibility="Hidden" />
+                        <ui:Label name="set-empty" text="판에 조각을 놓으면 여기에 세트가 나옵니다." class="set-empty" />
                     </ui:VisualElement>
                     <!-- 판: 칸(누르기) 위에 조각 그림 층과 반투명 미리보기 층을 겹친다 -->
                     <ui:VisualElement name="board-wrap" class="board-wrap">
@@ -223,6 +224,16 @@
                 </ui:VisualElement>
                 <ui:Label name="tip-flavor" class="tip-flavor" picking-mode="Ignore" />
             </ui:VisualElement>
+            <!-- 22차 세트 정보 창 (세트 효과 패널의 줄에 마우스를 올리면): 이름(죄종 색), 설명, 단계마다 한 줄 (달성 흰색, 못 달성 회색) -->
+            <ui:VisualElement name="set-tip" class="set-tip hidden" picking-mode="Ignore">
+                <ui:VisualElement class="set-tip-head" picking-mode="Ignore">
+                    <ui:Label name="set-tip-name" class="set-tip-name" picking-mode="Ignore" />
+                    <ui:Label name="set-tip-count" class="set-tip-count" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="set-tip-role" class="set-tip-role" picking-mode="Ignore" />
+                <ui:Label name="set-tip-desc" class="set-tip-desc" picking-mode="Ignore" />
+                <ui:VisualElement name="set-tip-tiers" class="set-tip-tiers" picking-mode="Ignore" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- 예견의 다락: 19차 모이라 카드 창 (다락 방이 뒤에 비침). 모이라가 든 카드 넷이 손에서 날아와 펼쳐진다 (GameUI.Moira.cs, Moira.uss) -->
@@ -237,14 +248,36 @@
             <ui:VisualElement name="moira-cards" class="moira-cards" picking-mode="Ignore" />
             <ui:Label name="moira-hint" class="moira-hint" picking-mode="Ignore" />
             <ui:Button name="attic-back" text="돌아가기 (Esc)" class="moira-back" />
-            <!-- 20차 운명 읽기 연출 (GameUI.Fate.cs): 불티 → 점성구가 가운데로 → 빛 → 어두운 글자. 누르면 닫힘 -->
+            <!-- 22차 욕망 최대치 강화 연출 (GameUI.Vessel.cs, Moira.uss): 카드 위 욕망 게이지가 이전 최대치 → 새 최대치로 자란다 -->
+            <ui:VisualElement name="vessel" class="vessel hidden" picking-mode="Ignore">
+                <ui:VisualElement name="vessel-halo" class="vessel-halo" picking-mode="Ignore" />
+                <ui:Label name="vessel-title" class="vessel-title" picking-mode="Ignore" />
+                <ui:VisualElement class="vessel-row" picking-mode="Ignore">
+                    <ui:VisualElement class="vessel-icon" picking-mode="Ignore" />
+                    <ui:VisualElement name="vessel-bar" class="bar-frame vessel-bar" picking-mode="Ignore">
+                        <ui:VisualElement class="bar-track meter" picking-mode="Ignore">
+                            <ui:VisualElement name="vessel-fill" class="meter-fill desire vessel-fill" picking-mode="Ignore" />
+                            <ui:VisualElement name="vessel-new" class="meter-fill vessel-new" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="bar-ink" picking-mode="Ignore" />
+                        <ui:VisualElement name="vessel-mark" class="vessel-mark" picking-mode="Ignore" />
+                        <ui:VisualElement name="vessel-glint" class="vessel-glint" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label name="vessel-value" class="vessel-value" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="vessel-line-0" class="vessel-line" picking-mode="Ignore" />
+                <ui:Label name="vessel-line-1" class="vessel-line" picking-mode="Ignore" />
+                <ui:Label name="vessel-line-2" class="vessel-line" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <!-- 22차 미래 보기 연출 (GameUI.FateShow.cs, 방 쪽은 씬 Hub/Moira/FateOrb): 점성구가 떠오름 → 파편 불티 → 자세히 살펴보기(E) → 빨려 드는 줌 → 구슬 속 영상과 자막 -->
             <ui:VisualElement name="fate" class="fate hidden">
                 <ui:VisualElement name="fate-dim" class="fate-dim" picking-mode="Ignore" />
-                <ui:VisualElement name="fate-light" class="fate-light fate-light-wide" picking-mode="Ignore" />
-                <ui:VisualElement name="fate-core" class="fate-light fate-light-core" picking-mode="Ignore" />
-                <ui:VisualElement name="fate-ring" class="fate-ring" picking-mode="Ignore" />
-                <ui:VisualElement name="fate-shade" class="fate-light" picking-mode="Ignore" />
-                <ui:VisualElement name="fate-orb" class="fate-orb" picking-mode="Ignore"><ui:VisualElement name="fate-orb-glass" class="fate-orb-glass" picking-mode="Ignore" /></ui:VisualElement>
+                <ui:VisualElement name="fate-prompt" class="hub-prompt fate-prompt" picking-mode="Ignore">
+                    <ui:VisualElement class="hub-prompt-tag" picking-mode="Ignore">
+                        <ui:Label text="E" class="kbd" picking-mode="Ignore" />
+                        <ui:Label name="fate-prompt-text" class="hub-prompt-text" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:VisualElement name="fate-sparks" class="fate-sparks" picking-mode="Ignore">
                     <ui:VisualElement class="fate-spark" picking-mode="Ignore" />
                     <ui:VisualElement class="fate-spark" picking-mode="Ignore" />
@@ -311,10 +344,17 @@
                 <ui:Label name="desire-name" class="dialog-title" />
                 <ui:Label name="desire-text" class="dialog-text" />
                 <ui:Label name="desire-penalty" class="dialog-text" />
-                <ui:VisualElement class="actions">
-                    <ui:Button name="absorb" text="욕망 흡수" class="primary" />
-                    <ui:Button name="refuse" text="그대로 지나가기" />
+                <ui:VisualElement class="desire-choices">
+                    <ui:VisualElement class="desire-choice">
+                        <ui:Button name="absorb" text="욕망 흡수" class="primary" />
+                        <ui:Label name="absorb-feel" class="desire-feel" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="desire-choice">
+                        <ui:Button name="refuse" text="그대로 지나가기" />
+                        <ui:Label name="refuse-feel" class="desire-feel" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:Label name="desire-numbers" class="desire-numbers" />
             </ui:VisualElement>
             <ui:VisualElement name="dialog-shop" class="dialog hidden">
                 <ui:VisualElement class="merchant-peek-slot" picking-mode="Ignore" />

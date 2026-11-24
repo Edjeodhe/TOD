@@ -41,7 +41,7 @@ namespace TOD
             SetDef d = set.def;
             float v = d.effectPerTier * set.tier * d.procEffectScale;
             float amount = d.procDamage + d.procDamagePerTier * set.tier;
-            if (d.element == Element.Light && (e.elite || e.IsBoss)) amount *= 1 + v;   // 빛: 정예·보스에게 더 세게
+            if (d.element == Element.Pride && (e.elite || e.IsBoss || e.hp >= e.maxHp - .01f)) amount *= 1 + v;   // 교만: 정예·보스·체력 가득한 적에게 더 세게
             Fx fx = Spawn(r, FxKind.Proc, e.x, e.y, new FxSpec { time = EC.procTime, alpha = 1 });
             fx.element = d.element; fx.lift = EnemyHeight(e) * .5f; fx.seed = r.random() * 100; fx.follow = e;
             fx.size = (e.IsBoss ? X.bossScale : 1);
@@ -54,51 +54,24 @@ namespace TOD
             Event(r, "proc");
         }
 
-        // 속성 효과 한 번 (부가 발동): 화상 · 둔화 · 번개 튐 · 저주 · 흡혈 · 바람 끌림 · 중독
+        // 죄종 효과 한 번 (부가 발동): 분노 화상 · 나태 둔화와 잠 겹 · 탐욕 저당 · 시기 독 · 색욕 매혹과 끌림 · 식탐 회복
         void ApplyElementEffect(RunState r, Enemy e, SetDef d, float v, float dealt, bool kill)
         {
             Player p = r.player;
             switch (d.element)
             {
-                case Element.Fire: if (e.hp > 0) { e.burnDps = Mathf.Max(e.burnDps, v); e.burnTime = d.effectTime; } break;
-                case Element.Ice: if (e.hp > 0) { e.slow = Mathf.Min(d.effectCap > 0 ? d.effectCap : .8f, Mathf.Max(e.slow, v)); e.slowTime = d.effectTime; } break;
-                case Element.Dark: if (e.hp > 0) { e.curse = Mathf.Max(e.curse, v); e.curseTime = d.effectTime; } break;
-                case Element.Poison:
-                    if (e.hp <= 0) break;
-                    e.poisonStacks = Mathf.Min(Mathf.Max(1, (int)d.effectCap), e.poisonStacks + Mathf.Max(1, (int)d.effectCap / 2));
-                    e.poisonDps = Mathf.Max(e.poisonDps, v); e.poisonTime = d.effectTime;
-                    break;
-                case Element.Lightning:
-                {
-                    int left = Mathf.Max(1, (int)d.effectCap);
-                    foreach (Enemy to in r.enemies.Where(o => o != e && o.hp > 0 && Distance(o, e) <= d.effectRange).OrderBy(o => Distance(o, e)).ToList())
-                    {
-                        if (left-- <= 0) break;
-                        DamageEnemy(r, to, v, Element.Lightning);
-                        Fx arc = Spawn(r, FxKind.Chain, e.x, e.y, new FxSpec { time = db.visual.chainTime, alpha = 1 });
-                        arc.toX = to.x; arc.toY = to.y; arc.element = Element.Lightning; arc.seed = r.random() * 100;
-                        arc.lift = EnemyHeight(e) * .5f; arc.angle = EnemyHeight(to) * .5f;
-                    }
-                    break;
-                }
-                case Element.Wind:
+                case Element.Envy: SinStatus(r, e, d, 1, v, Mathf.Max(1, (int)d.effectCap / 2)); break;
+                case Element.Lust:
                     foreach (Enemy o in r.enemies.Where(o => o.hp > 0 && (o == e || Distance(o, e) <= d.effectRange)))
                     {
                         float gap = Mathf.Max(1, Mathf.Sqrt((p.x - o.x) * (p.x - o.x) + (p.y - o.y) * (p.y - o.y) * A.projectionY * A.projectionY));
                         float yank = Mathf.Min(F.yankReach * (1 + v), Mathf.Max(0, gap - F.yankMinGap));
                         o.yank = new Timed { x = (p.x - o.x) / gap * yank, y = (p.y - o.y) / gap * yank, time = F.yankTime };
+                        o.charmTime = Mathf.Max(o.charmTime, d.effectTime);
                     }
                     break;
-                case Element.Blood:
-                {
-                    float heal = Mathf.Min(r.maxHp - r.hp, Round(dealt * v));
-                    if (heal < 1) break;
-                    r.hp += heal;
-                    Fx number = Spawn(r, FxKind.Number, p.x, p.y, X.damageNumber);
-                    number.text = "+" + heal.ToString("0"); number.color = db.Tone(Element.Blood).color;
-                    number.useElement = true; number.element = Element.Blood;
-                    break;
-                }
+                case Element.Gluttony: Leech(r, v, dealt); break;
+                default: SinStatus(r, e, d, 1, v, 1); break;
             }
         }
 
@@ -147,35 +120,33 @@ namespace TOD
             Player p = r.player;
             switch (boss.element)
             {
-                case Element.Fire: p.burnDps = Mathf.Max(p.burnDps, a.value); p.burnTime = a.time; break;
-                case Element.Ice: p.slow = Mathf.Max(p.slow, Mathf.Clamp(a.value, 0, .9f)); p.slowTime = a.time; break;
-                case Element.Lightning:
-                    p.shockLeft = Mathf.Max(p.shockLeft, a.count); p.shockDamage = a.value;
-                    p.shockInterval = Mathf.Max(.05f, a.time); p.shockTimer = p.shockInterval;
-                    break;
-                case Element.Light: p.blind = p.blindMax = a.time; p.blindPower = a.value; break;
-                case Element.Dark: p.dark = p.darkMax = a.time; p.darkRadius = a.range; break;
-                case Element.Blood:
+                case Element.Wrath: p.burnDps = Mathf.Max(p.burnDps, a.value); p.burnTime = a.time; break;
+                case Element.Sloth: p.slow = Mathf.Max(p.slow, Mathf.Clamp(a.value, 0, .9f)); p.slowTime = a.time; break;
+                case Element.Pride: p.blind = p.blindMax = a.time; p.blindPower = a.value; break;
+                case Element.Greed: p.dark = p.darkMax = a.time; p.darkRadius = a.range; break;
+                case Element.Gluttony:
                 {
                     if (boss.hp <= 0) break;
                     float heal = Mathf.Min(boss.maxHp - boss.hp, Round(amount * a.value));
                     if (heal < 1) break;
                     boss.hp += heal;
                     Fx number = Spawn(r, FxKind.Number, boss.x, boss.y, X.damageNumber);
-                    number.text = "+" + heal.ToString("0"); number.color = db.Tone(Element.Blood).color;
-                    number.useElement = true; number.element = Element.Blood; number.lift = EnemyHeight(boss) * .6f;
+                    number.text = "+" + heal.ToString("0"); number.color = db.Tone(Element.Gluttony).color;
+                    number.useElement = true; number.element = Element.Gluttony; number.lift = EnemyHeight(boss) * .6f;
                     break;
                 }
-                case Element.Wind:
+                case Element.Lust:
                 {
-                    Vector2 away = new(p.x - boss.x, (p.y - boss.y) * A.projectionY);
+                    // 22차 색욕 보스: 밀쳐내는 대신 보스 쪽으로 홀린 듯 끌려간다 (range 는 끌리는 거리, 보스에 닿기 전까지)
+                    Vector2 away = new(boss.x - p.x, (boss.y - p.y) * A.projectionY);
+                    a = new BossElementAttack { value = a.value, time = a.time, count = a.count, range = Mathf.Min(a.range, Mathf.Max(0, away.magnitude - boss.radius - 30)) };
                     if (away.sqrMagnitude < 1e-4f) away = Vector2.right;
                     away.Normalize();
                     float time = Mathf.Max(.05f, a.time);
                     p.push = new Timed { x = away.x * a.range, y = away.y / A.projectionY * a.range, time = time, max = time };
                     break;
                 }
-                case Element.Poison:
+                case Element.Envy:
                     p.poisonStacks = Mathf.Min(Mathf.Max(1, a.count), p.poisonStacks + 1);
                     p.poisonDps = a.value; p.poisonTime = a.time;
                     break;
@@ -210,9 +181,9 @@ namespace TOD
             {
                 p.shockLeft--;
                 p.shockTimer = p.shockInterval;
-                PlayerDot(r, p.shockDamage, Element.Lightning);
+                PlayerDot(r, p.shockDamage, Element.Unused3);
                 Fx zap = Spawn(r, FxKind.BossHit, p.x, p.y, new FxSpec { time = EC.bossHitTime * .6f, size = EC.bossHitSize * .6f, alpha = 1 });
-                zap.element = Element.Lightning; zap.follow = p; zap.seed = r.random() * 100;
+                zap.element = Element.Unused3; zap.follow = p; zap.seed = r.random() * 100;
             }
             float burn = p.burnDps * dt, poison = p.poisonDps * p.poisonStacks * dt;
             if (burn <= 0 && poison <= 0) { p.dotTick = 0; return; }
@@ -222,7 +193,7 @@ namespace TOD
             p.dotTick = 0;
             float amount = p.dotPending;
             p.dotPending = 0;
-            PlayerDot(r, amount, poison > burn ? Element.Poison : Element.Fire);
+            PlayerDot(r, amount, poison > burn ? Element.Envy : Element.Wrath);
         }
 
         // 지속 피해: 피격 무적·경직 없이 체력만 깎고 속성 글꼴 숫자를 띄운다

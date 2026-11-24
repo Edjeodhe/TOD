@@ -1,8 +1,8 @@
 """모이라 리그 미리보기 (리깅 페이지와 같은 계산): Assets/Rig/moira_rig.json → PNG
 
-python tools/preview_moira_rig.py out.png [--talk] [--time T] [--ref 0.35] [--scale 2] [--bones]
+python tools/preview_moira_rig.py out.png [--talk] [--touch] [--time T] [--ref 0.35] [--scale 2] [--bones]
 
---talk 은 카드 들기(raise 끝 자세 + hold), --ref 는 참고 그림 겹치기 세기, --bones 는 뼈·관절점 표시.
+--talk 은 카드 들기(raise 끝 자세 + hold), --touch 는 22차 구슬 만지기(touch 끝 자세 + touchLoop), --ref 는 참고 그림 겹치기 세기, --bones 는 뼈·관절점 표시.
 """
 import json
 import math
@@ -53,14 +53,21 @@ def shot(m, t, a, b, c):
 def main():
     rig = json.loads((ROOT / "Assets/Rig/moira_rig.json").read_text(encoding="utf-8"))
     talk, t, S = "--talk" in sys.argv, arg("--time", 0.0), arg("--scale", 2.0)
+    touch = "--touch" in sys.argv and "touch" in rig
     ang = {b["id"]: 0.0 for b in rig["bones"]}
-    for m, w in ((rig["idle"], 1), (rig["hold"], 1 if talk else 0)):
+    if touch:
+        talk = False
+    for m, w in ((rig["idle"], 1), (rig["hold"], 1 if talk else 0), (rig.get("touchLoop") or {"length": 1}, 1 if touch else 0)):
         if w == 0: continue
         u = (t % m["length"]) / m["length"]
         for bw in m.get("bones", []):
             if bw["bone"] in ang: ang[bw["bone"]] += wave(bw, u) * w
     if talk:
         m = rig["raise"]
+        for bp in m["bones"]:
+            if bp["bone"] in ang: ang[bp["bone"]] += shot(m, m["length"], bp["start"], bp["peak"], bp["settle"])
+    if touch:
+        m = rig["touch"]
         for bp in m["bones"]:
             if bp["bone"] in ang: ang[bp["bone"]] += shot(m, m["length"], bp["start"], bp["peak"], bp["settle"])
     W = {}

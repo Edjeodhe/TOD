@@ -7,9 +7,13 @@ namespace TOD
 {
     // 실의 속성 = 재봉 상자 세트. 직렬화 값(정수)이 데이터에 저장되므로 새 값은 끝에만 붙인다.
     // Plain = 세트가 없을 때의 기본 실, Dodge = 대쉬 흔적. (12차: 혼돈 → 화염, 절망 → 얼음, 좌절 → 번개로 이름 변경, 빛·어둠·피·바람·독 추가)
-    public enum Element { Plain, Fire, Ice, Lightning, Dodge, Light, Dark, Blood, Wind, Poison }
+    // 22차: 8속성 → 칠죄종. 정수 값(직렬화)은 그대로 두고 이름만 바꿈 (Fire→Wrath, Ice→Sloth, Lightning→Unused3, Light→Pride, Dark→Greed, Blood→Gluttony, Wind→Lust, Poison→Envy)
+    public enum Element { Plain, Wrath, Sloth, Unused3, Dodge, Pride, Greed, Gluttony, Lust, Envy }
     // 재봉 조각 고유 효과 (유니크·레전더리). value·param 의 뜻은 GearConfig.effectTexts 설명 참고.
-    public enum ItemEffect { None, Brink, QuickBind, Spite, HeavyKnot, Leap, Greed, Rewind, Giant }
+    public enum ItemEffect { None, Brink, QuickBind, Spite, HeavyKnot, Leap, Greed, Rewind, Giant,
+        // 22차 칠죄종 조각과 신화 도안: 금실 물레(금화 param 개마다 +value, 최대 = 금화 상한까지) · 만찬(처치마다 param 초 동안 +value, 겹침 최대 5)
+        // 삼키기(처치하면 체력 +value) · 얽힌 실(결박한 적에게 +value) · 높은 굽(체력이 가득하면 +value) · 왕좌(치명타 확률 +value) · 재단(당기기 피해 +value)
+        GoldThread, Feast, Devour, Embrace, Crown, Pedestal, Tailor }
     // 재봉 조각 능력치. 직렬화 값(정수)이 조각 데이터에 저장되므로 새 값은 끝에만 붙인다.
     // Multishot = 한 번 쏠 때 더 나가는 바늘 수(좌우로 부채꼴), ThreadWidth = 실 굵기 증가 비율(0.6 = +60%)
     public enum StatKind { Damage, Speed, Health, Recharge, Purity, Yarn, Multishot, ThreadWidth }
@@ -261,10 +265,14 @@ namespace TOD
     }
 
     // 세트 = 속성. 같은 색 조각을 맞대 단계(thresholds)가 켜지면 실이 그 속성 모습이 되고, 당길 때 한 타마다 속성 피해가 더해지며 부가 효과가 붙는다.
-    // 부가 효과(effectPerTier × 단계)의 뜻은 속성마다 다르다:
-    //   화염 = 화상 초당 피해 · 얼음 = 둔화 비율(effectCap 상한) · 번개 = 옆 적에게 튀는 피해(effectRange 안, effectCap 마리)
-    //   빛 = 결박·정예·보스에게 추가 피해 비율 · 어둠 = 저주(받는 피해 증가 비율) · 피 = 흡혈(준 피해 중 회복 비율)
-    //   바람 = 끌어오는 거리 증가 비율(effectRange 안 주변 적도 끌림) · 독 = 중독 한 겹당 초당 피해(effectCap 겹까지)
+    // 22차 칠죄종. 부가 효과(effectPerTier × 단계 = v)의 뜻은 죄종마다 다르다:
+    //   분노 = 화상 초당 v, 내 체력이 낮을수록 피해 +(1 - 체력 비율) × extra × 단계
+    //   나태 = 둔화 비율 v(effectCap 상한), 맞을 때마다 1겹 · extra 겹이면 extraTime 초 잠듦(보스는 bossSleepScale 배)
+    //   시기 = 독 한 겹당 초당 v(effectCap 겹까지), 독 걸린 적이 죽으면 effectRange 안 extra 마리에게 겹을 옮김
+    //   식탐 = 준 피해 중 v 비율 회복, 처치하면 털실 +extra
+    //   색욕 = 매혹 effectTime 초(공격 안 함) + effectRange 안 주변 적도 끌려옴, 끄는 거리 +v 비율
+    //   탐욕 = 저당(받는 피해 +v 비율, effectTime 초), 저당 잡힌 적을 처치하면 금화 +extra × 단계
+    //   교만 = 정예·보스·체력이 가득한 적에게 피해 +v 비율
     [Serializable] public class SetDef
     {
         public string id, name, bonus;        // bonus = 속성 피해 이름 (예: "화염 피해")
@@ -276,7 +284,13 @@ namespace TOD
         public float effectTime;              // 부가 효과 지속 (초)
         public float effectRange;             // 번개 튐·바람 끌림 반경 (전투장 px)
         public float effectCap;               // 얼음 둔화 상한 · 번개 튀는 마리 수 · 독 최대 겹
-        public string effectText;             // 부가 효과 문구. {0} = 이 단계의 값 (예: "화상 초당 {0}")
+        public string effectText;             // 부가 효과 문구. {0} = 이 단계의 값, {1} = extra × 단계 (예: "화상 초당 {0}")
+        public string brief;                  // 22차 세트 패널 목록의 짧은 효과 (effectText 와 같은 {0}, {1}). 긴 문구는 마우스 올림 창에서
+        [TextArea] public string description; // 22차 세트 마우스 올림 창의 설명 한두 줄
+        [Header("22차: 죄종 두 번째 효과 (위 설명 참고)")]
+        public float extra;
+        public float extraTime;
+        public float bossSleepScale;          // 나태: 보스가 잠드는 시간 배율
         [Header("16차: 부가 세트 주기 발동 (메인이 아닌 켜진 세트)")]
         public int procCharge;                // 바늘 명중·당기기 타격 몇 번에 한 번 터지는지
         public float procDamage, procDamagePerTier;   // 발동 피해 = procDamage + procDamagePerTier × 단계 (상성 적용)
@@ -293,8 +307,9 @@ namespace TOD
         public Vector2Int[] shape;
         public Sprite icon;
         [TextArea] public string flavor;      // 카드 아래 짧은 설명
-        public ItemEffect effect;             // 고유 효과 (유니크·레전더리)
+        public ItemEffect effect;             // 고유 효과 (유니크·레전더리·신화)
         public float effectValue, effectParam;
+        public float desireStart;             // 22차 붉게 물든 도안: 들고 가면 이 욕망을 안고 등반을 시작한다
     }
 
     // 고유 효과 이름·설명. text 의 {0} = effectValue, {1} = effectParam
@@ -313,7 +328,7 @@ namespace TOD
         public int starterSlotsBase, starterSlotsStep;   // 17차: 들고 갈 시작 조각 수 = base + '시작 조각 선택' 단계 × step
         public string starterFull;            // 17차: 판이 다 찼을 때 ("시작 조각은 {0}개까지 들고 갈 수 있습니다")
         public PieceDef[] pieces;
-        public string[] rankNames;            // 코스트 1~4 → 일반·레어·유니크·레전더리
+        public string[] rankNames;            // 코스트 1~5 → 일반·레어·유니크·레전더리·신화(22차 아버지의 도안)
         public int baseColumns, baseRows, baseCostLimit, costLimitStep;
         public float rowBonus;
         public int[] startingKinds;
@@ -356,7 +371,8 @@ namespace TOD
     }
 
     // 실 리본·결박 폭발의 모습 (Plain = 금실 = 빛)
-    public enum BindStyle { Plain, Fire, Lightning, Frost, Dark, Blood, Wind, Poison }
+    // 22차: 칠죄종을 끝에 붙임 (옛 값 0~7 유지, 씬에 저장된 정수가 바뀌지 않게)
+    public enum BindStyle { Plain, Fire, Lightning, Frost, Dark, Blood, Wind, Poison, Wrath, Sloth, Pride, Greed, Gluttony, Lust, Envy }
 
     [Serializable] public class BindLook
     {
@@ -533,6 +549,9 @@ namespace TOD
         public string summaryClear, summaryDead, summaryAbsorbed, summaryRetreat, summaryBody;
         public string augmentTitle, augmentRule, augmentStat;
         public string desireEyebrow, desirePenalty;
+        // 22차 보스 욕망 창 (속삭임 말투). desireTitle {0} = 죄종 이름, desireNumbers {0} = 흡수로 얻는 욕망, {1} = 욕망 이름, {2} = 효과, {3} = 대가
+        public string desireTitle, absorbButton, refuseButton, desireNumbers;
+        [TextArea] public string absorbFeel, refuseFeel;
         public string saleActive, saleOver, saleSold, price, soldOut, nextFloor;
         public string restEyebrow, restBodyBoss, restBodyNext, restButtonBoss, restButtonNext;
         public string upgradeBody, upgradeCost, upgradeMax, upgradeDone;
@@ -546,6 +565,7 @@ namespace TOD
         public string starterSlotsLine;       // 17차: 실궤 '시작 조각 선택' 카드 아랫줄 ({0} 지금 들고 갈 수)
         public string pieceCells, tipSet, setProgress, setProgressMax, ownedAll;   // 재봉 상자 정보 창·세트 패널·상점
         public string setMain, setSub;        // 세트 패널: 메인 속성 / 부가 속성 (16차: setSub 의 {0} = 발동까지 타격 수)
+        public string setListCount, setListNeed, setMainTag, setSubTag, setTierLine;   // 22차 세트 목록 "(3)" / 못 미친 "(1/2)" / 메인, 부가 꼬리표 / 창의 단계 숫자 "({0})"
         public string[] statNames;            // StatKind 순서
         public string[] roundNames;           // 첫 번째 라운드, 두 번째 라운드, 층 보스
     }

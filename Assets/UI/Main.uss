@@ -368,7 +368,6 @@ Button:disabled { opacity: 0.5; }
 .board-set-tag { font-size: 15px; padding: 0 6px 1px 6px; background-color: rgba(26, 16, 19, 0.82); border-radius: 3px; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .piece-name-box { flex-grow: 1; align-items: flex-end; justify-content: center; }
 /* 세트 이름 (이름 위, 세트 색 글씨 + 잉크 외곽선, 코드가 칠함) */
-.set-role { font-size: 15px; margin: 2px 0 0 28px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 /* 목록 줄의 세트 이름: 어두운 잉크 꼬리표 위 세트 색 글씨 (세트 색 종이와 섞이지 않게) */
 .piece-set { font-size: 15px; -unity-text-align: middle-center; margin-bottom: 4px; padding: 1px 8px 2px 8px; background-color: rgba(26, 16, 19, 0.82); border-radius: 3px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .tip-set-name { font-size: 15px; -unity-text-outline-width: 2px; -unity-text-outline-color: #1a1013; margin-top: 2px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
@@ -380,25 +379,37 @@ Button:disabled { opacity: 0.5; }
 /* 등급 꼬리표: 등급 색 바탕(코드가 칠함), 장착 중 아래 */
 .piece-rank { margin-top: 4px; padding: 2px 10px 3px 10px; font-size: 15px; border-width: 2px; border-color: #1a1013; border-radius: 3px; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
 .piece-dot { position: absolute; -unity-background-scale-mode: stretch-to-fill; border-color: rgba(26, 16, 19, 0.7); }
-/* 세트 효과 패널 (세피리아식): 색 매듭 · 이름 · 연결 수/다음 단계 · 단계별 효과, 켜진 단계는 밝게 */
+/* 세트 효과 패널 (22차): 판에 가진 세트만. 이름(죄종 색 글씨) (개수) + 메인/부가 꼬리표, 아래 켜진 효과 짧게(줄바꿈).
+   첫 단계에 못 미친 세트는 회색 한 줄. 단계별 긴 효과는 마우스 올림 창(.set-tip)에 */
 .set-panel { width: 330px; flex-shrink: 0; padding: 18px 18px 8px 18px; background-color: rgba(10, 5, 8, 0.5); border-width: 2px; border-color: #3a2a2e; border-radius: 4px; }
 .set-panel-title { font-size: 24px; color: #d6b06e; margin-bottom: 12px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
-/* 12차: 세트가 8개라 목록은 스크롤 (아래 버튼과 겹치지 않게) */
 .set-list { max-height: 640px; }
-.set-entry { margin-bottom: 12px; padding: 10px 12px; background-color: rgba(255, 255, 255, 0.03); border-left-width: 4px; border-color: #3a2a2e; }
-.set-entry.active { background-color: rgba(255, 236, 210, 0.08); border-color: #d6b06e; }
+.set-empty { font-size: 15px; color: #8a7d74; white-space: normal; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-entry { margin-bottom: 8px; padding: 6px 10px 7px 10px; border-left-width: 4px; border-color: rgba(0, 0, 0, 0); border-radius: 2px; }
+.set-entry.active { background-color: rgba(255, 236, 210, 0.07); }
+.set-entry:hover { background-color: rgba(255, 236, 210, 0.13); }
 .set-head { flex-direction: row; align-items: center; }
-.set-swatch { width: 18px; height: 18px; border-radius: 9px; border-width: 2px; border-color: #1a1013; margin-right: 10px; }
-.set-name { flex-grow: 1; font-size: 24px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
-.set-count { font-size: 24px; color: #eadcc4; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
-.set-tiers { margin-top: 6px; }
-.set-tier { flex-direction: row; align-items: center; margin-top: 4px; opacity: 0.42; }
-.set-tier.next { opacity: 0.7; }
-.set-tier.on { opacity: 1; }
-.tier-need { width: 34px; height: 24px; border-width: 2px; border-radius: 3px; margin-right: 10px; font-size: 15px; color: #eadcc4; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
-.set-tier.on .tier-need { color: #1a1013; }
-.tier-effect { font-size: 15px; color: #c9b8a6; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
-.set-tier.on .tier-effect { color: #fff4dc; }
+.set-name { font-size: 24px; -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-count { flex-grow: 1; margin-left: 6px; font-size: 24px; color: #eadcc4; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-entry.off .set-count { color: #7c716b; }
+.set-role { font-size: 15px; padding: 1px 7px 2px 7px; border-radius: 3px; color: #1a1013; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-brief { font-size: 15px; color: #f1e6d4; margin-top: 2px; white-space: normal; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+/* 세트 정보 창: 어두운 종이, 이름은 죄종 색, 단계 줄은 달성 흰색 / 못 달성 회색 (코드가 .done 을 붙임) */
+.set-tip {
+    position: absolute; width: 540px; padding: 30px 34px 36px 34px;
+    background-image: url("project://database/Assets/UI/Paper/panel_dark.png");
+    -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 64; -unity-slice-bottom: 64; -unity-slice-scale: 0.6px;
+}
+.set-tip-head { flex-direction: row; align-items: flex-end; }
+.set-tip-name { font-size: 30px; -unity-text-outline-width: 2px; -unity-text-outline-color: #1a1013; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-tip-count { flex-grow: 1; margin-left: 10px; margin-bottom: 3px; font-size: 15px; color: #b3a497; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-tip-role { font-size: 15px; margin-top: 2px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-tip-desc { font-size: 15px; color: #cdbca8; margin-top: 8px; padding-bottom: 10px; border-bottom-width: 1px; border-color: rgba(234, 220, 196, 0.25); white-space: normal; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-tip-tiers { margin-top: 8px; }
+.set-tip-tier { flex-direction: row; align-items: flex-start; margin-top: 5px; }
+.set-tip-need { width: 38px; flex-shrink: 0; font-size: 18px; color: #857c76; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-tip-effect { flex-grow: 1; flex-shrink: 1; font-size: 18px; color: #857c76; white-space: normal; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.set-tip-tier.done .set-tip-need, .set-tip-tier.done .set-tip-effect { color: #ffffff; -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
 /* 아이템 정보 창: 양피지(등급 색으로 살짝 물듦), 마우스를 따라다님 */
 .piece-tip {
     position: absolute; width: 440px; padding: 24px 28px;
@@ -543,3 +554,10 @@ Button:disabled { opacity: 0.5; }
 /* 체력 회복: 새로 찰 몫이 밝게 먼저 보이고, 체력 게이지가 그 위로 차오른다 */
 .meter-fill.heal { position: absolute; left: 0; top: 0; bottom: 0; -unity-background-image-tint-color: #dcfbb8; border-right-width: 0; }
 .meter-fill.health { position: absolute; left: 0; top: 0; bottom: 0; }
+
+/* 22차 보스 욕망 창: 속삭임과 두 갈래 느낌 문구 */
+#dialog-desire #desire-text { -unity-font-style: italic; font-size: 20px; color: #5a2e3a; -unity-text-align: middle-center; margin: 10px 0 6px 0; white-space: normal; }
+.desire-choices { flex-direction: row; justify-content: center; margin-top: 14px; }
+.desire-choice { width: 46%; margin: 0 2%; align-items: stretch; }
+.desire-feel { color: #4e3b31; font-size: 15px; white-space: normal; -unity-text-align: upper-center; margin-top: 8px; }
+.desire-numbers { color: rgba(78, 59, 49, 0.55); font-size: 13px; -unity-text-align: middle-center; margin-top: 12px; white-space: normal; }

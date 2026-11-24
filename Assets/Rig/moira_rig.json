@@ -595,5 +595,73 @@
   ]
  },
  "cardBone": "RB_low",
- "swapAfter": 0.8
+ "swapAfter": 0.8,
+ "touch": {
+  "length": 0.9,
+  "peakTime": 0.5,
+  "settleTime": 0.9,
+  "keepEnd": true,
+  "easeIn": true,
+  "bones": [
+   {
+    "bone": "head",
+    "start": 0,
+    "peak": 7.800000000000001,
+    "settle": 6
+   },
+   {
+    "bone": "RA_up",
+    "start": 0,
+    "peak": 31.0,
+    "settle": 28.7
+   },
+   {
+    "bone": "RA_low",
+    "start": 0,
+    "peak": -8.1,
+    "settle": -7.5
+   },
+   {
+    "bone": "LA_up",
+    "start": 0,
+    "peak": -58.7,
+    "settle": -54.3
+   },
+   {
+    "bone": "LA_low",
+    "start": 0,
+    "peak": 5.2,
+    "settle": 4.8
+   }
+  ]
+ },
+ "touchLoop": {
+  "length": 2.6,
+  "bones": [
+   {
+    "bone": "RA_low",
+    "offset": 0,
+    "a1": 2.2,
+    "p1": 0,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "LA_low",
+    "offset": 0,
+    "a1": -2.2,
+    "p1": 0.5,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "head",
+    "offset": 0,
+    "a1": 1.2,
+    "p1": 0.25,
+    "a2": 0,
+    "p2": 0
+   }
+  ]
+ }
 }

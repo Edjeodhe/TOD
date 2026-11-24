@@ -60,7 +60,7 @@ namespace TOD
             unlockBox.Q<Label>("unlock-name").style.color = ink;
             // 1단계 효과 (세트 패널과 같은 문구): "어둠 피해 +2, 저주 10%"
             string effect = string.Format(T.pieceEffect, set.bonus, Amount(set.damagePerTier));
-            if (!string.IsNullOrEmpty(set.effectText)) effect += ", " + string.Format(set.effectText, Amount(set.effectPerTier));
+            if (!string.IsNullOrEmpty(set.effectText)) effect += ", " + string.Format(set.effectText, Amount(set.effectPerTier), Amount(set.extra));
             Text(unlockBox, "unlock-text", effect);
             foreach (Label spark in unlockBox.Query<Label>(className: "unlock-spark").ToList()) spark.style.color = Color.Lerp(set.color, Color.white, .5f);
 

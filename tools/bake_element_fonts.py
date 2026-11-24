@@ -1,6 +1,6 @@
 """속성별·치명타 피해 숫자 그림 글꼴: 기본 아틀라스(흰 글자 + 검은 외곽선)에서 색을 새로 구워 같은 배치의 아틀라스를 만든다.
 
-python tools/bake_element_fonts.py [preview]
+python tools/bake_element_fonts.py [22 | 이름 ...]   (22 = 칠죄종 7개만, 22차)
   Assets/Art/Generated/damage_font.png (tools/bake_damage_font.py 결과)
   → Assets/Art/Generated/damage_font_<이름>.png   (글자 위치는 art_src/fonts/damage_font.json 그대로)
   → art_src/fonts/element_fonts_preview.png       (검토용: 속성마다 "1234!" + 치명타)
@@ -37,7 +37,16 @@ STYLES = {
     "wind":      ("FFFFFF", "C8FFE8", "4CC9A0", "06302A", "8CF2CC"),
     "poison":    ("F2FFB0", "9CFF40", "3E9E14", "0E2A04", "73E626"),
     "crit":      ("FFFFFF", "FFF27A", "FFC21A", "8A0E04", "FFE04A"),   # 치명타: 흰빛 → 노랑 → 주황
+    # 22차 칠죄종 (HANDOFF 22차 색: 분노 #C62E2E, 나태 #6F8FA8, 교만 #7B4FC9, 탐욕 #D9A520, 식탐 #E07A2A, 색욕 #D9418C, 시기 #4FA34A)
+    "wrath":     ("FFD9C2", "FF5A4A", "B01818", "2A0406", "E0302A"),
+    "sloth":     ("FFFFFF", "C4D6E4", "6F8FA8", "142230", "8FB0CC"),
+    "pride":     ("F4ECFF", "B894F0", "6A3CC0", "1A0A33", "9B6CF0"),
+    "greed":     ("FFF8D0", "FFD860", "C98A10", "3A2400", "F2C030"),
+    "gluttony":  ("FFF0D0", "FFA650", "C85A14", "2E1004", "F08A30"),
+    "lust":      ("FFE0F0", "FF7AB8", "C42A78", "2A0618", "F05AA8"),
+    "envy":      ("EAFFD0", "8CE070", "3A8A34", "0A2408", "66D05A"),
 }
+SINS = ("wrath", "sloth", "pride", "greed", "gluttony", "lust", "envy")
 
 base = Image.open(BASE).convert("RGBA")
 arr = np.asarray(base).astype(np.float32) / 255
@@ -69,7 +78,12 @@ def bake(name, top, mid, bottom, ink, glow):
     return im
 
 
-fonts = {name: bake(name, *style) for name, style in STYLES.items()}
+# 인자: 이름들 (없으면 전부), 22 = 칠죄종만 (미리보기도 죄종과 치명타만)
+_args = [a for a in sys.argv[1:] if a != "preview"]
+_pick = set(SINS) if "22" in _args else set(_args) or set(STYLES)
+fonts = {name: bake(name, *style) for name, style in STYLES.items() if name in _pick}
+if "22" in _args:
+    fonts["crit"] = Image.open(OUT / "damage_font_crit.png").convert("RGBA")
 print("baked", ", ".join(fonts))
 
 if "preview" in sys.argv[1:] or True:
@@ -90,7 +104,8 @@ if "preview" in sys.argv[1:] or True:
     icon = Image.open(icon_path).convert("RGBA") if icon_path.exists() else None
     rows = list(fonts.items())
     sheet = Image.new("RGBA", (760, 92 * len(rows) + 20), (34, 26, 38, 255))
-    names = {"fire": "화염", "ice": "얼음", "lightning": "번개", "light": "빛", "dark": "어둠", "blood": "피", "wind": "바람", "poison": "독", "crit": "치명타"}
+    names = {"fire": "화염", "ice": "얼음", "lightning": "번개", "light": "빛", "dark": "어둠", "blood": "피", "wind": "바람", "poison": "독", "crit": "치명타",
+             "wrath": "분노", "sloth": "나태", "pride": "교만", "greed": "탐욕", "gluttony": "식탐", "lust": "색욕", "envy": "시기"}
     for i, (name, im) in enumerate(rows):
         y = 10 + i * 92
         w = word(im, "1234", .55)

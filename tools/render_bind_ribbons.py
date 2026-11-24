@@ -12,6 +12,7 @@
   art_src/vfx/bind/bind.blend       마지막 상태의 편집용 씬
 
 style: fire(화염) · lightning(번개) · frost(얼음) · plain(금실 = 빛) · dark(어둠) · blood(피) · wind(바람) · poison(독). 모든 프레임은 위상 t = i/FRAMES 로 고리처럼 이어진다.
+22차: 칠죄종 wrath sloth pride greed gluttony lust envy (render_bind_ribbons_sins.py). 인자 없이 실행하면 죄종만 굽는다 (옛 8종은 이름이나 legacy).
 """
 import math
 import random
@@ -121,6 +122,18 @@ class Layer:
             ws.append(width * max(0.0, prof) ** 0.8)
             als.append(alpha)
         self.ribbon(pts, ws, als, lum, edge)
+
+    def poly(self, pts, alpha, lum=1.0, edge=1.0):
+        """가운데에서 부채꼴로 채운 다각형 (22차: 하트, 금화, 이빨). edge < 1 이면 가장자리가 옅어진다."""
+        if len(pts) < 3:
+            return
+        self.z += 0.001
+        cx = sum(p[0] for p in pts) / len(pts)
+        cy = sum(p[1] for p in pts) / len(pts)
+        c = self._vert(cx, cy, lum, alpha)
+        ring = [self._vert(x, y, lum, alpha * edge) for x, y in pts]
+        for i in range(len(ring)):
+            self.f.append((c, ring[i], ring[(i + 1) % len(ring)]))
 
     def disc(self, x, y, r, alpha, lum=1.0, seg=24):
         self.z += 0.001
@@ -576,9 +589,16 @@ STYLES = {
     "wind": (thread_wind, trail_wind),
     "poison": (thread_poison, trail_poison),
 }
+LEGACY = set(STYLES)   # 16차 이전 8속성: 22차부터 이름을 주거나 'legacy' 를 줄 때만 굽는다
+
+# 22차 칠죄종: 그림 함수는 render_bind_ribbons_sins.py (같은 이름공간에서 실행)
+_sins_src = Path(__file__).with_name("render_bind_ribbons_sins.py")
+exec(compile(_sins_src.read_text(encoding="utf-8"), str(_sins_src), "exec"), globals())
 
 for style, (thread_fn, trail_fn) in STYLES.items():
-    if ONLY and style not in ONLY:
+    if ONLY and style not in ONLY and not (style in LEGACY and "legacy" in ONLY):
+        continue
+    if not ONLY and style in LEGACY:
         continue
     for kind, fn, size in (("thread", thread_fn, THREAD), ("trail", trail_fn, TRAIL)):
         stacks = {"core": [], "rim": []}
@@ -591,7 +611,7 @@ for style, (thread_fn, trail_fn) in STYLES.items():
         for lname, frames in stacks.items():
             save(np.concatenate(frames, axis=0), OUT / f"bind_{style}_{kind}_{lname}.png")   # 0번이 맨 아래
     core, rim = Layer(), Layer()
-    head(style, core, rim, random.Random(sum(map(ord, style)) * 17))
+    (head_sin if style in SIN_STYLES else head)(style, core, rim, random.Random(sum(map(ord, style)) * 17))
     for lname, layer in (("core", core), ("rim", rim)):
         save(render_layer(layer, HEAD, TMP / f"{style}_head_{lname}.png"), OUT / f"bind_{style}_head_{lname}.png")
     print("bind ribbons", style)

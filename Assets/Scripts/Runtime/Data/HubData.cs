@@ -37,6 +37,35 @@ namespace TOD
         public float closeTime;                 // 닫힐 때 빛이 걷히고 구가 탁자로 돌아가는 시간
         public string skipHint;                 // 아래 안내 ("눌러서 닫기")
         public string lightSound;               // 빛이 퍼질 때 효과음 id (SoundBank)
+
+        [Header("22차 미래 보기 (점성구 → 파편 → 자세히 살펴보기 E → 모이라가 구슬을 만지고 빨려 드는 줌 → 구슬 속 영상과 자막)")]
+        public float riseTime;                  // 탁자 점성구가 떠오르며 죄종 색으로 빛나는 시간
+        public float liftHeight;                // 떠오르는 높이 (그림 px)
+        public float sparkDelay;                // 떠오르기 시작한 뒤 파편 불티가 출발할 때까지
+        public float promptDelay;               // 불티가 다 닿은 뒤 "자세히 살펴보기 (E)" 가 뜰 때까지
+        public string promptText;               // "자세히 살펴보기 (E)"
+        public float promptLift;                // 안내가 점성구 위로 떨어진 높이 (패널 px)
+        public float touchLead;                 // E 뒤 모이라가 구슬을 감싸 쥐는 동안 기다림 (줌 시작 전)
+        public float zoomTime;                  // 구슬로 빨려 드는 줌 시간
+        [Range(.2f, 1.2f)] public float zoomFill;   // 줌 끝에 구슬 반지름이 화면 반 높이에서 차지하는 비율
+        public Vector2 zoomOffset;              // 줌 끝 카메라 중심을 구슬 중심에서 옮김 (구슬 반지름 배율, +y 위)
+        public float swirlStrength;             // 줌 동안 둘레가 빨려 드는 일그러짐 최대 세기
+        public float swirlRest;                 // 줌이 끝난 뒤 남는 일그러짐
+        [Range(0, 1)] public float tintAmount;  // 구슬 바깥 주변을 죄종 색으로 물들이는 양
+        public float videoFade;                 // 영상이 구슬 안에 번져 나오는 시간
+        public float videoTime;                 // 영상 재생 시간 (영상 길이가 달라도 이 시간에 맞춰 빠르게, 느리게 튼다)
+        public float lineFade;                  // 자막 한 줄이 나오고 사라지는 시간
+        public float lineTime;                  // 자막 한 줄이 머무는 시간 (줄이 많으면 영상이 끝난 뒤 마지막 장면에 멈춘 채 이어진다)
+        public float subtitleY;                 // 자막 높이 (화면 높이 비율)
+        public float endHold;                   // 영상이 끝난 뒤 저절로 돌아가기까지 (0 = 누를 때까지)
+        public float zoomOutTime;               // 돌아갈 때 줌이 풀리는 시간
+        public string riseSound, zoomSound;     // 효과음 id (점성구가 떠오를 때, 빨려 들 때)
+
+        [Header("22차 미래 보기 2차: 정면 가속 줌, 확대 뒤 완전 정지 (swirlStrength = 구슬 쪽으로 당기는 세기, 회전 없음)")]
+        public float zoomPower;                 // 줌 가속 (지수 이즈인. 1 = 고르게, 3 = 점점 빨라짐)
+        public float rushBlur;                  // 줌 속도에 맞춰 구슬 바깥이 방사형으로 번지는 최대 양 (반지름 비율)
+        public float rushFade;                  // 줌이 멈춘 뒤 당김과 번짐이 걷히는 시간
+        public float freezeTime;                // 줌 시작 뒤 모이라(손, 몸, 숨쉬기)가 서서히 멈추기까지 (영상 동안은 완전히 정지)
     }
 
     // 20차 칸 강화, 확장 연출: 빛나는 실 머리가 그 줄의 첫 칸에서 끝 칸까지 달리며 실을 잇는다.
@@ -53,6 +82,22 @@ namespace TOD
         public float threadWidth, headSize, flashSize;
         public Color threadColor, headColor, flashColor;
         public string stepSound, endSound;     // 칸마다, 끝날 때 효과음 id
+    }
+
+    // 22차 욕망 최대치 강화 연출 (GameUI.Vessel.cs): 모이라 카드 위에 욕망 게이지가 나타나고,
+    // 게이지 틀이 이전 최대치 길이에서 새 최대치 길이로 자라며 새로 생긴 자리가 밝은 욕망으로 차오른다. 숫자도 함께 오른다.
+    // 길이(px) = barBase + (최대치 - desire.maxBase) * unitPx (barMax 까지). 시간은 초.
+    [Serializable]
+    public class VesselShow
+    {
+        public float barBase, unitPx, barMax;  // 게이지 틀 길이
+        public float appear;                   // 게이지가 나타나는 시간
+        public float growDelay, grow;          // 나타난 뒤 기다림, 틀이 자라는 시간
+        public float fill;                     // 자란 자리가 차오르는 시간
+        public float lineDelay, lineGap;       // 틀이 자라기 시작한 뒤 첫 문구까지, 문구 사이
+        public float hold, fade;               // 다 찬 뒤 머무는 시간, 사라지는 시간
+        public Color newColor, glintColor;     // 새로 생긴 자리 색, 자라는 끝의 빛
+        public string growSound, fullSound;    // 효과음 id (자라기 시작, 다 참)
     }
 
     // 17차: 걸어 다니는 방 하나 (재봉실 본방은 HubConfig 의 옛 필드를 그대로 쓰고, 다락 방은 HubConfig.attic)
@@ -187,6 +232,12 @@ namespace TOD
         public string fateIntro;              // 모이라가 암시 앞에 붙이는 말 (비우면 암시만)
         public FateShow fateShow;             // 20차 운명 읽기 연출 (GameUI.FateShow.cs)
         public LineGrow lineGrow;             // 20차 칸 강화, 확장 연출 (GameUI.Board.cs)
+
+        [Header("22차 욕망 최대치 강화 연출 (GameUI.Vessel.cs)")]
+        public string vesselTitle;            // 게이지 위 제목 한 줄 ({0} 이전 최대치, {1} 새 최대치, {2} 늘어난 양)
+        public string[] vesselLines;          // 게이지 아래 감성 문구, 한 줄씩 차례로 (자리는 vesselTitle 과 같음, 2줄 권장)
+        public string vesselValue;            // 게이지 옆 숫자 ({0} 지금 올라가는 최대치), 예: "{0}"
+        public VesselShow vesselShow;
 
         [Header("안내")]
         public string hint;                   // 화면 아래 조작 안내

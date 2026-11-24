@@ -5,6 +5,7 @@
 //     pose   : idle 반복 + hold 반복 × 말 비중 + raise(시작 → 최고 → 유지) × 말 비중
 //     worlds : 뼈 i = 부모 · 이동(at) · 회전(rest + 동작) · 배율(scale) (뿌리 = 이동(rootPos + 동작 root))
 //     그리기 : 뼈 변환 · artScale · flip(pivot 세로축 거울) · 파츠 rot · 파츠 scale · 이동(-pivot), 순서(order) 오름차순
+//     (22차) + touchLoop 반복 × 만지기 비중 + touch(시작 → 최고 → 유지) × 만지기 비중. 만지는 만큼 말(카드 들기) 비중은 빠진다.
 //   말하는 동안 talkPart 가 있는 뼈는 그 그림으로 바뀐다(카드 넷을 쥔 손). 바뀌는 때 = 말 비중 > swapAt 이고 raise 최고 시점 × swapAfter 뒤.
 //   페이지에서 저장하면 에디터에서는 바로 다시 읽는다(플레이 중에도). 페이지 계산을 바꾸면 이 파일도 같이 바꾼다.
 // 좌표: 그림 px, 아래 +y, 각도 시계 방향 +(도). Unity 로 옮길 때 y 와 회전 방향을 뒤집는다.
@@ -46,6 +47,14 @@ namespace TOD
         public Sprite BallSprite { get; private set; }
         public bool BallOut { get; set; }
 
+        [Header("22차 미래 보기: 고해상도 점성구 (FateOrbView 가 재질 값을 넣음)")]
+        public SpriteRenderer fateOrb;        // Touching 동안 탁자 점성구 대신 그리는 큰 그림(moira_ball_big) 렌더러. 순서는 점성구 뼈와 같아 앞다리 손이 구슬 앞에 온다
+        public bool Touching { get; set; }    // 앉아서 두 앞다리로 점성구를 감싸 만진다 (리깅 페이지 '구슬 만지기')
+        public float TouchWeight { get; private set; }
+        public bool FateOrbOn { get; set; }   // 탁자 점성구를 fateOrb 로 바꿔 그린다
+        public float BallLift { get; set; }   // 점성구가 떠오른 높이 (그림 px)
+        public float Motion { get; set; } = 1; // 반복 동작(숨쉬기, 손 흔들림, 점성구 맥박)이 흐르는 빠르기. 0 이면 지금 자세 그대로 멈춘다 (미래 보기 영상 동안)
+
         // ---------------------------------------------------------------- JSON → 리그
         class Part { public Sprite sprite; public Vector2 pivot; public float rot, scale = 1; public Vector2? cardPoint; }
         class Bone
@@ -63,14 +72,14 @@ namespace TOD
 
         readonly Dictionary<string, Part> parts = new();
         readonly List<Bone> bones = new();
-        Loop idle, hold;
-        Shot raise;
+        Loop idle, hold, touchLoop;
+        Shot raise, touch;
         Vector2 rootPos;
         float swapAt = .35f, swapAfter = .8f, talkFollow = 6;
         string cardBone;
         string loadedText;
-        float time, talkStart = -99, reloadCheck;
-        bool wasTalking;
+        float time, loopTime, talkStart = -99, touchStart = -99, reloadCheck;
+        bool wasTalking, wasTouching;
         float[] ang;
         Matrix[] world;
         MaterialPropertyBlock block;
@@ -130,6 +139,8 @@ namespace TOD
             idle = ReadLoop(MiniJson.O(root, "idle"));
             hold = ReadLoop(MiniJson.O(root, "hold"));
             raise = ReadShot(MiniJson.O(root, "raise"));
+            touchLoop = ReadLoop(MiniJson.O(root, "touchLoop"));
+            touch = ReadShot(MiniJson.O(root, "touch"));
 
             // 그림이 있는 뼈마다 템플릿 복제 (order 가 그리기 순서)
             partTemplate.gameObject.SetActive(false);
@@ -220,10 +231,16 @@ namespace TOD
 #endif
             if (bones.Count == 0) return;
             time += dt;
+            loopTime += dt * Mathf.Clamp01(Motion);
             if (Talking && !wasTalking) talkStart = time;
             wasTalking = Talking;
             TalkWeight += ((Talking ? 1 : 0) - TalkWeight) * Mathf.Min(1, dt * talkFollow);
             float talkT = time - talkStart;
+            if (Touching && !wasTouching) touchStart = time;
+            wasTouching = Touching;
+            TouchWeight += ((Touching ? 1 : 0) - TouchWeight) * Mathf.Min(1, dt * talkFollow);
+            float touchT = time - touchStart;
+            float talkW = TalkWeight * (1 - TouchWeight);   // 만지는 만큼 카드 들기는 빠진다
 
             // pose
             Vector2 rootOffset = Vector2.zero;
@@ -231,17 +248,23 @@ namespace TOD
             void AddLoop(Loop m, float w)
             {
                 if (m == null || w <= 0) return;
-                float u = m.length > 0 ? Mathf.Repeat(time, m.length) / m.length : 0;
+                float u = m.length > 0 ? Mathf.Repeat(loopTime, m.length) / m.length : 0;
                 if (m.rootX != null) rootOffset.x += m.rootX.At(u) * w;
                 if (m.rootY != null) rootOffset.y += m.rootY.At(u) * w;
                 foreach (Wave bw in m.bones) ang[bw.bone] += bw.At(u) * w;
             }
             AddLoop(idle, 1);
-            AddLoop(hold, TalkWeight);
-            if (raise != null && TalkWeight > 0)
+            AddLoop(hold, talkW);
+            if (raise != null && talkW > 0)
             {
                 float tt = Mathf.Min(talkT, raise.length);
-                foreach (var (bone, start, peak, settle) in raise.bones) ang[bone] += ShotValue(raise, tt, start, peak, settle) * TalkWeight;
+                foreach (var (bone, start, peak, settle) in raise.bones) ang[bone] += ShotValue(raise, tt, start, peak, settle) * talkW;
+            }
+            AddLoop(touchLoop, TouchWeight);
+            if (touch != null && TouchWeight > 0)
+            {
+                float tt = Mathf.Min(touchT, touch.length);
+                foreach (var (bone, start, peak, settle) in touch.bones) ang[bone] += ShotValue(touch, tt, start, peak, settle) * TouchWeight;
             }
 
             // worlds
@@ -256,7 +279,7 @@ namespace TOD
 
             // 그리기 (말할 때 그림 바꾸기 포함)
             bool raised = raise == null || talkT >= raise.peakTime * swapAfter;
-            bool showTalk = TalkWeight > swapAt && (raised || !Talking);
+            bool showTalk = talkW > swapAt && (raised || !Talking);
             float ppu = Space.Ppu > 0 ? Space.Ppu : 100;
             block ??= new MaterialPropertyBlock();
             for (int i = 0; i < bones.Count; i++)
@@ -266,7 +289,8 @@ namespace TOD
                 string key = showTalk && b.talkPart != null && parts.ContainsKey(b.talkPart) ? b.talkPart : b.part;
                 if (key == null || !parts.TryGetValue(key, out Part part)) { b.sr.enabled = false; continue; }
                 b.sr.enabled = true;
-                Matrix m = DrawMatrix(world[i], b, part);
+                Matrix bw = b.id == ballBone && BallLift != 0 ? world[i] * Matrix.T(0, -BallLift) : world[i];   // 22차: 떠오른 점성구
+                Matrix m = DrawMatrix(bw, b, part);
                 Place(b.sr, m, part.sprite, ppu);
                 if (b.id == cardBone && b.talkPart != null && parts.TryGetValue(b.talkPart, out Part tp) && tp.cardPoint is Vector2 cp)
                 {
@@ -287,13 +311,30 @@ namespace TOD
                     BallSize = bb.size;
                     BallSprite = part.sprite;
                     if (BallOut) b.sr.enabled = false;   // 20차 운명 읽기: 점성구가 화면 가운데로 나가 있는 동안
+                    PlaceFateOrb(b, m, ppu);
                 }
             }
             PlaceShadowAndGlow(ppu);
             if (BallOut && glow != null) glow.enabled = false;
         }
 
-        float Pulse => .5f + .5f * Mathf.Sin(time * ballSpeed * 2 * Mathf.PI);
+        float Pulse => .5f + .5f * Mathf.Sin(loopTime * ballSpeed * 2 * Mathf.PI);
+
+        // 22차 미래 보기: 탁자 점성구(작은 그림)를 같은 자리, 같은 크기의 큰 그림(fateOrb.sprite)으로 바꿔 그린다. 확대해도 선명하고, 재질이 유리 안에 영상을 그린다.
+        void PlaceFateOrb(Bone b, Matrix small, float ppu)
+        {
+            if (fateOrb == null) return;
+            fateOrb.enabled = FateOrbOn && fateOrb.sprite != null && b.sr.sprite != null;
+            if (!fateOrb.enabled) return;
+            b.sr.enabled = false;
+            fateOrb.sortingOrder = b.order;
+            float k = b.sr.sprite.rect.width / fateOrb.sprite.rect.width;   // 큰 그림 1px = 작은 그림 k px
+            Place(fateOrb, small * Matrix.S(k, k), fateOrb.sprite, ppu);
+            fateOrb.color = tint;   // 방 색 (영상은 셰이더가 이 색을 곱하지 않는다)
+            Bounds bb = fateOrb.bounds;
+            BallPoint = bb.center;
+            BallSize = bb.size;
+        }
 
         // 바닥 그림자(탁자 밑 부드러운 타원)와 점성구 빛(점성구 둘레 보랏빛 더하기)
         void PlaceShadowAndGlow(float ppu)
@@ -307,7 +348,7 @@ namespace TOD
             int ball = BoneIndex(ballBone);
             if (glow != null && glowSize.x > 0 && ball >= 0)
             {
-                Vector2 at = world[ball].Apply(glowOffset);
+                Vector2 at = world[ball].Apply(glowOffset + new Vector2(0, -BallLift));
                 Color c = glowColor;
                 c.a *= .75f + .25f * Pulse;
                 glow.enabled = true;

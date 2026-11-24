@@ -110,6 +110,7 @@ namespace TOD
             Run = Combat.CreateRun(Profile, () => Random.value);
             HubShop.ConsumePacked(Profile);   // 19차: 챙긴 시작 조각은 이번 등반 가방으로 넘어가고 영구 프로필에서는 사라진다
             Moira.ConsumeFate(Profile);       // 19차: 모이라가 읽어 둔 1층 속성은 이번 등반(RunState.fate)에 쓰였다
+            Mythic.Ensure(db, Profile);       // 22차: 신화 도안은 영구라 다음 등반을 위해 다시 챙겨 둔다
             Gear.Save(db, Profile);
             offered = null;
             augmentRerolled = false;
@@ -237,7 +238,7 @@ namespace TOD
             switch (Combat.Nearest(Run))
             {
                 case Interactable.Stairs:
-                    if (Run.roundKind == RoundKind.Boss && Run.desirePending) ui.ShowDesire(Run.offer, Run.floor, Run.offer.id == db.desire.refine.id);
+                    if (Run.roundKind == RoundKind.Boss && Run.desirePending) ui.ShowDesire(Run.offer, Run.floor, Run.offer.id == db.desire.refine.id, Run.floorElement);
                     else Ascend();
                     break;
                 case Interactable.Altar: ui.ShowArtifacts(Run.floor, Run.artifactOffer, PickArtifact, !Run.artifactRerolled); break;
@@ -544,26 +545,21 @@ namespace TOD
             return string.IsNullOrEmpty(db.hub.fateIntro) ? def.fateLine : db.hub.fateIntro + " " + def.fateLine;
         }
 
-        // 20차: 점성구가 가운데로 나와 빛을 퍼뜨리고 암시가 어두운 글자로 번진다 (GameUI.Fate.cs). 끝나면 모이라가 같은 말을 한 줄로 남긴다.
+        // 22차 미래 보기: 점성구가 떠오름 → 파편 → 자세히 살펴보기(E) → 모이라가 구슬을 만지고 빨려 드는 줌 → 구슬 속 죄종 영상과 속삭임 자막 (GameUI.FateShow.cs, FateOrbView).
+        // 끝나면(Esc 건너뛰기 포함) 원래 화면으로 돌아오고 모이라가 같은 미래를 한 줄로 남긴다.
         void ShowFate(bool paid)
         {
             ElementDef def = db.elements?.Def(Moira.FateElement(Profile));
             if (def == null) { ui.SayMoira(moiraLine); return; }
+            Color tint = def.fateColor.a > 0 ? def.fateColor : def.hintColor.a > 0 ? def.hintColor : Color.white;   // 구슬, 자막, 구슬 바깥 색
+            string[] lines = def.fateWhispers != null && def.fateWhispers.Length > 0 ? def.fateWhispers : new[] { def.fateLine };
             MoiraRig rig = hub != null ? hub.moira : null;
-            Color tint = def.fateColor.a > 0 ? def.fateColor : def.hintColor.a > 0 ? def.hintColor : Color.white;   // 20차: 구슬, 빛, 글자 색
-            ui.ShowFate(def.fateLine, tint, rig != null ? rig.BallSprite : null, MoiraBall,
-                out_ => { if (rig != null) rig.BallOut = out_; },
-                () => { if (!string.IsNullOrEmpty(db.hub.fateShow?.lightSound)) sound.Play(db.hub.fateShow.lightSound); },   // 빛만 (가운데 바느질 고리 이펙트는 뺐다)
-                () => ui.SayMoira(moiraLine), paid);
-        }
-
-        // 탁자 위 점성구 자리 (패널 px)
-        Rect MoiraBall()
-        {
-            MoiraRig rig = hub != null ? hub.moira : null;
-            if (rig == null || rig.BallSprite == null) return new Rect(920, 260, 80, 80);
-            Vector2 a = ui.WorldToPanel(rig.BallPoint - rig.BallSize / 2), b = ui.WorldToPanel(rig.BallPoint + rig.BallSize / 2);
-            return Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+            if (rig != null) rig.Talking = false;   // 카드를 내려놓고 구슬을 본다
+            ui.ShowFate(lines, tint, hub != null ? hub.fateOrb : null, def.fateVideo, id => sound.Play(id), () =>
+            {
+                if (rig != null && screen == UiScreen.Attic) rig.Talking = true;
+                ui.SayMoira(moiraLine);
+            }, paid);
         }
 
         void ReadFateCard()
@@ -652,6 +648,7 @@ namespace TOD
                 return;
             }
             UpgradeDef u = Upgrade(pendingUpgrade);
+            float oldMax = db.desire.maxBase + Profile.capacity * db.desire.capacityStep;   // 22차 욕망 최대치 연출의 시작 길이
             if (u == null || !Moira.Apply(db, Profile, u, pendingPick)) return;
             Gear.Save(db, Profile);
             int picked = pendingPick;
@@ -660,7 +657,9 @@ namespace TOD
             ui.UpdateMeta(Profile);
             sound.Play("upgrade");
             ui.RoomFlash();
-            ui.Say(string.Format(db.ui.upgradeDone, u.name, Level(u)));
+            if (u.key == Moira.Capacity && db.hub.vesselShow != null)   // 22차: 아래 작은 알림 대신 카드 위 욕망 게이지가 자란다 (GameUI.Vessel.cs)
+                ui.ShowVessel(oldMax, db.desire.maxBase + Profile.capacity * db.desire.capacityStep, id => { if (!string.IsNullOrEmpty(id)) sound.Play(id); });
+            else ui.Say(string.Format(db.ui.upgradeDone, u.name, Level(u)));
             if (u.key == Unlocks.StarterKey) { ShowHubShop(); return; }   // 단추 메뉴로
             if (picking != null)   // 판에 남아 바뀐 줄을 보여 준다 (이어서 더 고를 수 있음)
             {
@@ -698,7 +697,8 @@ namespace TOD
             if (k.enterKey.wasPressedThisFrame && screen == UiScreen.Lobby && Run == null && Opened == "") StartRun();
             if (k.rKey.wasPressedThisFrame && (screen == UiScreen.Inventory || runInventory)) Rotate();
             if (IsCombat && k.spaceKey.wasPressedThisFrame) dashRequested = true;
-            if (k.eKey.wasPressedThisFrame && !runInventory) Interact();
+            if (k.eKey.wasPressedThisFrame && ui.FateShowing) ui.AdvanceFate();   // 22차 미래 보기: 자세히 살펴보기, 돌아가기
+            else if (k.eKey.wasPressedThisFrame && !runInventory) Interact();
             if (k.iKey.wasPressedThisFrame) { if (Run != null) ToggleRunInventory(); else ToggleOutgameInventory(); }   // 20차: 아웃게임에서도 언제든 I
         }
 
@@ -707,7 +707,7 @@ namespace TOD
         void Escape()
         {
             if (runInventory) { CloseRunInventory(); return; }
-            if (ui.FateShowing) { ui.SkipFate(); return; }   // 20차 운명 읽기 연출
+            if (ui.FateShowing) { ui.SkipFate(); return; }   // 22차 미래 보기: 건너뛰기
             switch (Opened)
             {
                 case "diary": case "desire": return;

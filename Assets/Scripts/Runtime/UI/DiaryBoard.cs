@@ -44,6 +44,7 @@ namespace TOD
             root.Q<Button>("diary-page-close").text = D.closeText;
             root.Q<Button>("diary-close").clicked += () => game.ui.HideDiary();
             root.Q<Button>("diary-page-close").clicked += CloseReader;
+            root.Q<Button>("diary-page-mythic").clicked += ToggleMythic;
             root.Q<Button>("diary-lobby-button").clicked += () => game.ui.ShowDiary();
             // 게시판 바깥(어두운 곳)을 누르면 닫는다, 읽기 중이면 읽기만 닫는다
             board.RegisterCallback<PointerDownEvent>(e => { if (e.target == board) game.ui.HideDiary(); });
@@ -104,8 +105,33 @@ namespace TOD
             }
         }
 
+        DiaryEntry reading;
+
+        // 22차 신화: 펼친 장의 도안을 다음 등반에 들고 가기 / 내려놓기 (하나만)
+        void ToggleMythic()
+        {
+            if (reading == null) return;
+            Mythic.Toggle(Db, P, reading.floor);
+            Gear.Save(Db, P);
+            MythicButton(reading);
+        }
+
+        void MythicButton(DiaryEntry entry)
+        {
+            Button button = root.Q<Button>("diary-page-mythic");
+            bool has = entry.patternKind >= 0 && entry.patternKind < Db.gear.pieces.Length && Diary.IsUnlocked(P, entry);
+            Show(button, has);
+            if (!has) return;
+            PieceDef def = Db.gear.pieces[Mythic.KindFor(Db, P, entry)];
+            bool carried = P.mythicPick == entry.floor;
+            button.text = string.Format(carried ? D.mythicCarried ?? "{0}" : D.mythicCarry ?? "{0}", def.name);
+            button.EnableInClassList("carried", carried);
+        }
+
         void Read(DiaryEntry entry)
         {
+            reading = entry;
+            MythicButton(entry);
             bool wasNew = Diary.IsNew(P, entry);
             root.Q<Label>("diary-page-title").text = entry.title;
             root.Q<Label>("diary-page-body").text = string.Join("\n", entry.lines ?? new string[0]);
@@ -119,7 +145,7 @@ namespace TOD
             };
             root.Q("diary-page").style.rotate = new Rotate(new Angle(entry.tilt * .3f));
             // 17차 보상 줄: "기억의 파편 3 · 아버지의 도안: ..." (데이터 rewardLine)
-            PieceDef pattern = entry.patternKind >= 0 && entry.patternKind < Db.gear.pieces.Length ? Db.gear.pieces[entry.patternKind] : null;
+            PieceDef pattern = entry.patternKind >= 0 && entry.patternKind < Db.gear.pieces.Length ? Db.gear.pieces[Mythic.KindFor(Db, P, entry)] : null;
             Label reward = root.Q<Label>("diary-page-reward");
             if (reward != null)
             {

@@ -181,6 +181,7 @@ namespace TOD
 
         void TickMoira()
         {
+            TickVessel();   // 22차 욕망 최대치 강화 연출 (GameUI.Vessel.cs)
             if (attic == null || moiraCards.Count == 0 || attic.ClassListContains("hidden")) return;
             Layout();
             Vector2 hand = moiraHand?.Invoke() ?? new Vector2(attic.layout.width / 2, attic.layout.height * .3f);

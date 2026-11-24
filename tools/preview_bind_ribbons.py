@@ -21,7 +21,16 @@ LOOKS = {
     "blood": ((.8, .05, .1), (.95, .15, .18), (1, .7, .7)),
     "wind": ((.55, .95, .8), (.8, 1, .92), (1, 1, 1)),
     "poison": ((.45, .9, .15), (.65, 1, .3), (.92, 1, .75)),
+    # 22차 칠죄종 (Blender 그림 확인용 밝은 값. 게임 bind.looks 는 다섯 가닥이 겹쳐도 하얗게 날지 않게 core .25, color .7 배로 더 어둡다)
+    "wrath": ((.78, .18, .18), (.95, .35, .28), (1, .78, .65)),
+    "sloth": ((.44, .56, .66), (.62, .74, .84), (.88, .94, 1)),
+    "pride": ((.48, .31, .79), (.68, .5, .95), (.92, .85, 1)),
+    "greed": ((.85, .65, .13), (.95, .78, .3), (1, .95, .75)),
+    "gluttony": ((.88, .48, .16), (1, .62, .3), (1, .9, .72)),
+    "lust": ((.85, .25, .55), (1, .45, .7), (1, .85, .92)),
+    "envy": ((.31, .64, .29), (.48, .82, .4), (.85, 1, .75)),
 }
+SINS = ("wrath", "sloth", "pride", "greed", "gluttony", "lust", "envy")
 
 
 def load(name):
@@ -44,7 +53,8 @@ def compose(style, kind, frame=None):
     return Image.fromarray((out.clip(0, 1) * 255).astype(np.uint8))
 
 
-styles = sys.argv[1:] or [s for s in LOOKS if (SRC / f"bind_{s}_head_core.png").exists()]
+sins = "22" in sys.argv[1:]
+styles = list(SINS) if sins else sys.argv[1:] or [s for s in LOOKS if (SRC / f"bind_{s}_head_core.png").exists()]
 rows = []
 for s in styles:
     thread = [compose(s, "thread", f) for f in (0, 3)]
@@ -60,6 +70,6 @@ sheet = Image.new("RGB", (rows[0].width, sum(r.height for r in rows)), (20, 14, 
 y = 0
 for r in rows:
     sheet.paste(r, (0, y)); y += r.height
-out = ROOT / "art_src/vfx/bind/preview.png"
+out = ROOT / ("Temp/Shots/sin22_vfx_ribbons.png" if sins else "art_src/vfx/bind/preview.png")
 sheet.save(out)
 print(out)

@@ -142,16 +142,16 @@ namespace TOD
                 particles.Emit(kind, foot + new Vector2((Rand() - .5f) * 30, -Rand() * 60), v, life, Rand() < .5f ? t.color : t.core, size);
             }
             float rate = db.visual.statusRate > 0 ? db.visual.statusRate * 1.5f : 20;
-            if (p.burnTime > 0) Emit(Element.Fire, ParticleKind.Ember, new Vector2((Rand() - .5f) * 20, -50 - Rand() * 40), rate, .6f, 2.4f);
-            if (p.slowTime > 0) Emit(Element.Ice, ParticleKind.Glint, new Vector2((Rand() - .5f) * 10, 14), rate, .8f, 2f);
-            if (p.poisonTime > 0) Emit(Element.Poison, ParticleKind.Drop, new Vector2((Rand() - .5f) * 8, -24), rate, .8f, 2f);
-            if (p.shockLeft > 0) Emit(Element.Lightning, ParticleKind.Spark, new Vector2((Rand() - .5f) * 160, (Rand() - .5f) * 160), rate * 1.5f, .2f, 2f);
-            if (p.dark > 0) Emit(Element.Dark, ParticleKind.Drop, new Vector2((Rand() - .5f) * 14, -20), rate, 1f, 3f);
-            if (p.slowTime > 0) painter.Ellipse(Layer.Ground, foot, 26, 26 * Space.Proj, Painter.Alpha(Tone(Element.Ice).glow, .35f), 2, additive: true);
+            if (p.burnTime > 0) Emit(Element.Wrath, ParticleKind.Ember, new Vector2((Rand() - .5f) * 20, -50 - Rand() * 40), rate, .6f, 2.4f);
+            if (p.slowTime > 0) Emit(Element.Sloth, ParticleKind.Glint, new Vector2((Rand() - .5f) * 10, 14), rate, .8f, 2f);
+            if (p.poisonTime > 0) Emit(Element.Envy, ParticleKind.Drop, new Vector2((Rand() - .5f) * 8, -24), rate, .8f, 2f);
+            if (p.shockLeft > 0) Emit(Element.Unused3, ParticleKind.Spark, new Vector2((Rand() - .5f) * 160, (Rand() - .5f) * 160), rate * 1.5f, .2f, 2f);
+            if (p.dark > 0) Emit(Element.Greed, ParticleKind.Drop, new Vector2((Rand() - .5f) * 14, -20), rate, 1f, 3f);
+            if (p.slowTime > 0) painter.Ellipse(Layer.Ground, foot, 26, 26 * Space.Proj, Painter.Alpha(Tone(Element.Sloth).glow, .35f), 2, additive: true);
             // 화상, 중독 동안 발밑 웅덩이 (Blender boss_fire_pool, boss_poison_pool)
-            foreach (Element el in new[] { Element.Fire, Element.Poison })
+            foreach (Element el in new[] { Element.Wrath, Element.Envy })
             {
-                float left = el == Element.Fire ? p.burnTime : p.poisonTime;
+                float left = el == Element.Wrath ? p.burnTime : p.poisonTime;
                 FlipClip pool = EC.Def(el)?.boss?.pool;
                 if (left <= 0 || pool == null || !pool.Has) continue;
                 DrawClip(pool, foot, pool.size > 0 ? pool.size : 140, renderClock, 0, true, Mathf.Clamp01(left / .4f), 0, Layer.Ground);
@@ -206,7 +206,7 @@ namespace TOD
         // 결박 폭발: 어둠, 피, 바람, 독은 Blender bind_<속성>_burst (발밑). 그렸으면 true (기본 빛살 모양 대신)
         bool DrawBindClip(Fx fx, float fade)
         {
-            FlipClip clip = EC?.Def(fx.rage ? Element.Fire : fx.element)?.bindBurst;
+            FlipClip clip = EC?.Def(fx.rage ? Element.Wrath : fx.element)?.bindBurst;
             if (clip == null || !clip.Has) return false;
             float age = 1 - fade;
             Vector2 foot = fx.follow != null ? C(fx.follow) : C(fx.x, fx.y);

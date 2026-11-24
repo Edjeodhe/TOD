@@ -1,0 +1,200 @@
+{
+ "items": [
+  {
+   "name": "enemy_boss_head_envy",
+   "pivot": [
+    0.4788,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_head_lust",
+   "pivot": [
+    0.5332,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_head_pride",
+   "pivot": [
+    0.5397,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_head_sloth",
+   "pivot": [
+    0.5518,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_skirt_envy",
+   "pivot": [
+    0.5085,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_skirt_lust",
+   "pivot": [
+    0.5346,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_skirt_pride",
+   "pivot": [
+    0.5102,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_skirt_sloth",
+   "pivot": [
+    0.5174,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_torso_envy",
+   "pivot": [
+    0.4939,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_torso_greed",
+   "pivot": [
+    0.4933,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_torso_lust",
+   "pivot": [
+    0.4853,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_torso_pride",
+   "pivot": [
+    0.5503,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_torso_sloth",
+   "pivot": [
+    0.5316,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_uarm_envy",
+   "pivot": [
+    0.5,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_uarm_sloth",
+   "pivot": [
+    0.506,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_farm_envy",
+   "pivot": [
+    0.5446,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_farm_greed",
+   "pivot": [
+    0.49,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_farm_lust",
+   "pivot": [
+    0.5463,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_thigh_envy",
+   "pivot": [
+    0.5402,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_thigh_greed",
+   "pivot": [
+    0.5455,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_thigh_lust",
+   "pivot": [
+    0.4722,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_thigh_pride",
+   "pivot": [
+    0.5476,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_shooter_jaw_lust",
+   "pivot": [
+    0.5152,
+    0.5575
+   ]
+  },
+  {
+   "name": "enemy_shooter_leg_lust",
+   "pivot": [
+    0.5472,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_stalker_farm_lust",
+   "pivot": [
+    0.5702,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_stalker_thigh_lust",
+   "pivot": [
+    0.5,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_stalker_uarm_envy",
+   "pivot": [
+    0.5244,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_stalker_uarm_lust",
+   "pivot": [
+    0.4762,
+    0.5
+   ]
+  }
+ ]
+}

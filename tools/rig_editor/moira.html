@@ -46,6 +46,7 @@
   <span style="width:10px"></span>
   <button id="playIdle" class="on">대기</button>
   <button id="playTalk">말 걸기 (카드 들기)</button>
+  <button id="playTouch" title="22차 미래 보기: 앉아서 점성구를 두 손으로 감싼다">구슬 만지기</button>
   <button id="pause">멈춤</button>
   속도 <input id="speed" type="number" step="0.25" value="1">
   <span style="width:10px"></span>
@@ -77,7 +78,7 @@ const RIG_PATH = "Assets/Rig/moira_rig.json";
 const $ = id => document.getElementById(id);
 let rig = null, images = {}, sel = null;
 let view = { x: 0, y: 0, s: 0.9 };          // 화면 = 리그 원점 위치 + 배율
-let mode = "idle", t = 0, talkT = 0, talkW = 0, paused = false, last = performance.now();
+let mode = "idle", t = 0, talkT = 0, talkW = 0, touchT = 0, touchW = 0, paused = false, last = performance.now();
 let drag = null;
 
 // ---------------------------------------------------------------- 불러오기 / 저장
@@ -124,11 +125,18 @@ function pose() {
     root[0] += wave(m.rootX, u) * w; root[1] += wave(m.rootY, u) * w;
     (m.bones||[]).forEach(bw => { if (bw.bone in ang) ang[bw.bone] += wave(bw, u) * w; });
   };
+  // 22차: 구슬 만지기(touch)가 들어오는 만큼 카드 들기(talk)는 빠진다 (Unity MoiraRig 와 같음)
+  const tw = talkW * (1 - touchW);
   loop(rig.idle, t, 1);
-  loop(rig.hold, t, talkW);
-  if (rig.raise && talkW > 0) {
+  loop(rig.hold, t, tw);
+  if (rig.raise && tw > 0) {
     const m = rig.raise, tt = Math.min(talkT, m.length);
-    (m.bones||[]).forEach(bp => { if (bp.bone in ang) ang[bp.bone] += shotValue(m, tt, bp.start, bp.peak, bp.settle) * talkW; });
+    (m.bones||[]).forEach(bp => { if (bp.bone in ang) ang[bp.bone] += shotValue(m, tt, bp.start, bp.peak, bp.settle) * tw; });
+  }
+  loop(rig.touchLoop, t, touchW);
+  if (rig.touch && touchW > 0) {
+    const m = rig.touch, tt = Math.min(touchT, m.length);
+    (m.bones||[]).forEach(bp => { if (bp.bone in ang) ang[bp.bone] += shotValue(m, tt, bp.start, bp.peak, bp.settle) * touchW; });
   }
   return { ang, root };
 }
@@ -171,7 +179,7 @@ function draw() {
   // 그림: order 오름차순
   // 말할 때 그림(카드 쥔 손)은 손을 드는 동작이 최고 시점의 swapAfter 만큼 지난 뒤부터 (Unity MoiraRig 와 같은 규칙)
   const raised = !rig.raise || talkT >= rig.raise.peakTime * (rig.swapAfter ?? 0.8);
-  const showFan = talkW > (rig.swapAt ?? 0.35) && (raised || mode !== "talk");
+  const showFan = talkW * (1 - touchW) > (rig.swapAt ?? 0.35) && (raised || mode !== "talk");
   const partOf = b => (showFan && b.talkPart) ? b.talkPart : b.part;   // 말 걸 때 그림 바꾸기 (손 → 카드를 쥔 손)
   [...rig.bones].filter(b => partOf(b) && images[partOf(b)]).sort((a, b) => (a.order||0) - (b.order||0)).forEach(b => {
     if (b.id === rig.fanBone && !showFan) return;
@@ -267,7 +275,9 @@ function buildMotion() {
   const tbl = document.createElement("table");
   const head = `<tr><td></td><td>offset</td><td>a1</td><td>p1</td><td>a2</td><td>p2</td></tr>`;
   tbl.innerHTML = head;
-  [["대기", rig.idle], ["카드", rig.hold]].forEach(([name, m]) => {
+  rig.touchLoop = rig.touchLoop || { length: 2.6, bones: [] };
+  rig.touch = rig.touch || { length: 0.9, peakTime: 0.5, settleTime: 0.9, keepEnd: true, easeIn: true, bones: [] };
+  [["대기", rig.idle], ["카드", rig.hold], ["만지기", rig.touchLoop]].forEach(([name, m]) => {
     const tr2 = document.createElement("tr"); tr2.innerHTML = `<td>${name}</td>`;
     const w = waveOf(m, sel, false) || {};
     ["offset", "a1", "p1", "a2", "p2"].forEach(k => {
@@ -281,11 +291,18 @@ function buildMotion() {
   const row = document.createElement("div"); row.className = "row"; row.innerHTML = "<label>들기</label>";
   ["start", "peak", "settle"].forEach(k => { const inp = document.createElement("input"); inp.type = "number"; inp.title = k; inp.value = r[k] || 0; inp.oninput = () => waveOf(rig.raise, sel, true)[k] = +inp.value; row.appendChild(inp); });
   box.appendChild(row);
+  const tr = waveOf(rig.touch, sel, false) || {};
+  const trow = document.createElement("div"); trow.className = "row"; trow.innerHTML = "<label>구슬 만지기</label>";
+  ["start", "peak", "settle"].forEach(k => { const inp = document.createElement("input"); inp.type = "number"; inp.title = k; inp.value = tr[k] || 0; inp.oninput = () => waveOf(rig.touch, sel, true)[k] = +inp.value; trow.appendChild(inp); });
+  box.appendChild(trow);
   const all = $("motionAll"); all.innerHTML = "";
   all.appendChild(num("대기 길이", () => rig.idle.length, v => rig.idle.length = v, 0.1)[0]);
   all.appendChild(num("카드 길이", () => rig.hold.length, v => rig.hold.length = v, 0.1)[0]);
   all.appendChild(num("들기 최고", () => rig.raise.peakTime, v => rig.raise.peakTime = v, 0.05)[0]);
   all.appendChild(num("들기 정리", () => rig.raise.settleTime, v => rig.raise.settleTime = v, 0.05)[0]);
+  all.appendChild(num("만지기 반복 길이", () => rig.touchLoop.length, v => rig.touchLoop.length = v, 0.1)[0]);
+  all.appendChild(num("만지기 최고", () => rig.touch.peakTime, v => rig.touch.peakTime = v, 0.05)[0]);
+  all.appendChild(num("만지기 정리", () => rig.touch.settleTime, v => { rig.touch.settleTime = v; rig.touch.length = Math.max(rig.touch.length, v); }, 0.05)[0]);
 }
 
 // 그림 미리보기: 회전 중심(분홍), 끝 관절(청록), 자동으로 찾은 관절 후보(점선)
@@ -364,22 +381,27 @@ $("autoJoint").onclick = () => {
 
 $("save").onclick = save;
 $("reload").onclick = load;
-$("playIdle").onclick = () => { mode = "idle"; paused = false; $("playIdle").className = "on"; $("playTalk").className = ""; };
-$("playTalk").onclick = () => { mode = "talk"; talkT = 0; paused = false; $("playTalk").className = "on"; $("playIdle").className = ""; };
+function playButtons() { ["playIdle", "playTalk", "playTouch"].forEach(id => $(id).className = ""); $({ idle: "playIdle", talk: "playTalk", touch: "playTouch" }[mode]).className = "on"; }
+$("playIdle").onclick = () => { mode = "idle"; paused = false; playButtons(); };
+$("playTalk").onclick = () => { mode = "talk"; talkT = 0; paused = false; playButtons(); };
+// 구슬 만지기: 게임에서는 카드를 든 채(talk) 미래 보기 카드를 고르면 만지기로 넘어간다. 여기서도 talk 위에 얹는다.
+$("playTouch").onclick = () => { mode = "touch"; touchT = 0; talkW = 1; talkT = 99; paused = false; playButtons(); };
 $("pause").onclick = () => { paused = !paused; $("pause").className = paused ? "on" : ""; };
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000) * (+$("speed").value || 1); last = now;
   if (!paused) {
-    t += dt; talkT += dt;
-    const target = mode === "talk" ? 1 : 0;
-    talkW += (target - talkW) * Math.min(1, dt * (rig && rig.talkFollow || 6));
+    t += dt; talkT += dt; touchT += dt;
+    const target = mode === "talk" || mode === "touch" ? 1 : 0;
+    const follow = Math.min(1, dt * (rig && rig.talkFollow || 6));
+    talkW += (target - talkW) * follow;
+    touchW += ((mode === "touch" ? 1 : 0) - touchW) * follow;
   }
   draw();
   requestAnimationFrame(frame);
 }
 load().then(() => requestAnimationFrame(frame));
 // 확인용: 페이지 밖(자동 조작)에서 값을 읽고 쓸 수 있게
-window.rigEditor = { get rig() { return rig; }, set rig(v) { rig = v; buildBones(); buildFields(); buildMotion(); }, save, load, select, setTime(v) { t = v; }, talk(on) { mode = on ? "talk" : "idle"; talkT = 0; talkW = on ? 1 : 0; } };
+window.rigEditor = { get rig() { return rig; }, set rig(v) { rig = v; buildBones(); buildFields(); buildMotion(); }, save, load, select, setTime(v) { t = v; }, talk(on) { mode = on ? "talk" : "idle"; talkT = 0; talkW = on ? 1 : 0; }, touch(on) { mode = on ? "touch" : "idle"; touchT = 99; touchW = on ? 1 : 0; talkW = on ? 1 : 0; } };
 </script>
 </body>
 </html>

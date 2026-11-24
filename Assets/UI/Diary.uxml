@@ -44,7 +44,11 @@
                     <ui:Label name="diary-page-last" class="diary-page-last" picking-mode="Ignore" />
                     <!-- 17차: 이 쪽지의 보상 (파편, 아버지의 도안) -->
                     <ui:Label name="diary-page-reward" class="diary-page-reward" picking-mode="Ignore" />
-                    <ui:Button name="diary-page-close" class="diary-close page" />
+                    <!-- 22차: 아래 버튼 줄 (도안 들고 가기는 두 줄: 할 일 + 도안 이름, 닫기와 겹치지 않게 한 줄에 나란히) -->
+                    <ui:VisualElement class="diary-page-actions" picking-mode="Ignore">
+                        <ui:Button name="diary-page-mythic" class="diary-close page mythic hidden" />
+                        <ui:Button name="diary-page-close" class="diary-close page" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

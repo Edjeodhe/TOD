@@ -1,7 +1,8 @@
 """16차 속성 이펙트 시트 미리보기 — 게임 바닥색 위에 빛(가산) → 본체(알파) 순서로 합성해 칸을 늘어놓는다.
 
-실행: python tools/preview_element_vfx.py [그룹|시트 이름 ...]
+실행: python tools/preview_element_vfx.py [22] [그룹|시트 이름|죄종 ...]
 출력: Temp/Shots/vfx16_<그룹>.png  (한 줄 = 한 시트, 왼쪽부터 0번 칸)
+      22 를 주면 칠죄종 시트만 모아 Temp/Shots/vfx22_<그룹>.png
 """
 import json
 import sys
@@ -20,9 +21,14 @@ BG = np.array([0x3a, 0x33, 0x2e], dtype=np.float32) / 255     # 어두운 종이
 BG2 = np.array([0x8c, 0x80, 0x6c], dtype=np.float32) / 255    # 밝은 바닥 (정화 뒤)
 
 only = sys.argv[1:]
+SINS = ("wrath", "sloth", "pride", "greed", "gluttony", "lust", "envy")
+sins = "22" in only
+only = [o for o in only if o != "22"]
 groups = {}
 for name, m in META.items():
-    if only and name not in only and m["group"] not in only:
+    if sins and m["element"] not in SINS or not sins and m["element"] in SINS:
+        continue
+    if only and name not in only and m["group"] not in only and m["element"] not in only:
         continue
     if (SHEETS / f"{name}.png").exists():
         groups.setdefault(m["group"], []).append(name)
@@ -62,6 +68,6 @@ for group, names in groups.items():
     sheet = Image.new("RGB", (rows[0].width, CELL * len(rows)))
     for i, r in enumerate(rows):
         sheet.paste(r, (0, i * CELL))
-    path = OUT / f"vfx16_{group}.png"
+    path = OUT / f"vfx{22 if sins else 16}_{group}.png"
     sheet.save(path)
     print(path)

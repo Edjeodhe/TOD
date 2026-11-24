@@ -1455,21 +1455,34 @@ def bind_poison(t, B, G, P, rng):
 SHEETS = {}
 
 
-def sheet(name, group, fn, el, frames, fps, size, loop, pivot, ink=2.6, wob=.02, still=False):
-    """still: 칸마다 외곽과 모양이 들썩이지 않는다 (21차: 맵 장식이 너무 일렁거림 → 초와 웅덩이는 가만히, 불꽃과 알갱이만 움직임)"""
-    SHEETS[name] = dict(group=group, fn=fn, element=el, frames=frames, fps=fps, size=size, loop=loop, pivot=pivot, ink=ink, wob=wob, still=still)
+def sheet(name, group, fn, el, frames, fps, size, loop, pivot, ink=2.6, wob=.02, still=False, legacy=False):
+    """still: 칸마다 외곽과 모양이 들썩이지 않는다 (21차: 맵 장식이 너무 일렁거림 → 초와 웅덩이는 가만히, 불꽃과 알갱이만 움직임)
+    legacy: 16차 8속성 시트. 22차부터 기본 실행에서는 굽지 않고 메타만 남긴다 (이름이나 'legacy' 를 주면 굽는다)."""
+    SHEETS[name] = dict(group=group, fn=fn, element=el, frames=frames, fps=fps, size=size, loop=loop, pivot=pivot, ink=ink, wob=wob, still=still, legacy=legacy)
 
 
-for el in ELEMENTS:
-    sheet(f"boss_{el}_slam", "boss", globals()[f"slam_{el}"], el, 16, 24, 256, False, PIVOT_GROUND)
-    sheet(f"boss_{el}_bullet", "boss", globals()[f"bullet_{el}"], el, 8, 16, 128, True, PIVOT_CENTER, ink=1.6, wob=.025)
-sheet("boss_fire_pool", "boss", pool_fire, "fire", 12, 12, 256, True, (.5, .35))
-sheet("boss_poison_pool", "boss", pool_poison, "poison", 12, 12, 256, True, (.5, .35))
-for el in ELEMENTS:
-    sheet(f"proc_{el}", "proc", globals()[f"proc_{el}"], el, 12, 24, 256, False, PIVOT_CENTER, ink=2.2)
-for el in ELEMENTS:
-    sheet(f"decor_{el}_loop", "decor", globals()[f"decor_{el}"], el, 16, 10, 256, True, PIVOT_GROUND, ink=2.4, wob=.015, still=True)
+def sheet_set(els, pools, legacy):
+    for el in els:
+        sheet(f"boss_{el}_slam", "boss", globals()[f"slam_{el}"], el, 16, 24, 256, False, PIVOT_GROUND, legacy=legacy)
+        sheet(f"boss_{el}_bullet", "boss", globals()[f"bullet_{el}"], el, 8, 16, 128, True, PIVOT_CENTER, ink=1.6, wob=.025, legacy=legacy)
+    for el in pools:
+        sheet(f"boss_{el}_pool", "boss", globals()[f"pool_{el}"], el, 12, 12, 256, True, (.5, .35), legacy=legacy)
+    for el in els:
+        sheet(f"proc_{el}", "proc", globals()[f"proc_{el}"], el, 12, 24, 256, False, PIVOT_CENTER, ink=2.2, legacy=legacy)
+    for el in els:
+        sheet(f"decor_{el}_loop", "decor", globals()[f"decor_{el}"], el, 16, 10, 256, True, PIVOT_GROUND, ink=2.4, wob=.015, still=True, legacy=legacy)
+
+
+# 16차 8속성 (메타만, 그림 파일은 남겨 둠)
+sheet_set(ELEMENTS, ("fire", "poison"), True)
 for el in ("dark", "blood", "wind", "poison"):
+    sheet(f"bind_{el}_burst", "bind", globals()[f"bind_{el}"], el, 14, 30, 256, False, PIVOT_GROUND, legacy=True)
+
+# 22차 칠죄종: 그림 함수는 render_element_vfx_sins.py (같은 이름공간에서 실행)
+_sins_src = Path(__file__).with_name("render_element_vfx_sins.py")
+exec(compile(_sins_src.read_text(encoding="utf-8"), str(_sins_src), "exec"), globals())
+sheet_set(SINS, ("wrath", "envy"), False)
+for el in SINS:
     sheet(f"bind_{el}_burst", "bind", globals()[f"bind_{el}"], el, 14, 30, 256, False, PIVOT_GROUND)
 
 
@@ -1554,7 +1567,10 @@ meta = {name: dict(group=s["group"], element=s["element"], frames=s["frames"], s
         for name, s in SHEETS.items()}
 (SRC / "sheets.json").write_text(json.dumps(meta, indent=1, ensure_ascii=False), encoding="utf-8")
 for name, s in SHEETS.items():
-    if ONLY and name not in ONLY and s["group"] not in ONLY:
+    if s["legacy"]:
+        if name not in ONLY and not ("legacy" in ONLY and (s["group"] in ONLY or s["element"] in ONLY or len(ONLY) == 1)):
+            continue
+    elif ONLY and name not in ONLY and s["group"] not in ONLY and s["element"] not in ONLY:
         continue
     P = PAL[s["element"]]
     n, size = s["frames"], s["size"]

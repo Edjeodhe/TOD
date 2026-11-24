@@ -17,7 +17,7 @@ namespace TOD
     [Serializable]
     public class Profile
     {
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;   // 22차: 칠죄종으로 조각을 모두 새로 만들어 옛 조각 번호를 버린다
         public int version = CurrentVersion;
         public int shards, best, capacity;
         public int expansion;                     // 19차: 확장한 횟수 (한 번 = 줄 하나). 등급 합 한도도 이만큼 는다
@@ -43,6 +43,8 @@ namespace TOD
         // 20차: 진열을 뽑은 실제 시각(유닉스 초)과 이 진열에서 고른 조각 종류. hub.shopRefreshHours 가 지나면 새로 뽑고 비운다
         public long hubStockTime;
         public List<int> hubTaken = new();
+        // 22차 신화: 다음 등반에 들고 갈 아버지의 도안 (일기 장의 층 번호, 0 = 안 고름). Mythic.cs
+        public int mythicPick;
     }
 
     public class PlacedPiece
@@ -97,7 +99,11 @@ namespace TOD
                 {
                     Profile saved = JsonUtility.FromJson<Profile>(json);
                     if (saved is { version: >= 1 and <= Profile.CurrentVersion } && saved.items != null && saved.placements != null)
-                        return DropInvalidPlacements(db, Dedupe(db, Migrate(db, saved)));
+                    {
+                        Profile loaded = DropInvalidPlacements(db, Dedupe(db, Migrate(db, saved)));
+                        Mythic.Ensure(db, loaded);
+                        return loaded;
+                    }
                 }
             }
             catch (Exception error) { Debug.LogWarning($"[TOD] profile reset: {error.Message}"); }
@@ -112,6 +118,8 @@ namespace TOD
             profile.items.Clear();
             profile.placements.Clear();
             profile.hubStock?.Clear();
+            profile.hubTaken?.Clear();
+            profile.fate = 0;
             profile.rowLines ??= new List<int>();
             profile.colLines ??= new List<int>();
             if (profile.extraCols == 0 && profile.extraRows == 0 && profile.expansion > 0)
@@ -145,7 +153,7 @@ namespace TOD
         }
 
         // 17차 아버지의 도안: 일기로만 풀리는 전용 시작 조각 (탑 보상, 상점 무작위 진열에는 나오지 않는다)
-        public static bool IsPattern(GameDatabase db, int kind) => db.diary?.entries != null && System.Array.Exists(db.diary.entries, e => e.patternKind == kind);
+        public static bool IsPattern(GameDatabase db, int kind) => kind >= 0 && db.diary?.entries != null && System.Array.Exists(db.diary.entries, e => e.patternKind == kind || e.patternTainted == kind);
 
         public static void Save(GameDatabase db, Profile profile)
         {
@@ -274,7 +282,10 @@ namespace TOD
             }
             foreach (SetDef set in db.gear.sets)
             {
-                var remaining = new HashSet<PlacedPiece>(pieces.Where(p => p.def.set == set.id));
+                // 22차 신화: 이 세트 조각에 맞닿은 도안은 이 세트 조각 1개로 친다 (맞닿은 세트마다)
+                List<PlacedPiece> own = pieces.Where(p => p.def.set == set.id && !Mythic.IsMythic(p.def)).ToList();
+                List<PlacedPiece> wild = pieces.Where(p => Mythic.IsMythic(p.def) && own.Any(o => Touches(o, p))).ToList();
+                var remaining = new HashSet<PlacedPiece>(own.Concat(wild));
                 int size = 0;
                 while (remaining.Count > 0)
                 {
@@ -285,7 +296,7 @@ namespace TOD
                     {
                         foreach (PlacedPiece other in remaining.ToList())
                         {
-                            bool adjacent = cluster[i].cells.Any(a => other.cells.Any(b => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) == 1));
+                            bool adjacent = Touches(cluster[i], other);
                             if (adjacent) { cluster.Add(other); remaining.Remove(other); }
                         }
                     }
@@ -295,7 +306,7 @@ namespace TOD
                 result.groups[set.id] = new SetGroup { size = size, threshold = tiers.Length > 0 ? tiers[^1] : 0, tier = tiers.Length };
                 // 12차: 세트는 능력치 대신 속성(피해 + 부가 효과)을 준다 → Combat 이 r.sets 로 읽는다
                 if (tiers.Length > 0)
-                    result.sets.Add(new ActiveSet { def = set, tier = tiers.Length, size = size, count = pieces.Count(p => p.def.set == set.id), order = Array.IndexOf(db.gear.sets, set) });
+                    result.sets.Add(new ActiveSet { def = set, tier = tiers.Length, size = size, count = own.Count + wild.Count, order = Array.IndexOf(db.gear.sets, set) });
             }
             // 장착한 조각의 고유 효과 (같은 효과가 여럿이면 값을 더한다)
             foreach (PlacedPiece piece in pieces)
@@ -303,6 +314,8 @@ namespace TOD
             result.sets.Sort(MainFirst);
             return result;
         }
+
+        static bool Touches(PlacedPiece a, PlacedPiece b) => a.cells.Any(p => b.cells.Any(q => Mathf.Abs(p.x - q.x) + Mathf.Abs(p.y - q.y) == 1));
 
         // 16차 메인 세트 순서: 판에 놓인 조각 수 → 단계 → 연결 조각 수 → 세트 순서
         public static int MainFirst(ActiveSet a, ActiveSet b)

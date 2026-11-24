@@ -95,6 +95,7 @@ namespace TOD
 
         public RunState CreateRun(Profile profile, Func<float> random)
         {
+            Mythic.Ensure(db, profile);                // 22차: 고른 신화 도안이 지금 모습(보통/붉게 물든)으로 가방에 들어가게
             Profile bag = Gear.RunBag(db, profile);   // 17차: 등반 조각은 이 가방에만 (귀환하면 버림)
             GearStats gear = Gear.Stats(db, bag);
             float hp = Round(H.baseHp + gear[StatKind.Health]);
@@ -106,6 +107,7 @@ namespace TOD
                 damage = H.baseDamage + gear[StatKind.Damage], encumbrance = H.encumbrance,
                 fireInterval = H.shotInterval, reach = db.needle.reach,
             };
+            r.desire = Mathf.Clamp(Mythic.DesireStart(db, bag), 0, r.maxDesire);   // 22차 붉게 물든 도안: 욕망을 안고 시작
             r.player.x = A.width / 2;
             r.player.y = A.height / 2;
             r.player.angle = H.initialAngle;
@@ -396,6 +398,7 @@ namespace TOD
         {
             r.desirePending = false;
             Diary.RecordChoice(r.profile, r.floor, id != null);   // 15차: 일기 마지막 줄이 흡수/거절에 따라 바뀐다
+            Mythic.Ensure(db, r.profile);                         // 22차: 그 장의 도안이 붉게 물들거나 맑아진다
             Gear.Save(db, r.profile);
             if (id == null) return;
             if (id == db.desire.refine.id) r.damage += db.desire.refineDamage;
@@ -629,6 +632,10 @@ namespace TOD
             int shard = boss ? rw.shardBoss : e.elite ? rw.shardElite : 0;
             bool item = (boss && rw.bossDropsItem) || (e.elite && r.random() < rw.eliteItemChance);
             if (shard > 0 || item) DropPiece(r, e, new Drop { shard = shard, item = item });
+            SinOnKill(r, e);   // 22차: 시기 독 옮기기 · 식탐 털실 · 탐욕 저당 금화
+            GearStats kg = r.gearStats;
+            if (kg != null && kg.Has(ItemEffect.Feast)) { r.feastStacks = Mathf.Min(5, r.feastStacks + 1); r.feastTime = kg.Param(ItemEffect.Feast); }
+            if (kg != null && kg.Has(ItemEffect.Devour)) r.hp = Mathf.Min(r.maxHp, r.hp + kg.Effect(ItemEffect.Devour));
             if (r.desires.Contains("hunger")) r.hp = Mathf.Min(r.maxHp, r.hp + db.desire.hungerHeal);
             if (stuck.Count > 0 && r.desires.Contains("obsession"))
             {
@@ -888,24 +895,23 @@ namespace TOD
                 bool binding = bound.Contains(e);
                 float giant = e.IsBoss || e.elite ? r.gearStats.Effect(ItemEffect.Giant) : 0;   // 고유 효과 '거인 사냥'
                 float taken = 1 + (e.curseTime > 0 ? e.curse : 0);                                // 어둠 저주: 받는 피해 증가
-                bool crit = H.critChance > 0 && r.random() < H.critChance;   // 치명타: 이 타격 피해 전체
+                float critChance = H.critChance + (r.gearStats?.Effect(ItemEffect.Pedestal) ?? 0);   // 22차 왕좌의 바늘
+                bool crit = critChance > 0 && r.random() < critChance;   // 치명타: 이 타격 피해 전체
                 // 16차: 실 피해 + 메인 세트 속성 피해(damagePerTier × 단계, 빛은 결박·정예·보스에게 더 세게)를 한 숫자로 합친다.
                 // 메인 세트가 있으면 피해 전체가 메인 속성이라 층 속성과의 상성(약점 ×1.5, 저항 ×.5)이 걸린다.
                 float mainAdd = 0;
-                if (main != null)
-                {
-                    mainAdd = main.def.damagePerTier * main.tier * count;
-                    if (mainElement == Element.Light && (binding || e.elite || e.IsBoss)) mainAdd *= 1 + main.def.effectPerTier * main.tier;
-                }
+                if (main != null) mainAdd = main.def.damagePerTier * main.tier * count;
+                float sin = SinPullMultiplier(r, main, e);   // 22차: 교만(정예·보스·체력 가득) · 분노(내 체력이 낮을수록)
                 int relation = main != null ? Relation(mainElement, e.element) : 0;
-                float dealt = Round((damage * count * (binding ? 1 + db.bind.damageBonus : 1) + mainAdd) * (1 + giant) * taken
+                float embrace = binding ? r.gearStats?.Effect(ItemEffect.Embrace) ?? 0 : 0;   // 22차 얽힌 연인의 실
+                float dealt = Round((damage * count * (binding ? 1 + db.bind.damageBonus + embrace : 1) + mainAdd) * (1 + giant) * taken * sin
                     * (main != null ? Affinity(mainElement, e.element) : 1) * (crit ? Mathf.Max(1, H.critMultiplier) : 1));
                 e.hp = Mathf.Max(0, e.hp - dealt);
                 totalDealt += dealt;
                 e.flash = F.pullEnemyFlash;
                 float gap = Hypot(p.x - e.x, (p.y - e.y) * A.projectionY);
                 if (gap == 0) gap = 1;
-                float yank = Mathf.Min((e.IsBoss ? F.yankBoss : F.yankReach) * (1 + SetEffect(r, Element.Wind)), Mathf.Max(0, gap - F.yankMinGap));   // 바람: 더 멀리 끌어온다
+                float yank = Mathf.Min((e.IsBoss ? F.yankBoss : F.yankReach) * (1 + SetEffect(r, Element.Lust)), Mathf.Max(0, gap - F.yankMinGap));   // 바람: 더 멀리 끌어온다
                 var toward = new Vector2((p.x - e.x) / gap, (p.y - e.y) / gap);
                 e.yank = new Timed { x = toward.x * yank, y = toward.y * yank, time = F.yankTime };
                 e.stretch = new Timed { x = toward.x, y = toward.y * A.projectionY, time = F.stretchTime };
@@ -934,7 +940,7 @@ namespace TOD
                     burst.angle = angle;   // 주인공 쪽 (속도선 방향)
                     burst.follow = e;      // 끌려가는 적을 따라 터진다
                     burst.size = db.bind.burst.size * (e.IsBoss ? X.bossScale : 1);
-                    BindLook look = db.Look(db.Tone(rage ? Element.Fire : element).bindStyle);
+                    BindLook look = db.Look(db.Tone(rage ? Element.Wrath : element).bindStyle);
                     if (look != null && !string.IsNullOrEmpty(look.text))
                     {
                         Fx title = Spawn(r, FxKind.Combo, e.x, e.y, X.combo);
@@ -1007,7 +1013,7 @@ namespace TOD
                 {
                     Enemy first = wounded.First(bound.Contains);
                     Element boundElement = strands.First(s => s.target == first).element ?? r.element;
-                    BindLook look = db.Look(db.Tone(rage ? Element.Fire : boundElement).bindStyle);
+                    BindLook look = db.Look(db.Tone(rage ? Element.Wrath : boundElement).bindStyle);
                     r.flash += db.bind.flashBonus;
                     if (look != null) r.flashTint = look.glow;   // 화면이 속성 빛으로 번쩍
                     Event(r, "bind");
@@ -1091,6 +1097,11 @@ namespace TOD
             if (g.Has(ItemEffect.Leap) && p.sinceDash <= g.Param(ItemEffect.Leap) && !p.leapUsed) { bonus += g.Effect(ItemEffect.Leap); p.leapUsed = true; }
             if (g.Has(ItemEffect.Greed) && DesireFraction(r) >= g.Param(ItemEffect.Greed)) bonus += g.Effect(ItemEffect.Greed);
             if (p.spiteReady && impacts > 0) bonus += g.Effect(ItemEffect.Spite);
+            // 22차
+            if (g.Has(ItemEffect.Crown) && r.hp >= r.maxHp - .01f) bonus += g.Effect(ItemEffect.Crown);
+            if (g.Has(ItemEffect.GoldThread)) bonus += g.Effect(ItemEffect.GoldThread) * Mathf.Min(r.gold, 999) / Mathf.Max(1, g.Param(ItemEffect.GoldThread));
+            if (r.feastTime > 0) bonus += g.Effect(ItemEffect.Feast) * r.feastStacks;
+            bonus += g.Effect(ItemEffect.Tailor);
             return bonus;
         }
 
@@ -1115,61 +1126,114 @@ namespace TOD
                 {
                     SetDef d = set.def;
                     float v = d.effectPerTier * set.tier * SetScale(r, set);
-                    switch (d.element)
-                    {
-                        case Element.Fire: e.burnDps = Mathf.Max(e.burnDps, v); e.burnTime = d.effectTime; break;
-                        case Element.Ice: e.slow = Mathf.Min(d.effectCap > 0 ? d.effectCap : .8f, Mathf.Max(e.slow, v)); e.slowTime = d.effectTime; break;
-                        case Element.Dark: e.curse = Mathf.Max(e.curse, v); e.curseTime = d.effectTime; break;
-                        case Element.Poison:
-                            int hits = direct.TryGetValue(e, out int n) ? Mathf.Max(1, n) : 1;
-                            e.poisonStacks = Mathf.Min(Mathf.Max(1, (int)d.effectCap), e.poisonStacks + hits);
-                            e.poisonDps = v; e.poisonTime = d.effectTime;
-                            break;
-                    }
+                    int hits = direct.TryGetValue(e, out int n) ? Mathf.Max(1, n) : 1;
+                    SinStatus(r, e, d, set.tier, v, hits);
                 }
             }
-            // 번개: 맞은 적마다 반경 안 다른 적 effectCap 마리에게 튄다
-            SetDef bolt = SetOf(r, Element.Lightning);
-            if (bolt != null)
+            // 색욕: 맞은 적 둘레 반경 안의 다른 적도 매혹되어 주인공 쪽으로 끌려온다
+            SetDef lust = SetOf(r, Element.Lust);
+            if (lust != null)
             {
-                float chain = Round(SetEffect(r, Element.Lightning));
-                var struck = new HashSet<Enemy>(wounded);
-                foreach (Enemy from in wounded)
-                {
-                    int left = Mathf.Max(1, (int)bolt.effectCap);
-                    foreach (Enemy to in living.Where(o => o.hp > 0 && !struck.Contains(o) && Distance(o, from) <= bolt.effectRange).OrderBy(o => Distance(o, from)))
-                    {
-                        if (left-- <= 0) break;
-                        struck.Add(to);
-                        DamageEnemy(r, to, chain, Element.Lightning);
-                        Fx arc = Spawn(r, FxKind.Chain, from.x, from.y, new FxSpec { time = db.visual.chainTime, alpha = 1 });
-                        arc.toX = to.x; arc.toY = to.y; arc.element = Element.Lightning; arc.seed = r.random() * 100;
-                        arc.lift = EnemyHeight(from) * .5f; arc.angle = EnemyHeight(to) * .5f;   // angle 자리에 도착점 높이
-                    }
-                }
-            }
-            // 바람: 맞은 적 둘레 반경 안의 다른 적도 주인공 쪽으로 조금 끌려온다
-            SetDef wind = SetOf(r, Element.Wind);
-            if (wind != null)
-            {
-                foreach (Enemy o in living.Where(o => o.hp > 0 && !wounded.Contains(o) && wounded.Any(w => Distance(w, o) <= wind.effectRange)))
+                foreach (Enemy o in living.Where(o => o.hp > 0 && !wounded.Contains(o) && wounded.Any(w => Distance(w, o) <= lust.effectRange)))
                 {
                     float gap = Mathf.Max(1, Hypot(p.x - o.x, (p.y - o.y) * A.projectionY));
-                    float yank = Mathf.Min(F.yankReach * .5f * (1 + SetEffect(r, Element.Wind)), Mathf.Max(0, gap - F.yankMinGap));
+                    float yank = Mathf.Min(F.yankReach * .5f * (1 + SetEffect(r, Element.Lust)), Mathf.Max(0, gap - F.yankMinGap));
                     o.yank = new Timed { x = (p.x - o.x) / gap * yank, y = (p.y - o.y) / gap * yank, time = F.yankTime };
+                    o.charmTime = Mathf.Max(o.charmTime, lust.effectTime);
                 }
             }
-            // 피: 준 피해의 일부만큼 회복
-            float leech = SetEffect(r, Element.Blood);
-            if (leech > 0 && totalDealt > 0)
+            // 식탐: 준 피해의 일부만큼 회복
+            Leech(r, SetEffect(r, Element.Gluttony), totalDealt);
+        }
+
+        // ---------------------------------------------------------------- 22차 칠죄종 효과
+
+        // 당기기 한 타 피해 배율: 교만 = 정예·보스·체력이 가득한 적에게 +v, 분노 = 내 체력이 낮을수록 +(1 - 체력 비율) × extra × 단계
+        public float SinPullMultiplier(RunState r, ActiveSet main, Enemy e)
+        {
+            if (main == null) return 1;
+            SetDef d = main.def;
+            float v = d.effectPerTier * main.tier;
+            switch (d.element)
             {
-                float heal = Mathf.Min(r.maxHp - r.hp, Round(totalDealt * leech));
-                if (heal >= 1)
+                case Element.Pride: return e.elite || e.IsBoss || e.hp >= e.maxHp - .01f ? 1 + v : 1;
+                case Element.Wrath: return 1 + (1 - Mathf.Clamp01(r.hp / Mathf.Max(1, r.maxHp))) * d.extra * main.tier;
+            }
+            return 1;
+        }
+
+        // 맞은 적 하나에 거는 죄종 상태 (메인 세트 당기기 · 부가 발동이 같이 씀). hits = 이번에 몇 번 맞았는지
+        void SinStatus(RunState r, Enemy e, SetDef d, int tier, float v, int hits)
+        {
+            if (e.hp <= 0) return;
+            switch (d.element)
+            {
+                case Element.Wrath: e.burnDps = Mathf.Max(e.burnDps, v); e.burnTime = d.effectTime; break;
+                case Element.Sloth:
+                    e.slow = Mathf.Min(d.effectCap > 0 ? d.effectCap : .8f, Mathf.Max(e.slow, v)); e.slowTime = d.effectTime;
+                    if (e.sleepTime > 0) break;
+                    e.slothStacks += hits;
+                    if (d.extra > 0 && e.slothStacks >= d.extra)
+                    {
+                        e.slothStacks = 0;
+                        e.sleepTime = d.extraTime * (e.IsBoss ? (d.bossSleepScale > 0 ? d.bossSleepScale : .3f) : 1);
+                        Event(r, "sleep");
+                    }
+                    break;
+                case Element.Greed: e.curse = Mathf.Max(e.curse, v); e.curseTime = d.effectTime; e.pawned = true; break;
+                case Element.Envy:
+                    e.poisonStacks = Mathf.Min(Mathf.Max(1, (int)d.effectCap), e.poisonStacks + hits);
+                    e.poisonDps = Mathf.Max(e.poisonDps, v); e.poisonTime = d.effectTime;
+                    break;
+                case Element.Lust: e.charmTime = Mathf.Max(e.charmTime, d.effectTime); break;
+            }
+        }
+
+        // 식탐: 준 피해의 rate 비율만큼 회복하고 초록 숫자 대신 식탐 글꼴로 띄운다
+        void Leech(RunState r, float rate, float dealt)
+        {
+            if (rate <= 0 || dealt <= 0) return;
+            float heal = Mathf.Min(r.maxHp - r.hp, Round(dealt * rate));
+            if (heal < 1) return;
+            r.hp += heal;
+            Fx number = Spawn(r, FxKind.Number, r.player.x, r.player.y, X.damageNumber);
+            number.text = "+" + heal.ToString("0"); number.color = db.Tone(Element.Gluttony).color;
+            number.useElement = true; number.element = Element.Gluttony;
+        }
+
+        // 처치 때 죄종 효과: 시기 = 독 겹을 옆 적에게 옮김, 식탐 = 털실, 탐욕 = 저당 잡힌 적의 금화
+        void SinOnKill(RunState r, Enemy e)
+        {
+            ActiveSet main = MainSet(r);
+            if (main == null) return;
+            SetDef d = main.def;
+            switch (d.element)
+            {
+                case Element.Envy:
                 {
-                    r.hp += heal;
-                    Fx number = Spawn(r, FxKind.Number, p.x, p.y, X.damageNumber);
-                    number.text = "+" + heal.ToString("0"); number.color = db.Tone(Element.Blood).color;
-                    number.useElement = true; number.element = Element.Blood;
+                    if (e.poisonStacks <= 0) break;
+                    int left = Mathf.Max(1, (int)d.extra);
+                    foreach (Enemy to in r.enemies.Where(o => o != e && o.hp > 0 && Distance(o, e) <= d.effectRange).OrderBy(o => Distance(o, e)).ToList())
+                    {
+                        if (left-- <= 0) break;
+                        to.poisonStacks = Mathf.Min(Mathf.Max(1, (int)d.effectCap), to.poisonStacks + e.poisonStacks);
+                        to.poisonDps = Mathf.Max(to.poisonDps, e.poisonDps); to.poisonTime = d.effectTime;
+                        Fx arc = Spawn(r, FxKind.Chain, e.x, e.y, new FxSpec { time = db.visual.chainTime, alpha = 1 });
+                        arc.toX = to.x; arc.toY = to.y; arc.element = Element.Envy; arc.seed = r.random() * 100;
+                        arc.lift = EnemyHeight(e) * .5f; arc.angle = EnemyHeight(to) * .5f;   // angle 자리에 도착점 높이
+                    }
+                    break;
+                }
+                case Element.Gluttony:
+                    if (d.extra > 0) r.yarn = Mathf.Min(YarnMax(r), r.yarn + d.extra);
+                    break;
+                case Element.Greed:
+                {
+                    int gold = Mathf.RoundToInt(d.extra * main.tier);
+                    if (!e.pawned || gold <= 0) break;
+                    int coins = Mathf.Clamp(gold, 1, Mathf.Max(1, db.rewards.maxCoins));
+                    for (int i = 0; i < coins; i++) DropPiece(r, e, new Drop { gold = gold / coins + (i < gold % coins ? 1 : 0) });
+                    break;
                 }
             }
         }
@@ -1199,8 +1263,11 @@ namespace TOD
             e.slowTime = Mathf.Max(0, e.slowTime - dt);
             e.curseTime = Mathf.Max(0, e.curseTime - dt);
             e.poisonTime = Mathf.Max(0, e.poisonTime - dt);
+            e.sleepTime = Mathf.Max(0, e.sleepTime - dt);
+            e.charmTime = Mathf.Max(0, e.charmTime - dt);
             if (e.burnTime <= 0) e.burnDps = 0;
-            if (e.slowTime <= 0) e.slow = 0;
+            if (e.slowTime <= 0) { e.slow = 0; e.slothStacks = 0; }
+            if (e.curseTime <= 0) e.pawned = false;
             if (e.curseTime <= 0) e.curse = 0;
             if (e.poisonTime <= 0) { e.poisonStacks = 0; e.poisonDps = 0; }
             float burn = e.burnDps * dt, poison = e.poisonDps * e.poisonStacks * dt;
@@ -1211,7 +1278,7 @@ namespace TOD
             e.dotTick = 0;
             float amount = e.dotPending;
             e.dotPending = 0;
-            DamageEnemy(r, e, amount, poison > burn ? Element.Poison : Element.Fire);
+            DamageEnemy(r, e, amount, poison > burn ? Element.Envy : Element.Wrath);
         }
 
         void BossThresholds(RunState r, Enemy e)
@@ -1271,9 +1338,11 @@ namespace TOD
             if (e.yank != null) { Ease(e, e.yank, e.yank.max > 0 ? e.yank.max : F.yankTime, dt); if (e.yank.time <= 0) e.yank = null; }
             UpdateStatus(r, e, dt);
             if (e.hp <= 0) return;
-            float chill = 1 - e.slow;   // 얼음 둔화: 이동·돌진·행동 대기가 함께 느려진다
+            if (e.sleepTime > 0) return;   // 22차 나태: 잠든 동안 움직이지도 공격하지도 않는다
+            float chill = 1 - e.slow;   // 나태 둔화: 이동·돌진·행동 대기가 함께 느려진다
             dt *= Mathf.Max(.1f, chill);
             e.timer -= dt;
+            if (e.charmTime > 0 && e.action == EnemyAction.Move) e.wait = Mathf.Max(e.wait, .1f);   // 22차 색욕 매혹: 공격을 시작하지 않는다
             if (e.action == EnemyAction.Move)
             {
                 e.facing = near.x < 0 ? -1 : 1;
@@ -1342,6 +1411,7 @@ namespace TOD
             p.hurt = Mathf.Max(0, p.hurt - dt);
             p.shotCooldown = Mathf.Max(0, p.shotCooldown - dt);
             r.dry = Mathf.Max(0, r.dry - dt);
+            if ((r.feastTime = Mathf.Max(0, r.feastTime - dt)) <= 0) r.feastStacks = 0;   // 22차 만찬
             UpdatePlayerStatus(r, dt);   // 16차: 보스 속성 공격이 건 화상, 중독, 감전, 둔화, 눈부심, 어둠, 밀쳐짐
             if (r.outcome != Outcome.None) return;
             if (r.echo != null && r.echo.until <= r.time) r.echo = null;

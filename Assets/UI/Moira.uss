@@ -63,28 +63,78 @@
 }
 .moira-card.locked .card-level { background-color: rgb(190, 180, 170); }
 
-/* 20차 운명 읽기 연출 (GameUI.Fate.cs). 위치, 크기, 투명도는 코드가 매 프레임 정하고, 여기는 모양만. */
+/* 22차 미래 보기 연출 (GameUI.FateShow.cs). 위치, 투명도는 코드가 매 프레임 정하고, 여기는 모양만. */
 .fate { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
 .fate-dim { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(8, 4, 12); opacity: 0; }
-.fate-light { position: absolute; background-image: url("project://database/Assets/Art/Generated/soft_disc.png"); -unity-background-scale-mode: stretch-to-fill; opacity: 0; }
-.fate-ring { position: absolute; border-width: 3px; border-color: rgba(255, 246, 226, 0.9); opacity: 0; }
-.fate-orb { position: absolute; -unity-background-scale-mode: scale-to-fit; opacity: 0; }
+.fate-prompt { opacity: 0; }
 .fate-sparks { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
 .fate-spark {
     position: absolute; width: 26px; height: 26px; opacity: 0;
     background-image: url("project://database/Assets/sprites/icon_shard.png"); -unity-background-scale-mode: scale-to-fit;
     -unity-background-image-tint-color: rgb(236, 255, 246);
 }
+/* 자막: 죄종 색 글자 + 짙은 외곽 (속삭임) */
 .fate-text {
-    position: absolute; left: 12%; right: 12%; -unity-text-align: middle-center; white-space: normal;
-    font-size: 38px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
-    -unity-text-outline-width: 0.6px; -unity-text-outline-color: rgba(255, 244, 228, 0.45);
+    position: absolute; left: 14%; right: 14%; height: 120px; -unity-text-align: middle-center; white-space: normal;
+    font-size: 48px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    -unity-text-outline-width: 2.4px; -unity-text-outline-color: rgba(8, 4, 10, 0.95);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 1);
+    /* 글자 뒤 어두운 띠 (가장자리가 부드러운 원을 가로로 늘림) */
+    background-image: url("project://database/Assets/Art/Generated/soft_disc.png"); -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgba(6, 2, 8, 0.82);
 }
 .fate-skip {
-    position: absolute; left: 0; right: 0; bottom: 70px; -unity-text-align: middle-center; font-size: 22px; opacity: 0;
-    color: #3a2440; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    position: absolute; left: 0; right: 0; bottom: 44px; -unity-text-align: middle-center; font-size: 22px; opacity: 0;
+    color: rgb(236, 226, 214); -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    -unity-text-outline-width: 1px; -unity-text-outline-color: rgba(10, 5, 12, 0.9);
 }
-/* 연출 동안 카드와 안내는 숨긴다 */
+/* 연출 동안 카드와 안내는 숨기고, 구슬로 빨려 드는 동안에는 제목, 파편 수, 방 그늘도 걷는다 */
 .attic.fate-on .moira-cards, .attic.fate-on .moira-hint, .attic.fate-on .moira-back { opacity: 0; }
-/* 20차: 점성구 유리만 흑백 그림을 속성 색으로 물들여 덮는다 */
-.fate-orb-glass { position: absolute; left: 0; right: 0; top: 0; bottom: 0; -unity-background-scale-mode: scale-to-fit; }
+.attic .moira-head, .attic .moira-shards, .attic > .room-shade { transition-property: opacity; transition-duration: 0.5s; }
+.attic.fate-zoom .moira-head, .attic.fate-zoom .moira-shards, .attic.fate-zoom > .room-shade { opacity: 0; }
+
+/* 22차 욕망 최대치 강화 연출 (GameUI.Vessel.cs). 게이지 틀 길이, 채움 폭, 투명도는 코드가 매 프레임 정하고, 여기는 모양만.
+   게이지는 인게임 욕망 바(Main.uss .bar-frame, .meter-fill.desire)와 같은 잉크 틀과 보라 결을 크게 쓴다. */
+.vessel {
+    position: absolute; left: 0; right: 0; bottom: 54%; align-items: center; padding: 18px 0 14px 0;
+    background-image: url("project://database/Assets/Art/Generated/soft_disc.png"); -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgba(10, 5, 14, 0.86);
+}
+.vessel-halo {
+    position: absolute; left: 22%; right: 22%; top: 8%; bottom: 8%; opacity: 0;
+    background-image: url("project://database/Assets/Art/Generated/soft_disc.png"); -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgba(214, 150, 236, 0.55);
+}
+.vessel-title {
+    font-size: 30px; color: #f1ddff; margin-bottom: 8px; -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.2px; -unity-text-outline-color: #1a0d1f; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.vessel-row { flex-direction: row; align-items: center; justify-content: center; }
+.vessel-icon {
+    width: 46px; height: 46px; margin-right: 10px; -unity-background-scale-mode: scale-to-fit;
+    background-image: url("project://database/Assets/sprites/icon_desire.png");
+}
+.vessel-bar { height: 46px; width: 400px; flex-shrink: 0; }
+.vessel-bar .bar-track { top: 10px; bottom: 11px; }
+.vessel-bar .bar-ink { left: -4px; right: -4px; top: -4px; bottom: -4px; -unity-slice-scale: 0.55px; -unity-background-image-tint-color: #d2bce0; }
+.vessel-fill { position: absolute; left: 0; top: 0; bottom: 0; height: auto; border-right-width: 0; }
+.vessel-new { position: absolute; top: 0; bottom: 0; height: auto; border-right-width: 2px; -unity-background-image-tint-color: #f0c8ff; }
+/* 이전 최대치 자리: 짧은 금빛 바늘땀 */
+.vessel-mark { position: absolute; top: 4px; bottom: 4px; width: 3px; background-color: rgba(255, 226, 160, 0.95); border-radius: 2px; opacity: 0; }
+.vessel-glint {
+    position: absolute; top: -14px; width: 60px; height: 74px; opacity: 0;
+    background-image: url("project://database/Assets/UI/Puzzle/sparkle.png"); -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: #ffe9ff;
+}
+.vessel-value {
+    min-width: 96px; margin-left: 30px; font-size: 38px; color: #f6e6ff; -unity-text-align: middle-left;
+    -unity-text-outline-width: 1.2px; -unity-text-outline-color: #1a0d1f;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+/* 감성 문구: 모이라의 말과 같은 연보라 기울임 */
+.vessel-line {
+    margin-top: 6px; font-size: 23px; color: #e4d4f2; -unity-font-style: italic; -unity-text-align: middle-center; white-space: normal; max-width: 1100px;
+    -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}

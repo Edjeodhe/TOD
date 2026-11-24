@@ -85,6 +85,181 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 22차 (2026-11-24 시작) — 8속성 → 칠죄종, 신화 등급 아버지의 도안, 7층, 미래 보기 구슬 연출(Flow 영상), 인게임 그림 전면 교체 — 진행 중
+
+> 작업이 끊기면 여기서 이어 갑니다. 단계를 마칠 때마다 체크합니다. 사용자가 질문에 답한 결정입니다(2026-11-24 저녁).
+
+### 결정 (사용자)
+- **속성 8종(화염, 얼음, 번개, 빛, 어둠, 피, 바람, 독)을 칠죄종 7가지로 바꿉니다.** 세트, 층 속성, 상성, 몬스터, 맵, 이펙트, 글꼴, 문구 모두입니다.
+- **색 (게임용 조합):** 교만 보라 #7B4FC9, 탐욕 금색 #D9A520, 색욕 진분홍 #D9418C, 시기 독초록 #4FA34A, 식탐 주황 #E07A2A, 분노 진홍 #C62E2E, 나태 회청 #6F8FA8. 구슬, 글씨, 세트, 층 색조에 모두 씁니다.
+- **상성 고리:** 교만 → 시기 → 분노 → 나태 → 탐욕 → 식탐 → 색욕 → 교만 (화살표 앞이 뒤에 강함, ×1.5 / ×0.5, 무기 → 몬스터만). 교만은 남을 깔보아 시기를 짓밟고, 시기는 분노에 불을 붙이고, 분노는 게으름을 걷어차고, 나태는 쌓기만 하는 탐욕을 썩히고, 탐욕은 먹을 것을 움켜쥐어 식탐을 굶기고, 식탐은 색욕을 배부르게 잠재우고, 색욕은 교만한 자를 무릎 꿇립니다.
+- **세트 효과 (초안 승인, 수치는 임시):** 메인/부가 세트 규칙(16차)은 그대로입니다.
+  - 분노: 화상(초당 피해) + 내 체력이 낮을수록 피해 증가.
+  - 나태: 둔화, 3겹이면 잠깐 잠듦(멈춤).
+  - 시기: 질투의 독(겹 쌓는 도트), 독 걸린 적이 죽으면 옆 적에게 옮음.
+  - 식탐: 포식(준 피해의 % 회복), 처치하면 털실 +1.
+  - 색욕: 매혹(맞은 적이 잠깐 공격 없이 주인공 쪽으로 끌려옴, 주변 적도).
+  - 탐욕: 저당(맞은 적이 받는 피해 +%), 저당 잡힌 적을 처치하면 금화 +N.
+  - 교만: 오만(정예, 보스, 체력이 가득한 적에게 피해 +%).
+  - 번개 튀기는 없어집니다.
+- **조각:** 지금 39개를 모두 지우고 죄종마다 5개(일반 2, 레어 1, 유니크 1, 레전더리 1) = 35개. 아이콘은 Codex로 새로 그립니다. 고유 효과는 유니크와 레전더리 14개.
+- **신화 등급 = 아버지의 도안 (레전더리보다 위):**
+  - 층을 처음 돌파해 일기를 얻을 때마다 그 장의 도안을 **영구히** 얻습니다(파편 구매 없음, 단추 진열에서 뺌).
+  - 등반마다 **1개**를 골라 들고 갑니다(챙기기 칸 한도와 따로).
+  - **모든 세트로 셉니다:** 도안에 맞닿은 세트마다 조각 1개로 쳐 줍니다. 도안마다 강한 고유 효과가 하나씩 있습니다. 금빛 테두리로 표시합니다.
+  - **두 모습:** 그 장(층)의 보스 욕망을 거절했으면 보통 효과, 흡수했으면 '붉게 물든 도안'(더 강한 효과 + 들고 가면 욕망을 안고 등반 시작). 일기 마지막 줄처럼 가장 최근 선택을 따릅니다.
+- **탑은 7층, 일기는 7장, 도안은 7개.** 층마다 죄종 하나(등반마다 순서 무작위, 겹치지 않음). 일기 6, 7장은 새로 씁니다(18차의 피에 젖는 흐름을 이어서).
+- **보스 욕망 창:**
+  - 욕망 3종(집착, 분노, 갈망)은 죄종과 무관한 캐릭터 고유 능력치라 그대로 둡니다. 죄종 '분노'와 겹치지 않게 욕망 '분노'의 보이는 이름만 '격분'으로 바꿉니다.
+  - 문구는 **속삭임 말투**로 바꿉니다. 예(탐욕 층): 제목 "[탐욕의 잔향]", 속삭임 "다 가져도 돼. 원래 네 것이었어.", 흡수 버튼 "욕망을 삼킨다" + "실 끝에 묵직한 힘이 차오른다. 그런데... 왜 이렇게 어지러울까.", 거절 버튼 "고개를 돌린다" + "머릿속이 조용하고 맑다. 손끝이 조금 허전할 뿐이다."
+  - 흡수하면 욕망을 **정해진 양만큼 바로** 얻습니다(지금 `desire.absorb` 20). '욕망이 빨리 찬다' 규칙은 넣지 않습니다. 거절은 지금처럼 변화가 없습니다.
+- **미래 보기 (모이라 카드 '운명 읽기'를 바꿈):**
+  1. 카드 '미래 보기'를 누르면 점성구가 등장합니다 → 기억의 파편을 냅니다 → "자세히 살펴보기 (E)" UI가 뜹니다.
+  2. E를 누르면 점성구 안으로 확대됩니다. 확대 전 구도는 모이라가 앉아 구슬을 만지는 모습입니다(모이라 새 자세). 확대되는 동안 구슬 주변이 구슬로 빨려 들어가듯 일그러지며 카메라가 다가가고, 끝에는 구슬이 코앞에 와서 안의 내용이 잘 보입니다.
+  3. 구슬 안에서 **Flow로 만든 5초 영상**이 재생됩니다. 이집트 벽화풍으로 과거를 설명하는 듯한 **'탑의 신화'**이며, 죄종마다 하나씩 7개입니다. 영상 화풍은 게임과 맞추지 않아도 됩니다.
+  4. 영상과 함께 멘트(자막)가 나옵니다. 글씨 색과 구슬 바깥 주변 색은 그 죄종 색입니다.
+  5. 효과는 그대로 다음 등반 1층의 죄종을 알려 주는 것입니다.
+  - Flow는 사용자 Chrome(Claude in Chrome 확장)에 로그인된 `flow.google.com`을 씁니다.
+- **인게임 스테이지:** 몬스터 4종(스토커, 차저, 슈터, 보스) × 7죄종의 파츠 그림을 새로 그리고, 리그 관절과 동작을 새 그림에 맞춥니다. 층 색조, 정적 소품, 움직이는 장식, 보스 속성 공격, 부가 발동, 결박 폭발, 실 리본, 피해 글꼴도 죄종으로 다시 만듭니다. **다 만든 뒤 사용자 검토를 받습니다.**
+
+### 구현 결정 (이 세션)
+- `Element` 열거형은 정수 값을 유지한 채 이름만 바꿉니다: Fire(1) → **Wrath**, Ice(2) → **Sloth**, Lightning(3) → `Unused3`(안 씀), Dodge(4) 그대로, Light(5) → **Pride**, Dark(6) → **Greed**, Blood(7) → **Gluttony**, Wind(8) → **Lust**, Poison(9) → **Envy**. 이렇게 하면 씬에 저장된 `ElementDef`, 연결된 그림과 이펙트가 새 그림이 들어올 때까지 가장 가까운 죄종에 붙어 있습니다(화염 → 분노, 얼음 → 나태, 빛 → 교만, 어둠 → 탐욕, 피 → 식탐, 바람 → 색욕, 독 → 시기).
+- 세트 id: `wrath, sloth, envy, gluttony, lust, greed, pride`. 그림 파일 이름의 속성 자리도 이 id를 씁니다(예: `enemy_stalker_head_wrath.png`, `decor_greed_*.png`, `proc_lust.png`).
+
+### 조각 목록 (이 세션이 정함, 수치는 데이터 단계에서)
+| 죄종 | 일반 1 | 일반 2 | 레어 | 유니크 (고유 효과) | 레전더리 (고유 효과) |
+|---|---|---|---|---|---|
+| 분노 wrath | 그을린 골무 | 불씨 핀 | 성난 바늘꽂이 | 피 묻은 가위 (벼랑 끝) | 울부짖는 재봉틀 (분풀이) |
+| 나태 sloth | 늘어진 실타래 | 졸린 단추 | 베개 솜 주머니 | 무거운 매듭 추 (무거운 매듭) | 잠든 실패 (실 되감기) |
+| 시기 envy | 곁눈질 단추 | 초록 실밥 | 남의 골무 | 조급한 시침핀 (성급한 결박) | 질투의 거울 바늘 (거인 사냥) |
+| 탐욕 greed | 금박 단추 | 동전 실패 | 저당 잡힌 반지 | 탐욕의 실 (탐욕의 실) | 금실 물레 (새: 금화가 많을수록 피해) |
+| 식탐 gluttony | 부스러기 주머니 | 기름 묻은 실 | 끝없는 식탁보 | 만찬 포크 바늘 (새: 처치하면 잠깐 피해 증가, 겹침) | 삼키는 골무 (새: 처치하면 체력 회복) |
+| 색욕 lust | 분홍 리본 | 향수병 단추 | 입맞춤 자수 | 춤추는 무용 신 (도약 일격) | 얽힌 연인의 실 (새: 결박한 적에게 피해 증가) |
+| 교만 pride | 광낸 단추 | 왕관 핀 | 거울 달린 줄자 | 높은 굽 골무 (새: 내 체력이 가득하면 피해 증가) | 왕좌의 바늘 (새: 치명타 확률) |
+- 아이콘 파일: `Assets/sprites/item_<죄종>_<1~5>.png` (1, 2 일반, 3 레어, 4 유니크, 5 레전더리). 그림은 조각 이름 그대로의 재봉 소품, 죄종 색이 주조색, 기존 `item_*.png`와 같은 화풍과 크기.
+- 신화 도안 7장(일기 1~7장): 아버지의 재단 도안, 탑 문장 골무, 낡은 바늘집, 금 간 안경, 미완성 자수틀(기존 `item_pattern_1~5.png` 그대로), 새로 6장 '아버지의 빈 실패', 7장 '이름 없는 수틀'(`item_pattern_6~7.png`). 붉게 물든 모습은 같은 그림을 붉게 물들인 `item_pattern_<n>_tainted.png`(파이썬으로 색 입힘).
+
+### 세션 나누기 (사용자 요청 "세션 분할해서 작업해")
+| 세션 | 맡는 일 |
+|---|---|
+| 조율(이 세션) | 단계 1, 2(코드와 데이터), 신화 고르기 UI, 욕망 창, 마지막 통합과 검토 자료 |
+| `sin-art` | Codex 그림: 조각 아이콘 35 + 도안 2 + 붉은 도안 7, 몬스터 파츠 4종 × 7죄종, 정적 소품 7 × 4 (파일과 `TOD/Setup` 연결까지) |
+| `sin-vfx` | Blender 시트 7죄종(움직이는 장식, 보스 내려찍기, 탄, 장판, 부가 발동, 결박 폭발, 실 리본) + 피해 글꼴 7 |
+| `fate-orb` | Flow 영상 7개(Chrome) + 미래 보기 구슬 연출(모이라 자세, 빨려 드는 줌, 구슬 속 영상, 멘트) |
+- Unity 에디터는 하나입니다. 플레이, 테스트, 씬 저장 전에 `Temp/claude_unity.lock`을 확인하고 잡습니다(16차 규칙과 같음). 공유 파일(`Main.uxml`, `GameDatabase.cs`, `GameUI.cs`, `Combat.cs`)은 고치기 직전에 다시 읽고 작게 고칩니다.
+- UnityMCP 서버는 조율 세션이 띄운 백그라운드 프로세스입니다(8080). 끊기면 `C:\Users\MinSung\AppData\Roaming\Python\Python313\Scripts\uvx.exe --from "mcpforunityserver==10.3.0" mcp-for-unity --transport http --http-url http://127.0.0.1:8080 --project-scoped-tools`로 다시 띄웁니다.
+
+- **재개 상태 (2026-11-24 20:51):** sin-vfx 완료, fate-orb 완료(둘 다 커밋 전). sin-art 진행 중: Codex 한도라 22:23에 남은 파츠 10장(분노 4종, 식탐 4종, 나태 stalker, charger)을 `run_22.sh enemies_c/a/b`로 자동 재시도하게 걸어 둠(기록 `tools/codex_prompts/run_22_{ec2,ea2,eb2}.out`). 이 세션이 끊겼으면: 그 기록을 보고 원본이 다 있으면 `python tools/bake_22_art.py` → `TOD/Setup/1` → `TOD/Setup/16` → `python tools/preview_sin_rig.py wrath|gluttony|sloth` → 분노, 식탐 플레이 캡처 → 조율 '다음'으로. ChatGPT 웹 대체는 내장 브라우저가 로그인 안 되어 못 씀.
+- **재개 (2026-11-24 밤, 사용자 "핸드오프 읽고 이어서, 세션 분할"):** 앞 세션들이 끊겨 세 세션을 같은 이름으로 다시 띄움(같은 폴더 공유). sin-art = 한도로 못 그린 몬스터 파츠 10장(분노 4, 식탐 4, 나태 stalker/charger) + 안 구운 것(시기 charger/boss, 나태 shooter, 나태 소품) 굽기와 연결. sin-vfx = 시트 37장은 구워짐, 실 리본 7 + 피해 글꼴 7 + 연결과 미리보기. fate-orb = 영상 끝, 모이라 만지기 동작부터 단계 5 연출. 조율은 MCP 서버 재기동, 아이콘 재연결, 통합.
+
+### 22차-조율 진행
+- [x] 코드 (컴파일 통과, 테스트는 데이터 뒤에 고침):
+  - `Element` 이름 변경(전 파일), `SetDef.extra/extraTime/bossSleepScale`, `Enemy.slothStacks/sleepTime/charmTime/pawned`.
+  - `Combat.SinPullMultiplier/SinStatus/Leech/SinOnKill`(Combat.cs 세트 효과 절). 부가 발동 `ApplyElementEffect`도 이것을 씀. 잠든 적은 행동 안 함, 매혹된 적은 공격 시작 안 함. 번개 튐 코드는 지움. 색욕 보스는 주인공을 보스 쪽으로 끌어당김.
+  - 새 고유 효과 `ItemEffect.GoldThread, Feast, Devour, Embrace, Crown, Pedestal, Tailor`(문구는 `gear.effectTexts`에 데이터로).
+  - 신화: `Sim/MythicPattern.cs`(클래스 `Mythic`. 파일 이름 `Mythic.cs`는 Unity가 안 잡아서 MoveAsset으로 바꿈), `Profile.mythicPick`, 버전 4(옛 조각, 진열, 운명 비움), `DiaryEntry.patternTainted`, `PieceDef.desireStart`, 맞닿은 세트마다 1개로 셈(`Gear.Stats`), 등급 합과 챙기기 칸에서 뺌, 단추 진열에서 뺌, 등반 시작 때 `Mythic.Ensure` + 시작 욕망. 일기 크게 읽기에 "들고 가기" 버튼(`diary-page-mythic`, 문구 `diary.mythicCarry/mythicCarried`).
+  - 욕망 창: `GameUI.ShowDesire(..., Element sin)`, Main.uxml `absorb-feel/refuse-feel/desire-numbers`, 데이터 `ui.desireTitle/absorbButton/refuseButton/absorbFeel/refuseFeel/desireNumbers`, `ElementDef.sinName/desireWhisper`.
+- [x] 데이터(MCP, 씬 저장, 모두 임시값):
+  - 세트 7(단계 2/3/5, 효과 수치는 `gear.sets`), 해금 표: 분노, 나태, 시기 0 / 탐욕, 식탐 2 / 색욕, 교만 3.
+  - 조각 49 = 죄종 조각 35(0~34, 죄종 순서 분노, 나태, 시기, 탐욕, 식탐, 색욕, 교만 × 일반, 일반, 레어, 유니크, 레전더리) + 신화 보통 7(35~41) + 붉게 물든 7(42~48, 능력치 ×1.5, 효과 강화, `desireStart` 15). 아이콘은 `item_<죄종>_<n>` / `item_pattern_<n>[_tainted]`를 찾고 없으면 옛 그림을 빌림 → **sin-art 그림이 들어오면 아이콘 다시 연결 필요**(같은 이름 규칙으로 다시 찾기).
+  - 등급 5 '신화'(금색 #FFC740 근처, 번쩍임 1.2). 고유 효과 문구 7개 추가.
+  - 죄종 정의 7(번개 정의 지움): 이름, 색(hint/fate), 층 암시, 속삭임, 임시 미래 보기 문구(fate-orb가 덮어씀), 층 색조. 색욕 보스 끌어당김 140, .45초. 상성 고리. `arena.finalFloor` 7, `desire.perFloor` 5 → 3(7층 합 84).
+  - 일기 7장: 옛 5장 → 7장(일곱째 장, 탑의 꼭대기), 새 5장 '끝나지 않는 식탁'(식탐, 나태), 6장 '남의 등불'(시기, 탐욕, 분노). 핏자국 0~1, 파편 층 × 3, 도안 35+i / 42+i.
+  - 욕망 창 문구, 욕망 '분노' 이름 → '격분'.
+- [x] 테스트: EditMode 51개 통과(새 `MythicPatternFollowsDiaryAndDesire`, `MythicCountsForEveryTouchingSet`, 옛 `DiaryReadGivesShardsAndPattern` 대체, 나머지는 죄종 id로).
+- [x] 죄종 효과 테스트 `SinEffectsApply`(나태 잠, 시기 독 옮기기, 탐욕 저당 금화) 통과. EditMode 52개.
+- [x] 조각 아이콘 다시 연결(재개 때): `TOD/Setup/1` 뒤 execute_code로 `gear.pieces` 49개의 `icon`을 `item_<죄종>_<n>`(0~34), `item_pattern_<n>`(35~41), `item_pattern_<n>_tainted`(42~48)로 넣고 씬 저장. 49개 모두 그림 있음.
+- [x] 재개 때 MCP 재연결: 8080 서버가 꺼져 있어 위 uvx 명령을 백그라운드로 띄움. 서버가 떠도 instances 0이면 Unity 창을 앞으로 가져오면(user32 `ShowWindow(h,9)` + `SetForegroundWindow`) 바로 붙음. `TOD/Setup/1`처럼 오래 걸리는 메뉴는 MCP가 "disconnected while awaiting" 오류를 내도 실제로는 끝남(Editor.log `[TOD] Texture imports configured`로 확인).
+- [x] 중간 확인 (20:45): sin-vfx, fate-orb 완료 보고를 캡처로 확인함(`Temp/Shots/fate22_greed_sheet.png` 흐름 정상, `sin22_play_lust.png` 색욕 몬스터 4종과 장미 소품 정상). 색욕 캡처에 옛 공용 소품(마네킹, 바늘꽂이 가위)이 섞여 보이는데, 공용 장식이라 그대로 둠(통합 때 다시 볼 것).
+- [~] **사용자 검토 1차 수정 (2026-11-24 밤, 세션 분할):** `set-panel`(세트 효과 패널: 가진 세트만, 비활성 회색, 이름 글씨를 죄종 색, 마우스 올림 단계 창), `fate-orb`(거미 손 흔들림 제거, 회전 없는 정면 가속 줌, 확대 뒤 주변 정지 + 죄종 색 살짝 덮기, 자막 1항목 시간표), `desire-card`(욕망 최대치 강화 = 카드 위 욕망 게이지가 늘어나는 연출, 일기 도안 버튼 글자 잘림). 사용자가 고른 문구:
+  - 미래 보기 자막(죄종마다 `fateWhispers` 한 항목): 교만 "왕관이 무거울수록 목은 높아지지. 교만이 너를 기다려." / 탐욕 "반짝이는 건 늘 조금 더 멀리 있지. 탐욕이 너를 부른다." / 색욕 "닿을 듯 말 듯한 손끝, 색욕이 너를 홀린다." / 시기 "곁눈질은 독이 되어 스며들지. 시기가 너를 지켜봐." / 식탐 "한 입만 더, 그 말은 끝나지 않지. 식탐이 너를 삼킨다." / 분노 "타오르는 건 적이 아니라 너야. 분노가 깨어난다." / 나태 "눈꺼풀 위에 잠이 모래처럼 쌓여. 나태가 너를 재운다."
+  - 욕망 최대치 강화: "실 끝이 더 많은 욕망을 견딘다. 손끝이 뜨겁다." (`desire-card`에 전달함)
+  - [x] 자막 7개를 `db.elements.defs[].fateWhispers`(죄종마다 1항목)에 넣고 씬 저장. 세 세션 모두 완료, 캡처 확인함(`setpanel22_*`, `desire22_vessel_final_sheet`, `desire22_diary_sheet`, `fate22b_sloth_sheet`. fate 캡처의 자막은 바꾸기 전 옛 3줄).
+  - [x] set-panel이 찾은 버그 고침: 신화 도안(`set` 빈 문자열)이 판에 있으면 `db.Set(def.set)`이 null이라 재봉 상자 그리기가 멈춤 → `GameUI.PieceSet(def)`(세트가 없으면 등급 이름 '신화'와 등급 색으로 된 가짜 세트)로 7곳 바꿈. 캡처 `Temp/Shots/coord22_mythic_board.png`(금색 도안, '신화' 꼬리표, 맞닿은 분노에 1개로 셈). EditMode 52개 통과. 커밋 전.
+- [ ] 다음(조율): sin-art가 남은 파츠 10장을 다 굽고 연결하면 플레이 캡처(욕망 창, 일기 도안 버튼, 세트 패널, 7죄종 층 전부, 조각 아이콘이 재봉 상자에 나오는지), 검토 자료(사용자 검토)
+
+### 단계
+- [x] 1. 코드: 열거형 이름, 세트 효과 7종(잠, 독 옮기기, 털실, 매혹, 저당 금화, 교만, 분노 체력 비례), 상성 고리, 7층, 신화 등급(모든 세트로 셈, 두 모습, 영구 보유와 등반 1개), 욕망 창 문구 구조, 테스트
+- [x] 2. 데이터(MCP): 세트 7, 조각 35 + 도안 7, 죄종 7(색, 층 암시, 미래 보기 멘트, 층 색조, 보스 공격), 일기 7장, 욕망 창 문구
+- [x] 3. 조각 아이콘 35 + 도안 7 (Codex), 붉은 도안 7, 조각 49개 연결
+- [x] 4. Flow 영상 7개 (이집트 벽화풍 탑의 신화, 5초) → `Assets/Video/fate_<죄종>.mp4`
+- [x] 5. 미래 보기 연출: 점성구 등장, 파편, "자세히 살펴보기", 모이라 구슬 만지는 자세, 빨려 드는 줌(PostFX), 구슬 속 영상(원형), 멘트, 죄종 색 주변
+- [~] 6. 몬스터 파츠 4종 × 7 (Codex) + 리그 맞추기 (18/28 구움. 분노, 식탐 전부와 나태 stalker, charger는 Codex 한도로 대기)
+- [x] 7. 맵: 층 색조, 정적 소품 7 × 4 (Codex), 움직이는 장식 7 (Blender)
+- [x] 8. Blender 이펙트: 보스 공격(내려찍기, 탄, 장판), 부가 발동, 결박 폭발, 실 리본, 피해 글꼴 7
+- [ ] 9. EditMode 테스트(52개 통과, 각 세션 확인), 플레이 캡처, 검토 자료(사용자 검토)
+
+### 22차-sin-vfx (Blender 죄종 이펙트 시트, 실 리본, 피해 글꼴) — 완료(커밋 전, 사용자 검토 대기)
+- **진행:** [x] 시트 37장(부가 발동 7, 내려찍기 7, 탄 7, 장판 2(분노, 시기), 맵 장식 7, 결박 폭발 7, 각 `_glow`) [x] 실 리본 7 [x] 피해 글꼴 7 [x] `TOD/Setup/1`, `16` 실행 [x] 데이터 연결(`visual.tones`, `bind.looks`, `bindArt`, 죄종 `ElementDef`의 procFx, boss.fx/bullet/pool, animated, bindBurst) [x] 미리보기, 플레이 캡처 [x] EditMode 52개 통과
+- **결정:** `BindStyle`에 죄종 7가지를 끝에 붙입니다(Wrath 8 ~ Envy 14, 옛 8종 값은 그대로). 옛 속성 시트(`*_fire_*` 등)는 지우지 않고 시트 표에 `legacy`로 남겨 메타만 씁니다(기본 실행은 죄종만 굽기). 실 리본, 피해 글꼴도 같은 방식(옛 파일 그대로, 기본 실행은 죄종만).
+- **시트:** 그림 함수 `tools/render_element_vfx_sins.py`(`render_element_vfx.py`가 exec로 읽음). 다시 굽기 `blender -b -P tools/render_element_vfx.py -- C:/Project/TOD [그룹|시트|죄종]`, 확인 `python tools/preview_element_vfx.py 22` → `Temp/Shots/vfx22_<그룹>.png`. 형식, 피벗, 그리기 폭은 16차 표와 같습니다. 콘셉트: 분노 진홍 불길 가시와 갈라진 땅, 나태 졸음 구름과 초승달과 Z, 교만 금관과 보랏빛 후광, 탐욕 금화와 금실 올가미, 식탐 이빨 아가리, 색욕 하트와 장미 꽃잎, 시기 초록 눈과 가시 덩굴.
+- **실 리본:** `tools/render_bind_ribbons_sins.py`(`render_bind_ribbons.py`가 exec로 읽음, 인자 없으면 죄종만) → `Assets/vfx/bind/bind_<죄종>_thread|trail_core|rim.png`, `_head_core|rim.png`. 무늬: 분노 날 선 불길 가시와 달아오른 균열과 불씨, 나태 굴러가는 구름 덩이와 떠오르는 Z, 교만 꼬인 두 가닥과 짧은 햇살과 네 갈래 별, 탐욕 금실 두 가닥과 빙글 도는 금화 꿰미, 식탐 꿀꺽 부푼 덩이가 흐르는 굵은 줄과 양옆 이빨과 침방울, 색욕 땋은 세 가닥과 두근거리는 하트와 꽃잎, 시기 가시 덩굴과 잎과 독방울. 넓은 빛(rim)이 늘 가운데 띠를 덮고 심(core)은 가늘고 옅게. 확인 `python tools/preview_bind_ribbons.py 22` → `Temp/Shots/sin22_vfx_ribbons.png`.
+- **결박 덮개, 입자(코드):** `ArenaRenderer.CodeStyle`이 죄종을 가장 가까운 옛 모습으로 바꿔 코드 장식만 빌립니다(분노 → 화염 불길 혀, 나태 → 어둠 연기 덩이, 식탐 → 피 방울, 시기 → 독 거품, 교만, 탐욕, 색욕 → 금실 반짝임). 결박 폭발은 시트(`bindBurst`)가 그리므로 코드 모양은 안 씁니다.
+- **`bind.looks` (죄종 7, 글자 "분노 결박!" 등):** 다섯 가닥이 정확히 겹치면 가산이라 하얗게 날아가서 낮췄습니다: glow = 죄종 색 × .85, color = (죄종 색 15% 흰색 섞음) × .7, core = (35% 흰색 섞음) × .25, 나태는 color, glow를 한 번 더 .75, .8배. cover 분노 .85, 시기 .75, 교만 .7, 식탐, 색욕 .6, 나태, 탐욕 .5. `visual.tones`의 죄종 7은 bindStyle = 같은 이름 죄종, 색은 죄종 색(glow = 죄종 색, color = 밝게, core = 아주 밝게)으로 바꿨습니다(옛 속성 색이 남아 있었음).
+- **피해 글꼴:** `python tools/bake_element_fonts.py 22` → `Assets/Art/Generated/damage_font_<죄종>.png`(위→아래 3색 그라디언트, 죄종 잉크 외곽선, 죄종 빛). 치명타 글꼴은 그대로. `tones[].damageFont`에 글자 13개 연결(높이 30, 간격 −.08 유지).
+- **캡처 (`Temp/Shots/`):** `sin22_vfx_sheets_<boss|proc|decor|bind>.png`(시트 미리보기), `sin22_vfx_ribbons.png`, `sin22_vfx_fonts.png`, 플레이: `sin22_vfx_bind_pull.png`/`_zoom.png`(7죄종 결박 당기기, 실 리본과 결박 폭발), `sin22_vfx_proc_boss.png`(부가 발동, 보스 내려찍기, 탄, 결박 폭발, 움직이는 장식), `sin22_vfx_numbers.png`(7죄종 피해 숫자). 원본 프레임은 `Temp/Shots/sin22_raw/`. 캡처는 플레이 중 `execute_code`로 `GameController.Update`를 여러 번 부르고 `Camera.Render`로 찍었습니다(`r.devFreeze`, `Combat.Pull` 리플렉션).
+- **남은 것:** 실제 속도로 보는 느낌(정지 화면만 봄). 결박 당기기 처음 .4초의 흰 칼날 선(`DrawCut`, 모든 속성 공통)은 그대로라 잠깐 가운데가 하얗게 보입니다. 장판은 분노, 시기만 있습니다(화상, 중독만 장판을 씀). 보스 탄은 128px 칸이라 크게 그리면 흐릴 수 있음. 플레이 캡처의 맵 소품 일부는 sin-art가 아직 굽는 중인 그림.
+
+### 22차-sin-art (Codex 그림: 조각 아이콘, 도안, 죄종 몬스터 파츠, 정적 소품) — 진행 중
+- **흐름:** `python tools/make_sin_prompts.py`(프롬프트) → `sh tools/codex_prompts/run_22.sh <icons|decor|enemies_a|enemies_b>`(줄마다 백그라운드로 따로 돌림, 이미 있는 그림은 건너뜀, 한도면 `QUOTA`, 기록 `tools/codex_prompts/run_22_*.out`) → `python tools/bake_22_art.py`(굽기) → MCP `TOD/Setup/1. Texture Imports` → `TOD/Setup/16. Element Art`.
+- 원본 시트: 아이콘 `art_src/raw/sin_icons_a`(분노, 나태) `_b`(탐욕, 식탐) `_c`(색욕, 교만) `_d`(시기, 자홍 키), 도안 `sin_patterns.png`, 몬스터 `enemy_<종류>_parts_<죄종>.png`, 소품 `decor_<죄종>.png`. 시기는 자홍 키, 나머지는 초록 키.
+- **리그 맞춤 (이 세션이 정함):** 뼈대 템플릿은 종류마다 하나를 모든 죄종이 같이 쓰므로, 리그 값 대신 **그림을 관절에 맞춥니다.** `bake_22_art.py`가 새 파츠의 가로세로 비율이 원래 파츠와 10% 안이면 16차처럼 원래 칸에 꼭 맞추고, 더 다르면(왕관, 망토, 부푼 배) 찌그러뜨리지 않고 같은 배율로 줄여 관절 끝(팔다리와 몸통은 위 끝 가운데, 머리는 아래 끝 가운데)을 원래 자리에 놓고 튀어나온 만큼 캔버스를 넓힙니다. 넓힌 파츠의 피벗은 `art_src/raw/sin_parts_fit.json`에 적고, `ElementArtSetup.ImportSkins`가 그 피벗(사용자 지정)과 원래 PPU로 가져옵니다(작은 수정). 확인은 `python tools/preview_sin_rig.py [죄종]` → `Temp/Shots/sin22_rig_<죄종>.png`(원래, 죄종 쉬는 자세, 걷기).
+- 붉은 도안: `taint()`가 가장자리부터 스며든 핏빛 + 번진 핏자국 + 흘러내린 자국 + 튄 핏방울을 입힙니다. 모양, 크기, 잉크 외곽선은 그대로입니다. 신화 금빛 테두리는 그림에 없고 UI가 그리므로 그대로 씁니다.
+- **진행:** [x] 아이콘 35 [x] 도안 6, 7 + 붉은 도안 1~7 [~] 몬스터 파츠 28시트(18 구움: 교만, 탐욕, 색욕, 시기 4종 + 나태 슈터, 보스. 남은 10장은 Codex 한도로 22:23 뒤 자동 재시도) [x] 소품 28 [~] 연결 메뉴(Texture Imports → 16. Element Art 실행, 조각 49개 아이콘이 새 그림을 가리킴) [~] 미리보기(5죄종) [~] 플레이 캡처(교만, 탐욕, 색욕, 시기, 나태 `Temp/Shots/sin22_play_<죄종>.png`, 씬 저장함)
+- 플레이 캡처 방법: 플레이 → `execute_code`로 `GameController.StartRun()`, `Run.devGod = true`, `Run.enemies.Clear()`(DevKillAll은 보스를 죽여 라운드가 끝나므로 쓰지 않음), `Combat.DevSetFloorElement(Run, Element.X)`, `arena.BeginRound(Run)`, `Combat.DevSpawn` 4종을 주인공 위쪽 한 줄에 놓고 `Run.devFreeze = true` → `manage_camera screenshot`(Temp/Shots). 게임이 포커스를 잃어 일시 정지 창이 뜨면 `TogglePause()`.
+- **이어 받은 세션 결정 (20:20):** Codex 한도(22:21까지)라 내장 브라우저 ChatGPT를 열었으나 로그인되어 있지 않아(비밀번호 입력 불가) 쓰지 않고, 22:23에 `run_22.sh enemies_c/a/b` 세 줄을 다시 돌리게 걸었습니다(기록 `tools/codex_prompts/run_22_{ec2,ea2,eb2}.out`). `ElementArtSetup`의 소품 연결은 옛 속성 소품(`decor_fire_*` 등)을 빼고 그 죄종 소품만 남기게 고쳤습니다. `bake_22_art.py` 소품 굽기에서 이웃 칸에서 넘어온 작은 조각(큰 덩어리에서 40px 넘게 떨어진 것)을 뺍니다.
+
+### 22차-fate-orb (미래 보기 구슬 연출) — 완료(커밋 전)
+- **영상 (끝):** Flow(flow.google.com, 프로젝트 "11월 24 - 20:02"), 모델 Omni 1.2 Flash, 16:9. 크레딧이 하루 20 정도(오후 2:26 충전)라 교만만 720p 5초 2개 중 하나를 골랐고, 나머지 6개는 **360p 3초 1개씩**입니다(다시 뽑지 못함). 게임에서 영상 길이를 `hub.fateShow` 재생 시간(5초)에 맞춰 늦춰 틉니다. ffmpeg 가 없어 자르지 않았습니다.
+  - `Assets/Video/fate_<pride|greed|lust|envy|gluttony|wrath|sloth>.mp4`. 프롬프트는 공통 "Ancient Egyptian tomb wall painting coming to life, flat painted figures in strict side profile, sandstone wall texture, hieroglyph band frame, dominant color <죄종 색>, <장면>, slow solemn movement as if an old legend is being told, main action centered, no text".
+  - 크레딧이 차면 720p 5초로 다시 뽑는 것을 권합니다(한 개 15크레딧).
+- **연출 (단계 5, 끝):**
+  - 흐름: 카드 '미래 보기' → 확인 → 탁자 점성구가 살짝 떠오르며 죄종 색으로 빛남 → 파편 불티가 점성구로(다시 보기는 불티 없음) → 점성구 위 "E 자세히 살펴보기" 안내 → E(또는 누름) → 모이라가 두 앞다리로 구슬을 감싸 쥠(점성구는 다시 내려앉음) → 둘레가 구슬로 빨려 드는 일그러짐 + 카메라가 구슬로 다가감 → 유리 안에 죄종 영상, 아래에 죄종 색 속삭임 자막 → 끝나면 `endHold` 뒤(또는 E, 누름) 줌이 풀리며 돌아옴 → 모이라가 `fateLine`을 한 줄로 남김. Esc는 언제든 건너뛰기.
+  - 코드: `UI/GameUI.FateShow.cs`(시간표, 다시 씀), `View/FateOrbView.cs`(새: 카메라 줌, 리그 `BallLift/Touching`, 구슬 재질 값, VideoPlayer, PostFX 전역값), `Shaders/FateOrb.shader`(새: 큰 점성구 위에 유리 마스크 `moira_ball_glass` 안으로 영상을 볼록 렌즈처럼, 가장자리는 죄종 색), `Shaders/PostFX.shader`에 `FateWarp`(구슬 바깥이 더 먼 곳을 가져오고 휘감김) + `FateTint`(구슬 바깥 죄종 색), `_TOD_Enabled`가 0인 허브에서도 돎. `GameController.ShowFate`, E 키는 `ui.AdvanceFate`. 데이터 필드: `ElementDef.fateVideo/fateWhispers`, `FateShow`의 22차 값들, `HubView.fateOrb`.
+  - 결정: 줌은 화면 UI가 아니라 **월드 카메라**로 합니다(구슬이 커져도 선명하게 `moira_ball_big`을 같은 자리에 그림, MoiraRig 19차 계산 그대로). 카메라 크기는 지수로 섞어 배율이 고르게 줄고, 중심은 크기에 비례해 구슬로 갑니다. 자막은 줄마다 `lineTime` 초(영상 5초보다 길면 영상 마지막 장면에 멈춘 채 이어짐). 옛 20차 가운데로 나오는 구, 빛, 어두운 글자 UI는 지웠습니다(Main.uxml `fate` 안, Moira.uss).
+  - 영상이 보이는 동안(줌 55%부터)은 구슬을 감싼 앞다리보다 앞에 그립니다(`FateOrbView.aboveHands` 500). 그 전에는 손이 구슬 앞이라 '만지는' 모습이 보이고, 바뀌는 순간은 일그러짐이 가장 셀 때라 튀지 않습니다. 모이라는 연출 동안 카드를 내려놓고(`Talking` false) 끝나면 다시 듭니다.
+  - 씬(MCP, 저장): `Hub/Moira/FateOrb`(SpriteRenderer `moira_ball_big` + `Materials/FateOrb.mat`, Actors 층, VideoPlayer(RenderTexture `Materials/FateVideo.renderTexture` 960×540, 소리 없음), FateOrbView), `MoiraRig.fateOrb`, `HubView.fateOrb`.
+  - 데이터(MCP, 저장): 카드 `hub.fateName` '미래 보기', 설명, 확인 문구, '본 미래 다시 보기'. 죄종 7개 `fateVideo`, `fateWhispers` 3줄(속삭임: "아주 옛날..." 신화 → 그 층이 어떻게 됐는지 → "쉿... 네 첫 층은 X야" + 경고), `fateLine`(끝난 뒤 모이라 한 줄, 짧게). `fateShow`: 떠오름 .8초 14px, 불티 .35초 뒤, 안내 "자세히 살펴보기", 감싸기 .8초, 줌 2.4초 채움 .78(구슬을 조금 위로, 자막 자리), 일그러짐 .55(남는 것 .12), 물들임 .7, 영상 5초 + 번짐 .7초, 자막 줄 2.1초, 끝난 뒤 2.2초에 저절로 돌아감, 풀림 1.1초, 소리 whisper / desire / unlock.
+- **확인:** EditMode 52개 통과. 플레이 캡처 `Temp/Shots/`: `fate22_cards`(카드 이름), 시기(파편 낸 흐름) `fate22_envy_1prompt ~ 6end`, 교만 `fate22_pride_1rise ~ 8close`, 분노 `fate22_wrath_sheet`(0.7~14.5초 12장, 낱장 `fate22_wrath_z*`), 탐욕 `fate22_greed_sheet`(낱장 `fate22_greed_z*`), 색욕 Esc 건너뛰기 `fate22_lust_esc_ab`(카메라 크기, 위치, PostFX 값이 원래대로 돌아옴을 값으로도 확인). 프로필은 `Temp/profile_backup_22fate.json`에서 되돌림.
+  - 캡처는 MCP 스크린샷이 UI를 빼먹는 때가 있어 `ScreenCapture.CaptureScreenshot`를 `EditorApplication.update`로 시간 맞춰 찍었습니다.
+- **남은 것:** 사람이 실제 속도로 본 느낌(줌 속도, 일그러짐 세기, 자막 길이). 나태, 식탐 영상은 플레이로 돌려 보지 않았습니다(같은 경로). 6개 영상이 360p 3초라 5초로 늦춰 틀면 조금 끊겨 보일 수 있습니다(크레딧이 차면 720p 5초로 다시 뽑기). 자막은 영상 장면을 보고 쓴 것이 아니라 죄종 신화로 썼으니, 영상과 어긋나면 `fateWhispers`만 고치면 됩니다. 일그러짐 동안 PostFX 잉크 외곽선이 늘어난 손 가장자리에 이중선처럼 보이는 곳이 있습니다.
+- **2차 (2026-11-24 21:30, 사용자 피드백 "손 흔들림이 어지럽다, 시계 방향 회전 줌 대신 정면 가속 줌, 확대 뒤 주변은 완전히 정지 + 죄종 색 살짝") — 완료(커밋 전):**
+  - **손, 몸 정지:** `MoiraRig.Motion`(새, 기본 1)이 반복 동작(idle 숨쉬기, touchLoop 손 흔들림, 점성구 맥박과 빛) 시간 `loopTime`의 빠르기입니다. 0이면 지금 자세 그대로 멈춥니다(튀지 않음). 한 번 치는 동작(카드 들기, 구슬 감싸기 `touch` 0.9초)은 원래 시간 그대로라 끝까지 갑니다. `FateOrbView.Still`(0~1)이 `rig.Motion = 1 - Still`로 넣고 `End`가 1로 되돌립니다.
+  - **정면 가속 줌:** 줌 진행 `zoom = ze^zoomPower`(이즈인, 점점 빨라짐). 카메라 크기는 원래대로 지수로 섞어 배율 기준으로도 가속입니다. PostFX `FateWarp`의 휘감김(회전)과 `_Time` 일렁임을 지우고, 구슬 바깥이 구슬 쪽으로 곧게 당겨지는 것만 남겼습니다(`_TOD_FateSwirl.w`). 새 `FateFetch`가 구슬 중심을 향한 직선으로 12번 가져와 섞는 줌 블러(`_TOD_FateBlur`, 화소마다 고정된 어긋남으로 겹 잔상 없이)입니다. 당김과 번짐은 줌 속도(`ze^(power-1)`)를 따르다 멈춘 뒤 `rushFade`에 걷힙니다.
+  - **확대 뒤 고요:** 영상 동안 당김 0, 번짐 0, 남는 일그러짐(`swirlRest`) 0, 모이라 정지. 허브에서도 `_TOD_Enabled`가 1이라(에디터 새 플레이에서도 1, 앞 기록의 "허브는 0"은 틀림) PostFX 촛불 깜빡임(화면 밝기 ±1.7%)이 돌고 있어서, `_TOD_FateStill`(= Still)이 1이면 깜빡임도 멈춥니다. 죄종 색 덮개 `FateTint`는 원래 시간에 따라 변하지 않으며 세기만 .7 → .35로 낮췄습니다.
+  - **돌아올 때:** 회전 없이 `EaseInOut`으로 풀리고(`zoomOutTime` 1.3초), 모이라 움직임도 같은 비율로 서서히 돌아옵니다.
+  - **자막 시간표 (조율 세션 요청으로 고침, 죄종마다 두 문장 한 줄):** 한 줄이면 영상 0초에 나타나(`lineFade` .35초) 영상 5초가 끝날 때 맞춰 사라집니다(4.65~5.0초 페이드 아웃, 확인 `Temp/Shots/fate22b_oneline.txt`, `fate22b_oneline_b.png`). 여러 줄이면 영상이 반쯤 번진 뒤(.35초)부터 한 줄 자리 = max(`lineTime` 1.6, (영상 5초 − 첫 자막 때) ÷ 줄 수)로 나오고, 마지막 줄도 자막이 끝날 때 사라집니다. 영상이 끝난 뒤 `endHold` 2.2초는 자막 없이 마지막 장면과 돌아가기 안내만 남습니다.
+  - 데이터(MCP, 씬 저장) `hub.fateShow`: `zoomTime` 2.4 → 1.7, 새 `zoomPower` 2.6, `swirlStrength`(이제 당김 세기) .55 → .35, `swirlRest` .12 → 0, 새 `rushBlur` .3, `rushFade` .35, `freezeTime` 1(줌 시작 뒤 이만큼에 걸쳐 모이라가 멈춤, 영상 시작 때는 반드시 1), `tintAmount` .7 → .35, `lineTime` 2.1 → 1.6, `zoomOutTime` 1.1 → 1.3.
+  - 코드: `HubData.FateShow`(필드 4개), `MoiraRig`(`Motion`, `loopTime`), `FateOrbView`(`Blur`, `Still`, 전역 `_TOD_FateBlur/_TOD_FateStill`), `GameUI.FateShow.cs` 4~6단계, `PostFX.shader`(`FateWarp`, `FateFetch`, 촛불 깜빡임).
+  - **확인:** EditMode 52개 통과. 캡처 `Temp/Shots/fate22b_<pride|wrath|sloth>_*`(E 뒤 0.9 줌 시작, 1.65 가속, 2.1, 2.35 빠름, 2.6 도착, 4.0/6.5 영상, 10.4 풀림)와 시트 `fate22b_*_sheet.png`, 값 기록 `fate22b_<죄종>.txt`. 영상 동안 손(RA_low, LA_low), 몸, 카메라 위치가 소수 넷째 자리까지 같고, 나태 영상 7장(3.6~6.5초)의 구슬 바깥 화면 모서리 밝기가 모두 같습니다(차이 지도 `fate22b_sloth_diffmap.png`: 바뀌는 곳은 구슬 안 영상과 자막뿐). 프로필은 바뀌지 않았음을 확인(`Temp/profile_backup_22fate2.json`).
+  - **남은 것:** 사람이 실제 속도로 본 느낌(가속 세기 `zoomPower`, 번짐 `rushBlur`, 줌 시간). 줌이 끝나는 순간 카메라가 바로 멈추고 번짐이 .35초에 걷히는 식이라, 멈춤이 세게 느껴지면 `rushFade`를 늘리거나 `zoomPower`를 낮춥니다.
+
+### 22차-set-panel (재봉 상자 세트 효과 패널: 가진 세트만, 마우스 올림 창) — 완료(커밋 전)
+- **목록:** 판에 가진 세트만 보입니다(`Gear.Stats`의 `groups[id].size > 0`, 신화 도안은 맞닿은 세트마다 1개로 세는 규칙 그대로). 한 줄 "이름 (개수)" + 오른쪽 메인/부가 꼬리표, 그 아래 지금 단계 효과를 짧게(`SetDef.brief`, 줄바꿈 허용). 첫 단계에 못 미친 세트는 회색 한 줄 "시기 (1/2)". 색 동그라미는 지우고 이름 글씨를 죄종 색으로(켜짐: 죄종 색을 밝혀 잉크 외곽선, 꺼짐: 같은 색조를 회색 쪽으로 60% 흐리게). 켜진 세트는 왼쪽 띠가 죄종 색. 하나도 없으면 "판에 조각을 놓으면 여기에 세트가 나옵니다."(Main.uxml `set-empty`).
+- **마우스 올림 창(`set-tip`, Main.uxml 재봉 상자 안):** 어두운 찢긴 종이(`panel_dark`), 세트 이름(죄종 색) + "4 / 5", 메인/부가 설명(`ui.setMain/setSub`), 설명 한두 줄(`SetDef.description`), 단계마다 한 줄 "(2) 분노 피해 +2, 화상 초당 2, ..."(달성 흰색, 못 달성 회색, 숫자 칸을 나눠 줄바꿈돼도 숫자 아래로 안 들어감). 세트 패널 오른쪽 바깥에 붙고 화면 밖으로 나가지 않게 자리를 고칩니다. 판이 다시 그려지면 같은 세트 창은 새 값으로, 세트가 사라지면 닫힘.
+- **파일:** `Slots.uxml`(set-entry 다시 씀, set-tier 지우고 `set-tip-tier` 추가), `Main.uxml`(`set-empty`, `set-tip`), `Main.uss`(세트 패널 구역 다시 씀, 옛 `.set-swatch/.set-tier/.tier-*` 지움), `GameUI.cs`(`RenderSets` 다시 씀 + `SetNameColor/SetTierText/ShowSetTip/MoveSetTip/HideSetTip`), `GameDatabase.cs`(`SetDef.brief/description`, `UiText.setListCount/setListNeed/setMainTag/setSubTag/setTierLine`).
+- **데이터(MCP, 씬 저장):** 세트 7개 `brief`(예: 분노 "화상 초당 {0}", 탐욕 "저당 +{0}, 금화 +{1}")와 `description`, 문구 `setListCount` "({0})", `setListNeed` "({0}/{1})", `setMainTag` "메인", `setSubTag` "부가", `setTierLine` "({0})".
+- **확인:** EditMode 52개 통과. 캡처 `Temp/Shots/setpanel22_list.png`(분노 4 메인, 탐욕 2 부가, 시기 1/2 회색), `setpanel22_tip_wrath/greed/envy.png`(달성 단계 흰색, 못 달성 회색, 꺼진 세트는 모두 회색). 캡처는 플레이 중 `ShowSetTip`을 리플렉션으로 불러 띄웠고(실제 마우스 올림은 사람 손으로 안 봄), 프로필은 `Temp/profile_backup_22setpanel.json`에서 되돌림.
+- **찾은 문제(이 단계 밖, 조율 세션 몫):** 신화 도안(`gear.pieces[35~48]`, `set` 빈 문자열)이 판에 있으면 `GameUI.BuildPiece`의 `db.Set(def.set).color`에서 NullReference로 재봉 상자 그리기가 멈춥니다. 목록 줄과 조각 정보 창(`ShowTip`의 `db.Set(def.set).name`)도 같은 문제가 있을 것입니다(`db.Set(` 8곳). 그래서 세트 패널 캡처에는 도안을 넣지 않았습니다.
+- **남은 것:** 사람이 실제 마우스로 올려 본 느낌. 세트 이름이 진한 색(분노 진홍, 교만 보라)이라 어두운 바탕에서 조금 어두울 수 있음(`SetNameColor` 밝힘 값 .3).
+
+### 22차-desire-card (모이라 카드 '욕망 최대치' 강화 연출, 일기 도안 버튼 잘림) — 완료(커밋 전)
+- **욕망 최대치 연출:** 강화를 확인하면 아래 작은 알림(`ui.upgradeDone`) 대신 카드 위에 욕망 게이지가 나타납니다. 인게임 욕망 바와 같은 잉크 틀(`bar-frame`, `meter_frame`)과 보라 결(`meter-fill desire`)을 크게 씁니다. 흐름: 나타남(위에서 내려앉음) → 틀이 이전 최대치 길이에서 새 최대치 길이로 **오른쪽으로만** 자람(왼쪽 끝 고정, 살짝 지나쳤다 돌아옴), 숫자가 함께 오름, 이전 최대치 자리에 금빛 바늘땀 → 새로 생긴 자리가 밝은 연보라로 차오름 → 다 차면 번쩍(뒤 빛, 틀 살짝 커짐)하고 원래 욕망 색으로 가라앉음 → 제목 아래 감성 문구가 한 줄씩 떠오름 → 저절로 사라짐. 카드는 그대로 누를 수 있습니다(연출은 picking 무시). 다락을 떠나면 바로 숨습니다.
+  - 길이(px) = `barBase + (최대치 - desire.maxBase) * unitPx`, `barMax`까지. 지금 값으로 100 → 110이면 480 → 560px, 최대(10단계, 200)는 1280px.
+  - 코드: `UI/GameUI.Vessel.cs`(새, `ShowVessel/HideVessel/TickVessel`, `TickMoira` 첫 줄에서 부름), `GameController.ConfirmUpgrade`(욕망 최대치면 `ui.ShowVessel(이전, 새 최대치)`, 아니면 예전 알림). UXML `Main.uxml` attic 안 `vessel`(제목, 아이콘, 틀, 채움, 새 칸, 바늘땀, 반짝, 숫자, 문구 3줄), 모양 `Moira.uss` 끝 `.vessel*`.
+  - 데이터 `HubConfig.vesselShow`(`VesselShow`): barBase 480, unitPx 8, barMax 1300, appear .45, growDelay .35, grow 1.2, fill .7, lineDelay .5, lineGap .7, hold 3.2, fade .6, newColor (.96,.8,1), glintColor (1,.93,1), growSound `desire`, fullSound `unlock`.
+- **문구 필드 (확정, 사용자 선택 "실 끝이 더 많은 욕망을 견딘다. 손끝이 뜨겁다."):** 첫 문장은 게이지와 함께 나타나는 제목, 둘째 문장은 다 자란 뒤 아래에 떠오르는 줄로 나눔. 아래 임시 문구는 지움. 모두 `GameDatabase.hub`(씬 `Main.unity`의 GameDatabase, MCP `update_component` 또는 execute_code).
+  - `hub.vesselTitle` (한 줄, 게이지 위 제목): "실 끝이 더 많은 욕망을 견딘다."
+  - `hub.vesselLines` (문자열 배열, 게이지 아래 한 줄씩 차례로 떠오름. **최대 3줄**, 한 줄 25자 안팎이면 한 줄에 들어감, 더 길면 저절로 접힘): ["손끝이 뜨겁다."]
+  - `hub.vesselValue` (게이지 오른쪽 숫자, `{0}` = 올라가는 최대치): "{0}"
+  - 제목과 문구의 자리: `{0}` 이전 최대치, `{1}` 새 최대치, `{2}` 늘어난 양(지금 10). 가운뎃점 금지.
+- **일기 도안 버튼:** 두 버튼이 같은 절대 위치(right 60, bottom 44)라 겹치고 글이 잘렸습니다. `Diary.uxml`에 버튼 줄 `diary-page-actions`(오른쪽 정렬 가로 줄)를 두고 도안 버튼은 줄어들며 두 줄로 접히게(`max-width` 600, 21px), 닫기는 그대로. 쪽지 아래 여백 118 → 150px. 문구 데이터를 두 줄로 바꿈: `diary.mythicCarry` "이 도안을 들고 가기
+{0}", `diary.mythicCarried` "들고 가는 중 (누르면 내려놓기)
+{0}". 7장 × 붉은 도안 × 들고 감 상태를 재어 보니 도안 버튼 폭 최대 325px, 두 줄, 닫기 버튼과 17px 이상 떨어짐.
+- **확인:** EditMode 52개 통과. 캡처 `Temp/Shots/`: `desire22_vessel_1appear ~ 7fade.png`(나타남, 자라기 시작, 자라는 중, 다 자람, 차오름, 문구, 사라짐) + 모은 그림 `desire22_vessel_sheet.png`, 일기 `desire22_diary_1normal / 2tainted / 3carried / 4carried_ch7.png` + `desire22_diary_sheet.png`, 7장 버튼 크기 `desire22_diary_bounds.txt`. 프로필은 `Temp/profile_backup_22desire.json`에서 되돌림. 씬 저장함.
+- 확정 문구 캡처: `Temp/Shots/desire22_vessel_final_*.png`, `desire22_vessel_final_sheet.png`.
+- **남은 것:** 사람이 실제 속도로 본 느낌(자라는 길이 80px이 충분한지, 늘리려면 `unitPx`, 최대 길이는 `barMax`). 효과음 `desire`, `unlock`은 기존 것을 빌림.
+
 ## 21차 (2026-11-24) — 칸 강화 "+N" 숫자, 맵 장식 일렁임 줄임, 증강 연출(발밑 파란 아크 + 디졸브), 피해 숫자 그림 시트 — 완료(커밋 전)
 
 - **사용자 요청:** 줄 강화를 색 대신 세피리아처럼 칸 오른쪽 위 "+1" 숫자로. 촛불 장식이 너무 일렁거림. 증강을 고를 때 동그란 이펙트 대신 실시간으로 성장하는 느낌의 디졸브 연출을 Blender로(선택: 실이 감겨 오르기, 금빛 고정, 오른 능력치 글자 띄우기). 실 공격과 당기기 피해 숫자가 구림 → 주아로, 검은 외곽 흐리게 → 이어서 "각 숫자에 대응되게 이미지 시트로 새로 뽑아 달라".

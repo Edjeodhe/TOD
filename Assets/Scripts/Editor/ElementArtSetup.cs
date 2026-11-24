@@ -24,8 +24,9 @@ namespace TOD.EditorTools
 
         static readonly Dictionary<Element, string> Ids = new()
         {
-            { Element.Fire, "fire" }, { Element.Ice, "ice" }, { Element.Lightning, "lightning" }, { Element.Light, "light" },
-            { Element.Dark, "dark" }, { Element.Blood, "blood" }, { Element.Wind, "wind" }, { Element.Poison, "poison" },
+            // 22차: 칠죄종 id. 그림 파일 이름의 속성 자리 (예: enemy_stalker_head_wrath.png, proc_lust.png)
+            { Element.Wrath, "wrath" }, { Element.Sloth, "sloth" }, { Element.Pride, "pride" },
+            { Element.Greed, "greed" }, { Element.Gluttony, "gluttony" }, { Element.Lust, "lust" }, { Element.Envy, "envy" },
         };
 
         [Serializable] class SheetInfo { public int frames; public int size; public float fps; public bool loop; public float[] pivot; }
@@ -73,7 +74,8 @@ namespace TOD.EditorTools
                 }
                 def.skins = skins.ToArray();
                 // 정적 소품
-                var props = def.props?.Where(p => p?.sprite != null).ToList() ?? new List<DecorDef>();
+                // 22차: 옛 속성 소품(decor_fire_* 등)은 빼고 이 죄종 소품만 남긴다 (손으로 바꾼 가중치는 유지)
+                var props = def.props?.Where(p => p?.sprite != null && p.sprite.name.StartsWith($"decor_{id}_")).ToList() ?? new List<DecorDef>();
                 foreach (string path in Directory.GetFiles(SpriteDir, $"decor_{id}_*.png"))
                 {
                     if (Path.GetFileNameWithoutExtension(path).EndsWith("_loop")) continue;
@@ -194,9 +196,19 @@ namespace TOD.EditorTools
         }
 
         // 속성 파츠: 원래 파츠와 같은 가져오기 설정(크기, 피벗, PPU)으로 맞춘다 → 리그에 끼워도 크기와 회전 중심이 같다
+        // 22차: 새 디자인이 원래 파츠 밖으로 튀어나와 캔버스를 넓힌 파츠는 bake_22_art.py 가 이 파일에 피벗을 적는다.
+        //        같은 픽셀 배율이라 PPU 는 원래 그대로, 피벗만 원래 관절 자리로 옮긴다.
+        const string FitPath = "art_src/raw/sin_parts_fit.json";
+        [Serializable] class FitItem { public string name; public float[] pivot; }
+        [Serializable] class FitList { public FitItem[] items; }
+
         static int ImportSkins()
         {
             int count = 0;
+            var fits = new Dictionary<string, Vector2>();
+            if (File.Exists(FitPath))
+                foreach (FitItem f in JsonUtility.FromJson<FitList>(File.ReadAllText(FitPath))?.items ?? Array.Empty<FitItem>())
+                    if (f?.pivot is { Length: 2 }) fits[f.name] = new Vector2(f.pivot[0], f.pivot[1]);
             foreach (string id in Ids.Values)
             {
                 foreach (string file in Directory.GetFiles(SpriteDir, $"enemy_*_{id}.png"))
@@ -213,6 +225,12 @@ namespace TOD.EditorTools
                     target.ReadTextureSettings(current);
                     // 그림 크기가 다르면 PPU 를 비율만큼 바꿔 같은 크기로 그려지게 한다 (피벗은 비율 좌표라 그대로)
                     float ppu = settings.spritePixelsPerUnit * (bh > 0 ? th / (float)bh : 1);
+                    if (fits.TryGetValue(name, out Vector2 fitPivot))
+                    {
+                        ppu = settings.spritePixelsPerUnit;
+                        settings.spriteAlignment = (int)SpriteAlignment.Custom;
+                        settings.spritePivot = fitPivot;
+                    }
                     bool dirty = target.textureType != TextureImporterType.Sprite || current.spriteAlignment != settings.spriteAlignment
                         || current.spritePivot != settings.spritePivot || Mathf.Abs(current.spritePixelsPerUnit - ppu) > .01f || current.spriteMode != settings.spriteMode;
                     if (!dirty) continue;
