@@ -1061,7 +1061,7 @@ COPPER = lin(hexc("#9a6a42"))
 
 def decor_fire(t, B, G, P, rng):
     """촛불 무리: 촛농이 흘러내린 초 다섯 자루에서 불꽃이 일렁이고, 불씨가 오른다."""
-    G.glow(0, GY + 1.2, 1.7, P["glow"], .35 + .05 * math.sin(TAU * t * 2))
+    G.glow(0, GY + 1.2, 1.7, P["glow"], .35 + .02 * math.sin(TAU * t * 2))
     G.glow(0, GY, 1.4, P["glow"], .3, sy=PY)
     B.blob(0, GY, 1.0, mixc(WAX_D, INK, .3), .9, sy=PY * .8, rough=.25, seed=3)   # 녹아 고인 촛농
     B.blob(-.1, GY + .03, .75, WAX_D, .9, sy=PY * .7, rough=.3, seed=4)
@@ -1073,8 +1073,8 @@ def decor_fire(t, B, G, P, rng):
         B.blade(x - w * .5, y0 + h, x - w * .5, y0 + h * .65, .035, WAX_D, bias=.2)
         B.blob(x - w * .45, y0 + h * .4, .04, WAX, rough=.1)
         B.blade(x, y0 + h - .02, x + .01, y0 + h + .1, .02, INK, bias=.5)          # 심지
-        fl = .9 + .12 * math.sin(TAU * (t * 2 + ph)) + .06 * math.sin(TAU * (t * 3 + ph * 2))
-        sway = .06 * math.sin(TAU * (t + ph)) + .03 * math.sin(TAU * (t * 2 + ph * 3))
+        fl = .92 + .05 * math.sin(TAU * (t * 2 + ph)) + .025 * math.sin(TAU * (t * 3 + ph * 2))   # 21차: 덜 일렁이게 (.12/.06 → .05/.025)
+        sway = .025 * math.sin(TAU * (t + ph)) + .012 * math.sin(TAU * (t * 2 + ph * 3))
         G.glow(x, y0 + h + .25, .45, P["glow"], .4)
         fire_tongue(B, P, x, y0 + h + .03, 0, 1, .5 * fl, sway, .14, ph=ph * TAU)
     for i in range(5):
@@ -1455,8 +1455,9 @@ def bind_poison(t, B, G, P, rng):
 SHEETS = {}
 
 
-def sheet(name, group, fn, el, frames, fps, size, loop, pivot, ink=2.6, wob=.02):
-    SHEETS[name] = dict(group=group, fn=fn, element=el, frames=frames, fps=fps, size=size, loop=loop, pivot=pivot, ink=ink, wob=wob)
+def sheet(name, group, fn, el, frames, fps, size, loop, pivot, ink=2.6, wob=.02, still=False):
+    """still: 칸마다 외곽과 모양이 들썩이지 않는다 (21차: 맵 장식이 너무 일렁거림 → 초와 웅덩이는 가만히, 불꽃과 알갱이만 움직임)"""
+    SHEETS[name] = dict(group=group, fn=fn, element=el, frames=frames, fps=fps, size=size, loop=loop, pivot=pivot, ink=ink, wob=wob, still=still)
 
 
 for el in ELEMENTS:
@@ -1467,7 +1468,7 @@ sheet("boss_poison_pool", "boss", pool_poison, "poison", 12, 12, 256, True, (.5,
 for el in ELEMENTS:
     sheet(f"proc_{el}", "proc", globals()[f"proc_{el}"], el, 12, 24, 256, False, PIVOT_CENTER, ink=2.2)
 for el in ELEMENTS:
-    sheet(f"decor_{el}_loop", "decor", globals()[f"decor_{el}"], el, 16, 10, 256, True, PIVOT_GROUND, ink=2.4, wob=.015)
+    sheet(f"decor_{el}_loop", "decor", globals()[f"decor_{el}"], el, 16, 10, 256, True, PIVOT_GROUND, ink=2.4, wob=.015, still=True)
 for el in ("dark", "blood", "wind", "poison"):
     sheet(f"bind_{el}_burst", "bind", globals()[f"bind_{el}"], el, 14, 30, 256, False, PIVOT_GROUND)
 
@@ -1560,7 +1561,7 @@ for name, s in SHEETS.items():
     bodies, glows = [], []
     for i in range(n):
         t = i / n if s["loop"] else i / (n - 1)
-        boil = i if s["loop"] else i // 2           # 반복은 칸마다, 터짐은 두 칸마다(12fps 들썩임)
+        boil = 0 if s["still"] else i if s["loop"] else i // 2   # 반복은 칸마다, 터짐은 두 칸마다(12fps 들썩임), still 은 고정
         B, G = Layer(s["wob"], boil), Layer(0, boil)
         fn = s["fn"]
         fn(t, B, G, P, random.Random(sum(map(ord, name)) * 31))

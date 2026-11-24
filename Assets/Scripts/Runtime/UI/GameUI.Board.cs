@@ -1,5 +1,6 @@
 // 19차 아웃게임 재봉 상자 판: 상인 단추의 '시작 조각 챙기기'(진열 조각을 놓으면 산다)와 모이라의 줄 고르기.
-// 줄 고르기: 가로/세로 줄은 마우스를 올린 줄이 반투명하게 덮이고(board-ghost), 누르면 그 줄. 이미 강화한 줄은 금빛 띠(board-pick).
+// 줄 고르기: 가로/세로 줄은 마우스를 올린 줄이 반투명하게 덮이고(board-ghost), 누르면 그 줄.
+// 21차: 강화한 칸은 색 대신 칸 오른쪽 위 "+N" 숫자(board-badges, DrawBadges). 이미 강화한 줄의 손잡이는 흐리게.
 // 확장은 판 네 가장자리에 반투명 띠(Slots.uxml pick-strip 복제)가 붙고, 누른 쪽에 줄 하나가 생긴다.
 // 구조는 Main.uxml(inventory-title, inventory-help, board-pick), 모양은 Outgame.uss.
 using System;
@@ -81,20 +82,6 @@ namespace TOD
             wrap.style.marginBottom = Margin(around); wrap.style.marginRight = Margin(around);
             if (boardMode?.pick == null) return;
 
-            // 강화한 줄: 판 위 금빛 띠 (가로 줄 = 가로 띠, 세로 줄 = 세로 띠). 고르는 종류의 줄만 진하게.
-            foreach (int y in profile.rowLines ?? new List<int>())
-            {
-                VisualElement band = Band(0, y * pitch, width * pitch, pitch, boardMode.pick is Moira.Rows or Moira.Lines ? "pick-done" : "pick-done-faint");
-                band.name = $"line-r{y}";   // 20차 PlayLineGrow 가 찾아 채운다
-                layer.Add(band);
-            }
-            foreach (int x in profile.colLines ?? new List<int>())
-            {
-                VisualElement band = Band(x * pitch, 0, pitch, height * pitch, boardMode.pick is Moira.Cols or Moira.Lines ? "pick-done" : "pick-done-faint");
-                band.name = $"line-c{x}";
-                layer.Add(band);
-            }
-
             if (lines)   // 칸 강화: 왼쪽 = 가로 줄 손잡이, 위 = 세로 줄 손잡이. 올리면 그 줄 전체가 반투명하게 덮인다
             {
                 for (int y = 0; y < height; y++) AddHandle(layer, profile, y, new Rect(-handle - 8, y * pitch + 3, handle, pitch - 6), "▶");
@@ -138,6 +125,36 @@ namespace TOD
             layer.Add(strip);
         }
 
+        // 21차: 강화한 칸 오른쪽 위에 "+N" (N = 그 칸을 지나는 강화한 가로 줄 + 세로 줄). 등반 중 재봉 상자에서도 보인다.
+        readonly Dictionary<Vector2Int, Label> badges = new();
+
+        void DrawBadges(Profile profile, int width, int height)
+        {
+            VisualElement layer = inventory.Q("board-badges");
+            layer.Clear();
+            badges.Clear();
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                {
+                    var at = new Vector2Int(x, y);
+                    var badge = (Label)Slot(slots, "cell-badge");
+                    badge.style.left = x * pitch;
+                    badge.style.top = y * pitch + 1;
+                    badge.style.width = pitch - 2;
+                    badge.style.fontSize = Mathf.Max(13, Mathf.Round(pitch * .3f));
+                    badge.style.transformOrigin = new TransformOrigin(Length.Percent(88), Length.Percent(20));
+                    SetBadge(badge, Gear.Reinforced(profile, at));
+                    layer.Add(badge);
+                    badges[at] = badge;
+                }
+        }
+
+        static void SetBadge(Label badge, int n)
+        {
+            badge.text = n > 0 ? $"+{n}" : "";
+            badge.style.display = n > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
         // 칸 강화 손잡이에 올린 줄을 반투명하게 덮는다 (이미 강화한 줄이면 붉게). -1 = 지움
         void HoverLine(Profile profile, int pick)
         {
@@ -155,13 +172,14 @@ namespace TOD
 
         // ---------------------------------------------------------------- 20차 칸 강화, 확장 연출
         // 빛나는 실 머리가 그 줄의 첫 칸(위 또는 왼쪽)에서 끝 칸까지 달리며 실을 잇는다. 머리가 지나는 칸은
-        // 확장이면 하나씩 튀어나오고(그 전에는 숨김), 칸 강화면 금빛 띠가 머리를 따라 채워진다. 칸마다 번쩍임. 값은 db.hub.lineGrow.
+        // 확장이면 하나씩 튀어나오고(그 전에는 숨김), 칸 강화면 그 칸의 "+N" 숫자가 하나 올라 톡 튀어나온다(21차). 칸마다 번쩍임. 값은 db.hub.lineGrow.
         class Grow
         {
             public readonly List<VisualElement> cells = new(), flashes = new();
             public readonly List<Vector2> centers = new();
-            public VisualElement thread, head, band;
-            public Rect bandRect;
+            public VisualElement thread, head;
+            public readonly List<Label> badges = new();      // 21차 칸 강화: 칸마다 "+N" (없으면 null)
+            public readonly List<int> badgeFrom = new(), badgeTo = new();
             public bool expand, vertical;
             public float start;
             public int stepped = -1;
@@ -202,13 +220,15 @@ namespace TOD
                 flash.style.opacity = 0;
                 gr.flashes.Add(flash);
                 if (gr.expand) { cell.style.opacity = 0; cell.style.scale = new Scale(Vector2.zero); }
+                // 칸 강화: 방금 오른 칸은 머리가 닿기 전까지 이전 숫자
+                Label badge = !gr.expand && badges.TryGetValue(at, out Label b) ? b : null;
+                int now = Gear.Reinforced(profile, at);
+                gr.badges.Add(badge);
+                gr.badgeTo.Add(now);
+                gr.badgeFrom.Add(Mathf.Max(0, now - 1));
+                if (badge != null) SetBadge(badge, now - 1);
             }
             if (gr.cells.Count == 0) return;
-            if (!gr.expand)
-            {
-                gr.band = layer.Q(vertical ? $"line-c{line}" : $"line-r{line}");
-                if (gr.band != null) gr.bandRect = vertical ? new Rect(line * pitch, 0, pitch, height * pitch) : new Rect(0, line * pitch, width * pitch, pitch);
-            }
             gr.thread = Slot(slots, "grow-thread");
             gr.thread.style.backgroundColor = g.threadColor;
             gr.head = Slot(slots, "grow-head");
@@ -225,7 +245,8 @@ namespace TOD
         {
             if (grow == null) return;
             foreach (VisualElement c in grow.cells) { c.style.opacity = StyleKeyword.Null; c.style.scale = StyleKeyword.Null; }
-            if (grow.band != null) { grow.band.style.width = grow.bandRect.width; grow.band.style.height = grow.bandRect.height; }
+            for (int i = 0; i < grow.badges.Count; i++)
+                if (grow.badges[i] != null) { SetBadge(grow.badges[i], grow.badgeTo[i]); grow.badges[i].style.scale = StyleKeyword.Null; }
             grow.thread?.RemoveFromHierarchy();
             grow.head?.RemoveFromHierarchy();
             foreach (VisualElement f in grow.flashes) f.RemoveFromHierarchy();
@@ -256,13 +277,6 @@ namespace TOD
             float burst = t > travel ? Mathf.Clamp01((t - travel) / Mathf.Max(.05f, g.fadeTime)) : 0;
             PlaceAt(grow.head, headAt, g.headSize * pitch * (1 + .18f * Mathf.Sin(Now * 22) + burst * 1.6f));
             grow.head.style.opacity = t < 0 ? 0 : fade;
-            // 칸 강화: 금빛 띠가 머리를 따라 채워짐
-            if (grow.band != null)
-            {
-                Rect r = grow.bandRect;
-                if (grow.vertical) grow.band.style.height = Mathf.Clamp(headAt.y - r.y, 0, r.height);
-                else grow.band.style.width = Mathf.Clamp(headAt.x - r.x, 0, r.width);
-            }
             // 칸: 머리가 칸 가운데에 닿을 때 번쩍임 (확장이면 그때 튀어나옴)
             for (int i = 0; i < n; i++)
             {
@@ -271,6 +285,15 @@ namespace TOD
                 VisualElement flash = grow.flashes[i];
                 if (f > 0 && f < 1) { PlaceAt(flash, grow.centers[i], g.flashSize * pitch * (.5f + .9f * EaseOutQuad(f))); flash.style.opacity = 1 - f; }
                 else flash.style.opacity = 0;
+                Label badge = grow.badges[i];
+                if (badge != null)   // 칸 강화: 머리가 닿으면 숫자가 하나 올라 톡 튀어나옴
+                {
+                    bool up = t >= ti;
+                    SetBadge(badge, up ? grow.badgeTo[i] : grow.badgeFrom[i]);
+                    float k = up ? Mathf.Clamp01((t - ti) / Mathf.Max(.05f, g.cellPop)) : 1;
+                    float s = up ? 1 + .9f * (1 - EaseOutBack(k)) + .35f * Mathf.Sin(Mathf.PI * k) : 1;
+                    badge.style.scale = new Scale(new Vector2(s, s));
+                }
                 if (grow.expand)
                 {
                     float k = Mathf.Clamp01((t - ti + g.cellPop * .25f) / Mathf.Max(.05f, g.cellPop));

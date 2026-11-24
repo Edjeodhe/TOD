@@ -643,7 +643,6 @@ namespace TOD
                     cell.style.top = y * pitch;
                     PlacedPiece occupying = placed.FirstOrDefault(p => p.cells.Contains(at));
                     cell.EnableInClassList("filled", occupying != null);
-                    cell.EnableInClassList("reinforced", Gear.Reinforced(profile, at) > 0);   // 19차: 고른 가로 줄, 세로 줄
                     cell.text = "";
                     cell.clicked += () => game.ClickCell(at.x, at.y);
                     cell.RegisterCallback<PointerEnterEvent>(e =>
@@ -658,6 +657,8 @@ namespace TOD
                     cells[at] = cell;
                 }
             }
+
+            DrawBadges(profile, width, height);   // 21차: 강화한 칸 "+N" (GameUI.Board.cs)
 
             // 판 위 조각 그림
             VisualElement layer = inventory.Q("board-pieces");

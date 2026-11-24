@@ -1105,6 +1105,7 @@ namespace TOD
                     case FxKind.Chain: DrawChain(fx, fade, at); break;
                     case FxKind.Proc: DrawProc(fx, fade); break;
                     case FxKind.BossHit: DrawBossHit(fx, fade); break;
+                    case FxKind.Growth: DrawGrowth(r, fx, fade); break;
                     case FxKind.Transfer:
                     {
                         float t = 1 - fade;

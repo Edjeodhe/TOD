@@ -3,6 +3,8 @@
     <ui:Button name="cell" class="cell" />
     <!-- 19차 모이라 줄 고르기: 판 위 반투명 띠(강화한 줄, 마우스를 올린 줄)와 확장 가장자리 띠 (GameUI.Board.cs) -->
     <ui:VisualElement name="pick-band" class="pick-band" picking-mode="Ignore" />
+    <!-- 21차 강화한 칸: 칸 오른쪽 위 "+N" (가로 줄 + 세로 줄 강화 횟수) -->
+    <ui:Label name="cell-badge" class="cell-badge" picking-mode="Ignore" />
     <ui:Button name="pick-strip" class="pick-strip" />
     <!-- 20차 칸 강화, 확장 연출 (GameUI.Board.cs PlayLineGrow): 실, 실 머리 빛, 칸 번쩍임 -->
     <ui:VisualElement name="grow-thread" class="grow-thread" picking-mode="Ignore" />

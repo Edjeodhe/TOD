@@ -85,6 +85,21 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 21차 (2026-11-24) — 칸 강화 "+N" 숫자, 맵 장식 일렁임 줄임, 증강 연출(발밑 파란 아크 + 디졸브), 피해 숫자 그림 시트 — 완료(커밋 전)
+
+- **사용자 요청:** 줄 강화를 색 대신 세피리아처럼 칸 오른쪽 위 "+1" 숫자로. 촛불 장식이 너무 일렁거림. 증강을 고를 때 동그란 이펙트 대신 실시간으로 성장하는 느낌의 디졸브 연출을 Blender로(선택: 실이 감겨 오르기, 금빛 고정, 오른 능력치 글자 띄우기). 실 공격과 당기기 피해 숫자가 구림 → 주아로, 검은 외곽 흐리게 → 이어서 "각 숫자에 대응되게 이미지 시트로 새로 뽑아 달라".
+- **칸 강화 "+N" (`GameUI.Board.cs` `DrawBadges/SetBadge`, Main.uxml `board-badges` 층, Slots.uxml `cell-badge`, Main.uss `.cell-badge`):** N = 그 칸을 지나는 강화한 가로 줄 + 세로 줄(`Gear.Reinforced`). 고르기 판과 등반 중 재봉 상자 모두 보입니다. 금빛 띠(`pick-done`)와 칸 색(`.cell.reinforced`)은 없앴고, 이미 강화한 손잡이는 금빛 대신 흐린 갈색입니다. 칸 강화 연출(`PlayLineGrow`)은 띠를 채우는 대신 실 머리가 지나는 칸의 숫자가 하나 올라 톡 튀어나옵니다. 안내 문구 `hub.pickLines/Rows/Cols`의 "금빛 줄은..."을 "칸 오른쪽 위 숫자는 그 칸을 강화한 횟수"로 바꿨습니다.
+- **맵 장식 일렁임:** `render_element_vfx.py` `sheet(..., still=True)`이면 칸마다 외곽과 모양이 들썩이지 않습니다(boil 고정). 장식 8종을 다시 구웠고, 촛불은 불꽃 흔들림도 절반 이하로 줄였습니다. 초와 촛농 웅덩이는 가만히, 불꽃과 불티만 움직입니다(`Temp/Shots/decor21_fire_frames.png`).
+- **증강 연출 (2판, `tools/render_augment_growth.py` → `Assets/Art/VFX/16/growth_back|front[_glow].png`, 20칸):** 처음 만든 금빛 실 나선 감기(1판)는 사용자가 "너무 과하다"고 해서 바꿨습니다. 지금은 파란 아크 세 줄기가 발밑 바닥에 미끄러지듯 감겨 붙었다가 살짝 돌며 빛나고, 노이즈 디졸브로 조각조각 사라지며 작은 불티가 오릅니다. 잉크 외곽은 없습니다. 고리 뒤쪽 반은 `back`(Ground 층, 주인공 뒤), 앞쪽 반은 `front`(Effects 층)입니다. 1판 스크립트는 git 기록에 없습니다(커밋 전에 덮어씀).
+  - 연결: `TOD/Setup/16. Element Art`가 `visual.growthBack/Front`를 채웁니다(fps 0 = 효과 시간에 한 번). 그리기 `ArenaRenderer.DrawGrowth`, `FxKind.Growth`(주인공을 따라감). `GameController.PickAugment`가 올리기 전 `AugmentPreview`로 "공격력 14 → 17" 같은 글자를 만들어 `growthTextAt`부터 머리 위로 띄웁니다. 연달아 고르면 앞 연출은 지우고 새 것만 남깁니다. 옛 `FxSprite.Stitch` 증강 이펙트는 안 씁니다.
+  - 값: `growthSize` 180, `growthFoot` .3, `growthTextAt` .3, `growthTextLift` 112, `growthTextRise` 26, `growthTextSize` 22, 글자색 (.72, .88, 1), `fx.augment.time` .75 → 1.3.
+- **피해 숫자 그림 시트:** Codex(`tools/codex_prompts/number21_a.txt`, 참고 `art_src/raw/number21_ref.png` = 주아 배치)로 0~9 + - ! 를 그렸습니다. a = 두툼한 흰 펠트 + 안쪽 홈질(쓰는 것), b = 찢은 양피지(`number21_b.png`, 비교용).
+  - `python tools/bake_number_font.py [a|b]` → `Assets/Art/Generated/number_font.png`(흰 글자, 피해 색을 곱함), `number_font_crit.png`(흰빛→노랑→주황), `art_src/fonts/number_font.json`, 검토 `art_src/fonts/number_font_preview_a|b.png`. 외곽은 짙은 심(4px, 흐림 2) + 옅은 번짐(10px, 흐림 5.5, α .55)의 흐린 검정입니다.
+  - `TOD/Setup/1`이 `number_font*.png`를 이 JSON으로 자릅니다. `visual.damageFont`/`critFont` 글자 = `number_font_<코드>` / `number_font_crit_<코드>`, 높이 30 → 37, 간격 -.08 → -.2(칸 여백이 커져서. 보이는 숫자 크기는 그대로).
+  - 실 당기기 피해 숫자는 이제 메인 속성 글꼴을 쓰지 않습니다(`Combat` 당기기 숫자 `useElement` 제거). 속성 피해, 흡혈 숫자는 그대로 `damage_font_<속성>`.
+- **확인:** EditMode 49개 통과. 캡처 `Temp/Shots/board21_badges.png`(+1/+2), `growth21b_frames.png`와 `growth21b_game_crop.png`(파란 아크 + "공격력 14 → 17"), `growth21_c.png`(전투 숫자). 프로필은 `Temp/profile_backup_21.json`, `_21b.json`에서 되돌림.
+- **남은 것:** 실제 속도로 사람이 본 연출(감기 속도, 글자 높이). 피해 숫자 b판으로 바꾸려면 `bake_number_font.py b` 후 `TOD/Setup/1`. 펠트 숫자에 곱하는 `fx.damageColor`가 옅은 민트라 색을 다시 고를 수 있습니다. 화살표(→)는 주아에 없어 갈무리 대체 글꼴로 나옵니다.
+
 ## 20차 (2026-11-24) — 운명 읽기 연출, 칸 강화·확장 연출, 종이 강화 판, 재봉실 그림 다시 뽑기, 층 암시 1라운드만, 카드 띠 글자 — 완료(커밋 전)
 
 - **사용자 요청:**

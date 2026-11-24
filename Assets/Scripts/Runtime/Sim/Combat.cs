@@ -922,7 +922,7 @@ namespace TOD
                 Fx number = Spawn(r, FxKind.Number, e.x, e.y, X.damageNumber);
                 number.text = dealt.ToString("0"); number.color = transferred > 0 ? X.transferColor : X.damageColor; number.pop = Mathf.Min(count, F.maxPopCount);
                 number.crit = crit;   // 치명타: 노란 글꼴 + 뾰족 아이콘
-                number.useElement = main != null; number.element = mainElement;   // 메인 속성 글꼴
+                number.element = mainElement;   // 21차: 실 피해는 속성 글꼴 대신 흐린 외곽 주아 숫자(visual.damageFont). 속성 피해는 따로 속성 글꼴
                 number.affinity = relation;
                 if (crit) Event(r, "crit");
                 if (binding)

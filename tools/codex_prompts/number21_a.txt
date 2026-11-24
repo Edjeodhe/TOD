@@ -1,0 +1,9 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/number21_a.png
+Size: landscape 1536x1024.
+The attached reference shows the LAYOUT and letter shapes only (a rounded chunky Korean-game font). Redraw it as a custom illustrated DAMAGE NUMBER typography sheet for a dark-fantasy sewing-themed 2D action game (a tower, needles and thread, torn parchment, candlelight).
+Exactly these 13 separate characters in the same positions as the reference, two rows, each fully separated by a wide empty gap (at least 60px), nothing touching:
+Row 1 (left to right): 0 1 2 3 4 5 6
+Row 2 (left to right): 7 8 9 + - !
+Style: soft, round, chunky, friendly heavy lettering (like the reference), every digit the SAME height (about 260px), upright, all characters clearly belonging to ONE consistent hand-made typeface. Each character looks cut from thick cream-white felt / padded fabric: fill is near-WHITE (#FFFFFF to #F4F0EA, very light so it can be tinted in game), with a gentle inner bevel shading only in light warm grey at the bottom-right inside edge, and a thin running-stitch line (small dashes, light grey #CFC8C0) sewn just inside the outline following its contour. A thin dark ink contour (#1A1013, about 6px) around each character. No other colors, no glow, no drop shadow, no decoration outside the characters. Perfectly readable at small size.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no text other than what is asked. Do not use any green color inside the artwork.

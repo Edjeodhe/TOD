@@ -214,10 +214,16 @@ namespace TOD
 
         void PickAugment(string id)
         {
+            AugmentDef def = System.Array.Find(db.augments.augments, a => a.id == id);
+            string preview = def != null ? Combat.AugmentPreview(Run, def) : "";   // 올리기 전에 "12 → 15"
             Combat.ApplyAugment(Run, id);
             offered = null;
             augmentRerolled = false;
-            AddPlayerFx(FxSprite.Stitch, db.fx.augment);
+            // 21차: 동그란 바느질 이펙트 대신 발밑에 파란 아크가 살짝 붙었다 디졸브로 사라짐 + 머리 위 오른 능력치
+            FxSpec spec = db.fx.augment;
+            Run.effects.RemoveAll(e => e.kind == FxKind.Growth);   // 연달아 고르면 앞 연출과 글자가 겹치지 않게 새 것으로
+            Run.effects.Add(new Fx { kind = FxKind.Growth, x = Run.player.x, y = Run.player.y, time = spec.time, max = spec.time, alpha = spec.alpha, followHero = true,
+                text = def == null ? null : string.IsNullOrEmpty(preview) ? def.name : $"{def.name}  {preview}" });
             ui.CloseDialog();
             sound.Play("upgrade");
         }

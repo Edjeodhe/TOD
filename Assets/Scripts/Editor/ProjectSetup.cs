@@ -54,6 +54,11 @@ namespace TOD.EditorTools
             if (File.Exists(fontJson))
                 foreach (string fontAtlas in Directory.GetFiles("Assets/Art/Generated", "damage_font*.png"))
                     SliceGlyphAtlas(fontAtlas.Replace('\\', '/'), fontJson);
+            // 21차 흐린 외곽 숫자 글꼴 (tools/bake_number_font.py): 실 공격, 당기기, 치명타 숫자
+            const string numberJson = "art_src/fonts/number_font.json";
+            if (File.Exists(numberJson))
+                foreach (string fontAtlas in Directory.GetFiles("Assets/Art/Generated", "number_font*.png"))
+                    SliceGlyphAtlas(fontAtlas.Replace('\\', '/'), numberJson);
             Debug.Log($"[TOD] Texture imports configured ({changed} changed)");
         }
 
@@ -64,7 +69,7 @@ namespace TOD.EditorTools
             bool tiled = name == "floor" || name == "dash" || (name.StartsWith("bind_") && name.Contains("_thread"));   // 결박 실 몸통 리본은 길이 방향으로 반복
 
             importer.textureType = TextureImporterType.Sprite;
-            importer.spriteImportMode = flip || name.StartsWith("damage_font") ? SpriteImportMode.Multiple : SpriteImportMode.Single;   // 그림 글꼴 아틀라스는 여러 장(잘라 둔 글자 유지)
+            importer.spriteImportMode = flip || name.StartsWith("damage_font") || name.StartsWith("number_font") ? SpriteImportMode.Multiple : SpriteImportMode.Single;   // 그림 글꼴 아틀라스는 여러 장(잘라 둔 글자 유지)
             importer.spritePixelsPerUnit = PixelsPerUnit;
             // 스프라이트는 화면에서 3~7배 줄여 그리므로 밉맵으로 자글거림을 막는다 (바이어스는 0, 음수로 날카롭게 하면 움직일 때 지글거림).
             importer.mipmapEnabled = !flip && name != "dash" && name != "white";

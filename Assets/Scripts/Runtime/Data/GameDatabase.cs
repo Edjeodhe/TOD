@@ -467,6 +467,13 @@ namespace TOD
         public int levelUpChevrons;               // 위로 솟는 화살표(▲) 수
         public int levelUpIcons;                  // 몸 둘레 여기저기 튀어나오는 레벨업 아이콘 수
         public float levelUpIconSize, levelUpIconSpread;   // 아이콘 크기(캔버스 px), 몸 둘레 퍼짐(캔버스 px)
+        [Header("21차 증강 성장: 금빛 실이 몸을 감아 오르고 아래부터 디졸브 (tools/render_augment_growth.py)")]
+        public FlipClip growthBack, growthFront;  // 몸 뒤 / 앞 층 (TOD/Setup/16. Element Art 가 연결, fps 0 = 효과 시간에 한 번)
+        public float growthSize;                  // 한 칸 높이 (캔버스 px). 발은 칸 가운데에서 growthFoot × 크기 아래
+        public float growthFoot;                  // .3 (Blender 바닥점 y = -1.2 / 4)
+        public float growthTextAt;                // 능력치 글자가 나오기 시작하는 때 (효과 시간 0~1)
+        public float growthTextLift, growthTextRise, growthTextSize;   // 발에서 글자까지 높이, 떠오르는 거리, 글자 크기 (캔버스 px)
+        public Color growthTextColor;
         [Header("피해 숫자 그림 글꼴")]
         public GlyphFont damageFont;
         [Header("치명타 숫자: 노란 그림 글꼴 + 왼쪽 위 뾰족한 아이콘 (세피리아 참고)")]

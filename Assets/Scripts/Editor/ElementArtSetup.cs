@@ -84,6 +84,10 @@ namespace TOD.EditorTools
                 report.Add($"{id}: 이펙트 {n}, 파츠 {skins.Count}, 소품 {props.Count}");
             }
             ec.defs = defs.ToArray();
+            // 21차 증강 성장 (tools/render_augment_growth.py)
+            db.visual ??= new VisualConfig();
+            int growth = Fill(ref db.visual.growthBack, "growth_back", sheets) + Fill(ref db.visual.growthFront, "growth_front", sheets);
+            report.Add($"증강 성장: {growth}");
             EditorUtility.SetDirty(db);
             EditorSceneManager.MarkSceneDirty(db.gameObject.scene);
             Debug.Log($"[TOD] Element Art: 시트 {sliced}장 자름, 파츠 {swapped}장 설정\n" + string.Join("\n", report));

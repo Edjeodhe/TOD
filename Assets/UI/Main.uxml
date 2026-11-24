@@ -175,6 +175,8 @@
                         <ui:VisualElement name="board" class="board" />
                         <ui:VisualElement name="board-pieces" class="board-layer" picking-mode="Ignore" />
                         <ui:VisualElement name="board-ghost" class="board-layer board-ghost" picking-mode="Ignore" />
+                        <!-- 21차 강화한 칸의 "+N" 숫자 (조각 그림 위) -->
+                        <ui:VisualElement name="board-badges" class="board-layer" picking-mode="Ignore" />
                         <!-- 19차 모이라 줄 고르기: 강화한 줄 띠, 확장 가장자리 띠(누름) -->
                         <ui:VisualElement name="board-pick" class="board-layer board-pick" picking-mode="Ignore" />
                         <ui:VisualElement name="needle" class="sew-needle hidden" picking-mode="Ignore" />

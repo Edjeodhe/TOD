@@ -44,6 +44,27 @@ namespace TOD
             painter.Sprite(layer, body, at, angle, w, size, Painter.Alpha(clip.tint, alpha));
         }
 
+        // 21차 증강 성장: 몸 뒤 층(Ground, 주인공 뒤) + 몸 앞 층(Effects), 끝 무렵 머리 위로 오른 능력치 글자가 떠오른다
+        void DrawGrowth(RunState r, Fx fx, float fade)
+        {
+            VisualConfig v = db.visual;
+            float age = 1 - fade;
+            Vector2 foot = fx.followHero ? C(r.player.x, r.player.y) : C(fx.x, fx.y);
+            float size = v.growthSize > 0 ? v.growthSize : 260;
+            Vector2 at = foot - new Vector2(0, size * (v.growthFoot > 0 ? v.growthFoot : .3f));
+            if (v.growthBack != null && v.growthBack.Has) DrawClip(v.growthBack, at, size, age * fx.max, age, false, fx.alpha, 0, Layer.Ground);
+            if (v.growthFront != null && v.growthFront.Has) DrawClip(v.growthFront, at, size, age * fx.max, age, false, fx.alpha);
+            if (string.IsNullOrEmpty(fx.text) || Text == null) return;
+            float start = v.growthTextAt > 0 ? v.growthTextAt : .55f;
+            if (age < start) return;
+            float k = (age - start) / Mathf.Max(.05f, 1 - start);
+            float pop = k < .15f ? .6f + EaseOutBack(k / .15f) * .4f : 1;
+            float alpha = 1 - Mathf.Clamp01((k - .7f) / .3f);
+            Vector2 spot = foot - new Vector2(0, (v.growthTextLift > 0 ? v.growthTextLift : 130) + v.growthTextRise * (1 - (1 - k) * (1 - k)));
+            Color color = v.growthTextColor.a > 0 ? v.growthTextColor : new Color(1, .9f, .55f);
+            Text.Label(fx.text, spot, v.growthTextSize > 0 ? v.growthTextSize : 22, Painter.Alpha(color, alpha), Painter.Alpha(Pal.textStroke, alpha), 4, pop, 0, false);
+        }
+
         Vector2 FxAt(Fx fx) => fx.follow != null ? C(fx.follow) : C(fx.x, fx.y);
 
         // 부가 세트 발동: Blender 이펙트(procFx) 또는 속성 그림을 크게 + 퍼지는 고리 + 머리 위 작은 글자
