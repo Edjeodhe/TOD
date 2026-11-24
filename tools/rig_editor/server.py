@@ -3,7 +3,8 @@
 python tools/rig_editor/server.py [port]
 
 - 프로젝트 폴더를 그대로 정적 파일로 내준다 (리깅 페이지 = /tools/rig_editor/moira.html, 그림 = /Assets/sprites/...).
-- POST /save?path=art_src/rig/<이름>.json 으로 받은 JSON 을 저장한다. art_src/rig 안에만 쓸 수 있다.
+- POST /save?path=Assets/Rig/<이름>.json 으로 받은 JSON 을 저장한다. Assets/Rig, art_src/rig 안에만 쓸 수 있다.
+  Assets/Rig 의 리그 JSON 은 Unity 가 TextAsset 으로 그대로 읽는다(MoiraRig). 저장하면 Unity 에 바로 반영된다.
 """
 import http.server
 import json
@@ -12,7 +13,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 ROOT = Path(__file__).resolve().parents[2]
-RIG_DIR = (ROOT / "art_src" / "rig").resolve()
+RIG_DIRS = [(ROOT / "Assets" / "Rig").resolve(), (ROOT / "art_src" / "rig").resolve()]
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -30,8 +31,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         rel = parse_qs(url.query).get("path", [""])[0]
         target = (ROOT / rel).resolve()
-        if RIG_DIR not in target.parents or target.suffix != ".json":
-            self.send_error(403, "art_src/rig/*.json 만 저장할 수 있습니다")
+        if not any(d in target.parents for d in RIG_DIRS) or target.suffix != ".json":
+            self.send_error(403, "Assets/Rig, art_src/rig 의 *.json 만 저장할 수 있습니다")
             return
         body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
         try:

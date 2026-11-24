@@ -1,4 +1,4 @@
-"""모이라 리그: '카드 들기' 자세를 손 자리로 정한다 (두 마디 IK). art_src/rig/moira_rig.json 의 raise 를 고쳐 쓴다.
+"""모이라 리그: '카드 들기' 자세를 손 자리로 정한다 (두 마디 IK). Assets/Rig/moira_rig.json 의 raise 를 고쳐 쓴다.
 
 python tools/moira_rig_ik.py
 
@@ -11,7 +11,7 @@ import math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PATH = ROOT / "art_src/rig/moira_rig.json"
+PATH = ROOT / "Assets/Rig/moira_rig.json"
 FAN_HAND = (178, -262)
 FAN_TILT = -10
 POINT = (112, -262)

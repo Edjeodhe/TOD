@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>모이라 리깅</title>
-<!-- 모이라 뼈대 리깅 페이지. 서버: python tools/rig_editor/server.py (POST /save 로 art_src/rig/moira_rig.json 저장).
+<!-- 모이라 뼈대 리깅 페이지. 서버: python tools/rig_editor/server.py (POST /save 로 Assets/Rig/moira_rig.json 저장).
+     Unity 는 이 JSON 과 같은 그림(Assets/sprites/moira_*.png)을 그대로 읽어 같은 계산을 C# 으로 돌린다(Runtime/Rig/MoiraRig.cs).
+     여기 계산(pose, worlds, 그리기 순서)을 바꾸면 MoiraRig.cs 도 같이 바꾼다.
      좌표는 Unity BoneRig 와 같다: 그림 px, 아래 +y, 각도는 시계 방향 +(도).
      뼈 i 의 세계 변환 = 부모 변환 · 이동(at) · 회전(rest + 동작) · 배율(scale). 뿌리 뼈는 이동(rootPos + 동작 root).
      그림은 뼈 원점(= 관절, pivot)에 그림의 pivot 이 오게 그린다. flip 이면 pivot 을 지나는 세로축으로 뒤집는다.
@@ -71,7 +73,7 @@
   </aside>
 </main>
 <script>
-const RIG_PATH = "art_src/rig/moira_rig.json";
+const RIG_PATH = "Assets/Rig/moira_rig.json";
 const $ = id => document.getElementById(id);
 let rig = null, images = {}, sel = null;
 let view = { x: 0, y: 0, s: 0.9 };          // 화면 = 리그 원점 위치 + 배율
@@ -167,7 +169,9 @@ function draw() {
   }
   const p = pose(), W = worlds(p);
   // 그림: order 오름차순
-  const showFan = talkW > 0.35;
+  // 말할 때 그림(카드 쥔 손)은 손을 드는 동작이 최고 시점의 swapAfter 만큼 지난 뒤부터 (Unity MoiraRig 와 같은 규칙)
+  const raised = !rig.raise || talkT >= rig.raise.peakTime * (rig.swapAfter ?? 0.8);
+  const showFan = talkW > (rig.swapAt ?? 0.35) && (raised || mode !== "talk");
   const partOf = b => (showFan && b.talkPart) ? b.talkPart : b.part;   // 말 걸 때 그림 바꾸기 (손 → 카드를 쥔 손)
   [...rig.bones].filter(b => partOf(b) && images[partOf(b)]).sort((a, b) => (a.order||0) - (b.order||0)).forEach(b => {
     if (b.id === rig.fanBone && !showFan) return;

@@ -1,4 +1,4 @@
-"""모이라 리그 첫 값: art_src/rig/moira_parts.json(굽기 결과) → art_src/rig/moira_rig.json
+"""모이라 리그 첫 값: art_src/rig/moira_parts.json(굽기 결과) → Assets/Rig/moira_rig.json
 
 python tools/moira_rig_seed.py [--force]
 
@@ -27,7 +27,7 @@ def ang(v):
 
 
 def main():
-    out = RIG / "moira_rig.json"
+    out = ROOT / "Assets/Rig/moira_rig.json"
     if out.exists() and "--force" not in sys.argv:
         print("이미 있음 (덮어쓰려면 --force):", out)
         return

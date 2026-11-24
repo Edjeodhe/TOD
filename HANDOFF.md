@@ -126,7 +126,23 @@
   - 모이라 그림이 주인공보다 꽤 큽니다(높이 210).
   - 문구와 가격은 임시입니다.
 
-## 19차 2부 (2026-11-24) — 모이라 리깅, 하스스톤식 카드 고르기, 인벤토리 칸 강화, 운명 읽기 — 완료(커밋 전)
+## 19차 3부 (2026-11-24) — 웹 리그를 C#으로 그대로, 다락 방 다시 그리기, 모이라가 방에 어울리게 — 완료(커밋 전)
+
+- **사용자 요청:**
+  - 웹에서 만든 리깅 모델을 굽지 말고, 리깅 코드와 이미지를 그대로 가져와 C#으로 바꿔 적용합니다.
+  - 모이라가 다른 그림을 붙인 것처럼 보이니, 방을 지금 구조에 맞게 다시 그리고 비네트와 그림자로 어울리게 합니다.
+- **리그:** 위 19차 2부의 Unity 항목을 고쳐 적었습니다(MoiraRig = 페이지 계산의 C# 판, JSON과 그림을 그대로 읽음).
+  - 확인: 플레이에서 구운 리그와 같은 자세로 그려졌고, 말 걸기 때 카드 쥔 손으로 바뀌었습니다. 페이지에서 머리 각도를 25도로 저장하자 플레이 중 Unity에 바로 반영된 것도 확인하고 되돌렸습니다(`Temp/Shots/moira19d_*`).
+  - 리깅 서버(`tools/rig_editor/server.py`)는 `Assets/Rig`에도 저장할 수 있습니다. 서버 코드를 바꾸면 미리보기 서버를 다시 켜야 합니다.
+- **다락 방:** `tools/codex_prompts/attic_room2.txt`(참고: 옛 방, 모이라) → `art_src/raw/attic_room2.png` → `python tools/bake_attic_art.py`(attic_room2가 있으면 이것) → `Assets/sprites/attic_room.png`.
+  - 모이라 자리 가운데에 별과 달 무늬 러그를 깔고, 뒤에는 달 창, 양옆에 촛대를 두었습니다. 둘레에는 점성구에서 번지는 보랏빛 웅덩이가 있고, 가장자리는 어둡게 했습니다(비네트).
+  - 모이라 시설 자리는 러그 가운데 (500, 428)로 옮겼습니다.
+- **어울리게:** MoiraRig에 방 색을 곱하고(`tint` (.86, .82, .92), `saturation` .82, `brightness` .92), 탁자 밑에 부드러운 바닥 그림자(`Shadow`, 470×110 그림 px, palette.shadow α .85)와 점성구 빛(`Glow`, 더하기, 240×220, 맥동)을 넣었습니다.
+  - 둘 다 `tools/make_soft_disc.py` → `Assets/Art/Generated/soft_disc.png`(가장자리가 부드러운 원)를 씁니다. 값은 인스펙터에서 바로 바뀝니다.
+- **확인:** EditMode 46개 통과. 캡처는 `Temp/Shots/moira19e_blend_oldroom`(전), `moira19e_blend_newroom`, `moira19e_blend_zoom`(후)입니다.
+- **남은 것:** 새 방의 촛대는 배경 그림이라 주인공이 지나갈 수 있습니다(막는 영역 없음). 모이라 머리가 위 띠에 조금 가깝습니다.
+
+## 19차 2부 (2026-11-24) — 모이라 리깅, 하스스톤식 카드 고르기, 인벤토리 칸 강화, 운명 읽기 — 완료
 
 - **사용자 결정:**
   - 모이라를 뼈대 리그로 움직입니다. 리깅은 오른쪽 브라우저 창에 띄운 리깅 페이지에서 합니다.
@@ -139,7 +155,7 @@
   - 뼈 고르기, 끌어서 자리(at), Shift+끌기로 기본 각도(rest)를 정합니다.
   - 그림 미리보기에서 클릭은 회전 중심, Shift+클릭은 끝 관절입니다.
   - 동작 파형을 편집하고 대기/말 걸기를 재생할 수 있으며, 참고 그림을 겹쳐 볼 수 있습니다.
-  - 저장하면 `art_src/rig/moira_rig.json`에 씁니다.
+  - 저장하면 `Assets/Rig/moira_rig.json`에 씁니다. Unity가 이 파일을 그대로 읽으므로 저장 즉시 반영됩니다(에디터에서는 0.5초마다 파일을 직접 다시 읽어 플레이 중에도 바뀜).
 - **그림, 관절:**
   - `tools/codex_prompts/moira_parts.txt`(머리, 몸, 탁자, 점성구, 윗다리, 아랫다리(손), 카드 부채), `moira_hand_cards.txt`(카드 넷을 쥔 손, 위를 향함), `moira_cards.txt`(카드 앞, 뒤).
   - 굽기는 `python tools/bake_moira_parts.py`로 하고, 다리 마디의 위/아래 둥근 끝 중심(회전 중심, 끝 관절)과 손목(팔찌 아래 손바닥)을 자동으로 찾아 `art_src/rig/moira_parts.json`에 씁니다.
@@ -147,7 +163,9 @@
   - 확인용 그림은 `tools/preview_moira_rig.py out.png [--talk] [--ref 1] [--bones]`로 뽑습니다.
 - **Unity:**
   - `Rig/MoiraRig.cs`(BoneRig): idle, hold 반복, raise(시작 → 최고 → 유지). 말하는 동안 RB_low 그림을 `TalkArt`(카드 쥔 손)로 바꾸는데, 팔이 얼굴 앞을 지날 때는 바꾸지 않게 `swapAfter`로 미룹니다. 점성구는 맥동하고, 카드가 날아 나가는 자리는 `CardPoint`입니다.
-  - 씬 `Hub/Moira`(SortingGroup, 뼈 21개)는 `python tools/moira_rig_export.py` → `art_src/rig/moira_rig_unity.txt`를 MCP `execute_code`로 읽어 조립했습니다. 조립 뒤에는 씬이 원본입니다.
+  - **(19차 3부에서 바꿈) 리그를 굽지 않습니다.** `Rig/MoiraRig.cs`는 리깅 페이지의 계산(pose, worlds, 그리기 순서와 그림 변환)을 C#으로 그대로 옮긴 것입니다. 페이지가 저장한 `Assets/Rig/moira_rig.json`(TextAsset, `Rig/MiniJson.cs`로 읽음)과 같은 그림(`Assets/sprites/moira_*.png`, `MoiraRig.sprites`)을 그대로 씁니다.
+  - 씬 `Hub/Moira`에는 SortingGroup, MoiraRig, `PartTemplate`(SpriteRenderer 템플릿, 꺼 둠), `Shadow`, `Glow`만 있습니다. 런타임에 그림이 있는 뼈마다 템플릿을 한 번 복제합니다.
+  - 페이지 계산을 바꾸면 `MoiraRig.cs`도 같이 바꿔야 합니다. 옛 `moira_rig_export.py`와 `moira_rig_unity.txt`는 지웠습니다.
   - `HubView.moira`가 Moira 시설 그림 대신 리그를 그리고, `AnimateMoira`는 카드 창이 열린 동안에도 돕니다.
   - 카드 창: `UI/GameUI.Moira.cs`, 카드 템플릿 `MoiraCard.uxml`, `Moira.uss`. 매 프레임 계산으로 움직입니다.
     - 손에서 호를 그리며 날아와 뒤집히고, 그 뒤 둥실 떠 있습니다. 마우스를 올리면 떠오르며 빛납니다.
@@ -167,7 +185,7 @@
   - 사람이 실제 속도로 본 움직임. 카드 비행, 뒤집기, 모이라가 손 드는 속도는 캡처로만 봤습니다.
   - 모이라 그림이 작아 다리가 가늘어 보입니다.
   - 확장 띠와 손잡이의 투명도.
-  - 리깅 값 다듬기는 리깅 페이지에서 할 수 있습니다. 저장한 뒤 `moira_rig_export.py` → MCP 재조립 코드(위 절차)를 다시 돌려야 씬에 반영됩니다.
+  - 리깅 값 다듬기는 리깅 페이지에서 하고 저장하면 끝입니다(Unity가 JSON을 그대로 읽음).
 
 ## 18차 요청 (2026-11-24) — 일기가 뒤로 갈수록 피에 젖고 욕망에 사로잡힌 말투 — 완료
 

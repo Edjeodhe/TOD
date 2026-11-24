@@ -1,4 +1,4 @@
-"""모이라 리그 미리보기 (리깅 페이지와 같은 계산): art_src/rig/moira_rig.json → PNG
+"""모이라 리그 미리보기 (리깅 페이지와 같은 계산): Assets/Rig/moira_rig.json → PNG
 
 python tools/preview_moira_rig.py out.png [--talk] [--time T] [--ref 0.35] [--scale 2] [--bones]
 
@@ -51,7 +51,7 @@ def shot(m, t, a, b, c):
 
 
 def main():
-    rig = json.loads((ROOT / "art_src/rig/moira_rig.json").read_text(encoding="utf-8"))
+    rig = json.loads((ROOT / "Assets/Rig/moira_rig.json").read_text(encoding="utf-8"))
     talk, t, S = "--talk" in sys.argv, arg("--time", 0.0), arg("--scale", 2.0)
     ang = {b["id"]: 0.0 for b in rig["bones"]}
     for m, w in ((rig["idle"], 1), (rig["hold"], 1 if talk else 0)):

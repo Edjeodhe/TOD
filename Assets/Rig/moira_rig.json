@@ -168,7 +168,7 @@
    ],
    "rest": 0,
    "order": 10,
-   "artScale": 1.0
+   "artScale": 1
   },
   {
    "id": "head",
@@ -190,7 +190,7 @@
     62,
     70
    ],
-   "rest": -177.0,
+   "rest": -177,
    "order": 20,
    "scale": 0.598,
    "flip": false,
@@ -204,7 +204,7 @@
     0,
     161
    ],
-   "rest": -150.0,
+   "rest": -150,
    "order": 24,
    "flip": false,
    "snapToEnd": true,
@@ -401,7 +401,7 @@
     0,
     161
    ],
-   "rest": -111.0,
+   "rest": -111,
    "order": 5,
    "flip": true,
    "snapToEnd": true,
@@ -527,7 +527,7 @@
   ]
  },
  "hold": {
-  "length": 2.0,
+  "length": 2,
   "bones": [
    {
     "bone": "RB_low",
@@ -590,7 +590,7 @@
     "bone": "RA_low",
     "start": 0,
     "peak": -87.4,
-    "settle": -78.0
+    "settle": -78
    }
   ]
  },
