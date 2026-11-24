@@ -87,6 +87,8 @@ namespace TOD
                 {
                     note.Q<Label>("note-title").text = entry.title;
                     note.Q<Label>("note-preview").text = string.Join("\n", (entry.lines ?? new string[0]).Take(2)) + " ...";
+                    Ink(note.Q<Label>("note-preview"), entry);
+                    Stain(note.Q("paper"), entry, .45f, (D.bloodMaxStains + 1) / 2, 11);
                     note.Q<Label>("note-new").text = D.newTag;
                     DiaryEntry captured = entry;
                     ((Button)note).clicked += () => Read(captured);
@@ -107,6 +109,8 @@ namespace TOD
             bool wasNew = Diary.IsNew(P, entry);
             root.Q<Label>("diary-page-title").text = entry.title;
             root.Q<Label>("diary-page-body").text = string.Join("\n", entry.lines ?? new string[0]);
+            Ink(root.Q<Label>("diary-page-body"), entry);
+            Stain(root.Q("diary-page"), entry, 1, D.bloodMaxStains, 29);
             Label last = root.Q<Label>("diary-page-last");
             last.text = Diary.LastLine(Db, P, entry);
             last.style.color = Diary.Choice(P, entry.floor) switch
@@ -114,17 +118,74 @@ namespace TOD
                 DiaryChoice.Absorbed => D.absorbedInk, DiaryChoice.Refused => D.refusedInk, _ => D.undecidedInk,
             };
             root.Q("diary-page").style.rotate = new Rotate(new Angle(entry.tilt * .3f));
+            // 17차 보상 줄: "기억의 파편 3 · 아버지의 도안: ..." (데이터 rewardLine)
+            PieceDef pattern = entry.patternKind >= 0 && entry.patternKind < Db.gear.pieces.Length ? Db.gear.pieces[entry.patternKind] : null;
+            Label reward = root.Q<Label>("diary-page-reward");
+            if (reward != null)
+            {
+                reward.text = entry.readShards > 0 || pattern != null ? string.Format(D.rewardLine ?? "", entry.readShards, pattern?.name ?? "") : "";
+                Show(reward, reward.text != "");
+            }
             Show(reader, true);
             if (wasNew)
             {
                 Diary.MarkRead(P, entry);
                 Gear.Save(Db, P);
                 Render();
+                game.ui.UpdateMeta(P);
+                var said = new List<string>();
+                if (entry.readShards > 0) said.Add(string.Format(D.rewardShards, entry.readShards));
+                if (pattern != null) said.Add(string.Format(D.rewardPattern, pattern.name));
+                if (said.Count > 0) game.ui.Say(string.Join("  ", said));
             }
             game.sound.Play(wasNew ? "upgrade" : "loot");
         }
 
         void CloseReader() => Show(reader, false);
+
+        // ---------------------------------------------------------------- 18차 핏자국, 핏빛 잉크
+
+        // 본문 잉크: 데이터 ink 의 알파가 0 이면 USS 기본색
+        static void Ink(Label label, DiaryEntry entry)
+        {
+            if (label == null) return;
+            label.style.color = entry.ink.a > 0 ? new StyleColor(entry.ink) : new StyleColor(StyleKeyword.Null);
+        }
+
+        // 쪽지 위에 핏자국을 흩뿌린다. 자리, 크기, 각도는 층 번호로 정해져서 열 때마다 같다.
+        // 핏자국 층(diary-blood)은 종이 맨 아래(글자 밑)에 깔린다.
+        void Stain(VisualElement paper, DiaryEntry entry, float scale, int maxStains, int salt)
+        {
+            if (paper == null) return;
+            paper.Q("diary-blood")?.RemoveFromHierarchy();
+            Sprite[] stains = D.bloodStains;
+            int count = stains == null || stains.Length == 0 ? 0 : Mathf.RoundToInt(entry.blood * maxStains);
+            if (count <= 0) return;
+            var layer = new VisualElement { name = "diary-blood", pickingMode = PickingMode.Ignore };
+            layer.AddToClassList("diary-blood");
+            var rng = new System.Random(entry.floor * 97 + salt);
+            float alpha = Mathf.Lerp(D.bloodAlpha.x, D.bloodAlpha.y, entry.blood);
+            for (int i = 0; i < count; i++)
+            {
+                Sprite sprite = stains[rng.Next(stains.Length)];
+                if (sprite == null) continue;
+                float size = Mathf.Lerp(D.bloodSize.x, D.bloodSize.y, (float)rng.NextDouble()) * scale;
+                float aspect = sprite.rect.width / Mathf.Max(1, sprite.rect.height);
+                var stain = new VisualElement { pickingMode = PickingMode.Ignore };
+                stain.AddToClassList("diary-stain");
+                stain.style.backgroundImage = new StyleBackground(sprite);
+                stain.style.width = size * Mathf.Min(1, aspect);
+                stain.style.height = size / Mathf.Max(1, aspect);
+                stain.style.left = Length.Percent((float)rng.NextDouble() * 88 - 6);
+                stain.style.top = Length.Percent((float)rng.NextDouble() * 86 - 4);
+                stain.style.rotate = new Rotate(new Angle(((float)rng.NextDouble() - .5f) * 60));   // 흐른 자국이 위로 가지 않게 ±30도만
+                Color tint = D.bloodTint.a > 0 ? D.bloodTint : Color.white;
+                tint.a *= alpha * Mathf.Lerp(.75f, 1, (float)rng.NextDouble());
+                stain.style.unityBackgroundImageTintColor = tint;
+                layer.Add(stain);
+            }
+            paper.Insert(0, layer);
+        }
 
         // ---------------------------------------------------------------- per frame
 

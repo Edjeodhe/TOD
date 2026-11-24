@@ -1,4 +1,4 @@
-// 15차 아웃게임: 층 돌파로 세트가 열리는 표, 해금 알림 기록, 다락 강화 '시작 조각'.
+// 15차 아웃게임: 층 돌파로 세트가 열리는 표, 해금 알림 기록. 17차: 시작 조각 들고 갈 수.
 // 데이터는 GameDatabase(gear.setUnlockFloor, upgrades 의 key "starter")에 있고, 여기는 계산만 한다.
 using System;
 using System.Collections.Generic;
@@ -43,49 +43,20 @@ namespace TOD
             foreach (SetDef s in sets) if (!profile.seenUnlocks.Contains(s.id)) profile.seenUnlocks.Add(s.id);
         }
 
-        // ---------------------------------------------------------------- 시작 조각
+        // ---------------------------------------------------------------- 시작 조각 (17차)
+        // 시작 조각 = Profile.items (기억의 파편으로 산 영구 조각). 등반 전에 재봉 상자 판에 놓은 것만 들고 간다(Gear.RunBag).
+        // 들고 갈 수 = gear.starterSlotsBase + 다락 '시작 조각 선택' 단계 × gear.starterSlotsStep.
 
-        public static bool IsStarter(Profile profile, OwnedItem item) => profile != null && item != null && profile.starter > 0 && item.kind == profile.starterKind;
+        public static int StarterSlots(GameDatabase db, Profile profile) =>
+            Math.Max(0, db.gear.starterSlotsBase + (profile?.starter ?? 0) * db.gear.starterSlotsStep);
 
-        // 등급 합 한도에 드는 값: 시작 조각은 0
-        public static int Cost(GameDatabase db, Profile profile, OwnedItem item) => IsStarter(profile, item) ? 0 : Gear.Def(db, item).cost;
+        // 판에 새로 놓으면 들고 갈 수를 넘는가 (이미 판에 있는 조각을 옮기는 것은 괜찮다)
+        public static bool StarterFull(GameDatabase db, Profile profile, OwnedItem item) =>
+            item != null && !profile.placements.Any(p => p.id == item.id) && profile.placements.Count >= StarterSlots(db, profile);
 
-        public static int Cost(GameDatabase db, Profile profile, PlacedPiece piece)
-        {
-            OwnedItem item = profile.items.Find(i => i.id == piece.Id);
-            return item != null ? Cost(db, profile, item) : piece.def.cost;
-        }
+        // 등급 합 한도에 드는 값 (17차: 시작 조각도 그대로 든다)
+        public static int Cost(GameDatabase db, Profile profile, OwnedItem item) => Gear.Def(db, item).cost;
 
-        public static OwnedItem StarterItem(Profile profile) =>
-            profile == null || profile.starter <= 0 ? null : profile.items.Find(i => i.kind == profile.starterKind);
-
-        // 그 조각을 놓을 수 있는 자리 중 같은 세트 조각과 가장 많이 맞닿는 곳 (같으면 위 왼쪽 먼저). 없으면 null.
-        public static (int x, int y, int turns)? BestSpot(GameDatabase db, Profile profile, OwnedItem item)
-        {
-            var (width, height, _) = Gear.Dimensions(db, profile);
-            string setId = Gear.Def(db, item).set;
-            var mine = Gear.Placed(db, profile).Where(p => p.def.set == setId && p.Id != item.id).SelectMany(p => p.cells).ToHashSet();
-            (int x, int y, int turns, int score)? best = null;
-            for (int turns = 0; turns < 4; turns++)
-                for (int y = 0; y < height; y++)
-                    for (int x = 0; x < width; x++)
-                    {
-                        if (!Gear.CanPlace(db, profile, item, turns, x, y)) continue;
-                        int touch = Gear.Shape(db, item, turns).Select(c => c + new Vector2Int(x, y))
-                            .Count(c => mine.Contains(c + Vector2Int.up) || mine.Contains(c + Vector2Int.down) || mine.Contains(c + Vector2Int.left) || mine.Contains(c + Vector2Int.right));
-                        if (best == null || touch > best.Value.score) best = (x, y, turns, touch);
-                    }
-            return best is { } b ? (b.x, b.y, b.turns) : null;
-        }
-
-        // 등반 시작: 시작 조각이 판에 없으면 빈자리에 놓는다. 놓았으면 그 조각 정의, 아니면 null.
-        public static PieceDef PlaceStarter(GameDatabase db, Profile profile)
-        {
-            OwnedItem item = StarterItem(profile);
-            if (item == null || profile.placements.Any(p => p.id == item.id)) return null;
-            if (BestSpot(db, profile, item) is not { } spot) return null;
-            profile.placements.Add(new Placement { id = item.id, x = spot.x, y = spot.y, turns = spot.turns });
-            return Gear.Def(db, item);
-        }
+        public static int Cost(GameDatabase db, Profile profile, PlacedPiece piece) => piece.def.cost;
     }
 }

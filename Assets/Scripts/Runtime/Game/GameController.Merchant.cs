@@ -33,7 +33,7 @@ namespace TOD
         void TickMerchant()
         {
             if (merchantTalk == null) return;
-            bool hubMerchant = InHub;
+            bool hubMerchant = InHub && !hub.InAttic;   // 17차: 다락 방에는 상인이 없다
             bool runMerchant = Run != null && Run.merchant != null && screen == UiScreen.Combat && !runInventory;
             bool near = hubMerchant ? hub.Near?.station == HubStation.Merchant : runMerchant && Combat.Nearest(Run) == Interactable.Merchant;
             if (near && !merchantNear && Opened == "")

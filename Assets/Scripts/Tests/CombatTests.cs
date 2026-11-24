@@ -127,7 +127,7 @@ namespace TOD.Tests
             Assert.AreEqual(1, p.items.Count, "같은 종류는 한 번만 가진다");
             p.best = 99;   // 15차: 잠긴 세트는 무작위 지급에서 빠지므로 모두 연다 (잠금은 OutgameTests)
             while (Gear.AddItem(db, p) != null) { }
-            Assert.AreEqual(db.gear.pieces.Length, p.items.Count, "무작위 지급은 아직 없는 종류에서만");
+            Assert.AreEqual(Enumerable.Range(0, db.gear.pieces.Length).Count(k => !Gear.IsPattern(db, k)), p.items.Count, "무작위 지급은 아직 없는 종류에서만 (17차: 아버지의 도안 제외)");
             Assert.AreEqual(p.items.Count, p.items.Select(i => i.kind).Distinct().Count());
             Assert.AreEqual(0, Gear.Unowned(db, p).Count);
         }

@@ -19,10 +19,22 @@ namespace TOD
 
         public static bool IsNew(Profile profile, DiaryEntry entry) => IsUnlocked(profile, entry) && !profile.diaryRead.Contains(entry.floor);
 
-        public static void MarkRead(Profile profile, DiaryEntry entry)
+        // 처음 읽으면 true: 17차 보상(기억의 파편 readShards)을 준다. 도안은 '읽은 쪽지'로 판정하므로 따로 줄 것이 없다(PatternOpen).
+        public static bool MarkRead(Profile profile, DiaryEntry entry)
         {
-            if (!profile.diaryRead.Contains(entry.floor)) profile.diaryRead.Add(entry.floor);
+            if (profile.diaryRead.Contains(entry.floor)) return false;
+            profile.diaryRead.Add(entry.floor);
+            profile.shards += System.Math.Max(0, entry.readShards);
+            return true;
         }
+
+        // 17차 아버지의 도안: 그 도안을 주는 쪽지를 읽었으면 상인 단추에게서 살 수 있다.
+        public static bool PatternOpen(GameDatabase db, Profile profile, int kind) =>
+            All(db).Any(e => e.patternKind == kind && kind >= 0 && profile.diaryRead.Contains(e.floor));
+
+        // 풀린(쪽지를 읽은) 도안 종류, 층 순서
+        public static List<int> OpenPatterns(GameDatabase db, Profile profile) =>
+            All(db).Where(e => e.patternKind >= 0 && e.patternKind < db.gear.pieces.Length && profile.diaryRead.Contains(e.floor)).Select(e => e.patternKind).ToList();
 
         // 보스 욕망 흡수/거절 기록. 같은 층을 다시 깨면 가장 최근 선택으로 덮는다.
         public static void RecordChoice(Profile profile, int floor, bool absorbed)

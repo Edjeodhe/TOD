@@ -62,3 +62,6 @@
 .hub-price.short { -unity-background-image-tint-color: #7a5d5a; color: #e8cfc4; }
 .hub-sold { opacity: 0.55; }
 .hub-sold .hub-price { -unity-background-image-tint-color: #5a4d55; }
+
+/* 17차: 상인 단추 진열의 '아버지의 도안' 표시 */
+.hub-pattern-tag { position: absolute; top: 8px; left: 10px; padding: 2px 10px; font-size: 15px; color: #f3e2c8; background-color: rgba(58, 44, 82, 0.9); border-radius: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }

@@ -5,7 +5,21 @@ using UnityEngine;
 
 namespace TOD
 {
-    public enum HubStation { SewingBox, Attic, Merchant, Tower, Diary }
+    // Chest = 17차 다락 방의 '모이라의 실궤'(강화 5종), AtticExit = 다락 방의 뚜껑문(재봉실로 내려감)
+    public enum HubStation { SewingBox, Attic, Merchant, Tower, Diary, Chest, AtticExit }
+
+    // 17차: 걸어 다니는 방 하나 (재봉실 본방은 HubConfig 의 옛 필드를 그대로 쓰고, 다락 방은 HubConfig.attic)
+    [Serializable] public class HubRoom
+    {
+        public string title, subtitle;        // 위 띠 방 이름 (예: "예견의 다락", "모이라의 방")
+        public Sprite backdrop;
+        public Rect backdropRect;             // 배경을 깔 캔버스 px 영역 (카메라도 이 안에 머문다)
+        public Rect walk;                     // 걸을 수 있는 바닥 좌표 영역
+        public Vector2 heroStart;             // 방에 들어온 자리
+        public float cameraZoom;
+        public HubFacility[] facilities;
+        public string hint;                   // 화면 아래 조작 안내
+    }
 
     [Serializable] public class HubFacility
     {
@@ -33,6 +47,13 @@ namespace TOD
         public float interactRadius;
         public float highlight;               // 가까운 시설 그림 밝기 배율 (1 = 그대로)
         public HubFacility[] facilities;
+        public string title, subtitle;        // 17차: 재봉실 위 띠 이름 (비면 UXML 그대로)
+
+        [Header("17차 다락 방")]
+        public HubRoom attic;
+        public Vector2 atticReturn;           // 다락에서 내려오면 서는 재봉실 바닥 자리
+        public float roomFade;                // 방을 오갈 때 어두워지는 시간 (초, 반쪽)
+        public string roomSound;              // 방을 오갈 때 효과음 id
 
         [Header("상인 단추 조각 상점 (기억의 파편)")]
         public int shopStock;                 // 진열 수
@@ -43,6 +64,7 @@ namespace TOD
         public string noShards;               // 파편이 모자랄 때
         public string bought;                 // "{0}을 샀습니다"
         public string buySound;
+        public string patternTag;             // 17차: 진열 카드의 '아버지의 도안' 표시
 
         [Header("안내")]
         public string hint;                   // 화면 아래 조작 안내

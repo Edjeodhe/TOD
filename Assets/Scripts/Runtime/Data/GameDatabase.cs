@@ -309,7 +309,9 @@ namespace TOD
         public SetDef[] sets;
         public SetUnlock[] setUnlockFloor;    // 15차: 세트 해금 표 (profile.best 가 floor 이상이면 열림, 표에 없으면 처음부터)
         public string unlockSound;            // 15차: 해금 알림 효과음 id (sounds)
-        public string starterPlaced;          // 15차: 등반 시작 때 시작 조각이 놓였다는 문구 ("시작 조각을 판에 먼저 놓았습니다: {0}")
+        public string starterPlaced;          // (17차부터 안 씀) 15차 시작 조각 자동 배치 문구
+        public int starterSlotsBase, starterSlotsStep;   // 17차: 들고 갈 시작 조각 수 = base + '시작 조각 선택' 단계 × step
+        public string starterFull;            // 17차: 판이 다 찼을 때 ("시작 조각은 {0}개까지 들고 갈 수 있습니다")
         public PieceDef[] pieces;
         public string[] rankNames;            // 코스트 1~4 → 일반·레어·유니크·레전더리
         public int baseColumns, baseRows, baseCostLimit, costLimitStep;
@@ -326,7 +328,7 @@ namespace TOD
     {
         public string key, name, text;
         public Sprite icon;
-        public int price, priceStep, max;     // max < 0 → 보드 높이 기준(가로 줄 강화)
+        public int price, priceStep, max;     // max < 0 → 판 크기 기준(가로 줄 = 높이 / 2, 세로 줄 = 폭 / 2)
     }
 
     [Serializable] public class WareDef
@@ -533,6 +535,8 @@ namespace TOD
         public string restRoundName, bossRoundLabel, survivalLabel, purified, artifactEyebrow, artifactTaken;
         public string dashValue, expText, expLevel, augmentLevel, pieceEffect, pieceShape;
         public string reroll, rerollUsed, threadBonus, inventoryHint, inventoryInRun;
+        public string inventoryOutgame;       // 17차: 아웃게임 재봉 상자 안내 ({0} 판에 놓은 시작 조각 수, {1} 들고 갈 수)
+        public string starterSlotsLine;       // 17차: 실궤 '시작 조각 선택' 카드 아랫줄 ({0} 지금 들고 갈 수)
         public string pieceCells, tipSet, setProgress, setProgressMax, ownedAll;   // 재봉 상자 정보 창·세트 패널·상점
         public string setMain, setSub;        // 세트 패널: 메인 속성 / 부가 속성 (16차: setSub 의 {0} = 발동까지 타격 수)
         public string[] statNames;            // StatKind 순서

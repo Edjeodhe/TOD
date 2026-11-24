@@ -42,6 +42,8 @@
                     <ui:Label name="diary-page-body" class="diary-page-body" picking-mode="Ignore" />
                     <ui:VisualElement class="diary-rule" picking-mode="Ignore" />
                     <ui:Label name="diary-page-last" class="diary-page-last" picking-mode="Ignore" />
+                    <!-- 17차: 이 쪽지의 보상 (파편, 아버지의 도안) -->
+                    <ui:Label name="diary-page-reward" class="diary-page-reward" picking-mode="Ignore" />
                     <ui:Button name="diary-page-close" class="diary-close page" />
                 </ui:VisualElement>
             </ui:VisualElement>

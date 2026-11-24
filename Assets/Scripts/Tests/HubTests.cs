@@ -36,8 +36,9 @@ namespace TOD.Tests
         public void HubDataHasAllFiveStations()
         {
             Assert.IsNotNull(db.hub, "GameDatabase.hub 가 비어 있습니다");
+            var all = db.hub.facilities.Concat(db.hub.attic?.facilities ?? new HubFacility[0]);   // 17차: 실궤, 뚜껑문은 다락 방에
             foreach (HubStation s in System.Enum.GetValues(typeof(HubStation)))
-                Assert.IsTrue(db.hub.facilities.Any(f => f.station == s && f.sprite != null && !string.IsNullOrEmpty(f.prompt)), $"시설 {s} 데이터(그림, 문구)가 없습니다");
+                Assert.IsTrue(all.Any(f => f.station == s && f.sprite != null && !string.IsNullOrEmpty(f.prompt)), $"시설 {s} 데이터(그림, 문구)가 없습니다");
             Assert.Greater(db.hub.walkSpeed, 0);
             Assert.Greater(db.hub.interactRadius, 0);
             Assert.IsTrue(db.hub.walk.Contains(db.hub.heroStart) && db.hub.walk.Contains(db.hub.returnSpot), "시작/귀환 자리가 걷는 영역 밖입니다");

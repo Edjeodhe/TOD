@@ -95,11 +95,12 @@ namespace TOD
 
         public RunState CreateRun(Profile profile, Func<float> random)
         {
-            GearStats gear = Gear.Stats(db, profile);
+            Profile bag = Gear.RunBag(db, profile);   // 17차: 등반 조각은 이 가방에만 (귀환하면 버림)
+            GearStats gear = Gear.Stats(db, bag);
             float hp = Round(H.baseHp + gear[StatKind.Health]);
             var r = new RunState
             {
-                profile = profile, random = random, gearStats = gear,
+                profile = profile, bag = bag, random = random, gearStats = gear,
                 element = Gear.ThreadElement(gear), maxDesire = db.desire.maxBase + profile.capacity * db.desire.capacityStep,
                 hp = hp, maxHp = hp, yarn = Round(H.baseYarn + gear[StatKind.Yarn]), recharge = 1 + gear[StatKind.Recharge],
                 damage = H.baseDamage + gear[StatKind.Damage], encumbrance = H.encumbrance,
@@ -221,7 +222,7 @@ namespace TOD
             r.altar = Near(r, offset);
             r.altarAge = 0;
             r.artifactOffer.Clear(); r.artifactTaken = false; r.artifactRerolled = false;
-            var kinds = Gear.Unowned(db, r.profile);   // 아이템은 고유: 이미 가진 종류는 탑에 나오지 않는다
+            var kinds = Gear.Unowned(db, r.bag);   // 아이템은 고유: 이미 가진 종류는 탑에 나오지 않는다
             while (r.artifactOffer.Count < R.artifactChoices && kinds.Count > 0)
             {
                 int i = Mathf.Min(kinds.Count - 1, Mathf.FloorToInt(r.random() * kinds.Count));
@@ -275,8 +276,8 @@ namespace TOD
             if (r.artifactTaken || r.artifactRerolled) return false;
             r.artifactRerolled = true;
             var shown = new HashSet<int>(r.artifactOffer);
-            var kinds = Gear.Unowned(db, r.profile).Where(k => !shown.Contains(k)).ToList();
-            if (kinds.Count < R.artifactChoices) kinds = Gear.Unowned(db, r.profile);
+            var kinds = Gear.Unowned(db, r.bag).Where(k => !shown.Contains(k)).ToList();
+            if (kinds.Count < R.artifactChoices) kinds = Gear.Unowned(db, r.bag);
             r.artifactOffer.Clear();
             while (r.artifactOffer.Count < R.artifactChoices && kinds.Count > 0)
             {
@@ -290,7 +291,7 @@ namespace TOD
         // 등반 중 재봉 상자(I)에서 배치를 바꾼 뒤: 장비 능력치 차이만큼 바로 반영한다.
         public void RefreshGear(RunState r)
         {
-            GearStats before = r.gearStats, after = Gear.Stats(db, r.profile);
+            GearStats before = r.gearStats, after = Gear.Stats(db, r.bag);
             r.damage += after[StatKind.Damage] - before[StatKind.Damage];
             r.recharge += after[StatKind.Recharge] - before[StatKind.Recharge];
             float hp = Round(after[StatKind.Health] - before[StatKind.Health]);
@@ -305,8 +306,7 @@ namespace TOD
         {
             if (r.artifactTaken || !r.artifactOffer.Contains(kind)) return null;
             r.artifactTaken = true;
-            PieceDef def = Gear.AddItem(db, r.profile, kind);
-            Gear.Save(db, r.profile);
+            PieceDef def = Gear.AddItem(db, r.bag, kind);
             Event(r, "loot", string.Format(M.loot, def.name));
             return def;
         }
@@ -606,7 +606,7 @@ namespace TOD
             GainXp(r, drop.xp);
             r.gold += drop.gold;
             if (drop.shard > 0) r.profile.shards += drop.shard;
-            if (drop.item) Event(r, "loot", string.Format(M.loot, Gear.AddItem(db, r.profile).name));
+            if (drop.item) Event(r, "loot", string.Format(M.loot, Gear.AddItem(db, r.bag).name));
             if (drop.shard > 0 || drop.item) Gear.Save(db, r.profile);
         }
 

@@ -1,4 +1,6 @@
 // 15차 재봉실 허브: 상인 단추의 조각 상점 (기억의 파편으로 아직 없는 조각을 산다). Unity 객체 무관, 테스트 대상.
+// 17차: 여기서 산 조각 = 영구 '시작 조각'(등반 전에 재봉 상자 판에 골라 놓고 들고 간다). 가격은 등급별 hub.piecePrices.
+// 일기로 풀린 '아버지의 도안'은 무작위 진열과 따로, 아직 안 샀으면 늘 진열 끝에 붙는다.
 using System;
 using System.Collections.Generic;
 
@@ -39,8 +41,16 @@ namespace TOD
 
         public static bool Sold(Profile profile, int kind) => Gear.Owns(profile, kind);
 
+        // 화면에 보일 진열: 무작위 진열 + 풀렸고 아직 안 산 도안
+        public static List<int> Display(GameDatabase db, Profile profile)
+        {
+            var list = new List<int>(profile.hubStock);
+            foreach (int k in Diary.OpenPatterns(db, profile)) if (!list.Contains(k) && !Gear.Owns(profile, k)) list.Add(k);
+            return list;
+        }
+
         public static bool CanBuy(GameDatabase db, Profile profile, int kind) =>
-            profile.hubStock.Contains(kind) && !Sold(profile, kind) && profile.shards >= Price(db, kind);
+            (profile.hubStock.Contains(kind) || Diary.PatternOpen(db, profile, kind)) && !Sold(profile, kind) && profile.shards >= Price(db, kind);
 
         // 사면 조각을 재봉 상자에 넣고 파편을 뺀다. 못 사면 null.
         public static PieceDef Buy(GameDatabase db, Profile profile, int kind)

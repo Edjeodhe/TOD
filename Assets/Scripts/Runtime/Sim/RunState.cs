@@ -127,7 +127,8 @@ namespace TOD
 
     public class RunState
     {
-        public Profile profile;
+        public Profile profile;   // 영구 저장 (파편, 최고 층, 일기)
+        public Profile bag;       // 17차 등반 가방: 시작 조각 + 이번 등반에서 얻은 조각과 배치 (Gear.RunBag, 귀환하면 버림)
         public Func<float> random;
         public GearStats gearStats;
         public int floor = 1, round = 1, level = 1, xp, gold, kills, spawned, shotCount, nextKnot, augmentQueue, combo;

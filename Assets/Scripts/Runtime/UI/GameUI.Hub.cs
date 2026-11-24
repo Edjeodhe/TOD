@@ -53,6 +53,12 @@ namespace TOD
                 bool done = sold(kind);
                 int cost = price(kind);
                 Button card = PieceOfferCard(container, kind, () => buy(kind));
+                if (Gear.IsPattern(db, kind) && !string.IsNullOrEmpty(hub.patternTag))   // 17차: 아버지의 도안 표시
+                {
+                    card.AddToClassList("hub-pattern");
+                    card.Add(new Label(hub.patternTag) { name = "hub-pattern-tag", pickingMode = PickingMode.Ignore });
+                    card.Q<Label>("hub-pattern-tag").AddToClassList("hub-pattern-tag");
+                }
                 // 팔림, 파편 부족도 누를 수 있게 두고(상인이 대답함) 흐리게만
                 card.EnableInClassList("hub-sold", done);
                 card.EnableInClassList("ware-dim", !done && shards < cost);

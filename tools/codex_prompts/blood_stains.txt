@@ -1,0 +1,12 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/blood_stains.png
+Size: landscape 1536x1024.
+Create a sheet of 6 separate dried BLOOD STAINS meant to be laid over old paper diary pages in a 2D game, arranged in a 3 columns x 2 rows grid, each stain about 300px, fully separated with wide empty gaps (at least 100px), nothing touching. Flat top-down, as if soaked into paper:
+(1) a round splatter with a few flung droplets around it
+(2) a long dragged smear, like a finger wiped across the page
+(3) a small mouse paw print (four tiny toes and a pad), not a human hand
+(4) a few drips running downward with round drops at the ends
+(5) a ring stain from a wet thimble set down on the page
+(6) a cluster of tiny dots and speckles, like spray from a pricked finger
+Color: dried dark crimson to brownish maroon (#5A1414, #7A1F1F, #3A0C0C), slightly darker at the edges where it dried, uneven soaked texture, semi-matte. Hand-painted 2D look matching a Tim Burton-like gothic paper cutout game, no black outline (stains have no outline), not glossy, not cartoon-bright.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no paper, no vignette, no shadows, no text, no labels, no numbers. Do not use any green color inside the artwork itself.

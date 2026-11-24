@@ -22,13 +22,40 @@ namespace TOD
             if (HubShop.Ensure(db, Profile, () => Random.value)) Gear.Save(db, Profile);
         }
 
-        // ShowScreen 에서: 로비 = 허브 켜기
+        // ShowScreen 에서: 로비 = 허브 켜기. 17차: 다락 방의 실궤 창(UiScreen.Attic)이 열린 동안에도 방을 뒤에 그대로 둔다.
         void SyncHub(UiScreen next)
         {
-            if (hubRoot != null) hubRoot.SetActive(next == UiScreen.Lobby);
+            bool behindChest = next == UiScreen.Attic && hub != null && hub.InAttic;
+            if (hubRoot != null) hubRoot.SetActive(next == UiScreen.Lobby || behindChest);
+            ui.SetAtticOverRoom(behindChest);
             if (next != UiScreen.Lobby || hub == null) { ui.ShowHubPrompt(null, Vector2.zero); return; }
             hub.Enter(hubFromRun);
             hubFromRun = false;
+            ui.SetHubRoom(hub.Room);
+        }
+
+        // 17차: 재봉실 ↔ 다락 방. 화면이 잠깐 어두워지는 사이에 방을 바꾼다.
+        bool roomMoving;
+        void MoveRoom(bool attic)
+        {
+            if (hub == null || roomMoving) return;
+            roomMoving = true;
+            if (!string.IsNullOrEmpty(db.hub.roomSound)) sound.Play(db.hub.roomSound);
+            ui.FadeRoom(db.hub.roomFade, () =>
+            {
+                hub.SetRoom(attic);
+                ui.SetHubRoom(hub.Room);
+                roomMoving = false;
+            });
+        }
+
+        // 결과 화면의 '예견의 다락' 등: 재봉실로 돌아와 다락 방에 선다.
+        public void GoToAttic()
+        {
+            if (Run != null) return;
+            ui.CloseDialog();
+            ShowScreen(UiScreen.Lobby);
+            if (hub != null && !hub.InAttic) { hub.SetRoom(true); ui.SetHubRoom(hub.Room); }
         }
 
         // 등반이 끝날 때(Finish): 돌아오면 탑 입구 앞에 서고, 상인이 새 조각을 진열한다.
@@ -50,7 +77,7 @@ namespace TOD
                 move.y = (k.sKey.isPressed || k.downArrowKey.isPressed ? 1 : 0) - (k.wKey.isPressed || k.upArrowKey.isPressed ? 1 : 0);
             }
             if (hubAutoMove != Vector2.zero) move = hubAutoMove;
-            bool free = Opened == "";
+            bool free = Opened == "" && !roomMoving;
             hub.Tick(dt, move, free, Clock);
             HubFacility near = free ? hub.Near : null;
             ui.ShowHubPrompt(near?.prompt, near != null ? hub.PromptAnchor(near) : Vector2.zero);
@@ -73,7 +100,9 @@ namespace TOD
             switch (station)
             {
                 case HubStation.SewingBox: ShowScreen(UiScreen.Inventory); break;
-                case HubStation.Attic: ShowScreen(UiScreen.Attic); break;
+                case HubStation.Attic: MoveRoom(true); break;            // 17차: 다락 방으로 올라간다
+                case HubStation.AtticExit: MoveRoom(false); break;
+                case HubStation.Chest: ShowScreen(UiScreen.Attic); sound.Play("loot"); break;   // 모이라의 실궤 = 강화 창
                 case HubStation.Merchant: ShowHubShop(); MerchantSay(MerchantCue.Greet); break;
                 case HubStation.Tower: StartRun(); break;
                 case HubStation.Diary: ui.ShowDiary(); break;
@@ -85,7 +114,7 @@ namespace TOD
         public void ShowHubShop()
         {
             if (HubShop.Ensure(db, Profile, () => Random.value)) Gear.Save(db, Profile);
-            ui.ShowHubShop(db.hub, Profile.hubStock, k => HubShop.Price(db, k), k => HubShop.Sold(Profile, k), Profile.shards, BuyHubPiece);
+            ui.ShowHubShop(db.hub, HubShop.Display(db, Profile), k => HubShop.Price(db, k), k => HubShop.Sold(Profile, k), Profile.shards, BuyHubPiece);
         }
 
         void BuyHubPiece(int kind)

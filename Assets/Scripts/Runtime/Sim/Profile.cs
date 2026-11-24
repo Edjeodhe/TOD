@@ -1,4 +1,6 @@
 // 영구 저장 프로필과 재봉 상자 계산 (웹판 gear.js).
+// 17차: Profile 은 영구 저장만 맡는다(파편, 강화, 일기, 시작 조각 items 와 등반 전 배치 placements).
+// 등반은 Gear.RunBag 이 만든 임시 Profile(RunState.bag)을 쓰고, 귀환하면 버린다.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,14 +14,16 @@ namespace TOD
     [Serializable]
     public class Profile
     {
-        public int version = 1;
+        public const int CurrentVersion = 2;
+        public int version = CurrentVersion;
         public int shards, best, expansion, rows, capacity;
+        public int cols;   // 17차 세로 줄 강화 단계
         public List<OwnedItem> items = new();
         public List<Placement> placements = new();
         public int nextId;
         // 15차-outgame-unlock: 알림을 본 해금 세트 id, 다락 '시작 조각' 강화 단계와 고른 조각 종류
         public List<string> seenUnlocks = new();
-        public int starter, starterKind = -1;
+        public int starter, starterKind = -1;   // starter = 17차 '시작 조각 선택' 단계(들고 갈 칸 수). starterKind 는 15차 흔적(안 씀)
         // 15차 아버지의 일기 (Diary.cs): 층 번호 - 1 자리에 보스 욕망 선택(0 아직, 1 흡수, 2 거절), 읽은 조각의 층 번호, 알린 조각 수
         public List<int> floorChoices = new();
         public List<int> diaryRead = new();
@@ -64,7 +68,8 @@ namespace TOD
                 if (!string.IsNullOrEmpty(json))
                 {
                     Profile saved = JsonUtility.FromJson<Profile>(json);
-                    if (saved is { version: 1 } && saved.items != null && saved.placements != null) return DropInvalidPlacements(db, Dedupe(db, saved));
+                    if (saved is { version: >= 1 and <= Profile.CurrentVersion } && saved.items != null && saved.placements != null)
+                        return DropInvalidPlacements(db, Dedupe(db, Migrate(db, saved)));
                 }
             }
             catch (Exception error) { Debug.LogWarning($"[TOD] profile reset: {error.Message}"); }
@@ -73,6 +78,42 @@ namespace TOD
             profile.nextId++;
             return profile;
         }
+
+        // 17차 이전 저장(version 1)의 조각은 예전 규칙(영구 보관)으로 얻은 등반 조각이다 → 처음 지급 조각만 남기고 배치를 비운다.
+        static Profile Migrate(GameDatabase db, Profile profile)
+        {
+            if (profile.version >= Profile.CurrentVersion) return profile;
+            profile.items.Clear();
+            profile.placements.Clear();
+            foreach (int kind in db.gear.startingKinds.Distinct()) profile.items.Add(new OwnedItem { id = ++profile.nextId, kind = kind });
+            profile.nextId++;
+            profile.hubStock?.Clear();
+            profile.version = Profile.CurrentVersion;
+            return profile;
+        }
+
+        // 등반용 임시 가방: 강화 단계는 영구 프로필과 같고, 조각은 판에 놓인 시작 조각만(같은 id, 같은 자리).
+        // 등반 중 얻은 조각과 배치는 여기에만 쌓이고, 귀환하면 버린다. 파편, 최고 층, 일기는 영구 프로필(RunState.profile)에 쓴다.
+        public static Profile RunBag(GameDatabase db, Profile profile)
+        {
+            var bag = new Profile
+            {
+                shards = 0, best = profile.best, expansion = profile.expansion, rows = profile.rows, cols = profile.cols,
+                capacity = profile.capacity, starter = profile.starter, nextId = profile.nextId,
+                seenUnlocks = new List<string>(profile.seenUnlocks ?? new List<string>()),
+            };
+            foreach (Placement p in profile.placements)
+            {
+                OwnedItem item = profile.items.Find(i => i.id == p.id);
+                if (item == null) continue;
+                bag.items.Add(new OwnedItem { id = item.id, kind = item.kind });
+                bag.placements.Add(new Placement { id = p.id, x = p.x, y = p.y, turns = p.turns });
+            }
+            return bag;
+        }
+
+        // 17차 아버지의 도안: 일기로만 풀리는 전용 시작 조각 (탑 보상, 상점 무작위 진열에는 나오지 않는다)
+        public static bool IsPattern(GameDatabase db, int kind) => db.diary?.entries != null && System.Array.Exists(db.diary.entries, e => e.patternKind == kind);
 
         public static void Save(GameDatabase db, Profile profile)
         {
@@ -88,9 +129,9 @@ namespace TOD
         // 아이템은 모두 고유하다: 같은 종류는 한 번만 가진다 (개수 표시 없음).
         public static bool Owns(Profile profile, int kind) => profile != null && profile.items.Any(i => i.kind == kind);
 
-        // 아직 갖지 않은 종류 (쉬어가기 탑 선택지·상점 조각이 여기서 뽑는다). 15차: 잠긴 세트 조각은 빠진다 (Unlocks).
+        // 아직 갖지 않은 종류 (쉬어가기 탑 선택지·상점 조각이 여기서 뽑는다). 15차: 잠긴 세트 조각은 빠진다 (Unlocks). 17차: 아버지의 도안도 빠진다.
         public static List<int> Unowned(GameDatabase db, Profile profile) =>
-            Enumerable.Range(0, db.gear.pieces.Length).Where(k => !Owns(profile, k) && Unlocks.KindOpen(db, profile, k)).ToList();
+            Enumerable.Range(0, db.gear.pieces.Length).Where(k => !Owns(profile, k) && Unlocks.KindOpen(db, profile, k) && !IsPattern(db, k)).ToList();
 
         // 저장된 프로필에 같은 종류가 여럿이면 처음 것만 남긴다 (빠진 것의 배치도 지움).
         static Profile Dedupe(GameDatabase db, Profile profile)
@@ -191,7 +232,8 @@ namespace TOD
             List<PlacedPiece> pieces = Placed(db, profile);
             foreach (PlacedPiece piece in pieces)
             {
-                float reinforced = piece.cells.Count(c => c.y < profile.rows * 2) / (float)piece.cells.Count;
+                // 가로 줄 강화(위에서 두 줄 단위) + 17차 세로 줄 강화(왼쪽에서 두 칸 단위). 둘 다 걸친 칸은 둘 다 받는다.
+                float reinforced = (piece.cells.Count(c => c.y < profile.rows * 2) + piece.cells.Count(c => c.x < profile.cols * 2)) / (float)piece.cells.Count;
                 result.stats[piece.def.stat] += piece.def.value * (1 + reinforced * db.gear.rowBonus);
             }
             foreach (SetDef set in db.gear.sets)

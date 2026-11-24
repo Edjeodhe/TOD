@@ -19,6 +19,8 @@ namespace TOD
 
         public Combat Combat { get; private set; }
         public Profile Profile { get; private set; }
+        // 17차: 재봉 상자가 다루는 가방. 등반 중 = 등반 가방(RunState.bag), 아웃게임 = 영구 시작 조각(Profile)
+        public Profile Bag => Run != null ? Run.bag : Profile;
         public RunState Run { get; private set; }
 
         UiScreen screen = UiScreen.Lobby;
@@ -65,6 +67,7 @@ namespace TOD
         public void ShowScreen(UiScreen next)
         {
             if (Run != null && next != UiScreen.Combat) return;
+            if (next == UiScreen.Attic && Run == null && hub != null && !hub.InAttic && screen != UiScreen.Summary) { GoToAttic(); return; }   // 17차: 다락은 걸어 들어가는 방
             if (next is UiScreen.Inventory or UiScreen.Attic) roomReturn = screen is UiScreen.Summary ? UiScreen.Summary : UiScreen.Lobby;
             screen = next;
             if (next == UiScreen.Lobby) summary = null;
@@ -99,7 +102,6 @@ namespace TOD
             ui.CloseDialog();
             summary = null;
             paused = false;
-            PlaceStarterPiece();   // 15차 다락 '시작 조각'
             Run = Combat.CreateRun(Profile, () => Random.value);
             offered = null;
             augmentRerolled = false;
@@ -303,7 +305,7 @@ namespace TOD
             WareDef ware = db.shop.wares.First(w => w.id == id);
             if (shop.sold.Contains(id)) { MerchantSay(MerchantCue.SoldOut); return; }
             if (Run.gold < Price(ware)) { MerchantSay(MerchantCue.NoMoney); return; }
-            if (id == "piece" && Gear.Unowned(db, Profile).Count == 0) { ui.Say(db.ui.ownedAll); MerchantSay(MerchantCue.SoldOut); return; }   // 아이템은 고유: 다 가졌으면 팔지 않는다
+            if (id == "piece" && Gear.Unowned(db, Run.bag).Count == 0) { ui.Say(db.ui.ownedAll); MerchantSay(MerchantCue.SoldOut); return; }   // 아이템은 고유: 다 가졌으면 팔지 않는다
             Run.gold -= Price(ware);
             shop.sold.Add(id);
             float potion = Run.desires.Contains("hunger") ? db.desire.hungerPotion : 1;
@@ -311,7 +313,7 @@ namespace TOD
             {
                 case "heal": Run.hp = Mathf.Min(Run.maxHp, Run.hp + ware.amount * potion); break;
                 case "pure": Combat.AdjustDesire(Run, -ware.amount * potion); break;
-                case "piece": ui.Say(string.Format(db.messages.loot, Gear.AddItem(db, Profile).name)); break;
+                case "piece": ui.Say(string.Format(db.messages.loot, Gear.AddItem(db, Run.bag)?.name)); break;
                 case "buff": Run.damage += ware.amount; break;
             }
             Gear.Save(db, Profile);
@@ -322,12 +324,23 @@ namespace TOD
 
         // ---------------------------------------------------------------- 재봉 상자
 
-        void RenderInventory() => ui.RenderInventory(Profile, selected, turns);
+        void RenderInventory() => ui.RenderInventory(Bag, selected, turns);
+
+        // 아웃게임 판 = 등반 전에 고른 시작 조각이라 저장한다. 등반 가방은 귀환하면 버리므로 저장하지 않는다.
+        void SaveBag() { if (Run == null) Gear.Save(db, Profile); }
+
+        // 17차: 아웃게임 판에는 들고 갈 수(Unlocks.StarterSlots)만큼만 놓는다.
+        bool StarterFull(OwnedItem item)
+        {
+            if (Run != null || !Unlocks.StarterFull(db, Profile, item)) return false;
+            ui.Say(string.Format(db.gear.starterFull, Unlocks.StarterSlots(db, Profile)));
+            return true;
+        }
 
         // 개발자 모드가 조각·배치를 바꾼 뒤: 저장하고, 등반 중이면 장비 능력치·세트를 바로 반영하고, 재봉 상자가 열려 있으면 다시 그린다.
         public void DevGearChanged()
         {
-            Gear.Save(db, Profile);
+            SaveBag();
             if (Run != null) Combat.RefreshGear(Run);
             if (screen == UiScreen.Inventory || runInventory) { selected = null; RenderInventory(); }
             ui.UpdateMeta(Profile);
@@ -336,7 +349,7 @@ namespace TOD
         public void SelectPiece(int id)
         {
             selected = id;
-            turns = Profile.placements.FirstOrDefault(p => p.id == id)?.turns ?? 0;
+            turns = Bag.placements.FirstOrDefault(p => p.id == id)?.turns ?? 0;
             RenderInventory();
         }
 
@@ -349,28 +362,29 @@ namespace TOD
 
         public void Unequip()
         {
-            Profile.placements.RemoveAll(p => p.id == selected);
-            Gear.Save(db, Profile);
+            Bag.placements.RemoveAll(p => p.id == selected);
+            SaveBag();
             RenderInventory();
         }
 
         public void ClickCell(int x, int y)
         {
-            OwnedItem item = Profile.items.FirstOrDefault(i => i.id == selected);
-            PlacedPiece occupying = Gear.Placed(db, Profile).FirstOrDefault(p => p.cells.Contains(new Vector2Int(x, y)));
+            OwnedItem item = Bag.items.FirstOrDefault(i => i.id == selected);
+            PlacedPiece occupying = Gear.Placed(db, Bag).FirstOrDefault(p => p.cells.Contains(new Vector2Int(x, y)));
             if (item == null)
             {
                 selected = occupying?.Id ?? selected;
                 turns = occupying?.placement.turns ?? turns;
                 RenderInventory();
             }
-            else if (!Gear.CanPlace(db, Profile, item, turns, x, y)) ui.Say(db.ui.invalidPlacement);
+            else if (StarterFull(item)) RenderInventory();
+            else if (!Gear.CanPlace(db, Bag, item, turns, x, y)) ui.Say(db.ui.invalidPlacement);
             else
             {
-                Profile.placements.RemoveAll(p => p.id == item.id);
-                Profile.placements.Add(new Placement { id = item.id, x = x, y = y, turns = turns });
+                Bag.placements.RemoveAll(p => p.id == item.id);
+                Bag.placements.Add(new Placement { id = item.id, x = x, y = y, turns = turns });
                 selected = null;
-                Gear.Save(db, Profile);
+                SaveBag();
                 RenderInventory();
                 ui.Sew(item.id);   // 장착: 바늘이 조각 둘레를 땀땀이 한 바퀴
                 sound.Play("loot");
@@ -381,23 +395,24 @@ namespace TOD
         public void BeginDrag(int id)
         {
             selected = id;
-            turns = Profile.placements.FirstOrDefault(p => p.id == id)?.turns ?? 0;
+            turns = Bag.placements.FirstOrDefault(p => p.id == id)?.turns ?? 0;
             RenderInventory();
         }
 
         // 끌어서 놓기: 판 칸에 놓을 수 있으면 옮겨 장착(바느질), 못 놓으면 안내 후 원래대로. 판 밖이면 취소.
         public void DropDrag(int id, Vector2Int? cell)
         {
-            OwnedItem item = Profile.items.FirstOrDefault(i => i.id == id);
-            Placement old = Profile.placements.FirstOrDefault(p => p.id == id);
+            OwnedItem item = Bag.items.FirstOrDefault(i => i.id == id);
+            Placement old = Bag.placements.FirstOrDefault(p => p.id == id);
             selected = null;
             if (item != null && cell is Vector2Int at && !(old != null && old.x == at.x && old.y == at.y && old.turns == turns))
             {
-                if (Gear.CanPlace(db, Profile, item, turns, at.x, at.y))
+                if (StarterFull(item)) { RenderInventory(); return; }
+                if (Gear.CanPlace(db, Bag, item, turns, at.x, at.y))
                 {
-                    Profile.placements.RemoveAll(p => p.id == id);
-                    Profile.placements.Add(new Placement { id = id, x = at.x, y = at.y, turns = turns });
-                    Gear.Save(db, Profile);
+                    Bag.placements.RemoveAll(p => p.id == id);
+                    Bag.placements.Add(new Placement { id = id, x = at.x, y = at.y, turns = turns });
+                    SaveBag();
                     RenderInventory();
                     ui.Sew(id);
                     sound.Play("loot");
@@ -411,14 +426,16 @@ namespace TOD
         public void HoverCell(Vector2Int? at)
         {
             if (screen != UiScreen.Inventory) return;
-            ui.PreviewPiece(Profile, Profile.items.FirstOrDefault(i => i.id == selected), turns, at);
+            ui.PreviewPiece(Bag, Bag.items.FirstOrDefault(i => i.id == selected), turns, at);
         }
 
         // ---------------------------------------------------------------- 예견의 다락
 
-        int Level(UpgradeDef u) => u.key switch { "expansion" => Profile.expansion, "rows" => Profile.rows, Unlocks.StarterKey => Profile.starter, _ => Profile.capacity };
+        // 강화 5종 (17차 모이라의 실궤): expansion 인벤토리 확장, rows 가로 줄, cols 세로 줄, capacity 욕망 최대치, starter 시작 조각 들고 갈 수
+        int Level(UpgradeDef u) => u.key switch { "expansion" => Profile.expansion, "rows" => Profile.rows, "cols" => Profile.cols, Unlocks.StarterKey => Profile.starter, _ => Profile.capacity };
         int Cost(UpgradeDef u) => u.price + u.priceStep * Level(u);
-        bool Maxed(UpgradeDef u) => Level(u) >= (u.max >= 0 ? u.max : Gear.Dimensions(db, Profile).height / 2);
+        // max < 0 → 판 크기 기준 (가로 줄 = 높이 / 2, 세로 줄 = 폭 / 2)
+        bool Maxed(UpgradeDef u) => Level(u) >= (u.max >= 0 ? u.max : u.key == "cols" ? Gear.Dimensions(db, Profile).width / 2 : Gear.Dimensions(db, Profile).height / 2);
 
         void RenderAttic()
         {
@@ -427,8 +444,7 @@ namespace TOD
                 pendingUpgrade = key;
                 UpgradeDef u = db.upgrades.First(x => x.key == key);
                 ui.ShowUpgradeConfirm(u, Cost(u));
-            });
-            RenderStarterRow();
+            }, Unlocks.StarterSlots(db, Profile));
         }
 
         public void ConfirmUpgrade()
@@ -440,6 +456,7 @@ namespace TOD
             {
                 case "expansion": Profile.expansion++; break;
                 case "rows": Profile.rows++; break;
+                case "cols": Profile.cols++; break;
                 case Unlocks.StarterKey: Profile.starter++; break;
                 default: Profile.capacity++; break;
             }
@@ -476,18 +493,33 @@ namespace TOD
         {
             Keyboard k = Keyboard.current;
             if (k == null) return;
-            if (k.escapeKey.wasPressedThisFrame)
-            {
-                if (runInventory) CloseRunInventory();
-                else if (Opened is "upgrade" or "augment" or "artifact" or "shop" or "starter" or "hubshop") ui.CloseDialog();   // 증강·아이템은 나중에 E 로 다시 연다
-                else if (Opened == "retreat") CancelRetreat();
-                else TogglePause();
-            }
+            if (k.escapeKey.wasPressedThisFrame) Escape();
             if (k.enterKey.wasPressedThisFrame && screen == UiScreen.Lobby && Run == null && Opened == "") StartRun();
             if (k.rKey.wasPressedThisFrame && (screen == UiScreen.Inventory || runInventory)) Rotate();
             if (IsCombat && k.spaceKey.wasPressedThisFrame) dashRequested = true;
             if (k.eKey.wasPressedThisFrame && !runInventory) Interact();
             if (k.iKey.wasPressedThisFrame) ToggleRunInventory();
+        }
+
+        // 17차 Esc: 맨 위에 열린 창부터 닫는다. 증강·아이템 창은 닫아도 나중에 E 로 다시 연다.
+        // 일기 게시판은 DiaryBoard 가 스스로 Esc 를 받는다(쪽지 → 게시판 순서). 고르기 전에는 못 닫는 욕망 제안만 남긴다.
+        void Escape()
+        {
+            if (runInventory) { CloseRunInventory(); return; }
+            switch (Opened)
+            {
+                case "diary": case "desire": return;
+                case "retreat": CancelRetreat(); return;
+                case "pause": TogglePause(); return;
+                case "": break;
+                default: ui.CloseDialog(); return;
+            }
+            if (Run == null)
+            {
+                if (screen is UiScreen.Inventory or UiScreen.Attic) BackFromRoom();   // 재봉 상자, 모이라의 실궤 창
+                return;
+            }
+            TogglePause();
         }
 
         CombatInput ReadCombatInput()

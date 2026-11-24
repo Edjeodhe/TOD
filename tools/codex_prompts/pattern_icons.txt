@@ -1,0 +1,11 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/pattern_icons.png
+Size: landscape 1536x1024.
+Create a game item icon sheet: 5 separate item icons arranged in one row of 5 columns (centered vertically), each icon about 240px, fully separated with wide empty gaps (at least 60px), nothing touching, each with its own thick black outline, three-quarter view. These are keepsakes left behind by a missing old mouse TAILOR FATHER, warm and nostalgic but slightly eerie, all in ivory, brass and faded indigo (no set color, they are tinted later):
+(1) a folded yellowed paper sewing pattern with dashed chalk cutting lines and a small drawn coat outline on it, a brass pin through it (no faces, no ears, no logos)
+(2) a worn brass thimble engraved with a tiny tower crest, with a dent on one side
+(3) a rolled leather needle case tied with a faded indigo ribbon, three needles peeking out
+(4) round wire spectacles with one cracked lens, the arms tied together with red thread
+(5) a half-finished embroidery hoop showing a stitched tall gothic tower on a grey hill (no green), needle still hanging on a red thread
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline around every shape, slight paper-grain texture INSIDE the shapes, low saturation. Cute but eerie mood.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels, no numbers. Do not use any green color inside the artwork itself.

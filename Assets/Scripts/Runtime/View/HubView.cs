@@ -1,6 +1,8 @@
 // 15차 재봉실 허브: 방 배경, 시설 그림, 걸어 다니는 주인공, 카메라.
 // 오브젝트(Hub, Backdrop, Facilities/FacilityTemplate)는 MCP 로 만들었고, 시설 그림은 템플릿을 데이터 수만큼 복제한다.
 // 주인공은 전투장의 Arena/Hero 를 한 번 복제해 같은 리그·동작으로 그린다(템플릿 복제). 적과 전투는 없다.
+// 17차: 방이 둘이다. 재봉실 본방(HubConfig 의 옛 필드)과 다락 방(HubConfig.attic). 같은 배경 렌더러에 그림만 바꿔 깔고,
+// 시설 그림은 두 방 것을 모두 복제해 두고 지금 방 것만 켠다.
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,6 +23,9 @@ namespace TOD
         readonly Dictionary<HubStation, SpriteRenderer> renderers = new();
         MaterialPropertyBlock block;
         bool placed;
+        HubRoom main;                          // 재봉실 본방 (HubConfig 옛 필드를 묶은 것)
+        public bool InAttic { get; private set; }
+        public HubRoom Room => InAttic && H.attic != null ? H.attic : main;
         static readonly int BrightId = Shader.PropertyToID("_Bright"), SatId = Shader.PropertyToID("_Sat");
 
         HubConfig H => db.hub;
@@ -33,23 +38,57 @@ namespace TOD
             hero = Instantiate(heroTemplate.gameObject, transform).GetComponent<HeroView>();
             hero.name = "Hero";
             hero.Init(db);
-            if (backdrop != null && H.backdrop != null)
+            main = new HubRoom
             {
-                backdrop.sprite = H.backdrop;
-                Rect r = H.backdropRect;
-                Vector2 size = H.backdrop.bounds.size * Space.Ppu;
+                title = H.title, subtitle = H.subtitle, backdrop = H.backdrop, backdropRect = H.backdropRect, walk = H.walk,
+                heroStart = H.heroStart, cameraZoom = H.cameraZoom, facilities = H.facilities ?? new HubFacility[0], hint = H.hint,
+            };
+            facilityTemplate.gameObject.SetActive(false);
+            foreach (HubRoom room in Rooms())
+                foreach (HubFacility f in room.facilities ?? new HubFacility[0])
+                {
+                    SpriteRenderer sr = Instantiate(facilityTemplate, facilityRoot);
+                    sr.name = f.station.ToString();
+                    renderers[f.station] = sr;
+                    Paint(f, sr);
+                }
+            ShowRoom();
+        }
+
+        IEnumerable<HubRoom> Rooms()
+        {
+            yield return main;
+            if (H.attic != null && H.attic.facilities != null && H.attic.facilities.Length > 0) yield return H.attic;
+        }
+
+        // 지금 방의 배경을 깔고 그 방 시설만 켠다.
+        void ShowRoom()
+        {
+            HubRoom room = Room;
+            if (backdrop != null && room.backdrop != null)
+            {
+                backdrop.sprite = room.backdrop;
+                Rect r = room.backdropRect;
+                Vector2 size = room.backdrop.bounds.size * Space.Ppu;
                 backdrop.transform.localPosition = Space.Canvas(r.center);
                 backdrop.transform.localScale = new Vector3(r.width / size.x, r.height / size.y, 1);
             }
-            facilityTemplate.gameObject.SetActive(false);
-            foreach (HubFacility f in H.facilities ?? new HubFacility[0])
-            {
-                SpriteRenderer sr = Instantiate(facilityTemplate, facilityRoot);
-                sr.name = f.station.ToString();
-                sr.gameObject.SetActive(true);
-                renderers[f.station] = sr;
-                Paint(f, sr);
-            }
+            var here = new HashSet<HubStation>();
+            foreach (HubFacility f in room.facilities ?? new HubFacility[0]) here.Add(f.station);
+            foreach (var pair in renderers) pair.Value.gameObject.SetActive(here.Contains(pair.Key));
+            Near = null;
+        }
+
+        // 17차: 다락 방으로 올라가기(true) / 재봉실로 내려오기(false). 내려오면 다락 사다리 앞(atticReturn)에 선다.
+        public void SetRoom(bool attic)
+        {
+            if (attic && (H.attic == null || H.attic.facilities == null || H.attic.facilities.Length == 0)) return;
+            InAttic = attic;
+            ShowRoom();
+            Vector2 at = attic ? H.attic.heroStart : H.atticReturn;
+            player.x = at.x; player.y = at.y;
+            player.motion = 0;
+            Combat.Act(player, HeroAction.Idle);
         }
 
         // 시설 그림을 데이터 자리·크기로 다시 놓는다 (merchant 세션이 자세 그림을 바꿀 때도 부른다).
@@ -63,13 +102,22 @@ namespace TOD
 
         public SpriteRenderer FacilityRenderer(HubStation station) => renderers.TryGetValue(station, out SpriteRenderer sr) ? sr : null;
 
-        public HubFacility Facility(HubStation station) => System.Array.Find(H.facilities, f => f.station == station);
+        public HubFacility Facility(HubStation station)
+        {
+            foreach (HubRoom room in Rooms())
+            {
+                HubFacility f = System.Array.Find(room.facilities ?? new HubFacility[0], x => x.station == station);
+                if (f != null) return f;
+            }
+            return null;
+        }
 
         // 허브에 들어올 때: 처음이면 시작 자리, 등반에서 돌아왔으면 탑 입구 앞(귀환 자리)
         public void Enter(bool fromRun)
         {
             if (!placed || fromRun)
             {
+                if (InAttic) { InAttic = false; ShowRoom(); }
                 Vector2 at = placed ? H.returnSpot : H.heroStart;
                 player.x = at.x; player.y = at.y;
                 placed = true;
@@ -90,8 +138,9 @@ namespace TOD
             player.x += move.x * H.walkSpeed * dt;
             player.y += move.y * H.walkSpeed * H.verticalFactor * dt;
             Block();
-            player.x = Mathf.Clamp(player.x, H.walk.xMin, H.walk.xMax);
-            player.y = Mathf.Clamp(player.y, H.walk.yMin, H.walk.yMax);
+            Rect walk = Room.walk;
+            player.x = Mathf.Clamp(player.x, walk.xMin, walk.xMax);
+            player.y = Mathf.Clamp(player.y, walk.yMin, walk.yMax);
             if (moving) player.strideTime += dt * (hc.strideBase + hc.strideFactor);
             player.actionTime += dt;
             HeroAction state = moving ? HeroAction.Run : HeroAction.Idle;
@@ -103,7 +152,7 @@ namespace TOD
             hero.Render(player, 1, db.palette.shadow);
 
             Near = Nearest();
-            foreach (HubFacility f in H.facilities)
+            foreach (HubFacility f in Room.facilities)
             {
                 if (!renderers.TryGetValue(f.station, out SpriteRenderer sr)) continue;
                 block.Clear();
@@ -112,14 +161,14 @@ namespace TOD
                 sr.SetPropertyBlock(block);
             }
             AnimateMerchant(clock);
-            float zoom = H.cameraZoom > 0 ? H.cameraZoom : 1;
-            cameraRig.Apply(Space.ToCanvas(player.x, player.y), H.backdropRect, zoom, 0, null, clock);
+            float zoom = Room.cameraZoom > 0 ? Room.cameraZoom : 1;
+            cameraRig.Apply(Space.ToCanvas(player.x, player.y), Room.backdropRect, zoom, 0, null, clock);
         }
 
         // 시설 바닥 타원 안으로 들어가면 타원 가장자리로 밀어낸다.
         void Block()
         {
-            foreach (HubFacility f in H.facilities)
+            foreach (HubFacility f in Room.facilities)
             {
                 if (f.block.x <= 0 || f.block.y <= 0) continue;
                 Vector2 c = f.position + f.blockOffset;
@@ -136,7 +185,7 @@ namespace TOD
         {
             HubFacility best = null;
             float bestD = float.MaxValue;
-            foreach (HubFacility f in H.facilities)
+            foreach (HubFacility f in Room.facilities)
             {
                 float radius = f.radius > 0 ? f.radius : H.interactRadius;
                 float d = Vector2.Distance(new Vector2(player.x, player.y), f.position);
@@ -150,7 +199,7 @@ namespace TOD
         {
             HubFacility f = Facility(HubStation.Merchant);
             SpriteRenderer sr = FacilityRenderer(HubStation.Merchant);
-            if (merchant == null || f == null || sr == null) return;
+            if (merchant == null || f == null || sr == null || InAttic) return;
             MerchantFrame frame = merchant.Pose(clock);
             Sprite sprite = merchant.Sprite(frame.mood) ?? f.sprite;
             if (sprite == null) return;

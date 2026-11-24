@@ -134,3 +134,8 @@ Button {
 .diary-page-body { font-size: 27px; color: #2e2120; -unity-paragraph-spacing: 12px; }
 .diary-rule { height: 2px; background-color: rgba(46, 33, 32, 0.35); margin: 26px 0 20px 0; }
 .diary-page-last { font-size: 28px; color: #7d2f3e; }
+.diary-page-reward { font-size: 22px; color: #5b6f4a; margin-top: 10px; -unity-text-align: middle-right; }
+
+/* 18차: 쪽지 핏자국 (DiaryBoard.Stain 이 종이 맨 아래에 깐다) */
+.diary-blood { position: absolute; left: 6%; right: 6%; top: 6%; bottom: 6%; overflow: hidden; }
+.diary-stain { position: absolute; -unity-background-scale-mode: scale-to-fit; }

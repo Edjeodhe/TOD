@@ -209,23 +209,17 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- 예견의 다락 -->
+        <!-- 예견의 다락: 17차부터 다락 방의 '모이라의 실궤' 강화 창 (방이 뒤에 비침, .over-room) -->
         <ui:VisualElement name="attic" class="layer room attic hidden">
             <ui:VisualElement class="room-shade" picking-mode="Ignore" />
-            <ui:VisualElement class="room-body">
-                <ui:Label text="✧  마녀 모이라" class="eyebrow" />
-                <ui:Label text="예견의 다락" class="room-title" />
-                <ui:Label text="기억의 파편을 내밀면 모이라가 다음 등반의 미래를 읽습니다." class="room-text" />
-                <ui:VisualElement name="upgrades" class="choice-grid" />
-                <!-- 15차: 다락 강화 '시작 조각' (강화를 산 뒤에 보임). GameUI.Outgame.cs -->
-                <ui:VisualElement name="attic-starter" class="attic-starter hidden">
-                    <ui:Label text="시작 조각" class="attic-starter-head" />
-                    <ui:VisualElement name="starter-icon" class="attic-starter-icon" />
-                    <ui:Label name="starter-name" class="attic-starter-name" />
-                    <ui:Label name="starter-none" text="아직 고르지 않았습니다" class="attic-starter-none" />
-                    <ui:Button name="starter-pick" text="조각 고르기" />
-                </ui:VisualElement>
-                <ui:VisualElement class="actions"><ui:Button name="attic-back" text="돌아가기" /></ui:VisualElement>
+            <ui:VisualElement class="room-body attic-body">
+                <!-- 17차: 종이 오른쪽 위 기억의 파편 -->
+                <ui:VisualElement class="shards attic-shards" tooltip="기억의 파편" picking-mode="Ignore"><ui:VisualElement picking-mode="Ignore" /><ui:Label name="attic-shards" text="0" picking-mode="Ignore" /></ui:VisualElement>
+                <ui:Label text="✧  예견의 다락" class="eyebrow" />
+                <ui:Label text="모이라의 실궤" class="room-title" />
+                <ui:Label text="기억의 파편을 실궤에 넣으면 모이라가 다음 등반의 실을 미리 감아 둡니다." class="room-text" />
+                <ui:VisualElement name="upgrades" class="choice-grid attic-grid" />
+                <ui:VisualElement class="actions"><ui:Button name="attic-back" text="돌아가기 (Esc)" /></ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -305,16 +299,6 @@
                 <ui:VisualElement name="artifacts" class="puzzle-grid" />
                 <ui:VisualElement class="actions reroll-row"><ui:Button name="reroll-artifact" text="다시 굴리기" class="reroll" /><ui:Button name="close-artifact" text="나중에 고르기" /></ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement name="dialog-starter" class="dialog hidden">
-                <ui:Label text="모이라의 예견" class="eyebrow" />
-                <ui:Label text="시작 조각 고르기" class="dialog-title" />
-                <ui:Label text="등반을 시작할 때 이 조각이 판의 빈자리에 먼저 놓입니다. 시작 조각은 등급 합 한도에 들지 않습니다." class="dialog-text" />
-                <ui:ScrollView name="starter-list" class="starter-list" />
-                <ui:VisualElement class="actions">
-                    <ui:Button name="close-starter" text="닫기" class="primary" />
-                    <ui:Button name="starter-clear" text="고르지 않기" />
-                </ui:VisualElement>
-            </ui:VisualElement>
             <ui:VisualElement name="dialog-hubshop" class="dialog hidden">
                 <ui:VisualElement class="merchant-peek-slot" picking-mode="Ignore" />
                 <ui:Label text="재봉실 한쪽 구석" class="eyebrow" />
@@ -337,6 +321,8 @@
         </ui:VisualElement>
 
         <ui:VisualElement name="room-flash" class="room-flash hidden" picking-mode="Ignore"><ui:VisualElement picking-mode="Ignore" /></ui:VisualElement>
+        <!-- 17차: 재봉실 ↔ 다락 방을 오갈 때 잠깐 어두워지는 판 -->
+        <ui:VisualElement name="room-fade" class="room-fade hidden" picking-mode="Ignore" />
         <ui:VisualElement name="notice" class="notice hidden" picking-mode="Ignore"><ui:Label name="notice-text" /></ui:VisualElement>
 
         <!-- 15차: 세트 해금 알림 (세트 색 종이 띠 + 이름 + 반짝임, 클릭하면 넘김). GameUI.Outgame.cs, Outgame.uss -->

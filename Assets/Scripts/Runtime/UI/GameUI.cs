@@ -69,7 +69,7 @@ namespace TOD
             Bind("cancel-upgrade", CloseDialog);
             Bind("restart", game.StartRun);
             Bind("summary-inventory", () => game.ShowScreen(UiScreen.Inventory));
-            Bind("summary-attic", () => game.ShowScreen(UiScreen.Attic));
+            Bind("summary-attic", game.GoToAttic);   // 17차: 다락은 걸어 들어가는 방
             Bind("summary-lobby", () => game.ShowScreen(UiScreen.Lobby));
             Bind("inventory-back", game.BackFromRoom);
             Bind("attic-back", game.BackFromRoom);
@@ -212,6 +212,7 @@ namespace TOD
         public void UpdateMeta(Profile profile)
         {
             Text(root, "meta-shards", profile.shards.ToString());
+            Text(root, "attic-shards", profile.shards.ToString());   // 17차: 실궤 창 종이 오른쪽 위
             Text(root, "best-record", $"◇ 최고 기록  {(profile.best > 0 ? string.Format(T.bestRecord, profile.best) : T.bestNone)}");
         }
 
@@ -509,15 +510,19 @@ namespace TOD
             vfx.style.backgroundImage = image != null ? new StyleBackground(image) : StyleKeyword.None;
         }
 
-        public void RenderAttic(Profile profile, Func<UpgradeDef, int> cost, Func<UpgradeDef, bool> maxed, Func<UpgradeDef, int> level, Action<string> pick)
+        // 17차 모이라의 실궤: 강화 5종 카드 + 종이 오른쪽 위 파편 수. '시작 조각 선택' 카드에는 지금 들고 갈 수를 덧붙인다.
+        public void RenderAttic(Profile profile, Func<UpgradeDef, int> cost, Func<UpgradeDef, bool> maxed, Func<UpgradeDef, int> level, Action<string> pick, int starterSlots)
         {
+            Text(attic, "attic-shards", profile.shards.ToString());
             VisualElement container = attic.Q("upgrades");
             container.Clear();
             foreach (UpgradeDef u in db.upgrades)
             {
                 bool max = maxed(u);
                 string foot = max ? T.upgradeMax : string.Format(T.upgradeCost, cost(u), level(u));
-                Card(container, u.icon, null, u.name, u.text, foot, () => pick(u.key), !max && profile.shards >= cost(u));
+                string text = u.text;
+                if (u.key == Unlocks.StarterKey && !string.IsNullOrEmpty(T.starterSlotsLine)) text += "\n" + string.Format(T.starterSlotsLine, starterSlots);
+                Card(container, u.icon, null, u.name, text, foot, () => pick(u.key), !max && profile.shards >= cost(u));
             }
         }
 
@@ -601,7 +606,13 @@ namespace TOD
         {
             var (width, height, limit) = Gear.Dimensions(db, profile);
             List<PlacedPiece> placed = Gear.Placed(db, profile);
-            Text(inventory, "inventory-header", string.Format(T.inventoryHeader, width, height, placed.Sum(p => Unlocks.Cost(db, profile, p)), limit));   // 시작 조각은 한도에 들지 않음
+            Text(inventory, "inventory-header", string.Format(T.inventoryHeader, width, height, placed.Sum(p => Unlocks.Cost(db, profile, p)), limit));
+            if (game.Run == null)   // 17차: 아웃게임 판 = 등반에 들고 갈 시작 조각
+            {
+                Label note = inventory.Q<Label>("inventory-run-note");
+                note.text = string.Format(T.inventoryOutgame ?? "", placed.Count, Unlocks.StarterSlots(db, profile));
+                Show(note, !string.IsNullOrEmpty(note.text));
+            }
             OwnedItem holding = profile.items.FirstOrDefault(i => i.id == selected);
             holdingPiece = holding != null;
             dragTurns = turns;
