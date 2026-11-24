@@ -40,6 +40,11 @@ namespace TOD
         public float height { get { Load(); return rigHeight; } }   // 리그 높이 (그림 px). 시설 height 에 맞춰 배율을 정한다
         float rigHeight = 430;
         public Vector3 CardPoint { get; private set; }
+        // 20차 운명 읽기: 점성구 그림의 월드 가운데, 크기, 그림. BallOut 이면 탁자 위 점성구와 빛을 감춘다(UI 의 구가 대신 날아감).
+        public Vector3 BallPoint { get; private set; }
+        public Vector3 BallSize { get; private set; }
+        public Sprite BallSprite { get; private set; }
+        public bool BallOut { get; set; }
 
         // ---------------------------------------------------------------- JSON → 리그
         class Part { public Sprite sprite; public Vector2 pivot; public float rot, scale = 1; public Vector2? cardPoint; }
@@ -275,8 +280,17 @@ namespace TOD
                 block.SetFloat(BrightId, bright);
                 block.SetFloat(SatId, saturation);
                 b.sr.SetPropertyBlock(block);
+                if (b.id == ballBone)
+                {
+                    Bounds bb = b.sr.bounds;
+                    BallPoint = bb.center;
+                    BallSize = bb.size;
+                    BallSprite = part.sprite;
+                    if (BallOut) b.sr.enabled = false;   // 20차 운명 읽기: 점성구가 화면 가운데로 나가 있는 동안
+                }
             }
             PlaceShadowAndGlow(ppu);
+            if (BallOut && glow != null) glow.enabled = false;
         }
 
         float Pulse => .5f + .5f * Mathf.Sin(time * ballSpeed * 2 * Mathf.PI);

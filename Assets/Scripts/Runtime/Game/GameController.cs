@@ -599,12 +599,35 @@ namespace TOD
             return string.IsNullOrEmpty(db.hub.fateIntro) ? def.fateLine : db.hub.fateIntro + " " + def.fateLine;
         }
 
+        // 20차: 점성구가 가운데로 나와 빛을 퍼뜨리고 암시가 어두운 글자로 번진다 (GameUI.Fate.cs). 끝나면 모이라가 같은 말을 한 줄로 남긴다.
+        void ShowFate(bool paid)
+        {
+            ElementDef def = db.elements?.Def(Moira.FateElement(Profile));
+            if (def == null) { ui.SayMoira(moiraLine); return; }
+            MoiraRig rig = hub != null ? hub.moira : null;
+            Color tint = def.fateColor.a > 0 ? def.fateColor : def.hintColor.a > 0 ? def.hintColor : Color.white;   // 20차: 구슬, 빛, 글자 색
+            ui.ShowFate(def.fateLine, tint, rig != null ? rig.BallSprite : null, MoiraBall,
+                out_ => { if (rig != null) rig.BallOut = out_; },
+                () => { if (!string.IsNullOrEmpty(db.hub.fateShow?.lightSound)) sound.Play(db.hub.fateShow.lightSound); ui.RoomFlash(); },
+                () => ui.SayMoira(moiraLine), paid);
+        }
+
+        // 탁자 위 점성구 자리 (패널 px)
+        Rect MoiraBall()
+        {
+            MoiraRig rig = hub != null ? hub.moira : null;
+            if (rig == null || rig.BallSprite == null) return new Rect(920, 260, 80, 80);
+            Vector2 a = ui.WorldToPanel(rig.BallPoint - rig.BallSize / 2), b = ui.WorldToPanel(rig.BallPoint + rig.BallSize / 2);
+            return Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+        }
+
         void ReadFateCard()
         {
-            if (Moira.FateRead(Profile))   // 다시 듣기 (파편 없음)
+            if (Moira.FateRead(Profile))   // 다시 듣기 (파편 없음, 점성구부터)
             {
-                ui.SayMoira(moiraLine = FateSpeech());
+                moiraLine = FateSpeech();
                 RenderAttic();
+                ShowFate(false);
                 return;
             }
             if (Profile.shards < db.hub.fatePrice) { ui.Say(db.hub.noShards); RenderAttic(); return; }
@@ -680,13 +703,13 @@ namespace TOD
                 ui.CloseDialog();   // → RenderAttic (카드 갱신)
                 ui.UpdateMeta(Profile);
                 sound.Play("upgrade");
-                ui.RoomFlash();
-                ui.SayMoira(moiraLine);
+                ShowFate(true);
                 return;
             }
             UpgradeDef u = Upgrade(pendingUpgrade);
             if (u == null || !Moira.Apply(db, Profile, u, pendingPick)) return;
             Gear.Save(db, Profile);
+            int picked = pendingPick;
             pendingPick = -1;
             ui.CloseDialog();   // 모이라 창이면 DialogClosed → RenderAttic
             ui.UpdateMeta(Profile);
@@ -694,7 +717,12 @@ namespace TOD
             ui.RoomFlash();
             ui.Say(string.Format(db.ui.upgradeDone, u.name, Level(u)));
             if (u.key == Unlocks.StarterKey) { ShowHubShop(); return; }   // 단추 메뉴로
-            if (picking != null) { selected = null; RenderInventory(); }   // 판에 남아 바뀐 줄을 보여 준다 (이어서 더 고를 수 있음)
+            if (picking != null)   // 판에 남아 바뀐 줄을 보여 준다 (이어서 더 고를 수 있음)
+            {
+                selected = null;
+                RenderInventory();
+                ui.PlayLineGrow(Profile, picking, picked, id => sound.Play(id));   // 20차: 실이 첫 칸에서 끝 칸까지 이어지며 칸이 생기거나 금빛으로 채워짐
+            }
         }
 
         // ---------------------------------------------------------------- frame
@@ -734,6 +762,7 @@ namespace TOD
         void Escape()
         {
             if (runInventory) { CloseRunInventory(); return; }
+            if (ui.FateShowing) { ui.SkipFate(); return; }   // 20차 운명 읽기 연출
             switch (Opened)
             {
                 case "diary": case "desire": return;

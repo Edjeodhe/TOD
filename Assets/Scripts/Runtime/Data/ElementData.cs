@@ -46,6 +46,7 @@ namespace TOD
         [TextArea] public string hint;        // 라운드 시작 때 화면 가운데 층 암시 (예: "화염의 기운이 가득한 것 같다...")
         [TextArea] public string fateLine;    // 19차 모이라의 '운명 읽기': 다음 등반 1층이 이 속성일 때 모이라가 하는 암시
         public Color hintColor;
+        public Color fateColor;               // 20차 운명 읽기 연출 색: 점성구 유리, 퍼지는 빛, 글자 색조가 이 색을 따른다
         [Header("층 색조 (라운드 컨셉보다 우선)")]
         public Color floorFill;               // 바닥 덮개 (a = 덮는 양)
         public Color lampTint, fogTint;       // 등불·불씨 색, 가장자리 안개 색 (a = 섞는 양)

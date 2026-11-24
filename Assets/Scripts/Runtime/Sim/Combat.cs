@@ -184,7 +184,7 @@ namespace TOD
             r.purifyTime = -1; r.purifyCenter = null;
             if (r.roundKind != RoundKind.Boss) r.purified = false;
             r.player.ClearStatus();   // 보스 속성 공격이 건 상태는 다음 라운드로 넘어가지 않는다
-            r.hintSerial++;           // 라운드마다 층 암시 문구
+            if (r.roundIndex == 0) r.hintSerial++;   // 층 암시 문구는 그 층의 첫 라운드에만 (20차)
             r.spawnTimers.Clear();
             foreach (SpawnEntry s in db.spawn.table) r.spawnTimers[s] = s.startDelay;
             string name;

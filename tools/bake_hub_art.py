@@ -5,6 +5,7 @@ python tools/bake_hub_art.py
 - hub_facilities.png (초록 키, 2×2): 재봉 상자, 다락 사다리, 탑 문, 일기 게시판 → hub_sewing_box / hub_attic / hub_tower_door / hub_diary_board
   칸마다 그 안의 그림 전부를 한 장으로 (다락에 매달린 장식처럼 떨어진 조각도 함께). 그림 아래 끝 = 스프라이트 아래 끝 (아래 가운데 피벗).
 - hub_room.png (불투명): 재봉실 배경 한 장 → hub_room.png (그대로 복사)
+- 20차 hub_facilities2.png (초록 키, 3×1, 방 빛에 맞춰 어둡게, 가장자리 비네트): 다락 사다리, 탑 문, 일기 게시판 → 위 같은 이름을 덮어씀
 상인 단추는 16차에 뽑은 merchant_idle.png 를 그대로 씁니다.
 """
 from pathlib import Path
@@ -66,6 +67,9 @@ def save(col, a, name, max_side):
 
 if (RAW / "hub_facilities.png").exists():
     for (col, a), name in zip(grid(RAW / "hub_facilities.png", 2, 2), FACILITIES):
+        save(col, a, f"hub_{name}", 512)
+if (RAW / "hub_facilities2.png").exists():   # 20차: 같은 이름을 덮어씀 (옛 시트의 재봉 상자는 그대로)
+    for (col, a), name in zip(grid(RAW / "hub_facilities2.png", 3, 1), ["attic", "tower_door", "diary_board"]):
         save(col, a, f"hub_{name}", 512)
 if (RAW / "hub_room.png").exists():
     Image.open(RAW / "hub_room.png").convert("RGB").save(OUT / "hub_room.png")

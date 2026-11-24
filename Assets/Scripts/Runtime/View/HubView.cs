@@ -15,6 +15,7 @@ namespace TOD
         public CameraRig cameraRig;
         public SpriteRenderer backdrop;
         public SpriteRenderer facilityTemplate;
+        public SpriteRenderer shadowTemplate;  // 20차: 시설 발밑 그림자 (soft_disc, 배경 바로 위 층. 꺼 둔 템플릿을 시설마다 복제)
         public Transform facilityRoot;
 
         HeroView hero;
@@ -22,6 +23,7 @@ namespace TOD
         public MoiraRig moira;                // 19차: 다락의 모이라 뼈대 리그 (씬 Hub/Moira). 있으면 Moira 시설 그림 대신 그린다
         readonly Player player = new();
         readonly Dictionary<HubStation, SpriteRenderer> renderers = new();
+        readonly Dictionary<HubStation, SpriteRenderer> shadows = new();
         MaterialPropertyBlock block;
         bool placed;
         HubRoom main;                          // 재봉실 본방 (HubConfig 옛 필드를 묶은 것)
@@ -45,6 +47,7 @@ namespace TOD
                 heroStart = H.heroStart, cameraZoom = H.cameraZoom, facilities = H.facilities ?? new HubFacility[0], hint = H.hint,
             };
             facilityTemplate.gameObject.SetActive(false);
+            if (shadowTemplate != null) shadowTemplate.gameObject.SetActive(false);
             foreach (HubRoom room in Rooms())
                 foreach (HubFacility f in room.facilities ?? new HubFacility[0])
                 {
@@ -52,6 +55,13 @@ namespace TOD
                     sr.name = f.station.ToString();
                     renderers[f.station] = sr;
                     Paint(f, sr);
+                    if (shadowTemplate != null && f.shadowSize.x > 0 && f.station != HubStation.Moira)
+                    {
+                        SpriteRenderer sh = Instantiate(shadowTemplate, facilityRoot);
+                        sh.name = f.station + "Shadow";
+                        shadows[f.station] = sh;
+                        PlaceShadow(f, sh);
+                    }
                 }
             ShowRoom();
         }
@@ -77,6 +87,7 @@ namespace TOD
             var here = new HashSet<HubStation>();
             foreach (HubFacility f in room.facilities ?? new HubFacility[0]) here.Add(f.station);
             foreach (var pair in renderers) pair.Value.gameObject.SetActive(here.Contains(pair.Key) && !(pair.Key == HubStation.Moira && moira != null));
+            foreach (var pair in shadows) pair.Value.gameObject.SetActive(here.Contains(pair.Key));
             if (moira != null)
             {
                 moira.gameObject.SetActive(here.Contains(HubStation.Moira));
@@ -110,6 +121,17 @@ namespace TOD
             sr.transform.localPosition = Space.Ground(f.position.x, f.position.y);
             float scale = f.sprite != null ? f.height / (f.sprite.bounds.size.y * Space.Ppu) : 1;
             sr.transform.localScale = new Vector3(scale * (f.flip ? -1 : 1), scale, 1);
+        }
+
+        // 20차: 발밑 그림자 = 부드러운 타원 (그림 아래 가운데 + shadowOffset, 지름 shadowSize 캔버스 px)
+        void PlaceShadow(HubFacility f, SpriteRenderer sh)
+        {
+            Vector3 at = Space.Ground(f.position.x, f.position.y);
+            sh.transform.localPosition = at + new Vector3(f.shadowOffset.x, -f.shadowOffset.y, 0) / Space.Ppu;
+            Vector2 px = sh.sprite != null ? (Vector2)sh.sprite.bounds.size * Space.Ppu : Vector2.one;
+            sh.transform.localScale = new Vector3(f.shadowSize.x / px.x, f.shadowSize.y / px.y, 1);
+            FacilityLook look = H.look;
+            if (look != null) sh.color = look.shadowColor;
         }
 
         public SpriteRenderer FacilityRenderer(HubStation station) => renderers.TryGetValue(station, out SpriteRenderer sr) ? sr : null;
@@ -167,10 +189,15 @@ namespace TOD
             foreach (HubFacility f in Room.facilities)
             {
                 if (!renderers.TryGetValue(f.station, out SpriteRenderer sr)) continue;
+                // 20차: 방 빛에 맞춰 색을 곱하고 채도, 밝기를 낮춘다 (가까이 가면 highlight 만큼 밝게)
+                FacilityLook look = H.look;
+                bool styled = look != null && look.brightness > 0;
+                sr.color = styled ? look.tint : Color.white;
                 block.Clear();
-                block.SetFloat(SatId, 1);
-                block.SetFloat(BrightId, f == Near ? H.highlight : 1);
+                block.SetFloat(SatId, styled ? look.saturation : 1);
+                block.SetFloat(BrightId, (f == Near ? H.highlight : 1) * (styled ? look.brightness : 1) * (f.brightness > 0 ? f.brightness : 1));
                 sr.SetPropertyBlock(block);
+                if (shadows.TryGetValue(f.station, out SpriteRenderer sh)) PlaceShadow(f, sh);
             }
             AnimateMerchant(clock);
             float zoom = Room.cameraZoom > 0 ? Room.cameraZoom : 1;

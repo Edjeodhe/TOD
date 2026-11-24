@@ -53,6 +53,23 @@ namespace TOD.Tests
             return e;
         }
 
+        // 20차: 층 속성 암시는 그 층의 첫 라운드에만 (다음 라운드에서는 다시 띄우지 않고, 다음 층 첫 라운드에서 다시)
+        [Test]
+        public void FloorHintOnlyOnFirstRound()
+        {
+            RunState r = NewRun();
+            combat.BeginFloor(r);
+            int first = r.hintSerial;
+            Assert.Greater(first, 0, "첫 라운드에 암시가 없음");
+            combat.Ascend(r);
+            Assert.AreEqual(first, r.hintSerial, "두 번째 라운드에 암시가 다시 뜸");
+            while (r.roundKind != RoundKind.Boss) combat.Ascend(r);
+            Assert.AreEqual(first, r.hintSerial, "보스 라운드에 암시가 다시 뜸");
+            combat.Ascend(r);
+            Assert.AreEqual(2, r.floor);
+            Assert.Greater(r.hintSerial, first, "다음 층 첫 라운드에 암시가 없음");
+        }
+
         // HANDOFF 3.3 예시: A에 바늘 1발, 바닥 실 두 가닥이 각각 B·C를 통과 → 총 5타, A 70 / B·C 각 28.
         [Test]
         public void PullTransfersAllHitsToPinnedEnemy()

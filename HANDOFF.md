@@ -85,6 +85,32 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 20차 (2026-11-24) — 운명 읽기 연출, 칸 강화·확장 연출, 종이 강화 판, 재봉실 그림 다시 뽑기, 층 암시 1라운드만, 카드 띠 글자 — 완료(커밋 전)
+
+- **사용자 요청:**
+  - 아웃게임 오브젝트를 비네트와 그림자로 맵에 어울리게 다시 뽑기(다락 방, 모이라 제외).
+  - 칸 강화·확장 때 시작 칸에서 끝 칸까지 이펙트가 이어지며 칸이 자연스럽게 생기기.
+  - 운명 읽기: 파편을 낸 뒤 이펙트 → 구가 가운데로 → 빛이 퍼짐 → 글자가 어둡게 나옴. 속성 색에 따라 구슬, 빛, 글자 색이 바뀜.
+  - 층 속성 암시는 각 층의 1라운드에만.
+  - 아이템 고르기 카드 띠의 속성 이름(예: "레전더리 번개")이 안 보임 → 검은 테두리, 밝은 색.
+  - 강화 판 UI를 반투명 유리 대신 종이 느낌으로. 점성구 그림이 너무 밝고 떠 보임 → 어둡게, 비네트.
+- **운명 읽기 (`UI/GameUI.FateShow.cs`, Main.uxml attic 의 `fate`, Moira.uss, 데이터 `hub.fateShow`):**
+  - 파편 불티 8개(UXML에 고정) → 탁자 점성구로 → 점성구가 화면 가운데로(`MoiraRig.BallOut`이 탁자 구와 빛을 감춤, `BallPoint/BallSize/BallSprite`) → 빛(넓은 빛 + 밝은 중심 + 퍼지는 고리) → 암시(`ElementDef.fateLine`)가 한 자씩 짙어짐(`<color=#RRGGBBAA>`. UI Toolkit은 `<alpha>`를 무시함).
+  - 누름/Esc: 글을 다 보여 주고, 한 번 더 누르면 빛이 걷히고 구가 탁자로 돌아감. 끝나면 모이라가 같은 말을 한 줄로 남김. '다시 듣기'는 불티 없이 구부터.
+  - 속성 색: `ElementDef.fateColor`(8속성). 구슬 = `moira_ball_big` 위에 유리만 흑백인 `moira_ball_glass`를 그 색으로 물들여 덮음. 빛 = `lightColor`와 `lightTint` .45만큼 섞음. 글자 = 속성 색의 어두운 판(`textTint` .75).
+  - 구 뒤 어두운 그늘(`shadeColor`, `shadeSize` 2.6)과 작은 흔들림(`bob` 2)으로 덜 떠 보이게.
+- **점성구 그림:** `tools/codex_prompts/moira_ball2.txt` → `art_src/raw/moira_ball2.png` → `python tools/bake_moira_ball.py` → `moira_ball.png`(리그용, 옛 캔버스 136×149와 같은 자리라 리그 값 그대로), `moira_ball_big.png`, `moira_ball_glass.png`. 옛 그림은 `art_src/raw/moira_ball_19.png`. 모이라 점성구 빛 `glowColor` α .28 → .16, `ballPulse` .06.
+- **칸 강화·확장 연출 (`GameUI.Board.cs` `PlayLineGrow/TickGrow`, Slots.uxml `grow-thread/head/flash`, 데이터 `hub.lineGrow`):** 확인 직후 실 머리가 그 줄의 첫 칸(위 또는 왼쪽)에서 끝 칸까지 달림. 확장은 지나는 칸이 하나씩 튀어나오고, 칸 강화는 금빛 띠(`line-r{y}`, `line-c{x}`)가 머리를 따라 채워짐. 칸마다 번쩍임과 `xp`, 끝에 `levelup`. 칸 .09초씩.
+  - 같이 고침: 판 칸을 flex 줄바꿈 대신 절대 자리로 놓음(8칸 너비에서 7칸씩 줄바꿈되던 문제).
+- **종이 강화 판 (Outgame.uss):** 가장자리 띠와 손잡이 = 찢어진 양피지(`button.png`), 강화한 줄 = 금물 든 양피지(`panel_light.png`), 올린 줄 = 양피지(`.board-ghost.paper` .76).
+- **재봉실 그림 (`tools/codex_prompts/hub_facilities2.txt`, 참고 옛 시설 시트와 방):** 다락 사다리, 탑 문, 일기 게시판을 방 빛에 맞춰 어둡게, 가장자리 비네트로 다시 뽑음 → `python tools/bake_hub_art.py`(3×1 시트가 있으면 덮어씀). 옛 그림은 `art_src/raw/old19/`.
+  - 인게임: `HubView.shadowTemplate`(MCP로 만든 `Hub/Facilities/ShadowTemplate`, soft_disc, Background 5) 복제로 시설 발밑 그림자(`HubFacility.shadowSize/shadowOffset`), 방 색 `hub.look`(tint, saturation .92, brightness 1.1, shadowColor). 상인 단추는 그림을 다시 뽑지 않고 `HubFacility.brightness` .78로 낮춤.
+- **층 암시:** `Combat.BeginRound`가 `roundIndex == 0`일 때만 `hintSerial++`. 테스트 `FloorHintOnlyOnFirstRound`.
+- **카드 띠 글자:** `.puzzle-tag` 밝은 글자 18px + 검은 테두리 1.8px, 세트 이름은 밝힌 세트 색(`GameUI.TagColor`).
+- **확인:** EditMode 47개 통과. 캡처 `Temp/Shots/`: `fate20e_fire3`, `fate20e_ice`, `fate20e_poison`(속성 색), `fate20_sparks`, `grow20_expand_slow`, `grow20_lines_slow`, `board20_paper_lines`, `board20_paper_expand`, `hub20_room`, `moira20_cards`. 프로필은 `Temp/profile_backup_20.json`에서 되돌림.
+- **주의:** 새 C# 파일 `GameUI.Fate.cs`를 Unity가 컴파일 목록에 넣지 않아(메타는 생김) `AssetDatabase.MoveAsset`으로 이름을 바꿔(`GameUI.FateShow.cs`) 잡았습니다. 새 파일이 안 잡히면 같은 방법을 쓰세요. 플레이 확인 때 Unity가 뒤에 있으면 프레임이 멈춥니다(앞으로 가져올 것).
+- **남은 것:** 사람이 실제 속도로 본 연출(불티, 글자 번짐, 실 머리 속도). 띠 글자는 작은 게임 뷰 캡처로만 봤습니다. 상인 단추 그림은 다시 뽑지 않았습니다.
+
 ## 19차 요청 (2026-11-24) — 다락의 예견가 모이라, 강화 위치 고르기, 시작 조각 챙기기(1회용), 아웃게임 재봉 상자 제거 — 완료
 
 - **사용자 결정:**

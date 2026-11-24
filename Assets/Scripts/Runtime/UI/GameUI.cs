@@ -149,6 +149,7 @@ namespace TOD
             }
             TickInventory();
             TickMoira();   // 19차 모이라 카드 (GameUI.Moira.cs)
+            TickFate();    // 20차 운명 읽기 연출 (GameUI.Fate.cs)
             if (Now >= noticeUntil) Show(notice, false);
             if (Now >= bannerUntil) Show(banner, false);
             if (Now >= flashUntil) Show(roomFlash, false);
@@ -387,6 +388,13 @@ namespace TOD
             return s > .3f && v < .85f ? Color.HSVToRGB(h, s, .97f) : c;
         }
 
+        // 카드 띠의 세트 이름: 같은 색조를 밝고 조금 연하게 (검은 테두리 위에서 또렷하게)
+        static Color TagColor(Color c)
+        {
+            Color.RGBToHSV(c, out float h, out float s, out float v);
+            return Color.HSVToRGB(h, Mathf.Min(s, .75f), Mathf.Max(v, 1f));
+        }
+
         static void SetBorder(VisualElement e, Color c)
         {
             e.style.borderTopColor = c; e.style.borderBottomColor = c; e.style.borderLeftColor = c; e.style.borderRightColor = c;
@@ -473,8 +481,8 @@ namespace TOD
             // 카드 색은 등급(코스트) 색: 일반 회색 · 레어 하늘색 · 유니크 노란색 · 레전더리 붉은색. 세트 색은 조각 모양에 남긴다.
             Color[] ranks = db.gear.rankColors;
             Color rankColor = ranks != null && def.cost < ranks.Length ? ranks[def.cost] : set.color;
-            // 띠: 등급 + 세트 이름(세트 색 글씨, 리치 텍스트)
-            string setTag = $"<color=#{ColorUtility.ToHtmlStringRGB(Color.Lerp(set.color, Color.black, .35f))}>{set.name}</color>";
+            // 띠: 등급 + 세트 이름(밝힌 세트 색 글씨, 리치 텍스트). 글자 전체에 검은 테두리(.puzzle-tag)를 둘러 어떤 띠 색에서도 읽히게.
+            string setTag = $"<color=#{ColorUtility.ToHtmlStringRGB(TagColor(set.color))}>{set.name}</color>";
             Button card = PuzzleCard(container, rankColor, def.icon, $"{db.gear.rankNames[def.cost]}  {setTag}", def.name, effect, text, onClick);
             card.AddToClassList($"rank-{def.cost}");
             float shine = db.gear.rankShine != null && def.cost < db.gear.rankShine.Length ? db.gear.rankShine[def.cost] : 0;
@@ -629,6 +637,10 @@ namespace TOD
                     var at = new Vector2Int(x, y);
                     cell.style.width = pitch - 4;
                     cell.style.height = pitch - 4;
+                    // 20차: 줄바꿈(flex-wrap)에 맡기지 않고 자리를 정한다 (8칸 너비에서 반올림으로 7칸씩 줄바꿈되던 문제)
+                    cell.style.position = Position.Absolute;
+                    cell.style.left = x * pitch;
+                    cell.style.top = y * pitch;
                     PlacedPiece occupying = placed.FirstOrDefault(p => p.cells.Contains(at));
                     cell.EnableInClassList("filled", occupying != null);
                     cell.EnableInClassList("reinforced", Gear.Reinforced(profile, at) > 0);   // 19차: 고른 가로 줄, 세로 줄
@@ -698,6 +710,7 @@ namespace TOD
             if (boardArt.All(a => a.id != sewId)) sewId = -1;
             ApplySew();
             inventory.Q("board-ghost").Clear();
+            inventory.Q("board-ghost").RemoveFromClassList("paper");
             DrawPickLayer(profile, width, height);   // 19차 줄 고르기: 강화한 줄 표시, 확장 가장자리 띠
 
             // 목록: 아이콘 · 퍼즐 모양 슬롯 · 이름(오른쪽 끝). 아이템은 모두 고유해서 개수는 없다. 장착한 것 먼저, 등급 높은 순.
@@ -1251,6 +1264,7 @@ namespace TOD
         void TickInventory()
         {
             if (inventory == null || inventory.ClassListContains("hidden")) { CancelPress(); return; }
+            TickGrow();   // 20차 칸 강화, 확장 연출 (GameUI.Board.cs)
             if (pressId >= 0 && !dragging && Now - pressTime >= HoldTime) BeginDrag();
             if (sewId >= 0) ApplySew();
             for (int p = 0; p < boardArt.Count; p++)

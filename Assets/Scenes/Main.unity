@@ -6111,6 +6111,97 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!1 &158813293
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 158813294}
+  - component: {fileID: 158813295}
+  m_Layer: 0
+  m_Name: ShadowTemplate
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &158813294
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 158813293}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1984695423}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &158813295
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 158813293}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 7b219dd95237987498329f4937b7aa6c, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 1101
+  m_SortingLayer: 1
+  m_SortingOrder: 5
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 21300000, guid: 1fd1416d2935df64a9ae51c5bea3a04f, type: 3}
+  m_Color: {r: 0.063, g: 0.043, b: 0.082, a: 0.8}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 2.56, y: 2.56}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
 --- !u!1 &166416002
 GameObject:
   m_ObjectHideFlags: 0
@@ -28930,6 +29021,7 @@ MonoBehaviour:
         \uCCAB \uCE35\uC5D0\uC11C \uB108\uB294 \uB728\uAC70\uC6B4 \uC228\uACB0\uC744
         \uB9DE\uC744 \uAC70\uB780\uB2E4."
       hintColor: {r: 1, g: 0.7075, b: 0.5125, a: 1}
+      fateColor: {r: 0.93, g: 0.4, b: 0.22, a: 1}
       floorFill: {r: 0.55, g: 0.17, b: 0.07, a: 0.3}
       lampTint: {r: 1, g: 0.55, b: 0.25, a: 1}
       fogTint: {r: 0.33, g: 0.102000006, b: 0.042000003, a: 0.55}
@@ -29179,6 +29271,7 @@ MonoBehaviour:
         \uCCAB \uCE35\uC740 \uC190\uB05D\uC774 \uC2DC\uB9B4 \uB9CC\uD07C \uCC28\uAC00\uC6B8
         \uAC8C\uB2E4."
       hintColor: {r: 0.753, g: 0.909, b: 1, a: 1}
+      fateColor: {r: 0.38, g: 0.72, b: 0.95, a: 1}
       floorFill: {r: 0.32, g: 0.52, b: 0.74, a: 0.3}
       lampTint: {r: 0.62, g: 0.86, b: 1, a: 1}
       fogTint: {r: 0.192, g: 0.312, b: 0.44400004, a: 0.55}
@@ -29404,6 +29497,7 @@ MonoBehaviour:
         \uCCAB \uCE35\uC5D0\uC120 \uD558\uB298\uC774 \uC6B0\uB294 \uC18C\uB9AC\uAC00
         \uB4E4\uB9B4 \uAC70\uC57C."
       hintColor: {r: 1, g: 0.961, b: 0.62299997, a: 1}
+      fateColor: {r: 0.95, g: 0.84, b: 0.28, a: 1}
       floorFill: {r: 0.5, g: 0.46, b: 0.14, a: 0.26}
       lampTint: {r: 1, g: 0.94, b: 0.42, a: 1}
       fogTint: {r: 0.3, g: 0.27600002, b: 0.08400001, a: 0.55}
@@ -29628,6 +29722,7 @@ MonoBehaviour:
         \uB2E4 \uC544\uD50C \uB9CC\uD07C. \uCCAB \uCE35\uC740 \uC9C0\uB098\uCE58\uAC8C
         \uBC1D\uC744 \uAC8C\uB2E4."
       hintColor: {r: 1, g: 0.9675, b: 0.844, a: 1}
+      fateColor: {r: 0.98, g: 0.92, b: 0.66, a: 1}
       floorFill: {r: 0.82, g: 0.74, b: 0.5, a: 0.24}
       lampTint: {r: 1, g: 0.95, b: 0.76, a: 1}
       fogTint: {r: 0.492, g: 0.44400004, b: 0.3, a: 0.55}
@@ -29851,6 +29946,7 @@ MonoBehaviour:
       fateLine: "\uC810\uC131\uAD6C\uAC00 \uC544\uBB34\uAC83\uB3C4 \uBE44\uCD94\uC9C0
         \uC54A\uB294\uAD6C\uB098. \uCCAB \uCE35\uC5D4 \uBE5B\uC774 \uB2FF\uC9C0 \uC54A\uB294\uB2E8\uB2E4."
       hintColor: {r: 0.77900004, g: 0.6425, b: 0.9675, a: 1}
+      fateColor: {r: 0.52, g: 0.32, b: 0.82, a: 1}
       floorFill: {r: 0.12, g: 0.05, b: 0.2, a: 0.3}
       lampTint: {r: 0.66, g: 0.45, b: 0.95, a: 1}
       fogTint: {r: 0.072000004, g: 0.030000001, b: 0.120000005, a: 0.55}
@@ -30103,6 +30199,7 @@ MonoBehaviour:
         \uCCAB \uCE35\uC740 \uBE44\uB9BF\uD55C \uB0C4\uC0C8\uB85C \uAC00\uB4DD\uD560
         \uAC70\uC57C."
       hintColor: {r: 1, g: 0.55799997, b: 0.55799997, a: 1}
+      fateColor: {r: 0.82, g: 0.14, b: 0.22, a: 1}
       floorFill: {r: 0.45, g: 0.04, b: 0.07, a: 0.32}
       lampTint: {r: 1, g: 0.32, b: 0.32, a: 1}
       fogTint: {r: 0.27, g: 0.024, b: 0.042000003, a: 0.55}
@@ -30355,6 +30452,7 @@ MonoBehaviour:
         \uCCAB \uCE35\uC5D4 \uBC1C\uC744 \uBD99\uC7A1\uB294 \uBC14\uB78C\uC774 \uBD88
         \uAC8C\uB2E4."
       hintColor: {r: 0.818, g: 1, b: 0.883, a: 1}
+      fateColor: {r: 0.36, g: 0.84, b: 0.64, a: 1}
       floorFill: {r: 0.42, g: 0.6, b: 0.46, a: 0.24}
       lampTint: {r: 0.72, g: 1, b: 0.82, a: 1}
       fogTint: {r: 0.252, g: 0.36, b: 0.27600002, a: 0.55}
@@ -30606,6 +30704,7 @@ MonoBehaviour:
       fateLine: "\uC5F0\uAE30\uAC00 \uD0C1\uD558\uAC8C \uB4A4\uD2C0\uB9AC\uB294\uAD6C\uB098.
         \uCCAB \uCE35\uC758 \uC228\uC740 \uB2EC\uC9C0 \uC54A\uC744 \uAC70\uB780\uB2E4."
       hintColor: {r: 0.753, g: 1, b: 0.55799997, a: 1}
+      fateColor: {r: 0.56, g: 0.82, b: 0.26, a: 1}
       floorFill: {r: 0.28, g: 0.48, b: 0.08, a: 0.3}
       lampTint: {r: 0.62, g: 1, b: 0.32, a: 1}
       fogTint: {r: 0.16800001, g: 0.28800002, b: 0.048, a: 0.55}
@@ -31080,6 +31179,11 @@ MonoBehaviour:
     cameraZoom: 0.95
     interactRadius: 110
     highlight: 1.25
+    look:
+      tint: {r: 0.95, g: 0.92, b: 1, a: 1}
+      saturation: 0.92
+      brightness: 1.1
+      shadowColor: {r: 0.04, g: 0.025, b: 0.06, a: 0.9}
     facilities:
     - station: 3
       name: "\uD0D1 \uC785\uAD6C"
@@ -31092,6 +31196,9 @@ MonoBehaviour:
       promptLift: 8
       block: {x: 100, y: 26}
       blockOffset: {x: 0, y: -8}
+      shadowSize: {x: 260, y: 58}
+      shadowOffset: {x: 0, y: -6}
+      brightness: 0
     - station: 1
       name: "\uC608\uACAC\uC758 \uB2E4\uB77D"
       prompt: "\uB2E4\uB77D\uC73C\uB85C \uC62C\uB77C\uAC00\uAE30"
@@ -31103,6 +31210,9 @@ MonoBehaviour:
       promptLift: 8
       block: {x: 50, y: 20}
       blockOffset: {x: 0, y: 0}
+      shadowSize: {x: 170, y: 44}
+      shadowOffset: {x: -10, y: -6}
+      brightness: 0
     - station: 4
       name: "\uC77C\uAE30 \uAC8C\uC2DC\uD310"
       prompt: "\uC544\uBC84\uC9C0\uC758 \uC77C\uAE30 \uBCF4\uAE30"
@@ -31114,6 +31224,9 @@ MonoBehaviour:
       promptLift: 8
       block: {x: 65, y: 18}
       blockOffset: {x: 0, y: 0}
+      shadowSize: {x: 150, y: 40}
+      shadowOffset: {x: 0, y: -5}
+      brightness: 0
     - station: 2
       name: "\uC0C1\uC778 \uB2E8\uCD94"
       prompt: "\uB2E8\uCD94\uC640 \uC774\uC57C\uAE30\uD558\uAE30"
@@ -31125,6 +31238,9 @@ MonoBehaviour:
       promptLift: 8
       block: {x: 35, y: 16}
       blockOffset: {x: 0, y: 0}
+      shadowSize: {x: 110, y: 32}
+      shadowOffset: {x: 0, y: -3}
+      brightness: 0.78
     title: "\uC7AC\uBD09\uC2E4"
     subtitle: "\uD0D1 \uC544\uB798 \uC791\uC5C5\uC2E4"
     attic:
@@ -31157,6 +31273,9 @@ MonoBehaviour:
         promptLift: 8
         block: {x: 110, y: 32}
         blockOffset: {x: 0, y: 0}
+        shadowSize: {x: 0, y: 0}
+        shadowOffset: {x: 0, y: 0}
+        brightness: 0
       - station: 6
         name: "\uB69C\uAED1\uBB38"
         prompt: "\uC7AC\uBD09\uC2E4\uB85C \uB0B4\uB824\uAC00\uAE30"
@@ -31168,6 +31287,9 @@ MonoBehaviour:
         promptLift: 8
         block: {x: 0, y: 0}
         blockOffset: {x: 0, y: 0}
+        shadowSize: {x: 120, y: 34}
+        shadowOffset: {x: 0, y: -4}
+        brightness: 0
       hint: "WASD \uAC77\uAE30     E \uB9D0 \uAC78\uAE30     Esc \uCC3D \uB2EB\uAE30"
     atticReturn: {x: 225, y: 275}
     roomFade: 0.22
@@ -31278,6 +31400,48 @@ MonoBehaviour:
     fateConfirm: "\uAE30\uC5B5\uC758 \uD30C\uD3B8 {0}\uAC1C\uB97C \uAC74\uB124\uACE0
       \uB2E4\uC74C \uB4F1\uBC18 1\uCE35\uC758 \uC6B4\uBA85\uC744 \uC77D\uC2B5\uB2C8\uB2E4."
     fateIntro: 
+    fateShow:
+      sparkTime: 0.55
+      sparkStagger: 0.07
+      orbDelay: 1.05
+      orbFly: 0.75
+      orbSize: 230
+      orbSprite: {fileID: 21300000, guid: c0ebdf73c2327904cb74552ebaabe41d, type: 3}
+      orbGlass: {fileID: 21300000, guid: 55da560754616584f8c21d9396a4be31, type: 3}
+      textTint: 0.75
+      shadeColor: {r: 0.04, g: 0.015, b: 0.06, a: 1}
+      shadeSize: 2.6
+      bob: 2
+      orbY: 0.3
+      lightDelay: 0.15
+      lightTime: 1.1
+      lightSize: 1900
+      lightColor: {r: 0.88, g: 0.78, b: 0.66, a: 1}
+      lightTint: 0.45
+      dim: 0.62
+      textDelay: 0.45
+      charTime: 0.055
+      charFade: 0.45
+      textColor: {r: 0.16, g: 0.07, b: 0.19, a: 1}
+      textY: 0.57
+      hold: 0
+      closeTime: 0.6
+      skipHint: "\uB20C\uB7EC\uC11C \uB2EB\uAE30"
+      lightSound: unlock
+    lineGrow:
+      startDelay: 0.2
+      cellTime: 0.09
+      cellPop: 0.28
+      flashTime: 0.4
+      fadeTime: 0.45
+      threadWidth: 0.1
+      headSize: 0.9
+      flashSize: 1.1
+      threadColor: {r: 1, g: 0.86, b: 0.55, a: 0.9}
+      headColor: {r: 1, g: 0.95, b: 0.8, a: 1}
+      flashColor: {r: 1, g: 0.9, b: 0.66, a: 0.85}
+      stepSound: xp
+      endSound: levelup
     hint: "WASD \uAC77\uAE30     E \uC0B4\uD3B4\uBCF4\uAE30     Enter \uBC14\uB85C
       \uB4F1\uBC18"
   merchant:
@@ -32031,6 +32195,7 @@ MonoBehaviour:
   cameraRig: {fileID: 1203403049}
   backdrop: {fileID: 7632946}
   facilityTemplate: {fileID: 1366584956}
+  shadowTemplate: {fileID: 158813295}
   facilityRoot: {fileID: 1984695423}
   moira: {fileID: 1688649516}
 --- !u!4 &1661311886
@@ -32799,7 +32964,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: cb511cceda934494bb1a7bd4941ff6c5, type: 3}
   partTemplate: {fileID: 526300313}
   ballBone: ball
-  ballPulse: 0.12
+  ballPulse: 0.06
   ballSpeed: 1.3
   tint: {r: 0.86, g: 0.82, b: 0.92, a: 1}
   saturation: 0.82
@@ -32811,7 +32976,7 @@ MonoBehaviour:
   glow: {fileID: 1401396880}
   glowOffset: {x: 0, y: -52}
   glowSize: {x: 240, y: 220}
-  glowColor: {r: 0.58, g: 0.42, b: 0.9, a: 0.28}
+  glowColor: {r: 0.58, g: 0.42, b: 0.9, a: 0.16}
 --- !u!4 &1688649517
 Transform:
   m_ObjectHideFlags: 0
@@ -34697,6 +34862,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1366584955}
+  - {fileID: 158813294}
   m_Father: {fileID: 1661311886}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1996666273

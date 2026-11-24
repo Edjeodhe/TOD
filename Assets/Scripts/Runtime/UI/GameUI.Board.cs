@@ -83,9 +83,17 @@ namespace TOD
 
             // 강화한 줄: 판 위 금빛 띠 (가로 줄 = 가로 띠, 세로 줄 = 세로 띠). 고르는 종류의 줄만 진하게.
             foreach (int y in profile.rowLines ?? new List<int>())
-                layer.Add(Band(0, y * pitch, width * pitch, pitch, boardMode.pick is Moira.Rows or Moira.Lines ? "pick-done" : "pick-done-faint"));
+            {
+                VisualElement band = Band(0, y * pitch, width * pitch, pitch, boardMode.pick is Moira.Rows or Moira.Lines ? "pick-done" : "pick-done-faint");
+                band.name = $"line-r{y}";   // 20차 PlayLineGrow 가 찾아 채운다
+                layer.Add(band);
+            }
             foreach (int x in profile.colLines ?? new List<int>())
-                layer.Add(Band(x * pitch, 0, pitch, height * pitch, boardMode.pick is Moira.Cols or Moira.Lines ? "pick-done" : "pick-done-faint"));
+            {
+                VisualElement band = Band(x * pitch, 0, pitch, height * pitch, boardMode.pick is Moira.Cols or Moira.Lines ? "pick-done" : "pick-done-faint");
+                band.name = $"line-c{x}";
+                layer.Add(band);
+            }
 
             if (lines)   // 칸 강화: 왼쪽 = 가로 줄 손잡이, 위 = 세로 줄 손잡이. 올리면 그 줄 전체가 반투명하게 덮인다
             {
@@ -135,6 +143,7 @@ namespace TOD
         {
             VisualElement ghost = inventory.Q("board-ghost");
             ghost.Clear();
+            ghost.EnableInClassList("paper", pick >= 0);   // 20차: 양피지는 덜 비치게
             if (pick < 0) return;
             var (width, height, _) = Gear.Dimensions(db, profile);
             bool col = pick >= Moira.ColBase;
@@ -142,6 +151,145 @@ namespace TOD
             VisualElement band = col ? Band(line * pitch, 0, pitch, height * pitch, "pick-hover") : Band(0, line * pitch, width * pitch, pitch, "pick-hover");
             band.EnableInClassList("pick-taken", !Moira.CanPick(db, profile, Moira.Lines, pick));
             ghost.Add(band);
+        }
+
+        // ---------------------------------------------------------------- 20차 칸 강화, 확장 연출
+        // 빛나는 실 머리가 그 줄의 첫 칸(위 또는 왼쪽)에서 끝 칸까지 달리며 실을 잇는다. 머리가 지나는 칸은
+        // 확장이면 하나씩 튀어나오고(그 전에는 숨김), 칸 강화면 금빛 띠가 머리를 따라 채워진다. 칸마다 번쩍임. 값은 db.hub.lineGrow.
+        class Grow
+        {
+            public readonly List<VisualElement> cells = new(), flashes = new();
+            public readonly List<Vector2> centers = new();
+            public VisualElement thread, head, band;
+            public Rect bandRect;
+            public bool expand, vertical;
+            public float start;
+            public int stepped = -1;
+            public bool ended;
+            public Action<string> sound;
+        }
+
+        Grow grow;
+
+        // 확인 직후 RenderInventory 다음에 부른다. key = 강화 key, pick = 고른 자리 (확장 = 변 0~3, 칸 강화 = 줄 번호 또는 ColBase + 열)
+        public void PlayLineGrow(Profile profile, string key, int pick, Action<string> sound)
+        {
+            EndGrow();
+            LineGrow g = db.hub?.lineGrow;
+            if (g == null || g.cellTime <= 0 || pick < 0) return;
+            var (width, height, _) = Gear.Dimensions(db, profile);
+            bool vertical;
+            int line;
+            switch (key)
+            {
+                case Moira.Expansion: vertical = pick is 1 or 3; line = pick switch { 1 => width - 1, 2 => height - 1, _ => 0 }; break;
+                case Moira.Lines: vertical = pick >= Moira.ColBase; line = vertical ? pick - Moira.ColBase : pick; break;
+                case Moira.Rows: vertical = false; line = pick; break;
+                case Moira.Cols: vertical = true; line = pick; break;
+                default: return;
+            }
+            VisualElement layer = inventory.Q("board-pick");
+            var gr = new Grow { expand = key == Moira.Expansion, vertical = vertical, start = Now + g.startDelay, sound = sound };
+            int n = vertical ? height : width;
+            for (int i = 0; i < n; i++)
+            {
+                var at = vertical ? new Vector2Int(line, i) : new Vector2Int(i, line);
+                if (!cells.TryGetValue(at, out Button cell)) continue;
+                gr.cells.Add(cell);
+                gr.centers.Add(new Vector2((at.x + .5f) * pitch, (at.y + .5f) * pitch));
+                VisualElement flash = Slot(slots, "grow-flash");
+                flash.style.unityBackgroundImageTintColor = g.flashColor;
+                flash.style.opacity = 0;
+                gr.flashes.Add(flash);
+                if (gr.expand) { cell.style.opacity = 0; cell.style.scale = new Scale(Vector2.zero); }
+            }
+            if (gr.cells.Count == 0) return;
+            if (!gr.expand)
+            {
+                gr.band = layer.Q(vertical ? $"line-c{line}" : $"line-r{line}");
+                if (gr.band != null) gr.bandRect = vertical ? new Rect(line * pitch, 0, pitch, height * pitch) : new Rect(0, line * pitch, width * pitch, pitch);
+            }
+            gr.thread = Slot(slots, "grow-thread");
+            gr.thread.style.backgroundColor = g.threadColor;
+            gr.head = Slot(slots, "grow-head");
+            gr.head.style.unityBackgroundImageTintColor = g.headColor;
+            layer.Add(gr.thread);
+            foreach (VisualElement f in gr.flashes) layer.Add(f);
+            layer.Add(gr.head);
+            grow = gr;
+            TickGrow();
+        }
+
+        // 다 끝났거나 판을 새로 그렸을 때: 칸과 띠를 원래대로, 연출 요소를 지운다
+        void EndGrow()
+        {
+            if (grow == null) return;
+            foreach (VisualElement c in grow.cells) { c.style.opacity = StyleKeyword.Null; c.style.scale = StyleKeyword.Null; }
+            if (grow.band != null) { grow.band.style.width = grow.bandRect.width; grow.band.style.height = grow.bandRect.height; }
+            grow.thread?.RemoveFromHierarchy();
+            grow.head?.RemoveFromHierarchy();
+            foreach (VisualElement f in grow.flashes) f.RemoveFromHierarchy();
+            grow = null;
+        }
+
+        void TickGrow()
+        {
+            if (grow == null) return;
+            if (grow.thread.parent == null) { grow.thread = null; EndGrow(); return; }   // 판을 새로 그림
+            LineGrow g = db.hub.lineGrow;
+            int n = grow.cells.Count;
+            float t = Now - grow.start;
+            float travel = n * g.cellTime;
+            float u = Mathf.Clamp01(t / travel);
+            Vector2 dir = grow.vertical ? new Vector2(0, 1) : new Vector2(1, 0);   // 패널 y 는 아래로 +
+            Vector2 a = grow.centers[0] - dir * pitch * .5f, b = grow.centers[n - 1] + dir * pitch * .5f;
+            Vector2 headAt = Vector2.Lerp(a, b, u);
+            float fade = t < 0 ? 0 : 1 - Mathf.Clamp01((t - travel) / Mathf.Max(.05f, g.fadeTime));
+
+            // 실: 첫 칸 가장자리 → 머리
+            float th = Mathf.Max(2, g.threadWidth * pitch);
+            VisualElement thread = grow.thread;
+            if (grow.vertical) { thread.style.left = a.x - th / 2; thread.style.top = a.y; thread.style.width = th; thread.style.height = headAt.y - a.y; }
+            else { thread.style.left = a.x; thread.style.top = a.y - th / 2; thread.style.width = headAt.x - a.x; thread.style.height = th; }
+            thread.style.opacity = fade;
+            // 머리: 달리는 동안 맥동, 끝에 닿으면 크게 터지며 사라짐
+            float burst = t > travel ? Mathf.Clamp01((t - travel) / Mathf.Max(.05f, g.fadeTime)) : 0;
+            PlaceAt(grow.head, headAt, g.headSize * pitch * (1 + .18f * Mathf.Sin(Now * 22) + burst * 1.6f));
+            grow.head.style.opacity = t < 0 ? 0 : fade;
+            // 칸 강화: 금빛 띠가 머리를 따라 채워짐
+            if (grow.band != null)
+            {
+                Rect r = grow.bandRect;
+                if (grow.vertical) grow.band.style.height = Mathf.Clamp(headAt.y - r.y, 0, r.height);
+                else grow.band.style.width = Mathf.Clamp(headAt.x - r.x, 0, r.width);
+            }
+            // 칸: 머리가 칸 가운데에 닿을 때 번쩍임 (확장이면 그때 튀어나옴)
+            for (int i = 0; i < n; i++)
+            {
+                float ti = (i + .5f) * g.cellTime;
+                float f = (t - ti) / Mathf.Max(.05f, g.flashTime);
+                VisualElement flash = grow.flashes[i];
+                if (f > 0 && f < 1) { PlaceAt(flash, grow.centers[i], g.flashSize * pitch * (.5f + .9f * EaseOutQuad(f))); flash.style.opacity = 1 - f; }
+                else flash.style.opacity = 0;
+                if (grow.expand)
+                {
+                    float k = Mathf.Clamp01((t - ti + g.cellPop * .25f) / Mathf.Max(.05f, g.cellPop));
+                    grow.cells[i].style.opacity = Mathf.Clamp01(k * 2);
+                    float s = k <= 0 ? 0 : EaseOutBack(k);
+                    grow.cells[i].style.scale = new Scale(new Vector2(s, s));
+                }
+                if (t >= ti && grow.stepped < i)
+                {
+                    grow.stepped = i;
+                    if (!string.IsNullOrEmpty(g.stepSound)) grow.sound?.Invoke(g.stepSound);
+                }
+            }
+            if (t >= travel && !grow.ended)
+            {
+                grow.ended = true;
+                if (!string.IsNullOrEmpty(g.endSound)) grow.sound?.Invoke(g.endSound);
+            }
+            if (t > travel + g.fadeTime) EndGrow();
         }
 
         VisualElement Band(float x, float y, float w, float h, string cls)
@@ -159,6 +307,7 @@ namespace TOD
             ghost.Clear();
             ghost.RemoveFromClassList("invalid");
             if (at == null || key is Moira.Expansion or Moira.Lines) return;   // 확장, 칸 강화는 가장자리 손잡이에서
+            ghost.AddToClassList("paper");
             var (width, height, _) = Gear.Dimensions(db, profile);
             bool rows = key == Moira.Rows;
             int line = rows ? at.Value.y : at.Value.x;

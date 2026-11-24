@@ -86,21 +86,31 @@
 /* ---------------------------------------------------------------- 19차 판 위 줄 고르기 (GameUI.Board.cs) */
 .board-pick { overflow: visible; }
 .pick-band { position: absolute; }
-/* 강화한 줄: 금빛 띠 */
-.pick-done { background-color: rgba(214, 176, 110, 0.32); border-width: 2px; border-color: rgba(240, 206, 140, 0.85); }
-.pick-done-faint { background-color: rgba(214, 176, 110, 0.12); border-width: 1px; border-color: rgba(240, 206, 140, 0.35); }
-/* 마우스를 올린 줄: 반투명 상아 보랏빛 (board-ghost 위) */
-.pick-hover { background-color: rgba(232, 222, 255, 0.7); border-width: 3px; border-color: rgb(255, 246, 222); }
-.pick-hover.pick-taken { background-color: rgba(220, 70, 72, 0.6); border-color: rgb(255, 170, 160); }
-/* 확장 가장자리 띠: 반투명, 올리면 밝아짐 */
+/* 20차: 유리처럼 반투명한 띠 대신 종이. 강화한 줄 = 금물 든 양피지 띠, 올린 줄 = 양피지를 덮어 봄, 가장자리 띠와 손잡이 = 찢어진 양피지 쪽지 */
+.pick-done, .pick-done-faint, .pick-hover {
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/UI/Paper/panel_light.png");
+    -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72;
+    -unity-slice-scale: 0.22px;
+}
+.pick-done { -unity-background-image-tint-color: rgba(214, 168, 78, 0.62); }
+.pick-done-faint { -unity-background-image-tint-color: rgba(214, 168, 78, 0.24); }
+/* 마우스를 올린 줄 (board-ghost 위, 판 칸이 비치게 층이 반쯤 투명) */
+.pick-hover { -unity-background-image-tint-color: rgb(236, 222, 192); }
+.pick-hover.pick-taken { -unity-background-image-tint-color: rgb(196, 98, 84); }
+/* 확장 가장자리 띠: 찢어진 양피지, 올리면 밝아지며 살짝 들림 */
 .board-pick > .pick-strip {
     position: absolute; margin: 0; padding: 0; min-width: 0; min-height: 0;
-    background-image: none; background-color: rgba(216, 207, 240, 0.07);
-    border-width: 2px; border-color: rgba(216, 207, 240, 0.55); border-radius: 6px;
-    color: rgba(255, 246, 222, 0.7); font-size: 34px; -unity-text-align: middle-center;
-    transition-property: background-color, border-color, color; transition-duration: 0.12s;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/UI/Paper/button.png");
+    -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44;
+    -unity-slice-scale: 0.34px;
+    -unity-background-image-tint-color: rgb(122, 102, 82);
+    border-width: 0; border-radius: 0;
+    color: #1f1517; font-size: 40px; -unity-text-align: middle-center;
+    transition-property: -unity-background-image-tint-color, color, translate; transition-duration: 0.12s;
 }
-.board-pick > .pick-strip:hover { background-color: rgba(232, 222, 255, 0.35); border-color: rgb(255, 246, 222); color: rgb(255, 255, 255); }
+.board-pick > .pick-strip:hover { -unity-background-image-tint-color: rgb(236, 220, 190); color: #1a1013; translate: 0 -2px; background-color: rgba(0, 0, 0, 0); }
 
 /* ---------------------------------------------------------------- 19차 챙기기 판: 단추 진열 줄 */
 .piece-row.offer { opacity: 0.82; border-width: 2px; border-color: rgba(61, 124, 112, 0.9); }
@@ -110,5 +120,10 @@
 .piece-row.offer .piece-state { display: flex; background-color: #2f6f63; -unity-text-outline-color: #12302a; }
 .piece-row.offer.short .piece-state { background-color: #6a524f; }
 /* 19차 칸 강화 손잡이: 판 왼쪽(가로 줄), 위(세로 줄). 이미 강화한 줄은 금빛 테두리, 올리면 밝아짐 */
-.board-pick > .pick-strip.pick-handle { font-size: 16px; border-radius: 4px; color: rgba(255, 246, 222, 0.6); }
-.board-pick > .pick-strip.pick-handle.pick-taken { border-color: rgba(240, 206, 140, 0.9); background-color: rgba(214, 176, 110, 0.25); }
+.board-pick > .pick-strip.pick-handle { font-size: 15px; -unity-slice-scale: 0.22px; -unity-background-image-tint-color: rgb(122, 102, 82); color: #2a1d1a; }
+.board-pick > .pick-strip.pick-handle:hover { -unity-background-image-tint-color: rgb(236, 220, 190); color: #1a1013; }
+.board-pick > .pick-strip.pick-handle.pick-taken { -unity-background-image-tint-color: rgb(214, 168, 78); color: #3b2410; }
+
+/* 20차 칸 강화, 확장 연출 (GameUI.Board.cs PlayLineGrow). 색, 크기, 위치는 데이터(hub.lineGrow)와 코드가 정한다 */
+.grow-thread { position: absolute; border-radius: 6px; }
+.grow-glow { position: absolute; background-image: url("project://database/Assets/Art/Generated/soft_disc.png"); -unity-background-scale-mode: stretch-to-fill; }

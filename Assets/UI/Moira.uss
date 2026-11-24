@@ -62,3 +62,29 @@
     -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
 }
 .moira-card.locked .card-level { background-color: rgb(190, 180, 170); }
+
+/* 20차 운명 읽기 연출 (GameUI.Fate.cs). 위치, 크기, 투명도는 코드가 매 프레임 정하고, 여기는 모양만. */
+.fate { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.fate-dim { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(8, 4, 12); opacity: 0; }
+.fate-light { position: absolute; background-image: url("project://database/Assets/Art/Generated/soft_disc.png"); -unity-background-scale-mode: stretch-to-fill; opacity: 0; }
+.fate-ring { position: absolute; border-width: 3px; border-color: rgba(255, 246, 226, 0.9); opacity: 0; }
+.fate-orb { position: absolute; -unity-background-scale-mode: scale-to-fit; opacity: 0; }
+.fate-sparks { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.fate-spark {
+    position: absolute; width: 26px; height: 26px; opacity: 0;
+    background-image: url("project://database/Assets/sprites/icon_shard.png"); -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: rgb(236, 255, 246);
+}
+.fate-text {
+    position: absolute; left: 12%; right: 12%; -unity-text-align: middle-center; white-space: normal;
+    font-size: 38px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    -unity-text-outline-width: 0.6px; -unity-text-outline-color: rgba(255, 244, 228, 0.45);
+}
+.fate-skip {
+    position: absolute; left: 0; right: 0; bottom: 70px; -unity-text-align: middle-center; font-size: 22px; opacity: 0;
+    color: #3a2440; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+/* 연출 동안 카드와 안내는 숨긴다 */
+.attic.fate-on .moira-cards, .attic.fate-on .moira-hint, .attic.fate-on .moira-back { opacity: 0; }
+/* 20차: 점성구 유리만 흑백 그림을 속성 색으로 물들여 덮는다 */
+.fate-orb-glass { position: absolute; left: 0; right: 0; top: 0; bottom: 0; -unity-background-scale-mode: scale-to-fit; }

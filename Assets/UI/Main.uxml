@@ -223,6 +223,27 @@
             <ui:VisualElement name="moira-cards" class="moira-cards" picking-mode="Ignore" />
             <ui:Label name="moira-hint" class="moira-hint" picking-mode="Ignore" />
             <ui:Button name="attic-back" text="돌아가기 (Esc)" class="moira-back" />
+            <!-- 20차 운명 읽기 연출 (GameUI.Fate.cs): 불티 → 점성구가 가운데로 → 빛 → 어두운 글자. 누르면 닫힘 -->
+            <ui:VisualElement name="fate" class="fate hidden">
+                <ui:VisualElement name="fate-dim" class="fate-dim" picking-mode="Ignore" />
+                <ui:VisualElement name="fate-light" class="fate-light fate-light-wide" picking-mode="Ignore" />
+                <ui:VisualElement name="fate-core" class="fate-light fate-light-core" picking-mode="Ignore" />
+                <ui:VisualElement name="fate-ring" class="fate-ring" picking-mode="Ignore" />
+                <ui:VisualElement name="fate-shade" class="fate-light" picking-mode="Ignore" />
+                <ui:VisualElement name="fate-orb" class="fate-orb" picking-mode="Ignore"><ui:VisualElement name="fate-orb-glass" class="fate-orb-glass" picking-mode="Ignore" /></ui:VisualElement>
+                <ui:VisualElement name="fate-sparks" class="fate-sparks" picking-mode="Ignore">
+                    <ui:VisualElement class="fate-spark" picking-mode="Ignore" />
+                    <ui:VisualElement class="fate-spark" picking-mode="Ignore" />
+                    <ui:VisualElement class="fate-spark" picking-mode="Ignore" />
+                    <ui:VisualElement class="fate-spark" picking-mode="Ignore" />
+                    <ui:VisualElement class="fate-spark" picking-mode="Ignore" />
+                    <ui:VisualElement class="fate-spark" picking-mode="Ignore" />
+                    <ui:VisualElement class="fate-spark" picking-mode="Ignore" />
+                    <ui:VisualElement class="fate-spark" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="fate-text" class="fate-text" picking-mode="Ignore" />
+                <ui:Label name="fate-skip" class="fate-skip" picking-mode="Ignore" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- 등반 결과 -->
