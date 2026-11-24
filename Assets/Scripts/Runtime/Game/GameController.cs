@@ -69,6 +69,7 @@ namespace TOD
             if (Run != null && next != UiScreen.Combat) return;
             if (next == UiScreen.Attic && Run == null && hub != null && !hub.InAttic && screen != UiScreen.Summary) { GoToAttic(); return; }   // 17차: 다락은 걸어 들어가는 방
             if (next is UiScreen.Inventory or UiScreen.Attic) roomReturn = screen is UiScreen.Summary ? UiScreen.Summary : UiScreen.Lobby;
+            if (next != UiScreen.Inventory) picking = null;   // 19차: 줄 고르기는 판이 열린 동안만
             screen = next;
             if (next == UiScreen.Lobby) summary = null;
             ui.ShowScreen(next);
@@ -84,6 +85,7 @@ namespace TOD
         public void BackFromRoom()
         {
             if (runInventory) { CloseRunInventory(); return; }
+            if (picking != null) { EndPick(); return; }   // 19차: 모이라의 줄 고르기 → 모이라 창으로
             ShowScreen(summary != null ? roomReturn : UiScreen.Lobby);
         }
 
@@ -103,6 +105,8 @@ namespace TOD
             summary = null;
             paused = false;
             Run = Combat.CreateRun(Profile, () => Random.value);
+            HubShop.ConsumePacked(Profile);   // 19차: 챙긴 시작 조각은 이번 등반 가방으로 넘어가고 영구 프로필에서는 사라진다
+            Gear.Save(db, Profile);
             offered = null;
             augmentRerolled = false;
             runInventory = false;
@@ -324,7 +328,54 @@ namespace TOD
 
         // ---------------------------------------------------------------- 재봉 상자
 
-        void RenderInventory() => ui.RenderInventory(Bag, selected, turns);
+        // 19차 아웃게임 판: 모이라의 줄 고르기(picking) 아니면 단추의 '시작 조각 챙기기'(진열 조각을 판에 놓으면 산다)
+        bool Packing => Run == null && picking == null;
+
+        void RenderInventory()
+        {
+            var board = new BoardMode { pick = picking };
+            if (Packing)
+            {
+                board.offers = HubShop.Offers(db, Profile).Select(k => new OwnedItem { id = OfferId + k, kind = k }).ToList();
+                board.price = k => HubShop.Price(db, k);
+            }
+            ui.RenderInventory(Bag, selected, turns, board);
+        }
+
+        // 19차: 판 옆 목록의 진열 조각(아직 안 산 것)은 id = OfferId + 종류인 가짜 조각이다. 판에 놓는 순간 산다(HubShop.Pack).
+        public const int OfferId = 1000000;
+
+        public OwnedItem ItemFor(int? id)
+        {
+            if (id == null) return null;
+            OwnedItem item = Bag.items.FirstOrDefault(i => i.id == id);
+            if (item != null || !Packing || id < OfferId) return item;
+            int kind = id.Value - OfferId;
+            return HubShop.Offered(db, Profile, kind) ? new OwnedItem { id = id.Value, kind = kind } : null;
+        }
+
+        bool IsOffer(OwnedItem item) => item != null && item.id >= OfferId;
+
+        // 진열 조각을 판에 놓기 = 사기. 놓았으면 true.
+        bool PackOffer(OwnedItem offer, int x, int y)
+        {
+            PackResult result = HubShop.Pack(db, Profile, offer.kind, x, y, turns, out OwnedItem item);
+            switch (result)
+            {
+                case PackResult.Full: ui.Say(string.Format(db.gear.starterFull, Unlocks.StarterSlots(db, Profile))); return false;
+                case PackResult.NoShards: ui.Say(db.hub.noShards); return false;
+                case PackResult.Blocked: ui.Say(db.ui.invalidPlacement); return false;
+                case PackResult.NotOffered: return false;
+            }
+            selected = null;
+            Gear.Save(db, Profile);
+            RenderInventory();
+            ui.UpdateMeta(Profile);
+            ui.Sew(item.id);
+            sound.Play(string.IsNullOrEmpty(db.hub.buySound) ? "loot" : db.hub.buySound);
+            ui.Say(string.Format(db.hub.packed ?? "{0}", Gear.Def(db, item).name));
+            return true;
+        }
 
         // 아웃게임 판 = 등반 전에 고른 시작 조각이라 저장한다. 등반 가방은 귀환하면 버리므로 저장하지 않는다.
         void SaveBag() { if (Run == null) Gear.Save(db, Profile); }
@@ -348,6 +399,7 @@ namespace TOD
 
         public void SelectPiece(int id)
         {
+            if (picking != null) return;
             selected = id;
             turns = Bag.placements.FirstOrDefault(p => p.id == id)?.turns ?? 0;
             RenderInventory();
@@ -362,6 +414,17 @@ namespace TOD
 
         public void Unequip()
         {
+            if (Packing && selected is int id && ItemFor(id) is { } packed && !IsOffer(packed))   // 19차: 챙긴 조각을 빼면 파편을 돌려준다
+            {
+                string name = Gear.Def(db, packed).name;
+                int refund = HubShop.Unpack(db, Profile, id);
+                selected = null;
+                Gear.Save(db, Profile);
+                RenderInventory();
+                ui.UpdateMeta(Profile);
+                if (refund >= 0) ui.Say(string.Format(db.hub.unpacked ?? "{0}", name, refund));
+                return;
+            }
             Bag.placements.RemoveAll(p => p.id == selected);
             SaveBag();
             RenderInventory();
@@ -369,7 +432,9 @@ namespace TOD
 
         public void ClickCell(int x, int y)
         {
-            OwnedItem item = Bag.items.FirstOrDefault(i => i.id == selected);
+            if (picking != null) { PickAt(new Vector2Int(x, y)); return; }
+            OwnedItem item = ItemFor(selected);
+            if (IsOffer(item)) { if (!PackOffer(item, x, y)) RenderInventory(); return; }
             PlacedPiece occupying = Gear.Placed(db, Bag).FirstOrDefault(p => p.cells.Contains(new Vector2Int(x, y)));
             if (item == null)
             {
@@ -402,9 +467,15 @@ namespace TOD
         // 끌어서 놓기: 판 칸에 놓을 수 있으면 옮겨 장착(바느질), 못 놓으면 안내 후 원래대로. 판 밖이면 취소.
         public void DropDrag(int id, Vector2Int? cell)
         {
-            OwnedItem item = Bag.items.FirstOrDefault(i => i.id == id);
+            OwnedItem item = ItemFor(id);
             Placement old = Bag.placements.FirstOrDefault(p => p.id == id);
             selected = null;
+            if (IsOffer(item))
+            {
+                if (cell is Vector2Int spot) { selected = id; if (PackOffer(item, spot.x, spot.y)) return; selected = null; }
+                RenderInventory();
+                return;
+            }
             if (item != null && cell is Vector2Int at && !(old != null && old.x == at.x && old.y == at.y && old.turns == turns))
             {
                 if (StarterFull(item)) { RenderInventory(); return; }
@@ -425,48 +496,108 @@ namespace TOD
 
         public void HoverCell(Vector2Int? at)
         {
-            if (screen != UiScreen.Inventory) return;
-            ui.PreviewPiece(Bag, Bag.items.FirstOrDefault(i => i.id == selected), turns, at);
+            if (screen != UiScreen.Inventory && !runInventory) return;
+            if (picking != null) { ui.PickHover(Bag, picking, at); return; }
+            ui.PreviewPiece(Bag, ItemFor(selected), turns, at);
         }
 
-        // ---------------------------------------------------------------- 예견의 다락
+        // ---------------------------------------------------------------- 예견의 다락: 모이라 (19차)
+        // 모이라 창(UiScreen.Attic) = 강화 4종 카드. 확장, 가로 줄, 세로 줄은 누르면 재봉 상자 판이 열리고(picking)
+        // 판 위에서 반투명하게 고른 자리(가장자리 또는 줄)를 확인하면 강화한다. 욕망 최대치는 바로 확인 창.
+        // 상인 단추의 '들고 갈 수 늘리기'(starter)도 같은 확인 창(ConfirmUpgrade)을 쓴다.
 
-        // 강화 5종 (17차 모이라의 실궤): expansion 인벤토리 확장, rows 가로 줄, cols 세로 줄, capacity 욕망 최대치, starter 시작 조각 들고 갈 수
-        int Level(UpgradeDef u) => u.key switch { "expansion" => Profile.expansion, "rows" => Profile.rows, "cols" => Profile.cols, Unlocks.StarterKey => Profile.starter, _ => Profile.capacity };
-        int Cost(UpgradeDef u) => u.price + u.priceStep * Level(u);
-        // max < 0 → 판 크기 기준 (가로 줄 = 높이 / 2, 세로 줄 = 폭 / 2)
-        bool Maxed(UpgradeDef u) => Level(u) >= (u.max >= 0 ? u.max : u.key == "cols" ? Gear.Dimensions(db, Profile).width / 2 : Gear.Dimensions(db, Profile).height / 2);
+        string picking;          // 판에서 고르는 중인 강화 key (null = 아님)
+        int pendingPick = -1;    // 확인 창에 올린 자리
+        string moiraLine;        // 말을 걸 때 고른 모이라의 한 줄
 
-        void RenderAttic()
+        int Level(UpgradeDef u) => Moira.Level(Profile, u.key);
+        int Cost(UpgradeDef u) => Moira.Cost(Profile, u);
+        bool Maxed(UpgradeDef u) => Moira.Maxed(db, Profile, u);
+        UpgradeDef Upgrade(string key) => db.upgrades.FirstOrDefault(x => x.key == key);
+
+        void RenderAttic() => ui.RenderAttic(Profile, Cost, Maxed, Level, PickUpgrade, moiraLine);
+
+        // 모이라에게 말을 걸 때: 한 줄을 새로 고른다
+        void TalkToMoira()
         {
-            ui.RenderAttic(Profile, Cost, Maxed, Level, key =>
+            string[] lines = db.hub.moiraLines;
+            moiraLine = lines != null && lines.Length > 0 ? lines[Random.Range(0, lines.Length)] : null;
+            ShowScreen(UiScreen.Attic);
+        }
+
+        // 모이라 창의 카드
+        void PickUpgrade(string key)
+        {
+            UpgradeDef u = Upgrade(key);
+            if (u == null || Maxed(u)) return;
+            if (Profile.shards < Cost(u)) { ui.Say(db.hub.noShards); return; }
+            if (Moira.NeedsPick(key)) { BeginPick(key); return; }
+            AskUpgrade(u, -1, string.Format(db.hub.confirmPlain ?? db.ui.upgradeBody, Cost(u), u.name));
+        }
+
+        void AskUpgrade(UpgradeDef u, int pick, string body)
+        {
+            pendingUpgrade = u.key;
+            pendingPick = pick;
+            bool merchant = u.key == Unlocks.StarterKey;
+            ui.ShowUpgradeConfirm(merchant ? db.hub.slotEyebrow : db.hub.moiraEyebrowConfirm, merchant ? db.hub.slotTitle : db.hub.moiraTitleConfirm,
+                body, merchant ? db.hub.slotConfirm : db.hub.moiraConfirmButton);
+        }
+
+        void BeginPick(string key)
+        {
+            picking = key;
+            selected = null;
+            ShowScreen(UiScreen.Inventory);
+            sound.Play("loot");
+        }
+
+        void EndPick()
+        {
+            picking = null;
+            pendingPick = -1;
+            ShowScreen(UiScreen.Attic);
+        }
+
+        // 판 위 고르기: 가로 줄 = 그 칸의 줄, 세로 줄 = 그 칸의 열. 확장은 가장자리 띠(PickSide)로 고른다.
+        void PickAt(Vector2Int cell)
+        {
+            if (picking == Moira.Rows) PickLine(cell.y);
+            else if (picking == Moira.Cols) PickLine(cell.x);
+        }
+
+        public void PickSide(int side) { if (picking == Moira.Expansion) PickLine(side); }
+
+        void PickLine(int pick)
+        {
+            UpgradeDef u = Upgrade(picking);
+            if (u == null) return;
+            if (Maxed(u)) { ui.Say(db.ui.upgradeMax); return; }
+            if (!Moira.CanPick(db, Profile, picking, pick)) { ui.Say(db.hub.lineTaken); return; }
+            if (Profile.shards < Cost(u)) { ui.Say(db.hub.noShards); return; }
+            string body = picking switch
             {
-                pendingUpgrade = key;
-                UpgradeDef u = db.upgrades.First(x => x.key == key);
-                ui.ShowUpgradeConfirm(u, Cost(u));
-            }, Unlocks.StarterSlots(db, Profile));
+                Moira.Rows => string.Format(db.hub.confirmRow, pick + 1, Cost(u), u.name),
+                Moira.Cols => string.Format(db.hub.confirmCol, pick + 1, Cost(u), u.name),
+                _ => string.Format(db.hub.confirmExpand, db.hub.sideNames != null && pick < db.hub.sideNames.Length ? db.hub.sideNames[pick] : pick.ToString(), Cost(u), u.name),
+            };
+            AskUpgrade(u, pick, body);
         }
 
         public void ConfirmUpgrade()
         {
-            UpgradeDef u = db.upgrades.FirstOrDefault(x => x.key == pendingUpgrade);
-            if (u == null || Maxed(u) || Profile.shards < Cost(u)) return;
-            Profile.shards -= Cost(u);
-            switch (u.key)
-            {
-                case "expansion": Profile.expansion++; break;
-                case "rows": Profile.rows++; break;
-                case "cols": Profile.cols++; break;
-                case Unlocks.StarterKey: Profile.starter++; break;
-                default: Profile.capacity++; break;
-            }
+            UpgradeDef u = Upgrade(pendingUpgrade);
+            if (u == null || !Moira.Apply(db, Profile, u, pendingPick)) return;
             Gear.Save(db, Profile);
             ui.CloseDialog();
-            RenderAttic();
             ui.UpdateMeta(Profile);
             sound.Play("upgrade");
             ui.RoomFlash();
             ui.Say(string.Format(db.ui.upgradeDone, u.name, Level(u)));
+            pendingPick = -1;
+            if (u.key == Unlocks.StarterKey) { ShowHubShop(); return; }   // 단추 메뉴로
+            if (picking != null) { selected = null; RenderInventory(); return; }   // 판에 남아 바뀐 줄을 보여 준다 (이어서 더 고를 수 있음)
+            RenderAttic();
         }
 
         // ---------------------------------------------------------------- frame
@@ -516,7 +647,7 @@ namespace TOD
             }
             if (Run == null)
             {
-                if (screen is UiScreen.Inventory or UiScreen.Attic) BackFromRoom();   // 재봉 상자, 모이라의 실궤 창
+                if (screen is UiScreen.Inventory or UiScreen.Attic) BackFromRoom();   // 챙기기 판, 모이라의 줄 고르기, 모이라 창
                 return;
             }
             TogglePause();

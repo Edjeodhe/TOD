@@ -99,36 +99,42 @@ namespace TOD
         {
             switch (station)
             {
-                case HubStation.SewingBox: ShowScreen(UiScreen.Inventory); break;
                 case HubStation.Attic: MoveRoom(true); break;            // 17차: 다락 방으로 올라간다
                 case HubStation.AtticExit: MoveRoom(false); break;
-                case HubStation.Chest: ShowScreen(UiScreen.Attic); sound.Play("loot"); break;   // 모이라의 실궤 = 강화 창
+                case HubStation.Moira: TalkToMoira(); sound.Play("loot"); break;   // 19차: 모이라 = 강화 4종 창
                 case HubStation.Merchant: ShowHubShop(); MerchantSay(MerchantCue.Greet); break;
                 case HubStation.Tower: StartRun(); break;
                 case HubStation.Diary: ui.ShowDiary(); break;
             }
         }
 
-        // ---------------------------------------------------------------- 상인 단추 (파편으로 조각 사기)
+        // ---------------------------------------------------------------- 상인 단추 메뉴 (19차)
+        // '시작 조각 챙기기' = 재봉 상자 판이 열리고 진열 조각을 판에 놓으면 파편으로 산다(다음 등반 한 번만, GameController.cs PackOffer).
+        // '들고 갈 수 늘리기' = 17차 모이라의 '시작 조각 선택' 강화를 단추가 맡는다.
 
         public void ShowHubShop()
         {
             if (HubShop.Ensure(db, Profile, () => Random.value)) Gear.Save(db, Profile);
-            ui.ShowHubShop(db.hub, HubShop.Display(db, Profile), k => HubShop.Price(db, k), k => HubShop.Sold(Profile, k), Profile.shards, BuyHubPiece);
+            UpgradeDef slots = Upgrade(Unlocks.StarterKey);
+            ui.ShowHubMenu(db.hub, Profile, Profile.placements.Count, Unlocks.StarterSlots(db, Profile), slots,
+                slots != null ? Cost(slots) : 0, slots != null && Maxed(slots), slots != null ? Level(slots) : 0, OpenPacking, BuySlot);
         }
 
-        void BuyHubPiece(int kind)
+        void OpenPacking()
         {
-            if (HubShop.Sold(Profile, kind)) { MerchantSay(MerchantCue.SoldOut); return; }
-            if (Profile.shards < HubShop.Price(db, kind)) { ui.Say(db.hub.noShards); MerchantSay(MerchantCue.NoMoney); return; }
-            PieceDef piece = HubShop.Buy(db, Profile, kind);
-            if (piece == null) return;
-            Gear.Save(db, Profile);
-            sound.Play(string.IsNullOrEmpty(db.hub.buySound) ? "loot" : db.hub.buySound);
-            ui.Say(string.Format(db.hub.bought, piece.name));
-            ui.UpdateMeta(Profile);
-            MerchantSay(MerchantCue.Buy);
-            ShowHubShop();
+            picking = null;
+            selected = null;
+            ui.CloseDialog();
+            ShowScreen(UiScreen.Inventory);
+            sound.Play("loot");
+        }
+
+        void BuySlot()
+        {
+            UpgradeDef u = Upgrade(Unlocks.StarterKey);
+            if (u == null || Maxed(u)) return;
+            if (Profile.shards < Cost(u)) { ui.Say(db.hub.noShards); MerchantSay(MerchantCue.NoMoney); return; }
+            AskUpgrade(u, -1, string.Format(db.ui.upgradeBody, Cost(u), u.name));
         }
     }
 }

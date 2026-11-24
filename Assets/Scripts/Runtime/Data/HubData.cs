@@ -5,8 +5,9 @@ using UnityEngine;
 
 namespace TOD
 {
-    // Chest = 17차 다락 방의 '모이라의 실궤'(강화 5종), AtticExit = 다락 방의 뚜껑문(재봉실로 내려감)
-    public enum HubStation { SewingBox, Attic, Merchant, Tower, Diary, Chest, AtticExit }
+    // Moira = 다락 방의 모이라(19차, 17차 '모이라의 실궤' 자리. 강화 4종), AtticExit = 다락 방의 뚜껑문(재봉실로 내려감)
+    // SewingBox 는 19차에 아웃게임에서 뺐다(직렬화 번호를 지키려고 값만 남김). 재봉 상자는 등반 중(I)과 단추의 '시작 조각 챙기기'에서만 연다.
+    public enum HubStation { SewingBox, Attic, Merchant, Tower, Diary, Moira, AtticExit }
 
     // 17차: 걸어 다니는 방 하나 (재봉실 본방은 HubConfig 의 옛 필드를 그대로 쓰고, 다락 방은 HubConfig.attic)
     [Serializable] public class HubRoom
@@ -65,6 +66,29 @@ namespace TOD
         public string bought;                 // "{0}을 샀습니다"
         public string buySound;
         public string patternTag;             // 17차: 진열 카드의 '아버지의 도안' 표시
+
+        [Header("19차 상인 단추 메뉴: 시작 조각 챙기기, 들고 갈 수 늘리기")]
+        public Sprite packIcon;               // '시작 조각 챙기기' 카드 그림
+        public string packName, packText;     // 카드 이름, 설명
+        public string packFoot;               // 카드 아랫줄 ({0} 챙긴 수, {1} 들고 갈 수)
+        public string packTitle, packHelp;    // 챙기기 판 제목, 안내 줄
+        public string packNote;               // 판 위 안내 ({0} 챙긴 수, {1} 들고 갈 수, {2} 파편)
+        public string packed, unpacked;       // "{0}을 챙겼습니다", "{0}을 돌려주고 파편 {1}개를 받았습니다"
+        public string unpackLabel;            // 판에서 빼기 버튼 (챙기기 판)
+        public string slotEyebrow, slotTitle, slotConfirm;   // '들고 갈 수 늘리기' 확인 창
+
+        [Header("19차 모이라 (다락)")]
+        public Sprite moiraPortrait;          // 모이라 창 왼쪽 그림
+        public string moiraEyebrow, moiraTitle;
+        public string[] moiraLines;           // 말을 걸 때마다 무작위 한 줄
+        public string moiraEmpty;             // 강화가 모두 끝났을 때
+        public string pickRows, pickCols, pickExpand;        // 판 위 안내 (줄 고르기)
+        public string pickTitle;              // 고르기 판 제목 ({0} 강화 이름)
+        public string confirmRow, confirmCol, confirmExpand; // 확인 문구 ({0} 줄 번호 또는 변 이름, {1} 파편, {2} 강화 이름)
+        public string confirmPlain;           // 위치 없는 강화(욕망 최대치) 확인 ({0} 파편, {1} 강화 이름)
+        public string[] sideNames;            // 위, 오른쪽, 아래, 왼쪽
+        public string lineTaken;              // 이미 강화한 줄을 골랐을 때
+        public string moiraEyebrowConfirm, moiraTitleConfirm, moiraConfirmButton;   // 확인 창 머리 (예: "모이라의 의식", "미래를 읽을까요?")
 
         [Header("안내")]
         public string hint;                   // 화면 아래 조작 안내

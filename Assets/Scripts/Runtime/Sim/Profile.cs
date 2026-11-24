@@ -1,6 +1,8 @@
 // 영구 저장 프로필과 재봉 상자 계산 (웹판 gear.js).
 // 17차: Profile 은 영구 저장만 맡는다(파편, 강화, 일기, 시작 조각 items 와 등반 전 배치 placements).
 // 등반은 Gear.RunBag 이 만든 임시 Profile(RunState.bag)을 쓰고, 귀환하면 버린다.
+// 19차: 시작 조각은 영구가 아니다. 상인 단추에게 파편을 내고 '챙긴' 조각(items, 모두 판 위)은 다음 등반 한 번만 들고 가고 등반을 시작하면 사라진다.
+// 모이라 강화는 위치를 고른다: 확장 = 판 가장자리에 줄 하나(extraCols/extraRows), 가로·세로 줄 강화 = 고른 줄 번호(rowLines/colLines).
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,21 +16,25 @@ namespace TOD
     [Serializable]
     public class Profile
     {
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
         public int version = CurrentVersion;
-        public int shards, best, expansion, rows, capacity;
-        public int cols;   // 17차 세로 줄 강화 단계
+        public int shards, best, capacity;
+        public int expansion;                     // 19차: 확장한 횟수 (한 번 = 줄 하나). 등급 합 한도도 이만큼 는다
+        public int extraCols, extraRows;          // 19차: 확장으로 붙인 세로 줄(폭), 가로 줄(높이) 수
+        public List<int> rowLines = new();        // 19차: 강화한 가로 줄 번호 (위에서 0)
+        public List<int> colLines = new();        // 19차: 강화한 세로 줄 번호 (왼쪽에서 0)
+        public int rows, cols;                    // (19차부터 안 씀) 옛 저장의 가로/세로 줄 강화 단계. 불러올 때 rowLines/colLines 로 옮긴다
         public List<OwnedItem> items = new();
         public List<Placement> placements = new();
         public int nextId;
         // 15차-outgame-unlock: 알림을 본 해금 세트 id, 다락 '시작 조각' 강화 단계와 고른 조각 종류
         public List<string> seenUnlocks = new();
-        public int starter, starterKind = -1;   // starter = 17차 '시작 조각 선택' 단계(들고 갈 칸 수). starterKind 는 15차 흔적(안 씀)
+        public int starter, starterKind = -1;   // starter = 17차 '시작 조각 선택' 단계(들고 갈 칸 수, 19차부터 상인 단추). starterKind 는 15차 흔적(안 씀)
         // 15차 아버지의 일기 (Diary.cs): 층 번호 - 1 자리에 보스 욕망 선택(0 아직, 1 흡수, 2 거절), 읽은 조각의 층 번호, 알린 조각 수
         public List<int> floorChoices = new();
         public List<int> diaryRead = new();
         public int diaryNoticed;
-        // 15차 재봉실 허브: 상인 단추 조각 상점 진열 (조각 종류, HubShop.cs)
+        // 15차 재봉실 허브: 상인 단추 진열 (조각 종류, HubShop.cs). 19차: 다음 등반에 챙길 수 있는 조각
         public List<int> hubStock = new();
     }
 
@@ -73,21 +79,28 @@ namespace TOD
                 }
             }
             catch (Exception error) { Debug.LogWarning($"[TOD] profile reset: {error.Message}"); }
-            var profile = new Profile();
-            foreach (int kind in db.gear.startingKinds.Distinct()) profile.items.Add(new OwnedItem { id = ++profile.nextId, kind = kind });
-            profile.nextId++;
-            return profile;
+            return new Profile { nextId = 1 };
         }
 
-        // 17차 이전 저장(version 1)의 조각은 예전 규칙(영구 보관)으로 얻은 등반 조각이다 → 처음 지급 조각만 남기고 배치를 비운다.
+        // 옛 저장 옮기기. 17차 이전(version 1)과 17~18차(version 2)의 조각은 영구 시작 조각이었다 → 19차에는 모두 버린다(돌려주는 파편 없음).
+        // 강화: 가로/세로 줄 단계 n → 위(왼쪽)부터 2n 줄, 확장 단계 e → 오른쪽과 아래에 줄 e 개씩 (확장 횟수 2e).
         static Profile Migrate(GameDatabase db, Profile profile)
         {
             if (profile.version >= Profile.CurrentVersion) return profile;
             profile.items.Clear();
             profile.placements.Clear();
-            foreach (int kind in db.gear.startingKinds.Distinct()) profile.items.Add(new OwnedItem { id = ++profile.nextId, kind = kind });
-            profile.nextId++;
             profile.hubStock?.Clear();
+            profile.rowLines ??= new List<int>();
+            profile.colLines ??= new List<int>();
+            if (profile.extraCols == 0 && profile.extraRows == 0 && profile.expansion > 0)
+            {
+                profile.extraCols = profile.extraRows = profile.expansion;
+                profile.expansion *= 2;
+            }
+            var (width, height, _) = Dimensions(db, profile);
+            for (int y = 0; y < Math.Min(profile.rows * 2, height); y++) if (!profile.rowLines.Contains(y)) profile.rowLines.Add(y);
+            for (int x = 0; x < Math.Min(profile.cols * 2, width); x++) if (!profile.colLines.Contains(x)) profile.colLines.Add(x);
+            profile.rows = profile.cols = 0;
             profile.version = Profile.CurrentVersion;
             return profile;
         }
@@ -98,7 +111,8 @@ namespace TOD
         {
             var bag = new Profile
             {
-                shards = 0, best = profile.best, expansion = profile.expansion, rows = profile.rows, cols = profile.cols,
+                shards = 0, best = profile.best, expansion = profile.expansion, extraCols = profile.extraCols, extraRows = profile.extraRows,
+                rowLines = new List<int>(profile.rowLines ?? new List<int>()), colLines = new List<int>(profile.colLines ?? new List<int>()),
                 capacity = profile.capacity, starter = profile.starter, nextId = profile.nextId,
                 seenUnlocks = new List<string>(profile.seenUnlocks ?? new List<string>()),
             };
@@ -124,7 +138,11 @@ namespace TOD
         public static PieceDef Def(GameDatabase db, OwnedItem item) => db.gear.pieces[item.kind];
 
         public static (int width, int height, int limit) Dimensions(GameDatabase db, Profile p) =>
-            (db.gear.baseColumns + p.expansion, db.gear.baseRows + p.expansion, db.gear.baseCostLimit + p.expansion * db.gear.costLimitStep);
+            (db.gear.baseColumns + p.extraCols, db.gear.baseRows + p.extraRows, db.gear.baseCostLimit + p.expansion * db.gear.costLimitStep);
+
+        // 19차: 강화한 줄 위의 칸인가 (가로 줄 + 세로 줄, 둘 다면 2)
+        public static int Reinforced(Profile p, Vector2Int c) =>
+            (p.rowLines != null && p.rowLines.Contains(c.y) ? 1 : 0) + (p.colLines != null && p.colLines.Contains(c.x) ? 1 : 0);
 
         // 아이템은 모두 고유하다: 같은 종류는 한 번만 가진다 (개수 표시 없음).
         public static bool Owns(Profile profile, int kind) => profile != null && profile.items.Any(i => i.kind == kind);
@@ -232,8 +250,8 @@ namespace TOD
             List<PlacedPiece> pieces = Placed(db, profile);
             foreach (PlacedPiece piece in pieces)
             {
-                // 가로 줄 강화(위에서 두 줄 단위) + 17차 세로 줄 강화(왼쪽에서 두 칸 단위). 둘 다 걸친 칸은 둘 다 받는다.
-                float reinforced = (piece.cells.Count(c => c.y < profile.rows * 2) + piece.cells.Count(c => c.x < profile.cols * 2)) / (float)piece.cells.Count;
+                // 19차: 고른 가로 줄 + 고른 세로 줄 위 칸 비율만큼 +rowBonus. 둘 다 걸친 칸은 둘 다 받는다.
+                float reinforced = piece.cells.Sum(c => Reinforced(profile, c)) / (float)piece.cells.Count;
                 result.stats[piece.def.stat] += piece.def.value * (1 + reinforced * db.gear.rowBonus);
             }
             foreach (SetDef set in db.gear.sets)

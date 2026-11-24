@@ -1,7 +1,6 @@
-// 15차 재봉실 허브: 시설 꼬리표("E 재봉 상자 열기")와 상인 단추 조각 상점 창 (GameUI 의 나머지 부분).
+// 15차 재봉실 허브: 시설 꼬리표와 상인 단추 창 (GameUI 의 나머지 부분). 19차: 단추 창 = 챙기기, 들고 갈 수 늘리기 메뉴.
 // 구조는 Main.uxml(lobby 의 hub-prompt, hub-hint, overlay 의 dialog-hubshop), 가격 띠는 HubSlots.uxml 템플릿, 모양은 Hub.uss.
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -9,7 +8,7 @@ namespace TOD
 {
     public partial class GameUI
     {
-        public VisualTreeAsset hubSlots;      // HubSlots.uxml (hub-price)
+        public VisualTreeAsset hubSlots;      // HubSlots.uxml (hub-price, 19차부터 안 씀)
 
         const float PromptMinTop = 150;     // 꼬리표 아래 끝의 최소 높이 (패널 px, 위 띠 100px 아래)
 
@@ -39,38 +38,25 @@ namespace TOD
             hubPrompt.style.top = Mathf.Max(p.y, PromptMinTop);   // 방 위쪽 시설(탑 문)이라도 위 띠에 가리지 않게
         }
 
-        public void ShowHubShop(HubConfig hub, IList<int> stock, Func<int, int> price, Func<int, bool> sold, int shards, Action<int> buy)
+        // 19차 단추 메뉴: '시작 조각 챙기기' 카드(누르면 챙기기 판)와 '들고 갈 수 늘리기' 강화 카드
+        public void ShowHubMenu(HubConfig hub, Profile profile, int packed, int slots, UpgradeDef slotUpgrade, int slotCost, bool slotMax, int slotLevel,
+            Action pack, Action buySlot)
         {
             Text(root, "hubshop-title", hub.shopTitle);
             Text(root, "hubshop-text", hub.shopText);
-            Text(root, "hubshop-shards", shards.ToString());
+            Text(root, "hubshop-shards", profile.shards.ToString());
             shines.Clear();
             VisualElement container = root.Q("hub-wares");
             container.Clear();
-            bool any = false;
-            foreach (int kind in stock)
+            Card(container, hub.packIcon, null, hub.packName, hub.packText, string.Format(hub.packFoot ?? "", packed, slots), pack);
+            if (slotUpgrade != null)
             {
-                bool done = sold(kind);
-                int cost = price(kind);
-                Button card = PieceOfferCard(container, kind, () => buy(kind));
-                if (Gear.IsPattern(db, kind) && !string.IsNullOrEmpty(hub.patternTag))   // 17차: 아버지의 도안 표시
-                {
-                    card.AddToClassList("hub-pattern");
-                    card.Add(new Label(hub.patternTag) { name = "hub-pattern-tag", pickingMode = PickingMode.Ignore });
-                    card.Q<Label>("hub-pattern-tag").AddToClassList("hub-pattern-tag");
-                }
-                // 팔림, 파편 부족도 누를 수 있게 두고(상인이 대답함) 흐리게만
-                card.EnableInClassList("hub-sold", done);
-                card.EnableInClassList("ware-dim", !done && shards < cost);
-                Label tag = (Label)Slot(hubSlots, "hub-price");
-                tag.text = done ? hub.soldOut : string.Format(hub.priceFormat, cost);
-                tag.EnableInClassList("short", !done && shards < cost);
-                card.Add(tag);
-                any |= !done;
+                string text = slotUpgrade.text;
+                if (!string.IsNullOrEmpty(T.starterSlotsLine)) text += "\n" + string.Format(T.starterSlotsLine, slots);
+                string foot = slotMax ? T.upgradeMax : string.Format(T.upgradeCost, slotCost, slotLevel);
+                Card(container, slotUpgrade.icon, null, slotUpgrade.name, text, foot, buySlot, !slotMax && profile.shards >= slotCost);
             }
-            Label empty = root.Q<Label>("hubshop-empty");
-            empty.text = hub.shopEmpty;
-            Show(empty, !any);
+            Show(root.Q<Label>("hubshop-empty"), false);
             ShowDialog("hubshop");
         }
     }

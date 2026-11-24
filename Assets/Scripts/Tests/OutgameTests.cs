@@ -1,4 +1,4 @@
-// 15차-outgame-unlock 검증 (EditMode): 세트 해금 표, 잠긴 세트 제외, 해금 알림 기록. 17차: 시작 조각, 등반 가방, 세로 줄, 옛 저장, 일기 보상, 가격. 값은 Main 씬 GameDatabase.
+// 15차-outgame-unlock 검증 (EditMode): 세트 해금 표, 잠긴 세트 제외, 해금 알림 기록. 17차: 시작 조각, 등반 가방, 일기 보상, 가격. 19차: 모이라 줄 고르기, 챙긴 조각 한 번, 옛 저장. 값은 Main 씬 GameDatabase.
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
@@ -147,9 +147,9 @@ namespace TOD.Tests
             Assert.AreEqual(2, p.items.Count, "영구 프로필의 조각은 그대로");
         }
 
-        // 17차: 세로 줄 강화 = 왼쪽 두 칸 단위 세로 줄 위 조각 능력치 +rowBonus
+        // 19차: 세로 줄 강화 = 고른 세로 줄 위 조각 능력치 +rowBonus
         [Test]
-        public void ColumnUpgradeBoostsLeftColumns()
+        public void ColumnUpgradeBoostsChosenColumns()
         {
             Profile p = EmptyProfile();
             Gear.AddItem(db, p, Kind("fire"));
@@ -157,18 +157,20 @@ namespace TOD.Tests
             int cells = def.shape.Length;
             p.placements.Add(new Placement { id = p.items[0].id, x = 0, y = 3 });   // 위쪽 줄 강화에는 안 걸리는 아래 줄
             float plain = Gear.Stats(db, p)[def.stat];
-            p.cols = 3;   // 왼쪽 6칸 모두
+            p.colLines.AddRange(Enumerable.Range(0, Gear.Dimensions(db, p).width));   // 모든 세로 줄
             float boosted = Gear.Stats(db, p)[def.stat];
             Assert.Greater(boosted, plain);
             Assert.AreEqual(def.value * (1 + db.gear.rowBonus), boosted, .001f);
             Assert.Greater(cells, 0);
         }
 
-        // 17차: 옛 저장(version 1)의 조각은 등반 조각이라 처음 지급 조각만 남긴다. 파편은 그대로.
+        // 19차: 옛 저장(version 1, 2)의 조각은 모두 버린다(시작 조각은 이제 한 번 쓰고 사라짐). 파편은 그대로,
+        // 가로 줄 단계 n → 위 2n 줄, 확장 단계 e → 오른쪽과 아래에 줄 e 개씩.
         [Test]
-        public void OldSaveDropsRunPieces()
+        public void OldSaveDropsPiecesAndKeepsUpgrades()
         {
-            var old = new Profile { version = 1, shards = 17, best = 2 };
+            var old = new Profile { version = 2, shards = 17, best = 2, rows = 1, cols = 1, expansion = 1 };
+            old.rowLines = null; old.colLines = null;
             for (int k = 0; k < 6; k++) old.items.Add(new OwnedItem { id = k + 1, kind = k });
             old.placements.Add(new Placement { id = 1, x = 0, y = 0 });
             old.nextId = 7;
@@ -178,8 +180,13 @@ namespace TOD.Tests
             Assert.AreEqual(Profile.CurrentVersion, loaded.version);
             Assert.AreEqual(17, loaded.shards);
             Assert.AreEqual(2, loaded.best);
-            CollectionAssert.AreEquivalent(db.gear.startingKinds.Distinct().ToArray(), loaded.items.Select(i => i.kind).ToArray());
+            Assert.AreEqual(0, loaded.items.Count, "옛 조각이 남았습니다");
             Assert.AreEqual(0, loaded.placements.Count);
+            CollectionAssert.AreEqual(new[] { 0, 1 }, loaded.rowLines);
+            CollectionAssert.AreEqual(new[] { 0, 1 }, loaded.colLines);
+            Assert.AreEqual(1, loaded.extraCols);
+            Assert.AreEqual(1, loaded.extraRows);
+            Assert.AreEqual(2, loaded.expansion);
         }
 
         // 17차 일기 보상: 처음 읽으면 파편 한 번, 그 쪽지의 도안이 상인 진열에 붙고 탑 보상에는 안 나온다
@@ -198,11 +205,71 @@ namespace TOD.Tests
             Assert.IsFalse(Diary.MarkRead(p, entry), "두 번 읽어도 보상은 한 번");
             Assert.AreEqual(entry.readShards, p.shards);
 
-            Assert.IsTrue(HubShop.Display(db, p).Contains(entry.patternKind));
+            Assert.IsTrue(HubShop.Offers(db, p).Contains(entry.patternKind));
             p.shards = 99;
-            Assert.IsNotNull(HubShop.Buy(db, p, entry.patternKind));
+            Vector2Int at = FreeSpot(p, entry.patternKind);
+            Assert.AreEqual(PackResult.Packed, HubShop.Pack(db, p, entry.patternKind, at.x, at.y, 0, out _));
             Assert.IsTrue(Gear.Owns(p, entry.patternKind));
-            Assert.IsFalse(HubShop.Display(db, p).Contains(entry.patternKind), "산 도안은 진열에서 빠진다");
+            Assert.IsFalse(HubShop.Offers(db, p).Contains(entry.patternKind), "챙긴 도안은 진열에서 빠진다");
+        }
+
+        Vector2Int FreeSpot(Profile p, int kind)
+        {
+            var (w, h, _) = Gear.Dimensions(db, p);
+            var probe = new OwnedItem { id = -1, kind = kind };
+            for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) if (Gear.CanPlace(db, p, probe, 0, x, y)) return new Vector2Int(x, y);
+            Assert.Fail("놓을 자리가 없습니다");
+            return default;
+        }
+
+        // 19차: 챙긴 시작 조각은 다음 등반 가방에 들어가고, 등반을 시작하면 영구 프로필에서 사라진다
+        [Test]
+        public void PackedPiecesLastOneRun()
+        {
+            Profile p = EmptyProfile();
+            HubShop.Restock(db, p, () => .2f);
+            int kind = p.hubStock[0];
+            p.shards = 99;
+            Vector2Int at = FreeSpot(p, kind);
+            Assert.AreEqual(PackResult.Packed, HubShop.Pack(db, p, kind, at.x, at.y, 0, out _));
+            RunState r = combat.CreateRun(p, () => .5f);
+            HubShop.ConsumePacked(p);
+            Assert.IsTrue(Gear.Owns(r.bag, kind), "챙긴 조각이 등반 가방에 없습니다");
+            Assert.AreEqual(0, p.items.Count, "등반을 시작했는데 챙긴 조각이 남았습니다");
+            Assert.AreEqual(0, p.placements.Count);
+        }
+
+        // 19차 모이라: 고른 가로 줄 하나만 강화, 같은 줄은 다시 못 고름. 확장은 고른 쪽에 줄이 붙고 위/왼쪽이면 조각과 줄 번호가 밀린다.
+        [Test]
+        public void MoiraUpgradesChosenLineAndSide()
+        {
+            UpgradeDef rows = db.upgrades.First(u => u.key == Moira.Rows);
+            UpgradeDef cols = db.upgrades.First(u => u.key == Moira.Cols);
+            UpgradeDef expand = db.upgrades.First(u => u.key == Moira.Expansion);
+            Profile p = EmptyProfile();
+            p.shards = 999;
+            Assert.IsTrue(Moira.Apply(db, p, rows, 2));
+            CollectionAssert.AreEqual(new[] { 2 }, p.rowLines);
+            Assert.AreEqual(999 - rows.price, p.shards);
+            Assert.IsFalse(Moira.Apply(db, p, rows, 2), "같은 줄을 두 번 강화함");
+            Assert.IsFalse(Moira.Apply(db, p, rows, 99), "판 밖 줄을 강화함");
+            Assert.IsTrue(Moira.Apply(db, p, cols, 0));
+
+            Gear.AddItem(db, p, Kind("fire"));
+            p.placements.Add(new Placement { id = p.items[0].id, x = 1, y = 1 });
+            var (w0, h0, limit0) = Gear.Dimensions(db, p);
+            Assert.IsTrue(Moira.Apply(db, p, expand, Moira.Top));
+            Assert.AreEqual(h0 + 1, Gear.Dimensions(db, p).height);
+            Assert.AreEqual(w0, Gear.Dimensions(db, p).width);
+            Assert.AreEqual(2, p.placements[0].y, "위에 줄을 붙였는데 조각이 안 밀림");
+            CollectionAssert.AreEqual(new[] { 3 }, p.rowLines, "위에 줄을 붙였는데 강화한 줄 번호가 안 밀림");
+            Assert.IsTrue(Moira.Apply(db, p, expand, Moira.Left));
+            Assert.AreEqual(2, p.placements[0].x);
+            CollectionAssert.AreEqual(new[] { 1 }, p.colLines);
+            Assert.IsTrue(Moira.Apply(db, p, expand, Moira.Right));
+            Assert.AreEqual(w0 + 2, Gear.Dimensions(db, p).width);
+            Assert.AreEqual(limit0 + 3 * db.gear.costLimitStep, Gear.Dimensions(db, p).limit);
+            Assert.AreEqual(3, Moira.Level(p, Moira.Expansion));
         }
 
         // 17차: 시작 조각 가격 = 일반 3, 레어 4, 유니크 5, 레전더리 6

@@ -44,8 +44,8 @@ namespace TOD
         }
 
         // ---------------------------------------------------------------- 시작 조각 (17차)
-        // 시작 조각 = Profile.items (기억의 파편으로 산 영구 조각). 등반 전에 재봉 상자 판에 놓은 것만 들고 간다(Gear.RunBag).
-        // 들고 갈 수 = gear.starterSlotsBase + 다락 '시작 조각 선택' 단계 × gear.starterSlotsStep.
+        // 시작 조각 = Profile.items. 19차: 상인 단추의 '시작 조각 챙기기'에서 파편으로 사서 판에 놓은 조각(다음 등반 한 번만, HubShop.Pack).
+        // 들고 갈 수 = gear.starterSlotsBase + '들고 갈 수 늘리기'(19차부터 단추, key starter) 단계 × gear.starterSlotsStep.
 
         public static int StarterSlots(GameDatabase db, Profile profile) =>
             Math.Max(0, db.gear.starterSlotsBase + (profile?.starter ?? 0) * db.gear.starterSlotsStep);

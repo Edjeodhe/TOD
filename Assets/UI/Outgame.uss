@@ -77,3 +77,35 @@
 /* 방을 오갈 때 어두워짐 (FadeRoom 이 transition-duration 을 정함) */
 .room-fade { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(8, 5, 10); opacity: 0; transition-property: opacity; transition-timing-function: ease-in-out; }
 .room-fade.on { opacity: 1; }
+
+/* ---------------------------------------------------------------- 19차 모이라 창 */
+/* 모이라 그림: 종이 왼쪽 밖에 앉아 있다 */
+.attic-portrait { position: absolute; left: -390px; bottom: -40px; width: 380px; height: 400px; background-size: contain; background-position-y: bottom; -unity-background-scale-mode: scale-to-fit; }
+.attic-line { -unity-font-style: italic; color: #c9b2e0; }
+
+/* ---------------------------------------------------------------- 19차 판 위 줄 고르기 (GameUI.Board.cs) */
+.board-pick { overflow: visible; }
+.pick-band { position: absolute; }
+/* 강화한 줄: 금빛 띠 */
+.pick-done { background-color: rgba(214, 176, 110, 0.32); border-width: 2px; border-color: rgba(240, 206, 140, 0.85); }
+.pick-done-faint { background-color: rgba(214, 176, 110, 0.12); border-width: 1px; border-color: rgba(240, 206, 140, 0.35); }
+/* 마우스를 올린 줄: 반투명 상아 보랏빛 (board-ghost 위) */
+.pick-hover { background-color: rgba(232, 222, 255, 0.7); border-width: 3px; border-color: rgb(255, 246, 222); }
+.pick-hover.pick-taken { background-color: rgba(220, 70, 72, 0.6); border-color: rgb(255, 170, 160); }
+/* 확장 가장자리 띠: 반투명, 올리면 밝아짐 */
+.board-pick > .pick-strip {
+    position: absolute; margin: 0; padding: 0; min-width: 0; min-height: 0;
+    background-image: none; background-color: rgba(216, 207, 240, 0.07);
+    border-width: 2px; border-color: rgba(216, 207, 240, 0.55); border-radius: 6px;
+    color: rgba(255, 246, 222, 0.7); font-size: 34px; -unity-text-align: middle-center;
+    transition-property: background-color, border-color, color; transition-duration: 0.12s;
+}
+.board-pick > .pick-strip:hover { background-color: rgba(232, 222, 255, 0.35); border-color: rgb(255, 246, 222); color: rgb(255, 255, 255); }
+
+/* ---------------------------------------------------------------- 19차 챙기기 판: 단추 진열 줄 */
+.piece-row.offer { opacity: 0.82; border-width: 2px; border-color: rgba(61, 124, 112, 0.9); }
+.piece-row.offer.short { opacity: 0.5; border-color: rgba(122, 93, 90, 0.9); }
+.piece-row.offer.selected { opacity: 1; }
+/* 진열 줄의 가격 꼬리표 (장착 중 꼬리표 자리, 청록 띠. 파편이 모자라면 흐린 갈색) */
+.piece-row.offer .piece-state { display: flex; background-color: #2f6f63; -unity-text-outline-color: #12302a; }
+.piece-row.offer.short .piece-state { background-color: #6a524f; }

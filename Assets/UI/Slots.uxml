@@ -1,6 +1,9 @@
 <!-- 작은 반복 요소 템플릿: 판 칸, 털실 칸, 대쉬 칸, 조각 점, 전투 글자, 퍼즐 카드. GameUI 가 이름으로 골라 복제한다. -->
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <ui:Button name="cell" class="cell" />
+    <!-- 19차 모이라 줄 고르기: 판 위 반투명 띠(강화한 줄, 마우스를 올린 줄)와 확장 가장자리 띠 (GameUI.Board.cs) -->
+    <ui:VisualElement name="pick-band" class="pick-band" picking-mode="Ignore" />
+    <ui:Button name="pick-strip" class="pick-strip" />
     <ui:VisualElement name="yarn-pip" class="yarn-pip"><ui:VisualElement name="wind" class="yarn-wind" /></ui:VisualElement>
     <ui:VisualElement name="piece-dot" class="piece-dot" picking-mode="Ignore" />
     <ui:Label name="world-label" class="world-label" picking-mode="Ignore" />

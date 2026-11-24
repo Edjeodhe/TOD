@@ -152,18 +152,17 @@
             </ui:VisualElement>
             <ui:VisualElement class="hub-menu">
                 <ui:Button name="start" text="Enter  등반 시작" class="primary start-button hub-start" />
-                <ui:Button name="open-inventory" text="재봉 상자" class="hidden" />
                 <ui:Button name="open-attic" text="예견의 다락" class="hidden" />
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- 재봉 상자 -->
+        <!-- 재봉 상자: 등반 중(I), 19차부터 아웃게임에서는 단추의 '시작 조각 챙기기'와 모이라의 줄 고르기 판으로만 연다 -->
         <ui:VisualElement name="inventory" class="layer room hidden">
             <ui:VisualElement class="room-body sewing-body">
                 <ui:Label name="inventory-header" class="eyebrow" />
-                <ui:Label text="재봉 상자" class="room-title" />
+                <ui:Label name="inventory-title" text="재봉 상자" class="room-title" />
                 <ui:Label name="inventory-run-note" class="room-note hidden" />
-                <ui:Label text="조각을 고르고(R로 회전) 판의 칸을 누르세요. 같은 색의 변을 맞대면 세트 효과가 켜집니다." class="room-text" />
+                <ui:Label name="inventory-help" text="조각을 고르고(R로 회전) 판의 칸을 누르세요. 같은 색의 변을 맞대면 세트 효과가 켜집니다." class="room-text" />
                 <ui:VisualElement class="inventory-layout">
                     <!-- 세트 효과 패널: 세트마다 색 매듭·이름·연결 수/다음 단계·단계별 효과 (GameUI 가 Slots.uxml set-entry 를 복제) -->
                     <ui:VisualElement name="sets" class="set-panel">
@@ -175,6 +174,8 @@
                         <ui:VisualElement name="board" class="board" />
                         <ui:VisualElement name="board-pieces" class="board-layer" picking-mode="Ignore" />
                         <ui:VisualElement name="board-ghost" class="board-layer board-ghost" picking-mode="Ignore" />
+                        <!-- 19차 모이라 줄 고르기: 강화한 줄 띠, 확장 가장자리 띠(누름) -->
+                        <ui:VisualElement name="board-pick" class="board-layer board-pick" picking-mode="Ignore" />
                         <ui:VisualElement name="needle" class="sew-needle hidden" picking-mode="Ignore" />
                     </ui:VisualElement>
                     <ui:ScrollView name="stash" class="stash" mode="Vertical" horizontal-scroller-visibility="Hidden" />
@@ -209,15 +210,16 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- 예견의 다락: 17차부터 다락 방의 '모이라의 실궤' 강화 창 (방이 뒤에 비침, .over-room) -->
+        <!-- 예견의 다락: 19차 모이라 창 (다락 방의 모이라에게 말을 걸면, 방이 뒤에 비침 .over-room). 강화 4종 카드 -->
         <ui:VisualElement name="attic" class="layer room attic hidden">
             <ui:VisualElement class="room-shade" picking-mode="Ignore" />
             <ui:VisualElement class="room-body attic-body">
                 <!-- 17차: 종이 오른쪽 위 기억의 파편 -->
                 <ui:VisualElement class="shards attic-shards" tooltip="기억의 파편" picking-mode="Ignore"><ui:VisualElement picking-mode="Ignore" /><ui:Label name="attic-shards" text="0" picking-mode="Ignore" /></ui:VisualElement>
-                <ui:Label text="✧  예견의 다락" class="eyebrow" />
-                <ui:Label text="모이라의 실궤" class="room-title" />
-                <ui:Label text="기억의 파편을 실궤에 넣으면 모이라가 다음 등반의 실을 미리 감아 둡니다." class="room-text" />
+                <ui:VisualElement name="attic-portrait" class="attic-portrait hidden" picking-mode="Ignore" />
+                <ui:Label name="attic-eyebrow" text="✧  예견의 다락" class="eyebrow" />
+                <ui:Label name="attic-title" text="모이라" class="room-title" />
+                <ui:Label name="attic-text" text="기억의 파편을 건네면 모이라가 다음 등반의 실을 미리 읽어 둡니다." class="room-text attic-line" />
                 <ui:VisualElement name="upgrades" class="choice-grid attic-grid" />
                 <ui:VisualElement class="actions"><ui:Button name="attic-back" text="돌아가기 (Esc)" /></ui:VisualElement>
             </ui:VisualElement>
@@ -232,7 +234,6 @@
                 <ui:Label name="summary-body" class="room-text" />
                 <ui:VisualElement class="actions">
                     <ui:Button name="restart" text="다시 등반" class="primary" />
-                    <ui:Button name="summary-inventory" text="재봉 상자" />
                     <ui:Button name="summary-attic" text="예견의 다락" />
                     <ui:Button name="summary-lobby" text="재봉실로" />
                 </ui:VisualElement>
@@ -305,13 +306,13 @@
                 <ui:Label name="hubshop-title" class="dialog-title" />
                 <ui:Label name="hubshop-text" class="dialog-text" />
                 <ui:VisualElement class="shards hubshop-shards" tooltip="기억의 파편"><ui:VisualElement /><ui:Label name="hubshop-shards" text="0" /></ui:VisualElement>
-                <ui:VisualElement name="hub-wares" class="puzzle-grid hub-wares" />
+                <ui:VisualElement name="hub-wares" class="choice-grid hub-wares" />
                 <ui:Label name="hubshop-empty" class="dialog-text hidden" />
                 <ui:VisualElement class="actions"><ui:Button name="close-hubshop" text="닫기" class="primary" /></ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="dialog-upgrade" class="dialog hidden">
-                <ui:Label text="모이라의 의식" class="eyebrow" />
-                <ui:Label text="미래를 읽을까요?" class="dialog-title" />
+                <ui:Label name="upgrade-eyebrow" text="모이라의 의식" class="eyebrow" />
+                <ui:Label name="upgrade-title" text="미래를 읽을까요?" class="dialog-title" />
                 <ui:Label name="upgrade-text" class="dialog-text" />
                 <ui:VisualElement class="actions">
                     <ui:Button name="confirm-upgrade" text="예, 미래를 읽어요" class="primary" />

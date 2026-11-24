@@ -85,6 +85,47 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 19차 요청 (2026-11-24) — 다락의 예견가 모이라, 강화 위치 고르기, 시작 조각 챙기기(1회용), 아웃게임 재봉 상자 제거 — 완료
+
+- **사용자 결정:**
+  - 다락 방의 실궤 대신 **예견가 모이라**(거미, 탁자 앞에 앉아 점성구를 읽음)를 둡니다. 쥐로 먼저 뽑았다가 사용자 요청으로 거미로 바꿨습니다(쥐 그림은 `art_src/raw/moira_rat.png`로 남김).
+  - 모이라에게 말을 걸면 강화 4종(인벤토리 확장, 가로 줄 강화, 세로 줄 강화, 욕망 최대치)을 합니다. 확장과 줄 강화는 재봉 상자 판이 열리고, 마우스를 올린 자리가 반투명하게 보이며 눌러서 고릅니다.
+    - 확장은 판 네 가장자리 중 한 곳에 줄 하나를 붙입니다(판은 직사각형 유지).
+    - 가로/세로 줄 강화는 한 번에 한 줄입니다.
+  - '시작 조각 선택'(들고 갈 수) 강화는 상인 단추에게 넘깁니다(이름 '들고 갈 수 늘리기').
+  - **조각은 영구로 사지 않습니다.** 단추의 '시작 조각 챙기기'에서 진열 조각을 파편으로 사서 판에 놓고, 다음 등반 한 번만 들고 갑니다. 진열은 무작위 4개(등반 끝마다 새로) + 풀린 아버지의 도안입니다.
+  - 옛 저장의 조각(처음 지급 4개와 산 것)은 돌려주는 파편 없이 지웁니다.
+  - 아웃게임 재봉 상자(재봉실 시설, 결과 화면 버튼)를 없앱니다. 재봉 상자는 등반 중(I)과 챙기기 판, 모이라의 고르기 판에서만 열립니다.
+- **구현:**
+  - `Profile` version 3: `extraCols/extraRows`(확장으로 붙인 줄), `rowLines/colLines`(강화한 줄 번호), `expansion` = 확장 횟수(등급 한도 = 기본 + 횟수 × `costLimitStep`). 옛 `rows/cols` n → 위(왼쪽)부터 2n 줄, 옛 `expansion` e → 오른쪽과 아래에 e 줄씩, 횟수 2e. 새 프로필은 조각 없이 시작합니다(`gear.startingKinds`는 이제 안 씀).
+  - `Sim/Moira.cs`: 단계, 가격, 최대(가로/세로 줄은 판 줄 수가 한도), `CanPick`, `Apply`, `Expand`(위/왼쪽이면 놓인 조각과 줄 번호가 한 칸 밀림).
+  - `Sim/HubShop.cs`: `Offers`, `Pack`(진열 조각을 판에 놓으면 삼, 결과 `PackResult`), `Unpack`(빼면 파편 돌려줌), `ConsumePacked`(`StartRun`에서 등반 가방을 만든 뒤 영구 프로필의 조각과 배치를 비움).
+  - 판: `GameController.RenderInventory`가 `BoardMode`(pick = 고르는 강화, offers = 진열 가짜 조각 id `OfferId + 종류`)를 넘깁니다. 진열 줄은 끌거나 눌러 판에 놓으면 삽니다. `UI/GameUI.Board.cs`가 제목과 안내, 강화한 줄 금빛 띠, 올린 줄 반투명 띠(이미 강화한 줄이면 붉게), 확장 가장자리 띠(`Slots.uxml` `pick-band`, `pick-strip`)를 그립니다. 확인하면 판에 남아 바뀐 줄을 보여 주고, Esc나 돌아가기로 모이라 창에 돌아갑니다.
+  - 모이라 창 = 예전 실궤 창(`UiScreen.Attic`): 왼쪽 그림(`attic-portrait`), 말을 걸 때마다 `hub.moiraLines`에서 한 줄, 카드 4장. 확인 창(`dialog-upgrade`)의 머리 문구는 모이라와 단추가 따로 씁니다.
+  - 단추 창(`dialog-hubshop`) = 카드 2장(챙기기, 들고 갈 수 늘리기).
+  - `HubStation.Chest` → `Moira`(같은 번호). `SewingBox` 값은 직렬화 번호 때문에 남겼고 시설 데이터에서는 뺐습니다.
+- **그림:** `tools/codex_prompts/moira.txt`(참고 `merchant_idle.png`) → `art_src/raw/moira.png` → `python tools/bake_attic_art.py` → `Assets/sprites/hub_attic_moira.png` → `TOD/Setup/1. Texture Imports`.
+- **MCP 데이터(임시값, 씬 저장):**
+  - 강화: 확장 6+4(최대 4, 한 번에 줄 하나, 등급 한도 +1, `gear.costLimitStep` 2 → 1), 가로/세로 줄 4+3(최대 = 판 줄 수), 욕망 최대치 그대로, starter 이름 '들고 갈 수 늘리기'.
+  - 시설: 재봉실의 재봉 상자를 뺐고, 다락 Moira 시설은 이름 '예견가 모이라', 문구 '모이라에게 말 걸기', 높이 210, 막는 타원 (95, 30).
+  - `hub.shopStock` 4. 단추 메뉴, 챙기기 판, 모이라 문구(`hub.pack*`, `slot*`, `moira*`, `pick*`, `confirm*`, `sideNames`, `lineTaken`)를 넣었고, `gear.starterFull` 문구도 바꿨습니다.
+- **확인:**
+  - EditMode 45개 통과. 새 테스트는 `MoiraUpgradesChosenLineAndSide`, `PackedPiecesLastOneRun`, `PackingSpendsShardsAndRefunds`, `OldSaveDropsPiecesAndKeepsUpgrades`입니다.
+  - 플레이 캡처(`Temp/Shots/`):
+    - `moira19_room`: 다락 방의 모이라
+    - `moira19_talk`: 모이라 창
+    - `moira19_pick_rows`, `moira19_row_done-1`: 줄 위 반투명 띠, 강화한 줄 금빛
+    - `moira19_pick_expand`, `moira19_expand_top-1`: 위에 붙이자 판이 7×6이 되고 강화한 줄이 3 → 4번째로 밀림
+    - `moira19_merchant_menu`: 단추 메뉴
+    - `moira19_packing`, `moira19_packing_prices-3`: 챙기기와 가격 꼬리표
+    - `moira19_packing_prices`: 재봉실에 재봉 상자가 없음
+  - 빼면 파편이 돌아오고, 등반을 시작하면 챙긴 조각이 등반 가방에만 남는 것도 확인했습니다. 실제 프로필은 `Temp/profile_backup_19.json`(v2)에서 되돌렸으므로, 다음 실행 때 v3로 옮겨지며 조각 5개가 사라집니다.
+- **남은 것:**
+  - 사람이 마우스로 직접 고르는 느낌은 확인하지 않았습니다. 확장 띠는 Linear 색공간이라 생각보다 밝게 보여 알파를 0.07로 낮췄지만, 낮춘 값은 캡처로 확인하지 못했습니다.
+  - 단추 메뉴에서 챙기기 판을 열면 대화 상자가 닫히며 단추의 작별 대사가 나옵니다.
+  - 모이라 그림이 주인공보다 꽤 큽니다(높이 210).
+  - 문구와 가격은 임시입니다.
+
 ## 18차 요청 (2026-11-24) — 일기가 뒤로 갈수록 피에 젖고 욕망에 사로잡힌 말투 — 완료
 
 - **문구 (`GameDatabase.diary.entries`, MCP):**

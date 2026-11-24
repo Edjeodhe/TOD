@@ -50,7 +50,6 @@ namespace TOD
             hint = root.Q("hint"); hintText = root.Q<Label>("hint-text");
 
             Bind("start", game.StartRun);
-            Bind("open-inventory", () => game.ShowScreen(UiScreen.Inventory));
             Bind("open-attic", () => game.ShowScreen(UiScreen.Attic));
             Bind("sound", game.ToggleSound);
             Bind("pause", game.TogglePause);
@@ -68,7 +67,6 @@ namespace TOD
             Bind("confirm-upgrade", game.ConfirmUpgrade);
             Bind("cancel-upgrade", CloseDialog);
             Bind("restart", game.StartRun);
-            Bind("summary-inventory", () => game.ShowScreen(UiScreen.Inventory));
             Bind("summary-attic", game.GoToAttic);   // 17차: 다락은 걸어 들어가는 방
             Bind("summary-lobby", () => game.ShowScreen(UiScreen.Lobby));
             Bind("inventory-back", game.BackFromRoom);
@@ -81,6 +79,7 @@ namespace TOD
             inventory.RegisterCallback<PointerMoveEvent>(OnPressMove, TrickleDown.TrickleDown);
             inventory.RegisterCallback<PointerUpEvent>(OnPressUp, TrickleDown.TrickleDown);
             InitOutgame();
+            InitBoard();   // 19차 챙기기 판, 모이라의 줄 고르기: GameUI.Board.cs
             InitHub();   // 15차 재봉실 허브: GameUI.Hub.cs
         }
 
@@ -490,9 +489,18 @@ namespace TOD
             return card;
         }
 
-        public void ShowUpgradeConfirm(UpgradeDef upgrade, int cost)
+        // 19차: 모이라(의식)와 단추(들고 갈 수 늘리기)가 같은 확인 창을 쓴다. 비어 있는 문구는 UXML 처음 문구 그대로.
+        string upgradeEyebrow0, upgradeTitle0, upgradeButton0;
+
+        public void ShowUpgradeConfirm(string eyebrow, string title, string body, string confirm)
         {
-            Text(root, "upgrade-text", string.Format(T.upgradeBody, cost, upgrade.name));
+            Label e = root.Q<Label>("upgrade-eyebrow"), t = root.Q<Label>("upgrade-title");
+            Button b = root.Q<Button>("confirm-upgrade");
+            upgradeEyebrow0 ??= e.text; upgradeTitle0 ??= t.text; upgradeButton0 ??= b.text;
+            e.text = string.IsNullOrEmpty(eyebrow) ? upgradeEyebrow0 : eyebrow;
+            t.text = string.IsNullOrEmpty(title) ? upgradeTitle0 : title;
+            b.text = string.IsNullOrEmpty(confirm) ? upgradeButton0 : confirm;
+            Text(root, "upgrade-text", body);
             ShowDialog("upgrade");
         }
 
@@ -510,20 +518,26 @@ namespace TOD
             vfx.style.backgroundImage = image != null ? new StyleBackground(image) : StyleKeyword.None;
         }
 
-        // 17차 모이라의 실궤: 강화 5종 카드 + 종이 오른쪽 위 파편 수. '시작 조각 선택' 카드에는 지금 들고 갈 수를 덧붙인다.
-        public void RenderAttic(Profile profile, Func<UpgradeDef, int> cost, Func<UpgradeDef, bool> maxed, Func<UpgradeDef, int> level, Action<string> pick, int starterSlots)
+        // 19차 모이라: 왼쪽 그림, 오늘의 한 줄, 강화 4종 카드(확장, 가로 줄, 세로 줄, 욕망 최대치) + 종이 오른쪽 위 파편 수.
+        public void RenderAttic(Profile profile, Func<UpgradeDef, int> cost, Func<UpgradeDef, bool> maxed, Func<UpgradeDef, int> level, Action<string> pick, string line)
         {
+            HubConfig h = db.hub;
             Text(attic, "attic-shards", profile.shards.ToString());
+            if (!string.IsNullOrEmpty(h.moiraEyebrow)) Text(attic, "attic-eyebrow", h.moiraEyebrow);
+            if (!string.IsNullOrEmpty(h.moiraTitle)) Text(attic, "attic-title", h.moiraTitle);
+            VisualElement portrait = attic.Q("attic-portrait");
+            if (portrait != null) { Icon(portrait, h.moiraPortrait); Show(portrait, h.moiraPortrait != null); }
             VisualElement container = attic.Q("upgrades");
             container.Clear();
-            foreach (UpgradeDef u in db.upgrades)
+            bool any = false;
+            foreach (UpgradeDef u in Moira.Upgrades(db))
             {
                 bool max = maxed(u);
+                any |= !max;
                 string foot = max ? T.upgradeMax : string.Format(T.upgradeCost, cost(u), level(u));
-                string text = u.text;
-                if (u.key == Unlocks.StarterKey && !string.IsNullOrEmpty(T.starterSlotsLine)) text += "\n" + string.Format(T.starterSlotsLine, starterSlots);
-                Card(container, u.icon, null, u.name, text, foot, () => pick(u.key), !max && profile.shards >= cost(u));
+                Card(container, u.icon, null, u.name, u.text, foot, () => pick(u.key), !max && profile.shards >= cost(u));
             }
+            if (!string.IsNullOrEmpty(any ? line : h.moiraEmpty)) Text(attic, "attic-text", any ? line : h.moiraEmpty);
         }
 
         // ---------------------------------------------------------------- 재봉 상자
@@ -602,18 +616,15 @@ namespace TOD
             return $"★ {text.name} — " + string.Format(text.text, Amount(def.effectValue), Amount(def.effectParam));
         }
 
-        public void RenderInventory(Profile profile, int? selected, int turns)
+        public void RenderInventory(Profile profile, int? selected, int turns, BoardMode mode = null)
         {
+            mode ??= new BoardMode();
+            boardMode = mode;
             var (width, height, limit) = Gear.Dimensions(db, profile);
             List<PlacedPiece> placed = Gear.Placed(db, profile);
             Text(inventory, "inventory-header", string.Format(T.inventoryHeader, width, height, placed.Sum(p => Unlocks.Cost(db, profile, p)), limit));
-            if (game.Run == null)   // 17차: 아웃게임 판 = 등반에 들고 갈 시작 조각
-            {
-                Label note = inventory.Q<Label>("inventory-run-note");
-                note.text = string.Format(T.inventoryOutgame ?? "", placed.Count, Unlocks.StarterSlots(db, profile));
-                Show(note, !string.IsNullOrEmpty(note.text));
-            }
-            OwnedItem holding = profile.items.FirstOrDefault(i => i.id == selected);
+            if (game.Run == null) SetOutgameBoardTexts(profile, placed.Count, mode);   // 19차: 챙기기 판, 줄 고르기 판 (GameUI.Board.cs)
+            OwnedItem holding = game.ItemFor(selected);
             holdingPiece = holding != null;
             dragTurns = turns;
             HideTip();
@@ -622,7 +633,7 @@ namespace TOD
             VisualElement board = inventory.Q("board");
             board.Clear();
             cells.Clear();
-            pitch = Mathf.Floor(560f / width);
+            pitch = Mathf.Floor(Mathf.Min(560f / width, 640f / height));   // 19차: 가로 줄을 붙여 판이 길어져도 화면 안에
             boardWidth = width;
             boardHeight = height;
             boardIds.Clear();
@@ -639,7 +650,7 @@ namespace TOD
                     cell.style.height = pitch - 4;
                     PlacedPiece occupying = placed.FirstOrDefault(p => p.cells.Contains(at));
                     cell.EnableInClassList("filled", occupying != null);
-                    cell.EnableInClassList("reinforced", y < profile.rows * 2);
+                    cell.EnableInClassList("reinforced", Gear.Reinforced(profile, at) > 0);   // 19차: 고른 가로 줄, 세로 줄
                     cell.text = "";
                     cell.clicked += () => game.ClickCell(at.x, at.y);
                     cell.RegisterCallback<PointerEnterEvent>(e =>
@@ -706,16 +717,21 @@ namespace TOD
             if (boardArt.All(a => a.id != sewId)) sewId = -1;
             ApplySew();
             inventory.Q("board-ghost").Clear();
+            DrawPickLayer(profile, width, height);   // 19차 줄 고르기: 강화한 줄 표시, 확장 가장자리 띠
 
             // 목록: 아이콘 · 퍼즐 모양 슬롯 · 이름(오른쪽 끝). 아이템은 모두 고유해서 개수는 없다. 장착한 것 먼저, 등급 높은 순.
             var stash = inventory.Q<ScrollView>("stash");
             stash.Clear();
             float rowHeight = Mathf.Round(pitch * 1.3f);
             stash.style.maxHeight = Mathf.Max(pitch * height, (rowHeight + 4) * 4);   // 최소 4줄은 보이게
-            foreach (OwnedItem item in profile.items.OrderBy(i => placed.Any(p => p.Id == i.id) ? 0 : 1).ThenByDescending(i => Gear.Def(db, i).cost))
+            stash.style.display = mode.pick != null ? DisplayStyle.None : DisplayStyle.Flex;   // 줄 고르기 중에는 목록 없음
+            var rows = profile.items.OrderBy(i => placed.Any(p => p.Id == i.id) ? 0 : 1).ThenByDescending(i => Gear.Def(db, i).cost).ToList();
+            if (mode.pick == null && mode.offers != null) rows.AddRange(mode.offers.OrderByDescending(i => Gear.Def(db, i).cost));   // 19차: 단추 진열 (놓으면 삼)
+            foreach (OwnedItem item in rows)
             {
                 PieceDef def = Gear.Def(db, item);
                 PlacedPiece placement = placed.FirstOrDefault(p => p.Id == item.id);
+                bool offer = mode.offers != null && mode.offers.Contains(item);
                 var button = (Button)Slot(pieceButton, "piece");
                 button.AddToClassList($"rank-{def.cost}");
                 button.EnableInClassList("selected", item.id == selected);
@@ -731,7 +747,9 @@ namespace TOD
                 button.Q<Label>("name").style.color = NameColor(RankColor(def));
                 Text(button, "set", db.Set(def.set).name);   // 이름 위 세트 이름 (세트 색)
                 button.Q<Label>("set").style.color = Color.Lerp(setColor, Color.white, .3f);
-                Text(button, "state", placement != null ? T.equipped : "");
+                Text(button, "state", offer ? string.Format(db.hub.priceFormat, mode.price?.Invoke(item.kind) ?? 0) : placement != null ? T.equipped : "");
+                button.EnableInClassList("offer", offer);
+                button.EnableInClassList("short", offer && profile.shards < (mode.price?.Invoke(item.kind) ?? 0));
                 // 등급 꼬리표: 등급 색 바탕 + 같은 색의 어두운 글씨
                 Label rankTag = button.Q<Label>("rank");
                 rankTag.text = db.gear.rankNames[def.cost];
@@ -754,6 +772,8 @@ namespace TOD
             }
             inventory.Q<Button>("rotate").SetEnabled(holding != null);
             inventory.Q<Button>("unequip").SetEnabled(placed.Any(p => p.Id == selected));
+            Show(inventory.Q<Button>("rotate"), mode.pick == null);
+            Show(inventory.Q<Button>("unequip"), mode.pick == null);
         }
 
         // 세피리아식 세트 목록: 색 매듭 · 이름 · 연결 수 / 다음 단계 · 단계별 효과(켜진 단계는 밝게). 켜진 세트가 위로.
@@ -1157,7 +1177,7 @@ namespace TOD
 
         void OnPressDown(PointerDownEvent e)
         {
-            if (e.button != 0 || dragging) return;
+            if (e.button != 0 || dragging || boardMode?.pick != null) return;   // 19차: 줄 고르기 중에는 끌기 없음
             pointerPos = pressPos = e.position;
             pressPointer = e.pointerId;
             pressTime = Now;
@@ -1217,7 +1237,7 @@ namespace TOD
             dragBuiltId = dragId;
             dragBuiltTurns = dragTurns;
             dragBuiltPitch = pitch;
-            OwnedItem item = game.Profile.items.FirstOrDefault(i => i.id == dragId);
+            OwnedItem item = game.ItemFor(dragId);   // 19차: 단추 진열 조각도
             if (item == null) return;
             BuildPiece(holder, Gear.Def(db, item), Gear.Shape(db, item, dragTurns).ToList(), -1, Vector2Int.zero);
         }
