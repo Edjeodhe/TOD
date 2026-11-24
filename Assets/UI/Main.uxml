@@ -181,7 +181,19 @@
                         <ui:VisualElement name="board-pick" class="board-layer board-pick" picking-mode="Ignore" />
                         <ui:VisualElement name="needle" class="sew-needle hidden" picking-mode="Ignore" />
                     </ui:VisualElement>
-                    <ui:ScrollView name="stash" class="stash" mode="Vertical" horizontal-scroller-visibility="Hidden" />
+                    <!-- 21차 목록 + 오른쪽 위 정렬 버튼 (누르면 기준 목록이 펼쳐짐, GameUI.Board.cs InitSort) -->
+                    <ui:VisualElement name="stash-col" class="stash-col">
+                        <ui:VisualElement name="stash-head" class="stash-head">
+                            <ui:Button name="stash-sort" text="등급순  ▼" class="stash-sort" />
+                        </ui:VisualElement>
+                        <ui:ScrollView name="stash" class="stash" mode="Vertical" horizontal-scroller-visibility="Hidden" />
+                        <!-- 목록보다 뒤에 둬야 목록 위에 그려진다 -->
+                        <ui:VisualElement name="stash-sort-menu" class="stash-sort-menu">
+                            <ui:Button name="sort-grade" text="등급순" class="sort-option" />
+                            <ui:Button name="sort-set" text="속성순" class="sort-option" />
+                            <ui:Button name="sort-acquired" text="획득순" class="sort-option" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="actions">
                     <ui:Button name="rotate" text="회전 (R)" />

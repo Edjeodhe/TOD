@@ -97,7 +97,8 @@
   - `python tools/bake_number_font.py [a|b]` → `Assets/Art/Generated/number_font.png`(흰 글자, 피해 색을 곱함), `number_font_crit.png`(흰빛→노랑→주황), `art_src/fonts/number_font.json`, 검토 `art_src/fonts/number_font_preview_a|b.png`. 외곽은 짙은 심(4px, 흐림 2) + 옅은 번짐(10px, 흐림 5.5, α .55)의 흐린 검정입니다.
   - `TOD/Setup/1`이 `number_font*.png`를 이 JSON으로 자릅니다. `visual.damageFont`/`critFont` 글자 = `number_font_<코드>` / `number_font_crit_<코드>`, 높이 30 → 37, 간격 -.08 → -.2(칸 여백이 커져서. 보이는 숫자 크기는 그대로).
   - 실 당기기 피해 숫자는 이제 메인 속성 글꼴을 쓰지 않습니다(`Combat` 당기기 숫자 `useElement` 제거). 속성 피해, 흡혈 숫자는 그대로 `damage_font_<속성>`.
-- **확인:** EditMode 49개 통과. 캡처 `Temp/Shots/board21_badges.png`(+1/+2), `growth21b_frames.png`와 `growth21b_game_crop.png`(파란 아크 + "공격력 14 → 17"), `growth21_c.png`(전투 숫자). 프로필은 `Temp/profile_backup_21.json`, `_21b.json`에서 되돌림.
+- **재봉 상자 목록 정렬 (사용자 선택: 등급순, 속성순, 획득순 / 펼쳐지는 목록 / 장착 조각은 항상 맨 위 / 저장):** 목록 오른쪽 위 찢은 양피지 버튼(`stash-sort`, 글자 = 지금 기준 + ▼)을 누르면 아래로 기준 목록(`stash-sort-menu`, 지금 기준은 금빛)이 펼쳐집니다. 메뉴는 목록 위에 그려지도록 Main.uxml에서 ScrollView 뒤에 둡니다. 순서는 `Gear.SortStash`(놓인 조각 먼저 → 등급순: 높은 등급, 세트, 획득 / 속성순: 세트 목록 순서, 높은 등급, 획득 / 획득순: items 순서). 고른 기준은 `Profile.stashSort`(기본 등급순 = 예전 순서)로 저장하고(아웃게임은 바로, 등반 중이면 귀환 때), 등반 중 재봉 상자에서도 같은 기준입니다. 줄 고르기 중에는 버튼을 숨깁니다. 기준 이름은 UXML 버튼 글자(`sort-grade/set/acquired`). 테스트 `StashSortKeepsPlacedFirst`.
+- **확인:** EditMode 50개 통과. 캡처 `Temp/Shots/board21_badges.png`(+1/+2), `growth21b_frames.png`와 `growth21b_game_crop.png`(파란 아크 + "공격력 14 → 17"), `growth21_c.png`(전투 숫자). 프로필은 `Temp/profile_backup_21.json`, `_21b.json`에서 되돌림.
 - **남은 것:** 실제 속도로 사람이 본 연출(감기 속도, 글자 높이). 피해 숫자 b판으로 바꾸려면 `bake_number_font.py b` 후 `TOD/Setup/1`. 펠트 숫자에 곱하는 `fx.damageColor`가 옅은 민트라 색을 다시 고를 수 있습니다. 화살표(→)는 주아에 없어 갈무리 대체 글꼴로 나옵니다.
 
 ## 20차 (2026-11-24) — 운명 읽기 연출, 칸 강화·확장 연출, 종이 강화 판, 재봉실 그림 다시 뽑기, 층 암시 1라운드만, 카드 띠 글자 — 완료(커밋 전)

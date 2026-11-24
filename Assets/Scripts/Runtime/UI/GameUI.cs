@@ -72,6 +72,7 @@ namespace TOD
             Bind("inventory-back", game.BackFromRoom);
             Bind("attic-back", game.BackFromRoom);
             Bind("rotate", game.Rotate);
+            InitSort();   // 21차 목록 정렬 (GameUI.Board.cs)
             Bind("unequip", game.Unequip);
             root.Q("board").RegisterCallback<PointerLeaveEvent>(_ => { if (!dragging) game.HoverCell(null); });
             // 꾹 눌러 끌기: 판 위 조각·목록 줄을 누른 채 기다리거나 끌면 집어 들고, 놓은 칸에 다시 장착한다.
@@ -720,7 +721,9 @@ namespace TOD
             float rowHeight = Mathf.Round(pitch * 1.3f);
             stash.style.maxHeight = Mathf.Max(pitch * height, (rowHeight + 4) * 4);   // 최소 4줄은 보이게
             stash.style.display = mode.pick != null ? DisplayStyle.None : DisplayStyle.Flex;   // 줄 고르기 중에는 목록 없음
-            var rows = profile.items.OrderBy(i => placed.Any(p => p.Id == i.id) ? 0 : 1).ThenByDescending(i => Gear.Def(db, i).cost).ToList();
+            StashSort sort = game.Profile?.stashSort ?? StashSort.Grade;   // 21차: 오른쪽 위 정렬 버튼 (등반 중에도 실제 프로필의 선택)
+            var rows = Gear.SortStash(db, profile.items, i => placed.Any(p => p.Id == i.id), sort);
+            DrawSortButton(sort, mode.pick == null);
             if (mode.pick == null && mode.offers != null) rows.AddRange(mode.offers.OrderByDescending(i => Gear.Def(db, i).cost));   // 19차: 단추 진열 (놓으면 삼)
             foreach (OwnedItem item in rows)
             {

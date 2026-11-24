@@ -1,4 +1,5 @@
 // 15차-outgame-unlock 검증 (EditMode): 세트 해금 표, 잠긴 세트 제외, 해금 알림 기록. 17차: 시작 조각, 등반 가방, 일기 보상, 가격. 19차: 모이라 줄 고르기, 챙긴 조각 한 번, 옛 저장. 값은 Main 씬 GameDatabase.
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
@@ -43,6 +44,28 @@ namespace TOD.Tests
         static Profile EmptyProfile(int best = 0) => new Profile { nextId = 1, best = best };
 
         int Kind(string set, int skip = 0) => Enumerable.Range(0, db.gear.pieces.Length).Where(k => db.gear.pieces[k].set == set).Skip(skip).First();
+
+        // 21차 재봉 상자 목록 정렬: 놓인 조각 먼저, 그 안에서 등급순/속성순/획득순
+        [Test]
+        public void StashSortKeepsPlacedFirst()
+        {
+            var items = Enumerable.Range(0, db.gear.pieces.Length).Select(k => new OwnedItem { id = 100 + k, kind = k }).Reverse().ToList();
+            int placedKind = items[items.Count / 2].kind;
+            bool Placed(OwnedItem i) => i.kind == placedKind;
+            int SetIndex(OwnedItem i) => System.Array.FindIndex(db.gear.sets, s => s.id == Gear.Def(db, i).set);
+
+            List<OwnedItem> grade = Gear.SortStash(db, items, Placed, StashSort.Grade);
+            Assert.AreEqual(placedKind, grade[0].kind, "놓인 조각이 맨 위");
+            for (int i = 2; i < grade.Count; i++) Assert.GreaterOrEqual(Gear.Def(db, grade[i - 1]).cost, Gear.Def(db, grade[i]).cost, "등급순: 높은 등급 먼저");
+
+            List<OwnedItem> set = Gear.SortStash(db, items, Placed, StashSort.Set);
+            Assert.AreEqual(placedKind, set[0].kind);
+            for (int i = 2; i < set.Count; i++) Assert.LessOrEqual(SetIndex(set[i - 1]), SetIndex(set[i]), "속성순: 세트 목록 순서");
+
+            List<OwnedItem> got = Gear.SortStash(db, items, Placed, StashSort.Acquired);
+            Assert.AreEqual(placedKind, got[0].kind);
+            CollectionAssert.AreEqual(items.Where(i => !Placed(i)).ToList(), got.Skip(1).ToList(), "획득순: 얻은 순서 그대로");
+        }
 
         [Test]
         public void UnlockTableFollowsBestFloor()

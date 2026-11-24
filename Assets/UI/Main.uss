@@ -337,6 +337,23 @@ Button:disabled { opacity: 0.5; }
 .sew-needle { position: absolute; width: 84px; height: 21px; translate: -84px -10px; transform-origin: 100% 50%; background-image: url("project://database/Assets/UI/Puzzle/needle.png"); -unity-background-scale-mode: stretch-to-fill; }
 /* 목록: 왼쪽 아이콘 · 퍼즐 모양 · 오른쪽 끝 이름. 한 줄 높이 = 판 한 칸 (코드가 맞춤) */
 .stash { flex-grow: 0; flex-shrink: 0; width: 440px; }
+/* 21차 목록 정렬: 오른쪽 위 찢어진 양피지 버튼 + 아래로 펼쳐지는 기준 목록 (목록 위에 겹침) */
+.stash-col { position: relative; flex-direction: column; flex-shrink: 0; }
+.stash-head { flex-direction: row; justify-content: flex-end; height: 46px; margin-bottom: 8px; }
+.stash-sort, .sort-option {
+    margin: 0; padding: 4px 22px 6px 22px; min-width: 0; border-width: 0; border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/UI/Paper/button.png");
+    -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 44; -unity-slice-bottom: 44; -unity-slice-scale: 0.3px;
+    -unity-background-image-tint-color: rgb(122, 102, 82);
+    color: #1f1517; font-size: 17px; -unity-text-align: middle-center; letter-spacing: 2px;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.stash-sort { width: 160px; height: 46px; color: #1a1013; }
+.stash-sort:hover, .sort-option:hover { -unity-background-image-tint-color: rgb(236, 220, 190); background-color: rgba(0, 0, 0, 0); }
+.stash-sort-menu { position: absolute; top: 52px; right: 0; width: 160px; flex-direction: column; }
+.sort-option { height: 42px; margin-top: 6px; }
+.sort-option.current { -unity-background-image-tint-color: rgb(214, 168, 78); }
 .piece-row {
     flex-direction: row; align-items: center; min-height: 0; padding: 4px 26px 4px 14px; margin-bottom: 4px;
     -unity-slice-scale: 0.5px; -unity-background-image-tint-color: #d9c7a8; color: #2e2120;

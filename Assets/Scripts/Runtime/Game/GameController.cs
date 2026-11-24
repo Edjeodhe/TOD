@@ -366,6 +366,14 @@ namespace TOD
             RenderInventory();
         }
 
+        // 21차: 재봉 상자 목록 정렬. 고른 기준은 프로필에 남긴다 (등반 중이면 귀환할 때 함께 저장)
+        public void SetStashSort(StashSort sort)
+        {
+            Profile.stashSort = sort;
+            if (Run == null) Gear.Save(db, Profile);
+            RenderInventory();
+        }
+
         public void Rotate()
         {
             if (selected == null) return;

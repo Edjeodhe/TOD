@@ -12,6 +12,7 @@ namespace TOD
 {
     [Serializable] public class OwnedItem { public int id, kind; }
     [Serializable] public class Placement { public int id, x, y, turns; }
+    public enum StashSort { Grade, Set, Acquired }   // 21차 재봉 상자 목록 정렬: 등급순(기본), 속성순, 획득순
 
     [Serializable]
     public class Profile
@@ -26,6 +27,7 @@ namespace TOD
         public int rows, cols;                    // (19차부터 안 씀) 옛 저장의 가로/세로 줄 강화 단계. 불러올 때 rowLines/colLines 로 옮긴다
         public List<OwnedItem> items = new();
         public List<Placement> placements = new();
+        public StashSort stashSort;               // 21차: 재봉 상자 목록 정렬 기준 (마지막으로 고른 것)
         public int nextId;
         // 15차-outgame-unlock: 알림을 본 해금 세트 id, 다락 '시작 조각' 강화 단계와 고른 조각 종류
         public List<string> seenUnlocks = new();
@@ -71,6 +73,21 @@ namespace TOD
 
     public static class Gear
     {
+        // 21차 재봉 상자 목록 순서: 판에 놓인 조각이 항상 먼저, 그 안에서 고른 기준.
+        // 등급순 = 높은 등급 → 세트 → 획득, 속성순 = 세트 목록 순서(화염, 얼음, 번개, 빛, 어둠, 피, 바람, 독) → 높은 등급 → 획득, 획득순 = 얻은 순서(items 순서)
+        public static List<OwnedItem> SortStash(GameDatabase db, IList<OwnedItem> items, Func<OwnedItem, bool> placed, StashSort sort)
+        {
+            int SetIndex(OwnedItem i) { int k = Array.FindIndex(db.gear.sets, s => s.id == Def(db, i).set); return k < 0 ? int.MaxValue : k; }
+            int Got(OwnedItem i) => items.IndexOf(i);
+            var first = items.OrderBy(i => placed(i) ? 0 : 1);
+            return (sort switch
+            {
+                StashSort.Set => first.ThenBy(SetIndex).ThenByDescending(i => Def(db, i).cost).ThenBy(Got),
+                StashSort.Acquired => first.ThenBy(Got),
+                _ => first.ThenByDescending(i => Def(db, i).cost).ThenBy(SetIndex).ThenBy(Got),
+            }).ToList();
+        }
+
         public static Profile Load(GameDatabase db)
         {
             try

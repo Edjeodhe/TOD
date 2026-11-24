@@ -125,6 +125,36 @@ namespace TOD
             layer.Add(strip);
         }
 
+        // ---------------------------------------------------------------- 21차 재봉 상자 목록 정렬
+        // 목록 오른쪽 위 버튼(stash-sort)을 누르면 아래로 기준 목록(stash-sort-menu)이 펼쳐진다. 버튼 글자 = 지금 기준 + ▼.
+        // 기준 이름은 Main.uxml 의 sort-grade / sort-set / sort-acquired 버튼 글자.
+        static readonly (string name, StashSort sort)[] SortOptions = { ("sort-grade", StashSort.Grade), ("sort-set", StashSort.Set), ("sort-acquired", StashSort.Acquired) };
+
+        void InitSort()
+        {
+            Button toggle = inventory.Q<Button>("stash-sort");
+            VisualElement menu = inventory.Q("stash-sort-menu");
+            toggle.clicked += () => Show(menu, menu.ClassListContains("hidden"));
+            foreach (var (name, sort) in SortOptions)
+            {
+                StashSort s = sort;
+                inventory.Q<Button>(name).clicked += () => { Show(menu, false); game.SetStashSort(s); };
+            }
+            Show(menu, false);
+        }
+
+        void DrawSortButton(StashSort sort, bool visible)
+        {
+            Show(inventory.Q("stash-head"), visible);
+            if (!visible) Show(inventory.Q("stash-sort-menu"), false);
+            foreach (var (name, s) in SortOptions)
+            {
+                Button option = inventory.Q<Button>(name);
+                option.EnableInClassList("current", s == sort);
+                if (s == sort) inventory.Q<Button>("stash-sort").text = $"{option.text}   ▼";
+            }
+        }
+
         // 21차: 강화한 칸 오른쪽 아래에 "+N" (N = 그 칸을 지나는 강화한 가로 줄 + 세로 줄). 등반 중 재봉 상자에서도 보인다.
         readonly Dictionary<Vector2Int, Label> badges = new();
 
