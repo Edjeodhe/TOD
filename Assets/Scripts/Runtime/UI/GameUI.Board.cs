@@ -46,7 +46,7 @@ namespace TOD
             {
                 title = h.packTitle ?? title;
                 help = h.packHelp ?? help;
-                noteText = string.Format(h.packNote ?? T.inventoryOutgame ?? "", packedCount, Unlocks.StarterSlots(db, profile), profile.shards);
+                noteText = string.Format(h.packNote ?? T.inventoryOutgame ?? "", HubShop.PackedCells(db, profile), Unlocks.StarterCells(db, profile), profile.shards);   // 20차: 칸 수
             }
             Text(inventory, "inventory-title", title ?? "");
             Text(inventory, "inventory-help", help ?? "");

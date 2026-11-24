@@ -139,7 +139,20 @@ namespace TOD
         public string packNote;               // 판 위 안내 ({0} 챙긴 수, {1} 들고 갈 수, {2} 파편)
         public string packed, unpacked;       // "{0}을 챙겼습니다", "{0}을 돌려주고 파편 {1}개를 받았습니다"
         public string unpackLabel;            // 판에서 빼기 버튼 (챙기기 판)
-        public string slotEyebrow, slotTitle, slotConfirm;   // '들고 갈 수 늘리기' 확인 창
+        public string slotEyebrow, slotTitle, slotConfirm;   // '퍼즐 칸 추가'(옛 들고 갈 수 늘리기) 확인 창
+
+        [Header("20차 시작 조각 챙기기: 무작위 진열에서 카드로 고르기 (칸 수 한도)")]
+        public int packPicks;                 // 한 진열에서 고를 수 있는 조각 수
+        public float shopRefreshHours;        // 진열이 새로 바뀌는 간격 (실제 시각, 시간)
+        public string packCardsEyebrow, packCardsTitle;
+        public string packStatus;             // 카드 창 위 줄 ({0} 고른 수, {1} 고를 수, {2} 쓴 칸, {3} 챙길 칸, {4} 새 진열까지 남은 시간)
+        public string packTimeFormat;         // 남은 시간 ({0} 시간, {1} 분)
+        public string packTaken;              // 고른 카드 아래 꼬리표
+        public string packPrice;              // 고르지 않은 카드 아래 꼬리표 ({0} 파편, {1} 칸 수)
+        public string packTooBig;             // 칸이 모자랄 때 ({0} 쓴 칸 + 이 조각, {1} 챙길 칸)
+        public string packLimit;              // 이번 진열에서 더 못 고를 때 ({0} 고를 수)
+        public string packReturned;           // 되돌렸을 때 ({0} 이름, {1} 돌려받은 파편)
+        public string packBoardButton;        // 카드 창의 '재봉 상자에 놓기 (I)' 버튼
 
         [Header("19차 모이라 (다락)")]
         public Sprite moiraPortrait;          // 모이라 창 왼쪽 그림

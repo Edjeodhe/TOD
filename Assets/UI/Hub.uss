@@ -46,7 +46,7 @@
 
 /* ---------- 상인 단추 조각 상점 ---------- */
 #dialog-hubshop { width: 1200px; }
-.hubshop-shards { position: absolute; right: 60px; top: 46px; margin-right: 0; color: #2f6f63; }
+.hubshop-shards { position: absolute; right: 60px; top: 46px; margin-right: 0; }
 .hub-wares { min-height: 120px; }
 .hub-price {
     position: absolute; left: 0; right: 0; bottom: -18px;
@@ -65,3 +65,20 @@
 
 /* 17차: 상인 단추 진열의 '아버지의 도안' 표시 */
 .hub-pattern-tag { position: absolute; top: 8px; left: 10px; padding: 2px 10px; font-size: 15px; color: #f3e2c8; background-color: rgba(58, 44, 82, 0.9); border-radius: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+
+/* ---------- 20차 단추 메뉴 카드: 설명 줄은 빼고 아랫줄(노란 글씨)만 크게 ---------- */
+.hub-wares .text { display: none; }
+.hub-wares .foot { font-size: 23px; color: #ffd76a; -unity-text-outline-width: 1.2px; -unity-text-outline-color: #1a1013; margin-top: 10px; }
+.hub-wares .name { margin-bottom: 4px; }
+
+/* ---------- 20차 시작 조각 챙기기: 카드 고르기 창 ---------- */
+#dialog-hubpack { width: 1720px; }
+.hubpack-status { font-size: 22px; color: #3a2a26; }
+.hubpack-cards { margin-top: 26px; margin-bottom: 30px; }
+.hubpack-cards > .puzzle { width: 280px; margin: 0 12px 26px 12px; }
+.hubpack-cards > .puzzle > .hub-price { bottom: -22px; font-size: 21px; }
+/* 고른 카드: 금빛 꼬리표, 살짝 들림 */
+.hubpack-cards > .puzzle.hub-taken { translate: 0 -10px; }
+.hubpack-cards > .puzzle.hub-taken > .hub-price { -unity-background-image-tint-color: #b48a2c; color: #fff6dc; }
+/* 고를 수 없는 카드: 흐리게 (눌러서 이유를 들을 수 있음) */
+.hubpack-cards > .puzzle.hub-blocked { opacity: 0.55; }

@@ -112,6 +112,38 @@
 - **주의:** 새 C# 파일 `GameUI.Fate.cs`를 Unity가 컴파일 목록에 넣지 않아(메타는 생김) `AssetDatabase.MoveAsset`으로 이름을 바꿔(`GameUI.FateShow.cs`) 잡았습니다. 새 파일이 안 잡히면 같은 방법을 쓰세요. 플레이 확인 때 Unity가 뒤에 있으면 프레임이 멈춥니다(앞으로 가져올 것).
 - **남은 것:** 사람이 실제 속도로 본 연출(불티, 글자 번짐, 실 머리 속도). 띠 글자는 작은 게임 뷰 캡처로만 봤습니다. 상인 단추 그림은 다시 뽑지 않았습니다.
 
+## 20차 3부 (2026-11-24) — 단추 상점: 카드로 고르는 시작 조각(칸 수 한도, 2시간 진열), 아웃게임 I 재봉 상자, 퍼즐 칸 추가 — 완료(커밋 전)
+
+- **사용자 요청:**
+  - 단추 설명을 짧은 개조식, 감성 말투로 바꾸기.
+  - 메뉴 두 카드의 회색 설명 줄을 빼고, 노란 글씨를 키우기.
+  - 챙기기 한도를 조각 수가 아니라 퍼즐 칸 수로(예: 5칸 = 레전더리 4칸 + 일반 1칸).
+  - 챙기기 화면은 내 조각을 배치하는 판이 아니라 증강처럼 무작위 5개 카드 중 2개 고르기. 칸을 넘으면 못 고르고, 진열은 2시간마다 초기화.
+  - 고른 조각은 I(재봉 상자)에서 배치하고, 아웃게임에서는 언제든 I로 재봉 상자를 연다.
+  - '들고 갈 수 늘리기'를 '퍼즐 칸 추가'로 바꾸기.
+- **규칙 (`Sim/HubShop.cs`):**
+  - `Ensure(db, p, random, now)`: 진열이 비었거나 `hub.shopRefreshHours`(2)가 지났으면 `Restock`. 진열 = `Pool`(못 가진 열린 조각 + 풀린 도안)에서 `shopStock`(5)개. 그때 `Profile.hubTaken`을 비우고 `hubStockTime`(유닉스 초)을 적습니다. 등반이 끝날 때 새로 뽑던 것은 없앴습니다.
+  - `Take`: 진열에 있고, 이번 진열에서 고른 수 < `packPicks`(2), 챙긴 칸 합 + 이 조각 칸 ≤ `Unlocks.StarterCells`, 파편 충분 → 파편을 내고 판에 놓지 않은 채 `items`에 넣습니다. 결과 `PackResult` Packed/NotOffered/NoShards/TooBig/PickLimit/Taken.
+  - `Return`: 고른 카드를 다시 누르면 판에서도 빼고 파편을 돌려받습니다.
+  - `Unlocks.StarterCells` = `gear.starterSlotsBase`(3) + `starter` 단계 × `starterSlotsStep`(1). 옛 `StarterSlots/StarterFull`(조각 수)은 지웠습니다.
+  - `Gear.RunBag`: 챙긴 조각은 판에 안 놓아도 등반 가방 목록에 들어갑니다.
+- **화면:**
+  - 단추 메뉴(`GameUI.ShowHubMenu`): 카드 설명 줄을 숨기고(`.hub-wares .text`) 아랫줄을 23px 노란 글씨 + 테두리로. 챙기기 카드 아랫줄은 "챙긴 칸 {0} / {1}칸"입니다.
+  - 챙기기 창 `dialog-hubpack`(`GameUI.ShowPackCards`):
+    - 퍼즐 카드 5장(`PieceOfferCard`). 카드 아래 꼬리표(HubSlots.uxml `hub-price`)는 "파편 N개, M칸", 고른 카드는 금빛 "챙김 (누르면 되돌리기)".
+    - 칸이 모자라거나 다 고른 카드는 흐리게 두고, 누르면 이유를 말합니다.
+    - 위 줄: 고른 수, 퍼즐 칸, 새 진열까지 남은 시간. 버튼 "재봉 상자에 놓기 (I)".
+  - 아웃게임 I(`GameController.ToggleOutgameInventory`): 재봉실, 다락, 단추 창에서 재봉 상자(시작 조각 배치 판)를 열고, 다시 I 또는 Esc로 닫습니다. 판의 진열 조각 목록, 판에 놓으면 산다(`OfferId`, `PackOffer`), 빼면 환불은 모두 없앴습니다. '판에서 빼기'는 이제 그냥 뺍니다.
+- **데이터 (MCP):**
+  - `hub.shopText` = 개조식 3줄: "- 실밥 하나까지 아껴 둔 조각들, 기억의 파편과 바꿔 드려요" 외 2줄.
+  - `shopStock` 5, `packPicks` 2, `shopRefreshHours` 2, `pack*` 문구, `hub.hint`와 다락 안내에 "I 재봉 상자"를 넣었습니다.
+  - `upgrades.starter` 이름 '퍼즐 칸 추가', 설명 "등반에 챙겨 갈 퍼즐 칸 +1". `gear.starterSlotsBase` 3, `starterSlotsStep` 1이라 0단계 3칸, 최대 4단계 7칸입니다.
+- **확인:**
+  - EditMode 49개 통과. 새 테스트 `TakingSpendsShardsAndReturnRefunds`, `TakingIsLimitedByCellsAndPicks`(5칸: 4칸 + 2칸 막힘, 4칸 + 1칸 됨, 3개째 막힘), `StockRefreshesByTime`, `StarterCellsGrowPerLevel`이고, 기존 테스트는 새 규칙으로 고쳤습니다.
+  - 캡처 `Temp/Shots/hub20d_menu`, `hub20d_pack`, `hub20d_board`.
+  - 테스트 전 실제 프로필을 `Temp/profile_backup_20b.json`(파편 252, 퍼즐 칸 4단계)으로 백업했고, 끝나고 되돌렸습니다.
+- **남은 것:** 사람이 직접 고르고 배치하는 흐름. 옛 흐름으로 이미 챙겨 둔 조각(지금 프로필 5칸)은 그대로 남습니다.
+
 ## 20차 2부 (2026-11-24) — 재봉실을 오브젝트에 맞춰 다시 그리기, 오브젝트 비네트와 그림자 — 완료(커밋 전)
 
 - **사용자 요청:** 오브젝트에 비네트와 그림자를 넣어 맵과 따로 노는 느낌을 없애고, 그에 맞춰 맵을 재구성해 다시 뽑기.
@@ -124,6 +156,8 @@
 - **오브젝트 비네트:** `tools/bake_hub_art.py` `vignette()`가 다락 사다리, 탑 문, 일기 게시판에 실루엣 안쪽 가장자리, 아래 40%, 양옆을 방의 어두운 자두색으로 눌러 굽습니다.
 - **방 다시 그리기:** `tools/codex_prompts/hub_room2.txt`(참고: 옛 방, 오브젝트를 얹은 배치 그림 `art_src/raw/hub_layout_ref.png`) → `art_src/raw/hub_room2.png` → `bake_hub_art.py` → `Assets/sprites/hub_room2.png`. 데이터 `hub.backdrop`이 이 그림이고, 옛 `hub_room.png`는 남겼습니다.
   - 탑 문 자리 = 벽 속 돌 아치, 사다리 위 = 천장 뚜껑문, 등불은 문 오른쪽으로, 상인 자리 = 작은 러그와 실패. 벽 밑과 오브젝트 발밑에 그림자를 그렸고, 전체를 덜 붉고 어둡게, 가장자리 비네트를 넣었습니다.
+- **단추 메뉴 창:** 오른쪽 위에 고개를 내밀던 상인 얼굴(`merchant-peek-slot`)을 사용자 요청으로 뺐습니다(파편 수와 겹침). 이 창이 열린 동안에는 단추의 말풍선도 뜨지 않습니다. 전투 상점 창(`dialog-shop`)의 얼굴은 그대로입니다.
+- **파편 수 글자:** 초록이라 잘 안 보여서 흰 글자 + 검은 테두리 1.8px, 26px로 바꿨습니다(`.shards > Label`, 위 띠, 모이라 창, 단추 메뉴 모두).
 - **카메라:** 오브젝트가 뒷벽에 붙으며 위로 올라가서 `hub.cameraZoom` .95 → 1.06(값이 클수록 넓게. 양옆에 약간 검은 띠가 생기지만 방 가장자리 어둠과 이어짐).
 - **확인:** EditMode 47개 통과. 캡처 `Temp/Shots/hub20c_zoom106`(시작 화면), `hub20c_room2_top`(문 앞), `attic20_exit`(다락 뚜껑문 그대로). 프로필은 백업에서 되돌림.
 - **남은 것:** 드리운 그림자는 어두운 바닥 위라 옅게 보입니다(값만 올리면 됨). 시작 자리에서는 오브젝트 위쪽이 상단 띠에 조금 가립니다(걸어 올라가면 보임). 꼬리표 높이(`promptLift`)는 옛 가운데 피벗 기준으로 맞춘 값이라 다시 볼 것.

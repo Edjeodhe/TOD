@@ -322,7 +322,7 @@
                 <ui:VisualElement class="actions reroll-row"><ui:Button name="reroll-artifact" text="다시 굴리기" class="reroll" /><ui:Button name="close-artifact" text="나중에 고르기" /></ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="dialog-hubshop" class="dialog hidden">
-                <ui:VisualElement class="merchant-peek-slot" picking-mode="Ignore" />
+                <!-- 20차: 오른쪽 위 상인 얼굴(merchant-peek-slot)은 파편 수와 겹쳐 뺐다 -->
                 <ui:Label text="재봉실 한쪽 구석" class="eyebrow" />
                 <ui:Label name="hubshop-title" class="dialog-title" />
                 <ui:Label name="hubshop-text" class="dialog-text" />
@@ -330,6 +330,15 @@
                 <ui:VisualElement name="hub-wares" class="choice-grid hub-wares" />
                 <ui:Label name="hubshop-empty" class="dialog-text hidden" />
                 <ui:VisualElement class="actions"><ui:Button name="close-hubshop" text="닫기" class="primary" /></ui:VisualElement>
+            </ui:VisualElement>
+            <!-- 20차 시작 조각 챙기기: 무작위 진열 조각을 증강처럼 카드로 고른다 (GameUI.Hub.cs ShowPackCards). 카드 아래 꼬리표는 HubSlots.uxml hub-price -->
+            <ui:VisualElement name="dialog-hubpack" class="dialog hidden">
+                <ui:Label name="hubpack-eyebrow" class="eyebrow" />
+                <ui:Label name="hubpack-title" class="dialog-title" />
+                <ui:Label name="hubpack-status" class="dialog-text hubpack-status" />
+                <ui:VisualElement class="shards hubshop-shards" tooltip="기억의 파편"><ui:VisualElement /><ui:Label name="hubpack-shards" text="0" /></ui:VisualElement>
+                <ui:VisualElement name="hubpack-cards" class="puzzle-grid hubpack-cards" />
+                <ui:VisualElement class="actions"><ui:Button name="hubpack-board" text="재봉 상자에 놓기 (I)" class="primary" /><ui:Button name="close-hubpack" text="닫기" /></ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="dialog-upgrade" class="dialog hidden">
                 <ui:Label name="upgrade-eyebrow" text="모이라의 의식" class="eyebrow" />

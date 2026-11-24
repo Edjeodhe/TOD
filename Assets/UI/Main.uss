@@ -226,7 +226,9 @@ Button:disabled { opacity: 0.5; }
 .brand-icon > VisualElement { width: 34px; height: 34px; background-image: url("project://database/Assets/sprites/icon_needle.png"); -unity-background-scale-mode: scale-to-fit; }
 .brand-name { font-size: 30px; color: #f3e2c8; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
 .brand-sub { color: #d6b06e; font-size: 12px; letter-spacing: 4px; margin-top: 6px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");}
-.shards { flex-direction: row; align-items: center; color: #8fbfb2; margin-right: 22px; font-size: 24px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.shards { flex-direction: row; align-items: center; color: #ffffff; margin-right: 22px; font-size: 26px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+/* 20차: 파편 수는 흰 글자 + 검은 테두리 (어두운 방, 양피지 어디서나 읽히게) */
+.shards > Label { color: #ffffff; -unity-text-outline-width: 1.8px; -unity-text-outline-color: #000000; text-shadow: 1px 2px 2px rgba(0, 0, 0, 0.55); }
 .shards > VisualElement { width: 32px; height: 32px; margin-right: 8px; background-image: url("project://database/Assets/sprites/icon_shard.png"); -unity-background-scale-mode: scale-to-fit; }
 .welcome-copy {
     position: absolute; left: 96px; top: 190px; width: 820px; padding: 52px 64px 50px 64px;

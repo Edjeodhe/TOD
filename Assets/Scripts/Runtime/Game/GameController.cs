@@ -332,65 +332,16 @@ namespace TOD
 
         // ---------------------------------------------------------------- 재봉 상자
 
-        // 19차 아웃게임 판: 모이라의 줄 고르기(picking) 아니면 단추의 '시작 조각 챙기기'(진열 조각을 판에 놓으면 산다)
-        bool Packing => Run == null && picking == null;
-
+        // 아웃게임 판: 모이라의 줄 고르기(picking) 아니면 챙긴 시작 조각 배치(20차: 진열 조각은 단추의 카드 창에서 고른다)
         void RenderInventory()
         {
-            var board = new BoardMode { pick = picking };
-            if (Packing)
-            {
-                board.offers = HubShop.Offers(db, Profile).Select(k => new OwnedItem { id = OfferId + k, kind = k }).ToList();
-                board.price = k => HubShop.Price(db, k);
-            }
-            ui.RenderInventory(Bag, selected, turns, board);
+            ui.RenderInventory(Bag, selected, turns, new BoardMode { pick = picking });
         }
 
-        // 19차: 판 옆 목록의 진열 조각(아직 안 산 것)은 id = OfferId + 종류인 가짜 조각이다. 판에 놓는 순간 산다(HubShop.Pack).
-        public const int OfferId = 1000000;
+        public OwnedItem ItemFor(int? id) => id == null ? null : Bag.items.FirstOrDefault(i => i.id == id);
 
-        public OwnedItem ItemFor(int? id)
-        {
-            if (id == null) return null;
-            OwnedItem item = Bag.items.FirstOrDefault(i => i.id == id);
-            if (item != null || !Packing || id < OfferId) return item;
-            int kind = id.Value - OfferId;
-            return HubShop.Offered(db, Profile, kind) ? new OwnedItem { id = id.Value, kind = kind } : null;
-        }
-
-        bool IsOffer(OwnedItem item) => item != null && item.id >= OfferId;
-
-        // 진열 조각을 판에 놓기 = 사기. 놓았으면 true.
-        bool PackOffer(OwnedItem offer, int x, int y)
-        {
-            PackResult result = HubShop.Pack(db, Profile, offer.kind, x, y, turns, out OwnedItem item);
-            switch (result)
-            {
-                case PackResult.Full: ui.Say(string.Format(db.gear.starterFull, Unlocks.StarterSlots(db, Profile))); return false;
-                case PackResult.NoShards: ui.Say(db.hub.noShards); return false;
-                case PackResult.Blocked: ui.Say(db.ui.invalidPlacement); return false;
-                case PackResult.NotOffered: return false;
-            }
-            selected = null;
-            Gear.Save(db, Profile);
-            RenderInventory();
-            ui.UpdateMeta(Profile);
-            ui.Sew(item.id);
-            sound.Play(string.IsNullOrEmpty(db.hub.buySound) ? "loot" : db.hub.buySound);
-            ui.Say(string.Format(db.hub.packed ?? "{0}", Gear.Def(db, item).name));
-            return true;
-        }
-
-        // 아웃게임 판 = 등반 전에 고른 시작 조각이라 저장한다. 등반 가방은 귀환하면 버리므로 저장하지 않는다.
+        // 아웃게임 판 = 등반 전에 챙긴 시작 조각이라 저장한다. 등반 가방은 귀환하면 버리므로 저장하지 않는다.
         void SaveBag() { if (Run == null) Gear.Save(db, Profile); }
-
-        // 17차: 아웃게임 판에는 들고 갈 수(Unlocks.StarterSlots)만큼만 놓는다.
-        bool StarterFull(OwnedItem item)
-        {
-            if (Run != null || !Unlocks.StarterFull(db, Profile, item)) return false;
-            ui.Say(string.Format(db.gear.starterFull, Unlocks.StarterSlots(db, Profile)));
-            return true;
-        }
 
         // 개발자 모드가 조각·배치를 바꾼 뒤: 저장하고, 등반 중이면 장비 능력치·세트를 바로 반영하고, 재봉 상자가 열려 있으면 다시 그린다.
         public void DevGearChanged()
@@ -418,17 +369,6 @@ namespace TOD
 
         public void Unequip()
         {
-            if (Packing && selected is int id && ItemFor(id) is { } packed && !IsOffer(packed))   // 19차: 챙긴 조각을 빼면 파편을 돌려준다
-            {
-                string name = Gear.Def(db, packed).name;
-                int refund = HubShop.Unpack(db, Profile, id);
-                selected = null;
-                Gear.Save(db, Profile);
-                RenderInventory();
-                ui.UpdateMeta(Profile);
-                if (refund >= 0) ui.Say(string.Format(db.hub.unpacked ?? "{0}", name, refund));
-                return;
-            }
             Bag.placements.RemoveAll(p => p.id == selected);
             SaveBag();
             RenderInventory();
@@ -438,7 +378,6 @@ namespace TOD
         {
             if (picking != null) { PickAt(new Vector2Int(x, y)); return; }
             OwnedItem item = ItemFor(selected);
-            if (IsOffer(item)) { if (!PackOffer(item, x, y)) RenderInventory(); return; }
             PlacedPiece occupying = Gear.Placed(db, Bag).FirstOrDefault(p => p.cells.Contains(new Vector2Int(x, y)));
             if (item == null)
             {
@@ -446,7 +385,6 @@ namespace TOD
                 turns = occupying?.placement.turns ?? turns;
                 RenderInventory();
             }
-            else if (StarterFull(item)) RenderInventory();
             else if (!Gear.CanPlace(db, Bag, item, turns, x, y)) ui.Say(db.ui.invalidPlacement);
             else
             {
@@ -474,15 +412,8 @@ namespace TOD
             OwnedItem item = ItemFor(id);
             Placement old = Bag.placements.FirstOrDefault(p => p.id == id);
             selected = null;
-            if (IsOffer(item))
-            {
-                if (cell is Vector2Int spot) { selected = id; if (PackOffer(item, spot.x, spot.y)) return; selected = null; }
-                RenderInventory();
-                return;
-            }
             if (item != null && cell is Vector2Int at && !(old != null && old.x == at.x && old.y == at.y && old.turns == turns))
             {
-                if (StarterFull(item)) { RenderInventory(); return; }
                 if (Gear.CanPlace(db, Bag, item, turns, at.x, at.y))
                 {
                     Bag.placements.RemoveAll(p => p.id == id);
@@ -754,7 +685,7 @@ namespace TOD
             if (k.rKey.wasPressedThisFrame && (screen == UiScreen.Inventory || runInventory)) Rotate();
             if (IsCombat && k.spaceKey.wasPressedThisFrame) dashRequested = true;
             if (k.eKey.wasPressedThisFrame && !runInventory) Interact();
-            if (k.iKey.wasPressedThisFrame) ToggleRunInventory();
+            if (k.iKey.wasPressedThisFrame) { if (Run != null) ToggleRunInventory(); else ToggleOutgameInventory(); }   // 20차: 아웃게임에서도 언제든 I
         }
 
         // 17차 Esc: 맨 위에 열린 창부터 닫는다. 증강·아이템 창은 닫아도 나중에 E 로 다시 연다.

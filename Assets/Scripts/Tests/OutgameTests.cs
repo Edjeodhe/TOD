@@ -104,25 +104,17 @@ namespace TOD.Tests
             PlayerPrefs.DeleteKey(db.gear.saveKey);
         }
 
-        // 17차: 들고 갈 시작 조각 수 = 단계마다 하나씩 (1단계 3개, 2단계 4개)
+        // 20차: 챙길 퍼즐 칸 = 기본 + '퍼즐 칸 추가' 단계 × 칸 (데이터 기본 3, 단계마다 1 → 1단계 4칸, 2단계 5칸)
         [Test]
-        public void StarterSlotsGrowPerLevel()
+        public void StarterCellsGrowPerLevel()
         {
             UpgradeDef up = db.upgrades.FirstOrDefault(u => u.key == Unlocks.StarterKey);
-            Assert.IsNotNull(up, "실궤 강화 starter 데이터가 없습니다");
+            Assert.IsNotNull(up, "퍼즐 칸 추가(starter) 데이터가 없습니다");
             Profile p = EmptyProfile();
             p.starter = 1;
-            Assert.AreEqual(3, Unlocks.StarterSlots(db, p));
+            Assert.AreEqual(4, Unlocks.StarterCells(db, p));
             p.starter = 2;
-            Assert.AreEqual(4, Unlocks.StarterSlots(db, p));
-
-            // 다 찼으면 새 조각은 못 놓고, 이미 놓인 조각은 옮길 수 있다
-            p.starter = 0;
-            int slots = Unlocks.StarterSlots(db, p);
-            for (int i = 0; i < slots + 1; i++) Gear.AddItem(db, p);
-            for (int i = 0; i < slots; i++) p.placements.Add(new Placement { id = p.items[i].id, x = i % 6, y = i / 6 });
-            Assert.IsTrue(Unlocks.StarterFull(db, p, p.items[slots]));
-            Assert.IsFalse(Unlocks.StarterFull(db, p, p.items[0]));
+            Assert.AreEqual(5, Unlocks.StarterCells(db, p));
         }
 
         // 17차: 등반 조각은 등반 가방에만 쌓이고, 영구 프로필에는 시작 조각과 파편만 남는다
@@ -136,8 +128,8 @@ namespace TOD.Tests
             p.placements.Add(new Placement { id = p.items[0].id, x = 0, y = 0 });   // 하나만 들고 간다
 
             RunState r = combat.CreateRun(p, () => .5f);
-            Assert.AreEqual(1, r.bag.items.Count, "판에 놓은 시작 조각만 들고 간다");
-            Assert.AreEqual(1, Gear.Placed(db, r.bag).Count);
+            Assert.AreEqual(2, r.bag.items.Count, "20차: 챙긴 시작 조각은 판에 안 놓았어도 들고 간다 (가방 목록에)");
+            Assert.AreEqual(1, Gear.Placed(db, r.bag).Count, "판에 놓은 것은 같은 자리에");
 
             int kind = Gear.Unowned(db, r.bag).First();
             r.artifactOffer.Clear();
@@ -197,7 +189,7 @@ namespace TOD.Tests
             Profile p = EmptyProfile();
             p.best = entry.floor;
             Assert.IsFalse(Gear.Unowned(db, p).Contains(entry.patternKind), "도안이 탑 보상 후보에 있습니다");
-            Assert.IsFalse(HubShop.Display(db, p).Contains(entry.patternKind), "읽기 전인데 도안이 진열됨");
+            Assert.IsFalse(HubShop.Pool(db, p).Contains(entry.patternKind), "읽기 전인데 도안이 진열 후보에 있음");
 
             Assert.IsTrue(Diary.MarkRead(p, entry));
             Assert.AreEqual(entry.readShards, p.shards);
@@ -205,12 +197,13 @@ namespace TOD.Tests
             Assert.IsFalse(Diary.MarkRead(p, entry), "두 번 읽어도 보상은 한 번");
             Assert.AreEqual(entry.readShards, p.shards);
 
-            Assert.IsTrue(HubShop.Offers(db, p).Contains(entry.patternKind));
+            Assert.IsTrue(HubShop.Pool(db, p).Contains(entry.patternKind), "읽은 쪽지의 도안이 진열 후보에 없음");
             p.shards = 99;
-            Vector2Int at = FreeSpot(p, entry.patternKind);
-            Assert.AreEqual(PackResult.Packed, HubShop.Pack(db, p, entry.patternKind, at.x, at.y, 0, out _));
+            p.starter = 10;
+            p.hubStock = new System.Collections.Generic.List<int> { entry.patternKind };
+            Assert.AreEqual(PackResult.Packed, HubShop.Take(db, p, entry.patternKind, out _));
             Assert.IsTrue(Gear.Owns(p, entry.patternKind));
-            Assert.IsFalse(HubShop.Offers(db, p).Contains(entry.patternKind), "챙긴 도안은 진열에서 빠진다");
+            Assert.IsFalse(HubShop.Pool(db, p).Contains(entry.patternKind), "챙긴 도안은 진열 후보에서 빠진다");
         }
 
         Vector2Int FreeSpot(Profile p, int kind)
@@ -227,11 +220,11 @@ namespace TOD.Tests
         public void PackedPiecesLastOneRun()
         {
             Profile p = EmptyProfile();
-            HubShop.Restock(db, p, () => .2f);
+            HubShop.Restock(db, p, () => .2f, 1000);
             int kind = p.hubStock[0];
             p.shards = 99;
-            Vector2Int at = FreeSpot(p, kind);
-            Assert.AreEqual(PackResult.Packed, HubShop.Pack(db, p, kind, at.x, at.y, 0, out _));
+            p.starter = 10;
+            Assert.AreEqual(PackResult.Packed, HubShop.Take(db, p, kind, out _));
             RunState r = combat.CreateRun(p, () => .5f);
             HubShop.ConsumePacked(p);
             Assert.IsTrue(Gear.Owns(r.bag, kind), "챙긴 조각이 등반 가방에 없습니다");

@@ -38,6 +38,9 @@ namespace TOD
         public int fate;
         // 15차 재봉실 허브: 상인 단추 진열 (조각 종류, HubShop.cs). 19차: 다음 등반에 챙길 수 있는 조각
         public List<int> hubStock = new();
+        // 20차: 진열을 뽑은 실제 시각(유닉스 초)과 이 진열에서 고른 조각 종류. hub.shopRefreshHours 가 지나면 새로 뽑고 비운다
+        public long hubStockTime;
+        public List<int> hubTaken = new();
     }
 
     public class PlacedPiece
@@ -107,7 +110,7 @@ namespace TOD
             return profile;
         }
 
-        // 등반용 임시 가방: 강화 단계는 영구 프로필과 같고, 조각은 판에 놓인 시작 조각만(같은 id, 같은 자리).
+        // 등반용 임시 가방: 강화 단계는 영구 프로필과 같고, 조각은 챙긴 시작 조각 전부(판에 놓은 것은 같은 자리, 20차: 안 놓은 것은 가방 목록에).
         // 등반 중 얻은 조각과 배치는 여기에만 쌓이고, 귀환하면 버린다. 파편, 최고 층, 일기는 영구 프로필(RunState.profile)에 쓴다.
         public static Profile RunBag(GameDatabase db, Profile profile)
         {
@@ -118,13 +121,9 @@ namespace TOD
                 capacity = profile.capacity, starter = profile.starter, nextId = profile.nextId,
                 seenUnlocks = new List<string>(profile.seenUnlocks ?? new List<string>()),
             };
+            foreach (OwnedItem item in profile.items) bag.items.Add(new OwnedItem { id = item.id, kind = item.kind });
             foreach (Placement p in profile.placements)
-            {
-                OwnedItem item = profile.items.Find(i => i.id == p.id);
-                if (item == null) continue;
-                bag.items.Add(new OwnedItem { id = item.id, kind = item.kind });
-                bag.placements.Add(new Placement { id = p.id, x = p.x, y = p.y, turns = p.turns });
-            }
+                if (profile.items.Exists(i => i.id == p.id)) bag.placements.Add(new Placement { id = p.id, x = p.x, y = p.y, turns = p.turns });
             return bag;
         }
 

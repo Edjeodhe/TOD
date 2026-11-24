@@ -44,15 +44,12 @@ namespace TOD
         }
 
         // ---------------------------------------------------------------- 시작 조각 (17차)
-        // 시작 조각 = Profile.items. 19차: 상인 단추의 '시작 조각 챙기기'에서 파편으로 사서 판에 놓은 조각(다음 등반 한 번만, HubShop.Pack).
-        // 들고 갈 수 = gear.starterSlotsBase + '들고 갈 수 늘리기'(19차부터 단추, key starter) 단계 × gear.starterSlotsStep.
+        // 시작 조각 = Profile.items. 19차: 상인 단추의 '시작 조각 챙기기'에서 파편으로 산 조각(다음 등반 한 번만).
+        // 20차: 한도는 퍼즐 칸 수. 챙길 칸 = gear.starterSlotsBase + '퍼즐 칸 추가'(key starter) 단계 × gear.starterSlotsStep.
+        //   예: 5칸이면 레전더리(4칸) 하나 + 일반(1칸) 하나. 넘는 조각은 HubShop.Take 가 막는다.
 
-        public static int StarterSlots(GameDatabase db, Profile profile) =>
+        public static int StarterCells(GameDatabase db, Profile profile) =>
             Math.Max(0, db.gear.starterSlotsBase + (profile?.starter ?? 0) * db.gear.starterSlotsStep);
-
-        // 판에 새로 놓으면 들고 갈 수를 넘는가 (이미 판에 있는 조각을 옮기는 것은 괜찮다)
-        public static bool StarterFull(GameDatabase db, Profile profile, OwnedItem item) =>
-            item != null && !profile.placements.Any(p => p.id == item.id) && profile.placements.Count >= StarterSlots(db, profile);
 
         // 등급 합 한도에 드는 값 (17차: 시작 조각도 그대로 든다)
         public static int Cost(GameDatabase db, Profile profile, OwnedItem item) => Gear.Def(db, item).cost;
