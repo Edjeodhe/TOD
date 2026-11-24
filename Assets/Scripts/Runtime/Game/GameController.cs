@@ -608,7 +608,7 @@ namespace TOD
             Color tint = def.fateColor.a > 0 ? def.fateColor : def.hintColor.a > 0 ? def.hintColor : Color.white;   // 20차: 구슬, 빛, 글자 색
             ui.ShowFate(def.fateLine, tint, rig != null ? rig.BallSprite : null, MoiraBall,
                 out_ => { if (rig != null) rig.BallOut = out_; },
-                () => { if (!string.IsNullOrEmpty(db.hub.fateShow?.lightSound)) sound.Play(db.hub.fateShow.lightSound); ui.RoomFlash(); },
+                () => { if (!string.IsNullOrEmpty(db.hub.fateShow?.lightSound)) sound.Play(db.hub.fateShow.lightSound); },   // 빛만 (가운데 바느질 고리 이펙트는 뺐다)
                 () => ui.SayMoira(moiraLine), paid);
         }
 

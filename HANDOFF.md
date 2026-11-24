@@ -97,6 +97,7 @@
 - **운명 읽기 (`UI/GameUI.FateShow.cs`, Main.uxml attic 의 `fate`, Moira.uss, 데이터 `hub.fateShow`):**
   - 파편 불티 8개(UXML에 고정) → 탁자 점성구로 → 점성구가 화면 가운데로(`MoiraRig.BallOut`이 탁자 구와 빛을 감춤, `BallPoint/BallSize/BallSprite`) → 빛(넓은 빛 + 밝은 중심 + 퍼지는 고리) → 암시(`ElementDef.fateLine`)가 한 자씩 짙어짐(`<color=#RRGGBBAA>`. UI Toolkit은 `<alpha>`를 무시함).
   - 누름/Esc: 글을 다 보여 주고, 한 번 더 누르면 빛이 걷히고 구가 탁자로 돌아감. 끝나면 모이라가 같은 말을 한 줄로 남김. '다시 듣기'는 불티 없이 구부터.
+  - 빛이 퍼질 때 함께 나오던 바느질 고리 이펙트(`RoomFlash`, `vfx/stitch.png`)는 사용자 요청으로 뺐습니다(효과음만).
   - 속성 색: `ElementDef.fateColor`(8속성). 구슬 = `moira_ball_big` 위에 유리만 흑백인 `moira_ball_glass`를 그 색으로 물들여 덮음. 빛 = `lightColor`와 `lightTint` .45만큼 섞음. 글자 = 속성 색의 어두운 판(`textTint` .75).
   - 구 뒤 어두운 그늘(`shadeColor`, `shadeSize` 2.6)과 작은 흔들림(`bob` 2)으로 덜 떠 보이게.
 - **점성구 그림:** `tools/codex_prompts/moira_ball2.txt` → `art_src/raw/moira_ball2.png` → `python tools/bake_moira_ball.py` → `moira_ball.png`(리그용, 옛 캔버스 136×149와 같은 자리라 리그 값 그대로), `moira_ball_big.png`, `moira_ball_glass.png`. 옛 그림은 `art_src/raw/moira_ball_19.png`. 모이라 점성구 빛 `glowColor` α .28 → .16, `ballPulse` .06.
