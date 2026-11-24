@@ -1,0 +1,10 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/number23_d.png
+Size: landscape 1536x1024.
+The attached reference shows the LAYOUT only. Draw a custom illustrated DAMAGE NUMBER typography sheet for a dark-fantasy sewing-themed 2D action game (a cursed tower, needles and thread, torn parchment, candlelight).
+Exactly these 13 separate characters in the same positions as the reference, two rows, each fully separated by a wide empty gap (at least 60px), nothing touching:
+Row 1 (left to right): 0 1 2 3 4 5 6
+Row 2 (left to right): 7 8 9 + - !
+Every digit the SAME height (about 260px), all characters clearly belonging to ONE consistent typeface, perfectly readable at small size.
+Style: CROSS-STITCH EMBROIDERY numerals: each digit is built entirely from visible X-shaped stitches of white cotton thread on an invisible grid (stitch cells about 22px), the thread shows tiny twisted fibers and soft shading, the whole digit has a clean dark ink contour (about 8px) hugging the stitched shape, and a short loose thread tail trailing from the end of each character (touching it). Fill near-white (#FFFFFF to #EFE9E0) so it can be tinted in game.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no text other than what is asked. Do not use any green color inside the artwork.

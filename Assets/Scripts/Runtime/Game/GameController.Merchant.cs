@@ -19,14 +19,15 @@ namespace TOD
             ui.DialogClosed += id => { if (id is "shop" or "hubshop") MerchantSay(MerchantCue.Farewell); };
         }
 
-        public void MerchantSay(MerchantCue cue)
+        // voiced = false 면 말풍선만 띄우고 소리(말 소리, 글자 찍힘)는 내지 않는다 (23차: 조각 챙길 때)
+        public void MerchantSay(MerchantCue cue, bool voiced = true)
         {
             if (merchantTalk == null) return;
             string line = merchantTalk.Say(cue, Clock);
             if (line == null) return;
             merchantBlips = 0;
-            merchantBlipLine = line;
-            if (!string.IsNullOrEmpty(db.merchant.talkSound)) sound.Play(db.merchant.talkSound);
+            merchantBlipLine = voiced ? line : null;
+            if (voiced && !string.IsNullOrEmpty(db.merchant.talkSound)) sound.Play(db.merchant.talkSound);
         }
 
         // 매 프레임: 다가오면 혼잣말, 글자 찍힘 소리, 말풍선 위치
@@ -38,8 +39,8 @@ namespace TOD
             bool near = hubMerchant ? hub.Near?.station == HubStation.Merchant : runMerchant && Combat.Nearest(Run) == Interactable.Merchant;
             if (near && !merchantNear && Opened == "")
             {
-                string line = merchantTalk.Approach(Clock);
-                if (line != null) { merchantBlips = 0; merchantBlipLine = line; if (!string.IsNullOrEmpty(db.merchant.talkSound)) sound.Play(db.merchant.talkSound, .7f); }
+                // 23차: 다가올 때 머리 위에 뜨는 혼잣말은 소리 없이 (말 소리, 글자 찍힘 모두)
+                if (merchantTalk.Approach(Clock) != null) { merchantBlips = 0; merchantBlipLine = null; }
             }
             merchantNear = near;
             merchantTalk.Update(Clock);

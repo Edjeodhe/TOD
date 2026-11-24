@@ -53,6 +53,8 @@ namespace TOD
                     hintText.text = def.hint;
                     hintText.style.color = def.hintColor.a > 0 ? def.hintColor : new StyleColor(StyleKeyword.Null);
                     hintStart = Time.unscaledTime + EC.hintDelay;
+                    // 23차: 보스 욕망 한 줄(GameUI.DesireEcho)이 떠 있으면 다 사라진 뒤에 암시를 띄운다 (화면 가운데에서 겹치지 않게)
+                    if (game.ui != null && game.ui.DesireEchoEnd > Time.unscaledTime) hintStart = Mathf.Max(hintStart, game.ui.DesireEchoEnd + .25f);
                 }
                 else hintStart = -99;
             }

@@ -9,6 +9,8 @@ namespace TOD
     {
         // 캔버스 좌표에 글자를 띄운다 (매 프레임 다시 호출).
         void Label(string text, Vector2 canvas, float fontPx, Color fill, Color stroke, float strokePx, float scale, float rotationDeg, bool italic);
+        // 23차: 결박 당기기의 라틴어 죄종 글자 (Cinzel 로마 비문체, 금속 테두리 + 후광 + 빛 훑기). ArenaRenderer.Inscription.cs
+        void Inscription(string text, Vector2 canvas, in InscriptionPose pose);
     }
 
     [Serializable] public class FxSpriteEntry { public FxSprite id; public Sprite sprite; public bool tintable, directional; }
@@ -198,9 +200,11 @@ namespace TOD
             Vector2 hero = C(r.player.x, r.player.y);
             foreach (Drop d in r.drops)
             {
+                if (d.shower && d.age < 0) continue;   // 23차 보스 파편: 엇갈려 아직 떨어지기 전
                 float pop = Mathf.Max(.01f, rw.dropPopTime);
                 float t = Mathf.Clamp01(d.age / pop);
                 float hop = d.age < pop ? Mathf.Sin(Mathf.PI * t) * rw.dropHop : 0;
+                if (d.shower) { pop = Mathf.Max(.01f, rw.bossShardFall) + d.hold; hop = ShardFall(d.age, rw); }
                 Vector2 ground = C(d.x, d.y);
                 bool flying = d.age >= pop;
                 // 빨려 드는 중에는 몸(허리 높이) 쪽으로 떠오른다.
@@ -233,14 +237,42 @@ namespace TOD
                         painter.Sprite(Layer.Effects, softSprite, at, 0, size * rw.dropGlow, size * rw.dropGlow, Painter.Alpha(rw.heartGlowColor, .55f), additive: true);
                     painter.Sprite(Layer.Effects, heartSprite != null ? heartSprite : goldIcon, at + new Vector2(0, bob), 0, size * beat, size * beat, Color.white);
                 }
+                else if (d.potion != null && Potions.Def(db, d.potion) is PotionDef pd && pd.icon != null)
+                {
+                    // 23차 포션 (정예 드롭): 포션 색 빛을 두르고 살짝 흔들린다.
+                    float size = db.potions.dropSize > 0 ? db.potions.dropSize : 26;
+                    if (softSprite != null)
+                        painter.Sprite(Layer.Effects, softSprite, at, 0, size * rw.dropGlow, size * rw.dropGlow, Painter.Alpha(db.potions.dropGlow.a > 0 ? db.potions.dropGlow : pd.color, .55f), additive: true);
+                    painter.Sprite(Layer.Effects, pd.icon, at + new Vector2(0, bob), Mathf.Sin(clock * 4 + d.x) * .12f, size, size, Color.white);
+                }
+                else if (d.shower)
+                {
+                    // 23차 기억의 파편: 푸른 빛을 두르고 반짝이며 살짝 기울어 돈다.
+                    float size = rw.shardSize > 0 ? rw.shardSize : 22;
+                    float twinkle = .75f + .25f * Mathf.Sin(clock * 9 + d.x * .13f);
+                    if (softSprite != null)
+                        painter.Sprite(Layer.Effects, softSprite, at, 0, size * rw.dropGlow * twinkle, size * rw.dropGlow * twinkle, Painter.Alpha(rw.shardColor, .6f), additive: true);
+                    painter.Sprite(Layer.Effects, shardIcon, at + new Vector2(0, bob), Mathf.Sin(clock * 3 + d.y) * .2f, size, size, Color.white);
+                }
                 else painter.Sprite(Layer.Effects, shardIcon, at, 0, 20, 20, Color.white);
                 if (flying)
                 {
                     Vector2 dir = (hero - ground).normalized;
-                    Color tail = d.xp > 0 ? rw.xpColor : d.heal > 0 ? rw.heartGlowColor : rw.goldColor;
+                    Color tail = d.shower ? rw.shardColor : d.xp > 0 ? rw.xpColor : d.heal > 0 ? rw.heartGlowColor : rw.goldColor;
                     painter.Line(Layer.Effects, at, at - dir * 14, 2, Painter.Alpha(tail, .5f), additive: true);
                 }
             }
+        }
+
+        // 23차 보스 파편이 위에서 떨어지는 높이: 가속하며 떨어져 바닥에 닿고, 한 번 작게 튀어 오른다.
+        static float ShardFall(float age, RewardConfig rw)
+        {
+            float fall = Mathf.Max(.01f, rw.bossShardFall);
+            float u = age / fall;
+            if (u >= 1) return 0;
+            const float land = .7f;
+            if (u < land) { float k = u / land; return rw.bossShardFallHeight * (1 - k * k); }
+            return Mathf.Sin(Mathf.PI * (u - land) / (1 - land)) * rw.bossShardFallHeight * .12f;
         }
 
         // ---------------------------------------------------------------- camera, map, props
@@ -311,6 +343,7 @@ namespace TOD
                 else DrawProp(altarSprite, Pal.altarHeight, r.altar, r.artifactTaken ? null : db.ui.promptAltar, nearest == Interactable.Altar, r.artifactTaken ? .55f : 1);
             }
             DrawMerchant(r, nearest, clock);   // 16차: 자세와 트윈 (ArenaRenderer.Merchant.cs)
+            DrawNpc(r, nearest, clock);        // 23차: 쉬어가기 NPC 리그 (ArenaRenderer.Npc.cs)
             if (r.stairs == null) return;
             if (stairPieces != null && stairPieces.Length > 0) { DrawStairCascade(r, nearest, clock, dt); return; }
             if (stairsSprite == null) return;
@@ -1079,6 +1112,7 @@ namespace TOD
                     }
                     case FxKind.Combo:
                     {
+                        if (fx.bound) { DrawInscription(fx, fade); break; }   // 23차 결박: 라틴어 죄종 글자
                         float age = 1 - fade;
                         float scale = age < .18f ? .4f + EaseOutBack(age / .18f) * .75f : 1.15f - (age - .18f) * .2f;
                         Color color = fx.color ?? Color.white;

@@ -39,6 +39,7 @@ namespace TOD.Tests
             var all = db.hub.facilities.Concat(db.hub.attic?.facilities ?? new HubFacility[0]);   // 17차: 뚜껑문은 다락 방에, 19차: 모이라도
             foreach (HubStation s in System.Enum.GetValues(typeof(HubStation)))
                 if (s == HubStation.SewingBox) Assert.IsFalse(all.Any(f => f.station == s), "19차: 아웃게임 재봉 상자가 남아 있습니다");
+                else if (HubView.IsNpc(s)) Assert.IsTrue(all.Any(f => f.station == s && !string.IsNullOrEmpty(f.prompt) && f.height > 0), $"23차 NPC 자리 {s} 데이터가 없습니다");   // 그림은 리그(CutoutRig)
                 else Assert.IsTrue(all.Any(f => f.station == s && f.sprite != null && !string.IsNullOrEmpty(f.prompt)), $"시설 {s} 데이터(그림, 문구)가 없습니다");
             Assert.Greater(db.hub.walkSpeed, 0);
             Assert.Greater(db.hub.interactRadius, 0);

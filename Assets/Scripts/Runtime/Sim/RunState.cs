@@ -7,7 +7,7 @@ namespace TOD
 {
     // Combat: 생존·보스 전투 중 / Purifying: 보스 처치 후 정화 연출 / Cleared: 라운드 종료(계단·제단·상인과 상호작용) / Victory
     public enum Phase { Combat, Purifying, Cleared, Victory, BossDying }
-    public enum Interactable { None, Stairs, Altar, Merchant }
+    public enum Interactable { None, Stairs, Altar, Merchant, Npc }   // 23차 Npc = 쉬어가기 NPC
     public enum Outcome { None, Dead, Absorbed, Clear, Retreat }
     public enum Mood { Normal, Frenzy, Awakened }
     public enum HeroAction { Idle, Run, Shoot, Pull, Dash, Hurt, Die }
@@ -96,7 +96,8 @@ namespace TOD
     public class Bullet : Point { public float vx, vy, hit, age; public bool spent; public Enemy boss; public Element element; }   // boss = 보스가 쏜 속성 탄
 
     // 처치 때 튀어나오는 보상. 잠깐 튀어 오른 뒤(age < popTime) 몸으로 빨려 든다.
-    public class Drop : Point { public int xp, gold, shard; public bool item; public float heal, vx, vy, age, speed; }
+    // 23차: shower = 보스 처치 기억의 파편 (위에서 떨어져 hold 초 머문 뒤 빨려 든다)
+    public class Drop : Point { public int xp, gold, shard; public bool item, shower; public string potion; public float heal, vx, vy, age, speed, hold; }
 
     public class Trail { public Point a, b; public float time; public HashSet<Enemy> used = new(); }
 
@@ -149,6 +150,11 @@ namespace TOD
         public float roundLength;
         public readonly Dictionary<SpawnEntry, float> spawnTimers = new();
         public Point stairs, altar, merchant;
+        // 23차 쉬어가기 NPC (CombatNpc.cs): 자리(없으면 null), 누구, 단계(0 아직, 1 도박 제안 중, 2 받음), 이번 라운드의 말과 그 시각
+        public Point npc;
+        public NpcKind npcKind;
+        public int npcStage;
+        public bool npcGreeted;
         public float stairsAge;
         public float altarAge;               // 탑이 나타난 뒤 지난 시간 (등장 연출)
         public List<int> artifactOffer = new();
@@ -167,6 +173,8 @@ namespace TOD
         public List<Strand> strands = new();
         public List<Bullet> bullets = new();
         public List<Drop> drops = new();
+        public PotionSlot[] potions = new PotionSlot[0];   // 23차 포션 칸 (Potions.NewSlots)
+        public float potionReady;            // 이 time 이 지나야 다음 포션을 마신다
         public List<Trail> trails = new();
         public List<Fx> effects = new();
         public HashSet<string> rules = new(), desires = new();

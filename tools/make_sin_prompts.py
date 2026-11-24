@@ -110,48 +110,83 @@ PATTERNS = "\n".join([
 ]) + "\n"
 
 # 몬스터: 파츠 순서와 자리는 그대로, 죄종 옷과 장식은 새로 (16차 원본 시트를 참고 그림으로)
+# 2판(22차 sin-art 이어받기): 게임 화면에서 작게 보여도 그 층 죄종이 바로 읽히게, 죄종 색이 몸 전체를 덮고 큰 상징 하나가 꼭 보이게.
 ENEMY = {
-    "wrath": ("WRATH: a furious berserk look, torn crimson cloth with jagged red-hot cracked seams, short iron spikes and broken chain links stitched on, "
-              "deep angry furrowed brows over burning red eyes, clenched clawed hands, little puffs of hot steam",
-              "black-maroon / dark crimson / blood red palette (#170A0C, #4E1216, #8E2226, #C62E2E)"),
-    "sloth": ("SLOTH: a lazy sleepy look, droopy limp blue-grey quilt patchwork cloth hanging loose, a long floppy striped nightcap on the head, heavy half-closed sleepy eyelids, "
-              "a drool drop, cobwebs and dust on the cloth, pillow stuffing poking out of the seams, bandage-like slack wraps on the limbs",
-              "slate / dusty blue-grey / pale grey palette (#151A20, #34424F, #6F8FA8, #B8C6D1)"),
-    "envy": ("ENVY: a jealous look, sickly green rotting cloth covered with many small stitched-on extra eyes that all glance sideways, thorny bramble vines wrapping the limbs, "
-             "a serpent-like green hood fringe, narrow glaring green eyes",
-             "black-olive / swamp green / envy green palette (#111710, #263D22, #3E6B38, #4FA34A)"),
-    "greed": ("GREED: a miserly look, tattered brown cloth with gold coins sewn on like scales, heavy gold chains and a small padlock, coin purse pouches hanging from the belt, "
-              "gold rings on the claws, gleaming coin-shaped gold eyes",
-              "dark umber / tarnished brass / gold palette (#1C150C, #4A3818, #8C6A22, #D9A520)"),
-    "gluttony": ("GLUTTONY: a bloated hungry look, a round swollen bulging belly on the torso, a stained napkin bib tied at the neck, a huge gaping mouth with jagged teeth and a drooling tongue on the head, "
-                 "a fork and spoon stuck into the cloth, food stains and crumbs, fat stubby limbs",
-                 "dark brown / rust / greasy orange palette (#1B120C, #4C2A16, #8C4A1E, #E07A2A)"),
-    "lust": ("LUST: a seductive look, deep rose silk and black lace with frilly ruffles, small heart-shaped stitched patches and ribbon bows, rose buds and thorns, "
-             "long curled eyelashes over glowing pink eyes, a lipstick-red mouth",
-             "dark plum / wine / rose pink palette (#1A0E16, #4A1A36, #8E2A5E, #D9418C)"),
-    "pride": ("PRIDE: an arrogant royal look, rich royal purple velvet with polished gold trim and gold buttons, a small tilted golden crown on the head, a short ermine-trimmed royal cape "
-              "draped over the shoulders of the torso, gold bracelets on the limbs, haughty half-lidded glowing violet eyes with the chin raised",
-              "near-black / deep purple / royal purple / gold palette (#130E1C, #33224F, #7B4FC9, #D9B65A)"),
+    "wrath": ("WRATH: a furious berserk demon look. The WHOLE monster is recolored to deep crimson and blood red (no pink left). "
+              "BIG ICONIC SYMBOL: a pair of large jagged cracked red demon horns on the head, split at the tips, with tiny burning embers and sparks flying off them. "
+              "Torn crimson cloth with glowing orange-red red-hot cracks along the seams like lava, charred black singed edges, short iron spikes and broken chain links stitched on, "
+              "deep angry furrowed brows over burning orange-red eyes, clenched clawed hands, little flames and puffs of hot steam",
+              "black-maroon / dark crimson / blood red palette with glowing ember orange cracks (#170A0C, #4E1216, #8E2226, #C62E2E, #FF7A2A)",
+              "glowing ember orange-red"),
+    "sloth": ("SLOTH: a lazy sleepy look. The WHOLE monster is recolored to dusty blue-grey (no pink left). "
+              "BIG ICONIC SYMBOL: a long floppy blue-and-white striped nightcap with a pompom drooping down from the head, and heavy half-closed sleepy eyelids with a drool drop. "
+              "Droopy limp blue-grey quilt patchwork cloth hanging loose like a blanket, cobwebs and dust on the cloth, pillow stuffing poking out of the seams, "
+              "slack bandage-like wraps on the limbs, a tiny crescent moon patch",
+              "slate / dusty blue-grey / pale grey palette (#151A20, #34424F, #6F8FA8, #B8C6D1)",
+              "dim sleepy pale blue"),
+    "envy": ("ENVY: a jealous look. The WHOLE monster is recolored to sickly green (no pink left). "
+             "BIG ICONIC SYMBOL: many glowing envious green eyes stitched all over the body that all glance sideways, and thorny bramble vines wrapping every limb. "
+             "Sickly green rotting cloth, a serpent-like green hood fringe, narrow glaring green eyes",
+             "black-olive / swamp green / envy green palette (#111710, #263D22, #3E6B38, #4FA34A)",
+             "glowing envious green"),
+    "greed": ("GREED: a miserly treasure-hoarder look. The WHOLE monster is covered in BRIGHT POLISHED GOLD: more than half of every part is shiny gold. "
+              "BIG ICONIC SYMBOL: overlapping big round gold coins sewn on like armor scales all over the body, heavy shiny gold chains with a padlock, and bright gold coin-shaped glowing eyes. "
+              "Dark brown leather showing only between the coins, fat coin purse pouches hanging from the belt, big gold rings and jewels (one red ruby) on the claws, small gleaming sparkles on the gold",
+              "dark umber / brass / bright shiny gold palette (#1C150C, #4A3818, #C8901E, #FFD24A)",
+              "gleaming gold"),
+    "gluttony": ("GLUTTONY: a bloated always-hungry look. The WHOLE monster is recolored to rust brown and greasy orange (no pink left). "
+                 "BIG ICONIC SYMBOL: a huge round swollen bulging belly on the torso with the cloth stretched tight and buttons popping off, and a huge gaping drooling mouth with jagged teeth and a long tongue on the head. "
+                 "A stained white napkin bib tied at the neck, a fork and a knife stuck into the cloth, sauce stains, crumbs and a gnawed bone, fat stubby limbs",
+                 "dark brown / rust / greasy orange palette with a cream white bib (#1B120C, #4C2A16, #8C4A1E, #E07A2A, #E8DCC0)",
+                 "hungry glowing orange"),
+    "lust": ("LUST: a seductive love-doll look. The WHOLE monster is recolored to bright rose pink and hot pink satin with cream-white lace for contrast. "
+             "BIG ICONIC SYMBOL: a BIG hot pink satin ribbon bow on the head, and big bright heart shapes (a large stitched heart patch on the chest, small hearts floating off). "
+             "Frilly cream-white lace ruffles at every edge, red rose buds with thorns, pearl strings, long curled eyelashes over glowing heart-shaped pink eyes, a red lipstick mouth or kiss mark",
+             "dark plum / wine / bright rose pink / cream lace palette (#1A0E16, #6A1E46, #E04A90, #FF8CC0, #F2E0D6)",
+             "glowing heart-shaped hot pink"),
+    "pride": ("PRIDE: an arrogant royal look. The WHOLE monster is recolored to royal purple and polished gold (no pink left). "
+              "BIG ICONIC SYMBOL: a tilted golden crown on the head and a short ermine-trimmed royal purple cape draped over the shoulders. "
+              "Rich purple velvet with polished gold trim and gold buttons, gold bracelets on the limbs, haughty half-lidded glowing violet eyes with the chin raised",
+              "near-black / deep purple / royal purple / gold palette (#130E1C, #33224F, #7B4FC9, #D9B65A)",
+              "glowing violet"),
 }
+
+# 보스는 그 층의 주인: 상징을 가장 크고 화려하게 (원래 왕관 자리, 실 자리를 죄종 상징으로)
+BOSS = {
+    "wrath": "As the LORD OF WRATH, the boss's crown becomes a tall crown of jagged burning red horns and flames, the thread spiral becomes a glowing red-hot iron chain wrapped around the robe, the robe hem is burning with small flames and embers",
+    "sloth": "As the LORD OF SLOTH, the boss wears an extra long striped nightcap instead of the crown, the thread spiral becomes loose sagging blue-grey yarn, the robe is a huge trailing patchwork quilt blanket with pillow stuffing and a stopped pocket watch",
+    "envy": "As the LORD OF ENVY, the boss's crown is made of thorny green brambles with eyes, the thread spiral becomes a coiled green serpent, many green eyes on the robe glance sideways",
+    "greed": "As the LORD OF GREED, the boss wears a tall heavy solid gold crown with jewels, the thread spiral becomes a heavy shiny gold chain, the robe is covered in gold coins and spilling coin pouches, gold everywhere",
+    "gluttony": "As the LORD OF GLUTTONY, the boss's crown is an overturned cooking pot with a ladle, the thread spiral becomes a string of sausages, the robe is a huge bulging stained banquet tablecloth with a napkin bib and cutlery stuck in it",
+    "lust": "As the LORD OF LUST, the boss wears a crown of red roses and a big hot pink ribbon bow, the thread spiral becomes a glowing hot pink ribbon with hearts, the robe is a frilly rose pink lace ball gown with hearts",
+    "pride": "As the LORD OF PRIDE, the boss wears a tall golden crown, the thread spiral becomes a glowing gold-and-purple sash, a long ermine-trimmed royal purple mantle",
+}
+
+STYLE_ENEMY = ("Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline around every shape, "
+               "slightly paper-grain texture INSIDE the shapes, moderate saturation (the sin color should read clearly), not neon")
 
 
 def enemy_prompt(t, s):
     base = (P / f"enemy_{t}_parts.txt").read_text(encoding="utf-8").splitlines()
     order = next(l for l in base if l.startswith("(1)"))
-    theme, palette = ENEMY[s]
+    theme, palette, eye = ENEMY[s]
+    # 원래 몸에 박힌 분홍(눈, 실)을 죄종 색으로
+    order = order.replace("two glowing pale pink eyes", f"two {eye} eyes").replace("glowing pink thread", "glowing thread")
+    extra = (BOSS[s] + ". ") if t == "boss" else ""
     return "\n".join([
         HEAD,
         f"Save path: art_src/raw/enemy_{t}_parts_{s}.png",
         "Size: landscape 1536x1024.",
         "The attached image is a parts sheet of a monster for a 2D cutout bone rig. Create a NEW sheet for the same skeleton: the SAME parts in the SAME order, "
         "at the SAME positions on the sheet, with the SAME sizes, proportions and orientations, so the new parts fit the same bones and joints. "
-        f"Redesign the costume and look of the monster as a seven-deadly-sins variant: {theme}. "
+        f"Redesign the costume and look of the monster as a seven-deadly-sins variant: {theme}. {extra}"
+        "The sin must be obvious at a glance even when the monster is shown small in the game: strong dominant sin color, the big iconic symbol clearly visible. "
         "Costume details may stick out a little beyond the original part silhouette (at most about 15%), but every joint end must stay where it is.",
         "Parts in reading order (left to right, top to bottom):",
         order,
         "RIGGING RULES (critical): every part is a SEPARATE piece with a wide empty gap (at least 70px) from every other piece, nothing touching or overlapping. "
         "Arm/leg segments STRAIGHT and pointing STRAIGHT DOWN with the joint end at the TOP and rounded caps at both ends. Torso upright facing right, head facing right with the neck end at the bottom.",
-        f"{STYLE}, {palette}.",
+        f"{STYLE_ENEMY}, {palette}.",
         BG[KEY.get(s, "green")],
     ]) + "\n"
 

@@ -23,7 +23,6 @@
             <ui:VisualElement class="diary-board">
                 <ui:VisualElement class="diary-head" picking-mode="Ignore">
                     <ui:Label name="diary-title" class="diary-title" picking-mode="Ignore" />
-                    <ui:Label name="diary-subtitle" class="diary-subtitle" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement name="diary-notes" class="diary-notes" />
                 <ui:VisualElement class="diary-foot">

@@ -1,0 +1,400 @@
+{
+ "name": "doll",
+ "height": 360,
+ "rootPos": [
+  0,
+  0
+ ],
+ "talkFollow": 6,
+ "swapAt": 0.35,
+ "swapAfter": 0.6,
+ "reference": {
+  "file": "art_src/raw/npc_doll.png",
+  "x": 0,
+  "y": 10.8,
+  "scale": 0.36
+ },
+ "parts": {
+  "head": {
+   "file": "Assets/sprites/npc_doll_head.png",
+   "w": 318,
+   "h": 228,
+   "pivot": [
+    180,
+    216
+   ]
+  },
+  "body": {
+   "file": "Assets/sprites/npc_doll_body.png",
+   "w": 197,
+   "h": 262,
+   "pivot": [
+    95,
+    259
+   ]
+  },
+  "arm_upper": {
+   "file": "Assets/sprites/npc_doll_arm_upper.png",
+   "w": 86,
+   "h": 159,
+   "pivot": [
+    44,
+    17
+   ],
+   "end": [
+    43,
+    139
+   ],
+   "found": [
+    [
+     44,
+     17
+    ],
+    [
+     43,
+     139
+    ]
+   ]
+  },
+  "arm_lower": {
+   "file": "Assets/sprites/npc_doll_arm_lower.png",
+   "w": 96,
+   "h": 184,
+   "pivot": [
+    52,
+    17
+   ],
+   "end": [
+    43,
+    124
+   ],
+   "found": [
+    [
+     52,
+     17
+    ],
+    [
+     43,
+     124
+    ],
+    [
+     43,
+     100
+    ]
+   ]
+  },
+  "die": {
+   "file": "Assets/sprites/npc_doll_die.png",
+   "w": 98,
+   "h": 110,
+   "pivot": [
+    48,
+    53
+   ]
+  }
+ },
+ "bones": [
+  {
+   "id": "root",
+   "parent": null,
+   "part": null,
+   "at": [
+    0,
+    0
+   ],
+   "rest": 0,
+   "order": 0
+  },
+  {
+   "id": "body",
+   "parent": "root",
+   "part": "body",
+   "at": [
+    0,
+    0
+   ],
+   "rest": 0,
+   "order": 10
+  },
+  {
+   "id": "head",
+   "parent": "body",
+   "part": "head",
+   "at": [
+    7,
+    -237
+   ],
+   "rest": 0,
+   "order": 20,
+   "scale": 0.62
+  },
+  {
+   "id": "L_up",
+   "parent": "body",
+   "part": "arm_upper",
+   "at": [
+    -71,
+    -215
+   ],
+   "rest": 40,
+   "order": 14,
+   "scale": 0.62,
+   "flip": true
+  },
+  {
+   "id": "L_low",
+   "parent": "L_up",
+   "part": "arm_lower",
+   "at": [
+    1,
+    122
+   ],
+   "rest": 140,
+   "order": 15,
+   "flip": true,
+   "snapToEnd": true
+  },
+  {
+   "id": "R_up",
+   "parent": "body",
+   "part": "arm_upper",
+   "at": [
+    87,
+    -215
+   ],
+   "rest": -40,
+   "order": 14,
+   "scale": 0.62,
+   "flip": false
+  },
+  {
+   "id": "R_low",
+   "parent": "R_up",
+   "part": "arm_lower",
+   "at": [
+    -1,
+    122
+   ],
+   "rest": -140,
+   "order": 15,
+   "flip": false,
+   "snapToEnd": true
+  },
+  {
+   "id": "juggle_0",
+   "parent": "body",
+   "part": null,
+   "at": [
+    7,
+    -229
+   ],
+   "rest": 0,
+   "order": 0
+  },
+  {
+   "id": "die_0",
+   "parent": "juggle_0",
+   "part": "die",
+   "at": [
+    0,
+    -180
+   ],
+   "rest": 0,
+   "order": 30,
+   "scale": 0.56
+  },
+  {
+   "id": "juggle_1",
+   "parent": "body",
+   "part": null,
+   "at": [
+    7,
+    -229
+   ],
+   "rest": 0,
+   "order": 0
+  },
+  {
+   "id": "die_1",
+   "parent": "juggle_1",
+   "part": "die",
+   "at": [
+    0,
+    -180
+   ],
+   "rest": 0,
+   "order": 30,
+   "scale": 0.56
+  },
+  {
+   "id": "juggle_2",
+   "parent": "body",
+   "part": null,
+   "at": [
+    7,
+    -229
+   ],
+   "rest": 0,
+   "order": 0
+  },
+  {
+   "id": "die_2",
+   "parent": "juggle_2",
+   "part": "die",
+   "at": [
+    0,
+    -180
+   ],
+   "rest": 0,
+   "order": 30,
+   "scale": 0.56
+  }
+ ],
+ "idle": {
+  "length": 1.5,
+  "bones": [
+   {
+    "bone": "body",
+    "offset": 0,
+    "a1": 1.5,
+    "p1": 0,
+    "a2": 0.5,
+    "p2": 0.25
+   },
+   {
+    "bone": "head",
+    "offset": 0,
+    "a1": 4,
+    "p1": 0.1,
+    "a2": 1.5,
+    "p2": 0.3
+   },
+   {
+    "bone": "L_up",
+    "offset": 0,
+    "a1": 0,
+    "p1": 0,
+    "a2": 3,
+    "p2": 0
+   },
+   {
+    "bone": "L_low",
+    "offset": 0,
+    "a1": 0,
+    "p1": 0,
+    "a2": 6,
+    "p2": 0.05
+   },
+   {
+    "bone": "R_up",
+    "offset": 0,
+    "a1": 0,
+    "p1": 0,
+    "a2": -3,
+    "p2": 0.5
+   },
+   {
+    "bone": "R_low",
+    "offset": 0,
+    "a1": 0,
+    "p1": 0,
+    "a2": -6,
+    "p2": 0.55
+   },
+   {
+    "bone": "juggle_0",
+    "offset": 0,
+    "a1": 62,
+    "p1": 0,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "juggle_1",
+    "offset": 0,
+    "a1": 62,
+    "p1": 0.3333333333333333,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "juggle_2",
+    "offset": 0,
+    "a1": 62,
+    "p1": 0.6666666666666666,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "die_0",
+    "offset": 0,
+    "a1": 0,
+    "p1": 0,
+    "a2": 40,
+    "p2": 0
+   },
+   {
+    "bone": "die_1",
+    "offset": 0,
+    "a1": 0,
+    "p1": 0,
+    "a2": 40,
+    "p2": 0.3333333333333333
+   },
+   {
+    "bone": "die_2",
+    "offset": 0,
+    "a1": 0,
+    "p1": 0,
+    "a2": 40,
+    "p2": 0.6666666666666666
+   }
+  ]
+ },
+ "hold": {
+  "length": 0.75,
+  "bones": [
+   {
+    "bone": "head",
+    "offset": 0,
+    "a1": 5,
+    "p1": 0,
+    "a2": 0,
+    "p2": 0
+   }
+  ]
+ },
+ "raise": {
+  "length": 0.6,
+  "peakTime": 0.3,
+  "settleTime": 0.6,
+  "keepEnd": true,
+  "easeIn": true,
+  "bones": [
+   {
+    "bone": "head",
+    "start": 0,
+    "peak": 10,
+    "settle": 6
+   },
+   {
+    "bone": "L_up",
+    "start": 0,
+    "peak": 12,
+    "settle": 8
+   },
+   {
+    "bone": "R_up",
+    "start": 0,
+    "peak": -12,
+    "settle": -8
+   },
+   {
+    "bone": "body",
+    "start": 0,
+    "peak": -2,
+    "settle": -1
+   }
+  ]
+ }
+}

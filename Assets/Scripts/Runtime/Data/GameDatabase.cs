@@ -221,6 +221,15 @@ namespace TOD
         public float dropVacuumSpeed, dropVacuumAccel;            // 그 뒤 몸으로 빨려 드는 속도·가속
         public float orbSize, coinSize, dropGlow;                 // 그리기 크기(캔버스 px), 빛 배율
         public Color xpColor, goldColor;                          // 흡수 반짝임 색
+        [Header("23차 보스 처치 기억의 파편 (shardBoss + shardFloorClear 를 나눠 담아 바닥에 흩뿌린다)")]
+        public int bossShardPieces;           // 떨어지는 알 수
+        public float bossShardSpread;         // 흩어지는 속도 (캔버스 px/초, 끌림으로 멈춤)
+        public float bossShardFall, bossShardFallHeight;          // 떨어지는 시간(초)과 높이(캔버스 px)
+        public float bossShardHold, bossShardStagger;             // 바닥에 머무는 시간(초), 알마다 엇갈림(초)
+        public float bossShardAccel;          // 빨려 드는 가속 (시작 속도는 dropVacuumSpeed)
+        public float shardSize;               // 그리기 크기(캔버스 px)
+        public Color shardColor;              // 빛, 꼬리, 몸에서 반짝임 색
+        public string shardSound;             // 흡수할 때 효과음 (SoundBank 이름)
     }
 
     [Serializable] public class AugmentEffect { public RunStat stat; public StatOp op; public float value; }
@@ -262,6 +271,13 @@ namespace TOD
         public float warpFrom;                // 욕망 비율 (.8)
         public Color warpTint;                // a = 최대 섞는 양
         public float warpAmplitude, warpFrequency, warpSpeed;   // 일렁임 진폭(캔버스 px)·주파수·속도
+        [Header("23차: 보스 욕망을 고른 뒤 화면에 잠깐 뜨는 한 줄 (GameUI.DesireEcho.cs)")]
+        public string swallowLine;            // 삼킴: "달다. 그래서 더 무섭다."
+        public string refuseLine;             // 안 삼킴: "손을 거두자, 욕망이 식어 간다."
+        public float echoDelay;               // 고른 뒤 쪽지가 뜨기까지 (초)
+        public float echoCharTime;            // 글자 하나가 번지는 시간 (초)
+        public float echoHold;                // 다 쓰인 뒤 머무는 시간 (초)
+        public float echoFade;                // 사라지는 시간 (초)
     }
 
     // 세트 = 속성. 같은 색 조각을 맞대 단계(thresholds)가 켜지면 실이 그 속성 모습이 되고, 당길 때 한 타마다 속성 피해가 더해지며 부가 효과가 붙는다.
@@ -334,6 +350,7 @@ namespace TOD
         public int[] startingKinds;
         public Color[] rankColors;            // 코스트 1~4 → 일반 회색·레어 하늘색·유니크 노란색·레전더리 붉은색 (0번 미사용)
         public float[] rankShine;             // 등급별 번쩍임 세기 (0 = 없음)
+        public CardEntrance cardEntrance;     // 22차-ui-fixes: 레전더리, 신화 카드가 고르기 창에 나타날 때 번쩍임
         public string saveKey;
         public ItemEffectText[] effectTexts;  // 고유 효과 이름·설명
         public float subSetScale;             // (16차부터 쓰지 않음) 예전 보조 세트 배율 — 부가 세트는 SetDef.procCharge 주기 발동으로 바뀜
@@ -352,6 +369,7 @@ namespace TOD
         public Sprite icon;
         public int basePrice;
         public float amount;
+        public string potion;                 // 23차: 포션 id 면 사서 포션 칸에 넣는다 (바로 쓰지 않음)
     }
 
     [Serializable] public class ShopConfig
@@ -379,7 +397,30 @@ namespace TOD
         public BindStyle style;
         public Color glow, color, core;       // 바깥 빛 · 몸통 · 가운데 심 (가산)
         [Range(0, 1)] public float cover = 1; // 실 덮개 세기 배율 (밝은 색은 다섯 가닥이 겹치면 하얗게 날아가므로 낮춘다)
-        public string text;                // 적 머리 위 글자 (예: "화염 결박!")
+        public string text;                // 적 머리 위 글자 (23차: 라틴어 죄종 이름, 예 "IRA". Cinzel 로마 비문체)
+        public Color titleFill, titleGlow;    // 23차 그 글자의 금속 면 색 · 뒤 후광 색 (죄종 색)
+    }
+
+    // 23차: 결박 당기기 때 적 머리 위에 찍히는 라틴어 죄종 글자 (GameUI.Inscription.cs, ArenaRenderer DrawInscription)
+    [Serializable] public class InscriptionConfig
+    {
+        public FxSpec fx;                     // time = 보이는 시간 (초), lift = 적 점 위로 띄우는 높이 (캔버스 px)
+        public float size;                    // 글자 크기 (캔버스 px)
+        public float spacing;                 // 자간 (글자 크기 비율)
+        public float stamp, stampTime;        // 처음 크기 배율, 찍히는 데 걸리는 때 (0~1, 가속하며 쾅)
+        public float spread;                  // 찍히기 전 자간 배율 (벌어졌다 모인다)
+        public float bounce, bounceTime;      // 찍힌 뒤 눌렸다 돌아오는 정도, 길이 (0~1)
+        public float settle, rise;            // 다 찍힌 뒤 천천히 커지는 배율, 떠오르는 거리 (px)
+        public float fadeFrom;                // 이때부터 사라진다 (0~1)
+        public float flashTime;               // 찍힌 순간 하얗게 달궈졌다 식는 길이 (0~1)
+        public float shake;                   // 찍힌 순간 좌우 떨림 (px)
+        public float sheenFrom, sheenTo, sheenWidth, sheenPower;   // 빛이 글자를 훑고 지나가는 구간 (0~1), 폭 (글자 수 비율), 세기
+        public float edgePx, glowPx, glowBlur, shadePx;   // 금속 테두리 · 후광 외곽 굵기 · 후광 번짐 · 아래 두께(어두운 단) (캔버스 px)
+        public Color edge;                    // 금속 테두리 색 (어두운 쇠)
+        [Range(0, 1)] public float shadeDark; // 아래 두께 색 = 면 색 × 이 값
+        public float rule, ruleThick;         // 양옆 가로줄 길이 (글자 크기 배율), 굵기 (px)
+        [Range(0, 1)] public float hiLift;    // 금속 두 톤: 글자 위쪽 절반을 흰색 쪽으로 이만큼 밝게
+        public float aura, auraFlash;         // 뒤 빛무리(soft_disc, 후광 색) 세기, 찍힌 순간 더 세지는 배율
     }
 
     // 결박 당기기: 같은 적 하나에 실이 strands 가닥 이상 걸린 채 당기면 그 적에게 추가 피해 + 속성 연출.
@@ -421,6 +462,7 @@ namespace TOD
         public float stretchPower;            // 끌려올 때 몸이 늘어나는 정도 배율
         public int speedLines;                // 적 둘레 속도선 수
         public BindLook[] looks;
+        public InscriptionConfig title;       // 23차 라틴어 죄종 글자
     }
 
     // 맵 장식 (12차): 상호작용 없는 코스메틱. 라운드마다 새 맵에 흩어 두고, 캐릭터·몬스터·공격 예고보다 항상 뒤(Ground 층 맨 앞 순서)에 그린다.
@@ -536,7 +578,7 @@ namespace TOD
         public string bossRoundName, roundName;   // "층 보스", "{0}라운드"
         public string loot;                   // "{0} 획득"
         public string dodge, emptyYarn, pullEmpty;
-        public string pullHits, pullTransfers, pullNone;   // "실 명중 {0}회", ", 피해 전달 {0}체", "실을 거뒀습니다"
+        public string pullHits, pullTransfers, pullNone;   // "실 명중 {0}회", ", 피해 전달 {0}체", (23차부터 pullNone 은 화면에 안 씀)
         public string bossSummon, combo;      // "{0} HIT"
         public string spite;                  // 고유 효과 '분풀이' 발동 ("분풀이! 털실 회수")
     }
@@ -568,6 +610,7 @@ namespace TOD
         public string setListCount, setListNeed, setMainTag, setSubTag, setTierLine;   // 22차 세트 목록 "(3)" / 못 미친 "(1/2)" / 메인, 부가 꼬리표 / 창의 단계 숫자 "({0})"
         public string[] statNames;            // StatKind 순서
         public string[] roundNames;           // 첫 번째 라운드, 두 번째 라운드, 층 보스
+        public string hudFloorRound, hudFloorRest, hudFloorBoss;   // 23차 타이머 오른쪽 "{0}층 {1}라운드" ({0} 층, {1} 라운드 번호). 쉬어가기, 보스는 따로(비면 hudFloorRound)
     }
 
     [Serializable] public class SynthSound
@@ -610,6 +653,8 @@ namespace TOD
         public MessageConfig messages;
         public UiTextConfig ui;
         public SynthSound[] sounds;
+        public PotionConfig potions;          // 23차: 포션 칸 (PotionData.cs)
+        public NpcConfig npcs;                // 23차: 쉬어가기 NPC 4종, 재봉실 NPC (NpcData.cs)
 
         public EnemyType Enemy(string id) => Array.Find(enemies.types, t => t.id == id);
         public AugmentDef Augment(string id) => Array.Find(augments.augments, a => a.id == id);

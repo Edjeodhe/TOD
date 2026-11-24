@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>종이 인형 리깅</title>
+<!-- 23차 종이 인형 리깅 페이지 (모이라 리깅 페이지 moira.html 을 리그 파일을 고를 수 있게 일반화한 것).
+     열기: http://localhost:5181/tools/rig_editor/rig.html?rig=Assets/Rig/npc_nun.json (위 '리그' 목록 = 서버 GET /rigs, Assets/Rig/*.json).
+     서버: python tools/rig_editor/server.py (POST /save 로 같은 파일에 저장). Unity 는 이 JSON 과 같은 그림을 그대로 읽어 같은 계산을 C# 으로 돌린다
+     (쉬어가기 NPC = Runtime/Rig/CutoutRig.cs, 모이라 = MoiraRig.cs). 여기 계산(pose, worlds, 그리기 순서)을 바꾸면 두 C# 파일도 같이 바꾼다.
+     동작: idle(대기 반복, 뿌리 rootX/rootY 포함) + hold(말하기 반복) × 말 비중 + raise(말하기 시작 → 최고 → 유지) × 말 비중. touch 는 모이라 전용(있을 때만 버튼이 보임).
+     좌표는 Unity BoneRig 와 같다: 그림 px, 아래 +y, 각도는 시계 방향 +(도).
+     뼈 i 의 세계 변환 = 부모 변환 · 이동(at) · 회전(rest + 동작) · 배율(scale). 뿌리 뼈는 이동(rootPos + 동작 root).
+     그림은 뼈 원점(= 관절, pivot)에 그림의 pivot 이 오게 그린다. flip 이면 pivot 을 지나는 세로축으로 뒤집는다.
+     artScale 은 그림만 키운다(자식 뼈 자리는 그대로), scale 은 뼈째 키운다(자식도 같이). -->
+<style>
+  :root { --bg:#17131b; --panel:#221c28; --line:#3a2f44; --ink:#e9dfef; --dim:#9d8fa8; --gold:#d6b06e; --hot:#ff6b8a; --cyan:#7fe0d8; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:13px/1.4 "Malgun Gothic", system-ui, sans-serif; display:flex; flex-direction:column; height:100vh; }
+  header { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:6px 10px; border-bottom:1px solid var(--line); background:var(--panel); }
+  header h1 { font-size:15px; margin:0 10px 0 0; color:var(--gold); }
+  button, select, input { font:inherit; color:var(--ink); background:#2d2536; border:1px solid var(--line); border-radius:4px; padding:3px 8px; }
+  button:hover { border-color:var(--gold); }
+  button.on { background:#5a3f6e; border-color:var(--gold); }
+  input[type=number] { width:64px; }
+  main { flex:1; display:flex; min-height:0; }
+  #stageWrap { flex:1; position:relative; min-width:0; }
+  #stage { width:100%; height:100%; display:block; cursor:crosshair; }
+  #hint { position:absolute; left:8px; bottom:6px; color:var(--dim); font-size:12px; pointer-events:none; }
+  aside { width:360px; border-left:1px solid var(--line); background:var(--panel); overflow:auto; padding:8px 10px; }
+  h2 { font-size:13px; color:var(--gold); margin:12px 0 6px; }
+  #bones { display:flex; flex-wrap:wrap; gap:4px; }
+  #bones button { padding:2px 6px; font-size:12px; }
+  .row { display:flex; gap:6px; align-items:center; margin:3px 0; }
+  .row label { width:62px; color:var(--dim); }
+  #partView { width:100%; height:260px; background:#0f0c12; border:1px solid var(--line); cursor:crosshair; }
+  #status { margin-left:auto; color:var(--dim); }
+  table { border-collapse:collapse; width:100%; }
+  td { padding:1px 2px; }
+  td input { width:52px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>종이 인형 리깅</h1>
+  <select id="rigPick" title="Assets/Rig 의 리그 파일"></select>
+  <button id="save">저장 (Ctrl+S)</button>
+  <button id="reload">다시 불러오기</button>
+  <button id="autoJoint" title="부모 그림에서 찾은 아래쪽 관절(끝점)에 자식 뼈를 붙인다">관절 자동 맞춤</button>
+  <span style="width:10px"></span>
+  <button id="playIdle" class="on">대기</button>
+  <button id="playTalk">말하기</button>
+  <button id="playTouch" title="22차 미래 보기: 앉아서 점성구를 두 손으로 감싼다">구슬 만지기</button>
+  <button id="pause">멈춤</button>
+  속도 <input id="speed" type="number" step="0.25" value="1">
+  <span style="width:10px"></span>
+  참고 그림 <input id="refAlpha" type="range" min="0" max="1" step="0.05" value="0.35">
+  <label><input id="showBones" type="checkbox" checked> 뼈</label>
+  <label><input id="showJoints" type="checkbox" checked> 관절점</label>
+  <span id="status"></span>
+</header>
+<main>
+  <div id="stageWrap">
+    <canvas id="stage"></canvas>
+    <div id="hint">뼈 관절점 클릭 = 고르기 · 끌기 = 자리(at) 옮기기 · Shift+끌기 = 기본 각도(rest) · 휠 = 확대 · 가운데 버튼 끌기 = 화면 이동</div>
+  </div>
+  <aside>
+    <h2>뼈</h2>
+    <div id="bones"></div>
+    <h2 id="selTitle">고른 뼈</h2>
+    <div id="fields"></div>
+    <h2>그림과 관절점 <span style="color:var(--dim);font-weight:normal">(클릭 = 회전 중심, Shift+클릭 = 끝 관절)</span></h2>
+    <canvas id="partView"></canvas>
+    <h2>동작 (고른 뼈)</h2>
+    <div id="motion"></div>
+    <h2>동작 전체</h2>
+    <div id="motionAll"></div>
+  </aside>
+</main>
+<script>
+let RIG_PATH = new URLSearchParams(location.search).get("rig") || "Assets/Rig/npc_nun.json";
+const $ = id => document.getElementById(id);
+let rig = null, images = {}, sel = null;
+let view = { x: 0, y: 0, s: 0.9 };          // 화면 = 리그 원점 위치 + 배율
+let mode = "idle", t = 0, talkT = 0, talkW = 0, touchT = 0, touchW = 0, paused = false, last = performance.now();
+let drag = null;
+
+// ---------------------------------------------------------------- 불러오기 / 저장
+async function load() {
+  const res = await fetch("/" + RIG_PATH + "?t=" + Date.now());
+  rig = await res.json();
+  images = {};
+  const files = Object.entries(rig.parts).map(([k, p]) => [k, p.file]);
+  if (rig.reference) files.push(["__ref", rig.reference.file]);
+  await Promise.all(files.map(([k, f]) => new Promise(ok => { const im = new Image(); im.onload = () => { images[k] = im; ok(); }; im.onerror = ok; im.src = "/" + f + "?t=" + Date.now(); })));
+  sel = sel && bone(sel) ? sel : rig.bones[0].id;
+  $("playTouch").style.display = rig.touch ? "" : "none";
+  document.title = "리깅: " + RIG_PATH.split("/").pop();
+  buildBones(); buildFields(); buildMotion();
+  status("불러옴");
+}
+async function save() {
+  const res = await fetch("/save?path=" + encodeURIComponent(RIG_PATH), { method: "POST", body: JSON.stringify(rig) });
+  status(res.ok ? "저장함 " + new Date().toLocaleTimeString() : "저장 실패 " + res.status);
+}
+function status(s) { $("status").textContent = s; }
+const bone = id => rig.bones.find(b => b.id === id);
+
+// ---------------------------------------------------------------- 수학 (2×3 행렬 [a b c d e f]: x' = a x + c y + e)
+const mul = (m, n) => [m[0]*n[0]+m[2]*n[1], m[1]*n[0]+m[3]*n[1], m[0]*n[2]+m[2]*n[3], m[1]*n[2]+m[3]*n[3], m[0]*n[4]+m[2]*n[5]+m[4], m[1]*n[4]+m[3]*n[5]+m[5]];
+const tr = (x, y) => [1, 0, 0, 1, x, y];
+const rot = d => { const r = d * Math.PI / 180, c = Math.cos(r), s = Math.sin(r); return [c, s, -s, c, 0, 0]; };
+const sc = s => [s, 0, 0, s, 0, 0];
+const apply = (m, p) => [m[0]*p[0]+m[2]*p[1]+m[4], m[1]*p[0]+m[3]*p[1]+m[5]];
+function inv(m) { const det = m[0]*m[3]-m[1]*m[2]; const a = m[3]/det, b = -m[1]/det, c = -m[2]/det, d = m[0]/det; return [a, b, c, d, -(a*m[4]+c*m[5]), -(b*m[4]+d*m[5])]; }
+
+// ---------------------------------------------------------------- 동작 (BoneRig 와 같은 계산)
+const wave = (w, u) => !w ? 0 : (w.offset||0) + (w.a1||0)*Math.sin(2*Math.PI*(u+(w.p1||0))) + (w.a2||0)*Math.sin(4*Math.PI*(u+(w.p2||0)));
+function shotValue(m, t, a, b, c) {
+  if (m.peakTime > 0 && t < m.peakTime) { let u = t / m.peakTime; if (m.easeIn) u = 1-(1-u)*(1-u); return a + (b-a)*u; }
+  if (t < m.settleTime) return b + (c-b)*(m.settleTime > m.peakTime ? (t-m.peakTime)/(m.settleTime-m.peakTime) : 1);
+  if (m.keepEnd || m.length <= m.settleTime) return c;
+  return c + (0-c)*Math.min(1, Math.max(0, (t-m.settleTime)/(m.length-m.settleTime)));
+}
+function pose() {
+  const ang = {}, root = [0, 0];
+  rig.bones.forEach(b => ang[b.id] = 0);
+  const loop = (m, time, w) => {
+    if (!m || w <= 0) return;
+    const u = m.length > 0 ? ((time % m.length) + m.length) % m.length / m.length : 0;
+    root[0] += wave(m.rootX, u) * w; root[1] += wave(m.rootY, u) * w;
+    (m.bones||[]).forEach(bw => { if (bw.bone in ang) ang[bw.bone] += wave(bw, u) * w; });
+  };
+  // 22차: 구슬 만지기(touch)가 들어오는 만큼 카드 들기(talk)는 빠진다 (Unity MoiraRig 와 같음)
+  const tw = talkW * (1 - touchW);
+  loop(rig.idle, t, 1);
+  loop(rig.hold, t, tw);
+  if (rig.raise && tw > 0) {
+    const m = rig.raise, tt = Math.min(talkT, m.length);
+    (m.bones||[]).forEach(bp => { if (bp.bone in ang) ang[bp.bone] += shotValue(m, tt, bp.start, bp.peak, bp.settle) * tw; });
+  }
+  loop(rig.touchLoop, t, touchW);
+  if (rig.touch && touchW > 0) {
+    const m = rig.touch, tt = Math.min(touchT, m.length);
+    (m.bones||[]).forEach(bp => { if (bp.bone in ang) ang[bp.bone] += shotValue(m, tt, bp.start, bp.peak, bp.settle) * touchW; });
+  }
+  return { ang, root };
+}
+function worlds(p) {
+  const out = {};
+  for (const b of rig.bones) {
+    let m;
+    if (!b.parent) m = tr(rig.rootPos[0] + p.root[0], rig.rootPos[1] + p.root[1]);
+    else m = mul(out[b.parent], tr(b.at[0], b.at[1]));
+    m = mul(m, rot((b.rest||0) + p.ang[b.id]));
+    if (b.scale && b.scale !== 1) m = mul(m, sc(b.scale));
+    out[b.id] = m;
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- 그리기
+const cv = $("stage"), ctx = cv.getContext("2d");
+function screenM() { return [view.s, 0, 0, view.s, cv.width/2 + view.x, cv.height*0.86 + view.y]; }
+function draw() {
+  const dpr = devicePixelRatio || 1;
+  if (cv.width !== cv.clientWidth*dpr || cv.height !== cv.clientHeight*dpr) { cv.width = cv.clientWidth*dpr; cv.height = cv.clientHeight*dpr; }
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = "#0f0c12"; ctx.fillRect(0, 0, cv.width, cv.height);
+  if (!rig) return;
+  const S = screenM();
+  // 바닥선, 원점
+  ctx.setTransform(...S);
+  ctx.strokeStyle = "#3a2f44"; ctx.lineWidth = 1/view.s;
+  ctx.beginPath(); ctx.moveTo(-600, 0); ctx.lineTo(600, 0); ctx.stroke();
+  // 참고 그림 (원래 통그림): reference.x/y = 그림 아래 가운데가 오는 리그 좌표, scale
+  const ref = rig.reference, rim = images.__ref;
+  if (ref && rim && +$("refAlpha").value > 0) {
+    ctx.globalAlpha = +$("refAlpha").value;
+    const s = ref.scale || 1;
+    ctx.drawImage(rim, ref.x - rim.width*s/2, ref.y - rim.height*s, rim.width*s, rim.height*s);
+    ctx.globalAlpha = 1;
+  }
+  const p = pose(), W = worlds(p);
+  // 그림: order 오름차순
+  // 말할 때 그림(카드 쥔 손)은 손을 드는 동작이 최고 시점의 swapAfter 만큼 지난 뒤부터 (Unity MoiraRig 와 같은 규칙)
+  const raised = !rig.raise || talkT >= rig.raise.peakTime * (rig.swapAfter ?? 0.8);
+  const showFan = talkW * (1 - touchW) > (rig.swapAt ?? 0.35) && (raised || mode !== "talk");
+  const partOf = b => (showFan && b.talkPart) ? b.talkPart : b.part;   // 말 걸 때 그림 바꾸기 (손 → 카드를 쥔 손)
+  [...rig.bones].filter(b => partOf(b) && images[partOf(b)]).sort((a, b) => (a.order||0) - (b.order||0)).forEach(b => {
+    if (b.id === rig.fanBone && !showFan) return;
+    const key = partOf(b), part = rig.parts[key], im = images[key];
+    ctx.setTransform(...mul(S, W[b.id]));
+    if (b.artScale && b.artScale !== 1) ctx.scale(b.artScale, b.artScale);   // 그림만 키움 (자식 뼈는 그대로)
+    if (b.flip) ctx.scale(-1, 1);
+    if (part.rot) ctx.rotate(part.rot * Math.PI / 180);   // 그림을 다른 방향으로 그린 파츠 (예: 위를 향한 손)
+    if (part.scale && part.scale !== 1) ctx.scale(part.scale, part.scale);   // 이 그림만 키움 (예: 카드를 쥔 손)
+    ctx.drawImage(im, -part.pivot[0], -part.pivot[1]);
+  });
+  // 뼈와 관절점
+  if ($("showBones").checked) {
+    ctx.setTransform(1,0,0,1,0,0);
+    for (const b of rig.bones) {
+      const a = apply(mul(S, W[b.id]), [0, 0]);
+      if (b.parent) { const q = apply(mul(S, W[b.parent]), [0, 0]); ctx.strokeStyle = "rgba(214,176,110,.7)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(a[0], a[1]); ctx.stroke(); }
+      ctx.fillStyle = b.id === sel ? "#ff6b8a" : "#d6b06e";
+      ctx.beginPath(); ctx.arc(a[0], a[1], b.id === sel ? 7 : 4.5, 0, 7); ctx.fill();
+      if (b.id === sel) { ctx.fillStyle = "#fff"; ctx.font = "12px sans-serif"; ctx.fillText(b.id, a[0] + 9, a[1] - 8); }
+      // 끝 관절 (자식이 붙는 자리)
+      const part = b.part && rig.parts[b.part];
+      if ($("showJoints").checked && part && part.end) {
+        const e = [ (part.end[0]-part.pivot[0]) * (b.flip ? -1 : 1), part.end[1]-part.pivot[1] ];
+        const q = apply(mul(S, W[b.id]), e);
+        ctx.strokeStyle = "#7fe0d8"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(q[0], q[1], 5, 0, 7); ctx.stroke();
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------- 오른쪽 패널
+function buildBones() {
+  const box = $("bones"); box.innerHTML = "";
+  rig.bones.forEach(b => { const btn = document.createElement("button"); btn.textContent = b.id; if (b.id === sel) btn.className = "on"; btn.onclick = () => select(b.id); box.appendChild(btn); });
+}
+function select(id) { sel = id; buildBones(); buildFields(); buildMotion(); }
+function num(label, get, set, step = 1) {
+  const row = document.createElement("div"); row.className = "row";
+  row.innerHTML = `<label>${label}</label>`;
+  const inp = document.createElement("input"); inp.type = "number"; inp.step = step; inp.value = +(+get()).toFixed(2);
+  inp.oninput = () => { if (inp.value !== "") set(+inp.value); drawPart(); };
+  row.appendChild(inp); return [row, inp];
+}
+function buildFields() {
+  const b = bone(sel), box = $("fields"); box.innerHTML = "";
+  $("selTitle").textContent = "고른 뼈: " + b.id;
+  const parentRow = document.createElement("div"); parentRow.className = "row";
+  parentRow.innerHTML = `<label>부모</label>`;
+  const ps = document.createElement("select");
+  ps.innerHTML = `<option value="">(뿌리)</option>` + rig.bones.filter(x => x.id !== b.id).map(x => `<option ${x.id === b.parent ? "selected" : ""}>${x.id}</option>`).join("");
+  ps.onchange = () => { b.parent = ps.value || null; };
+  parentRow.appendChild(ps); box.appendChild(parentRow);
+  const partRow = document.createElement("div"); partRow.className = "row";
+  partRow.innerHTML = `<label>그림</label>`;
+  const qs = document.createElement("select");
+  qs.innerHTML = `<option value="">(없음)</option>` + Object.keys(rig.parts).map(k => `<option ${k === b.part ? "selected" : ""}>${k}</option>`).join("");
+  qs.onchange = () => { b.part = qs.value || null; drawPart(); };
+  partRow.appendChild(qs); box.appendChild(partRow);
+  const talkRow = document.createElement("div"); talkRow.className = "row";
+  talkRow.innerHTML = `<label>말할 때</label>`;
+  const ts = document.createElement("select");
+  ts.innerHTML = `<option value="">(그대로)</option>` + Object.keys(rig.parts).map(k => `<option ${k === b.talkPart ? "selected" : ""}>${k}</option>`).join("");
+  ts.onchange = () => { b.talkPart = ts.value || undefined; };
+  talkRow.appendChild(ts); box.appendChild(talkRow);
+  if (b.parent) {
+    const row = document.createElement("div"); row.className = "row"; row.innerHTML = "<label>자리 at</label>";
+    ["0", "1"].forEach(i => { const inp = document.createElement("input"); inp.type = "number"; inp.value = +(+b.at[i]).toFixed(1); inp.oninput = () => b.at[i] = +inp.value; row.appendChild(inp); });
+    box.appendChild(row);
+  } else {
+    const row = document.createElement("div"); row.className = "row"; row.innerHTML = "<label>rootPos</label>";
+    [0, 1].forEach(i => { const inp = document.createElement("input"); inp.type = "number"; inp.value = rig.rootPos[i]; inp.oninput = () => rig.rootPos[i] = +inp.value; row.appendChild(inp); });
+    box.appendChild(row);
+  }
+  box.appendChild(num("rest (도)", () => b.rest || 0, v => b.rest = v)[0]);
+  box.appendChild(num("순서", () => b.order || 0, v => b.order = v)[0]);
+  box.appendChild(num("배율", () => b.scale || 1, v => b.scale = v, 0.05)[0]);
+  box.appendChild(num("그림 배율", () => b.artScale || 1, v => b.artScale = v, 0.05)[0]);
+  const fr = document.createElement("div"); fr.className = "row"; fr.innerHTML = `<label>뒤집기</label>`;
+  const fc = document.createElement("input"); fc.type = "checkbox"; fc.checked = !!b.flip; fc.onchange = () => b.flip = fc.checked; fr.appendChild(fc); box.appendChild(fr);
+  const shade = num("그늘", () => b.shade || 0, v => b.shade = v, 0.05); box.appendChild(shade[0]);
+  drawPart();
+}
+// 모션: 고른 뼈의 대기(idle) / 카드 들기(hold) 파형, 말 걸기(raise) 시작→최고→유지
+function waveOf(m, id, make) {
+  m.bones = m.bones || [];
+  let w = m.bones.find(x => x.bone === id);
+  if (!w && make) { w = { bone: id, offset: 0, a1: 0, p1: 0, a2: 0, p2: 0, start: 0, peak: 0, settle: 0 }; m.bones.push(w); }
+  return w;
+}
+function buildMotion() {
+  const box = $("motion"); box.innerHTML = "";
+  const tbl = document.createElement("table");
+  const head = `<tr><td></td><td>offset</td><td>a1</td><td>p1</td><td>a2</td><td>p2</td></tr>`;
+  tbl.innerHTML = head;
+  const hasTouch = !!rig.touch;   // 모이라 전용 (구슬 만지기)
+  rig.hold = rig.hold || { length: 1.5, bones: [] };
+  rig.raise = rig.raise || { length: 0.7, peakTime: 0.38, settleTime: 0.7, keepEnd: true, easeIn: true, bones: [] };
+  [["대기", rig.idle], ["말하기", rig.hold]].concat(hasTouch ? [["만지기", rig.touchLoop]] : []).forEach(([name, m]) => {
+    const tr2 = document.createElement("tr"); tr2.innerHTML = `<td>${name}</td>`;
+    const w = waveOf(m, sel, false) || {};
+    ["offset", "a1", "p1", "a2", "p2"].forEach(k => {
+      const td = document.createElement("td"), inp = document.createElement("input"); inp.type = "number"; inp.step = k[0] === "p" ? 0.05 : 0.5; inp.value = w[k] || 0;
+      inp.oninput = () => { waveOf(m, sel, true)[k] = +inp.value; }; td.appendChild(inp); tr2.appendChild(td);
+    });
+    tbl.appendChild(tr2);
+  });
+  box.appendChild(tbl);
+  const r = waveOf(rig.raise, sel, false) || {};
+  const row = document.createElement("div"); row.className = "row"; row.innerHTML = "<label>들기</label>";
+  ["start", "peak", "settle"].forEach(k => { const inp = document.createElement("input"); inp.type = "number"; inp.title = k; inp.value = r[k] || 0; inp.oninput = () => waveOf(rig.raise, sel, true)[k] = +inp.value; row.appendChild(inp); });
+  box.appendChild(row);
+  if (hasTouch) {
+    const tr = waveOf(rig.touch, sel, false) || {};
+    const trow = document.createElement("div"); trow.className = "row"; trow.innerHTML = "<label>구슬 만지기</label>";
+    ["start", "peak", "settle"].forEach(k => { const inp = document.createElement("input"); inp.type = "number"; inp.title = k; inp.value = tr[k] || 0; inp.oninput = () => waveOf(rig.touch, sel, true)[k] = +inp.value; trow.appendChild(inp); });
+    box.appendChild(trow);
+  }
+  const all = $("motionAll"); all.innerHTML = "";
+  all.appendChild(num("대기 길이", () => rig.idle.length, v => rig.idle.length = v, 0.1)[0]);
+  all.appendChild(num("말하기 길이", () => rig.hold.length, v => rig.hold.length = v, 0.1)[0]);
+  all.appendChild(num("시작 최고", () => rig.raise.peakTime, v => rig.raise.peakTime = v, 0.05)[0]);
+  all.appendChild(num("시작 정리", () => rig.raise.settleTime, v => { rig.raise.settleTime = v; rig.raise.length = Math.max(rig.raise.length, v); }, 0.05)[0]);
+  all.appendChild(num("리그 높이", () => rig.height || 400, v => rig.height = v, 5)[0]);
+  // 뿌리 흔들림 (대기): 둥실 뜨기(유령), 들썩임
+  ["rootX", "rootY"].forEach(key => {
+    const w = rig.idle[key] || {};
+    const row = document.createElement("div"); row.className = "row"; row.innerHTML = `<label>뿌리 ${key === "rootX" ? "가로" : "세로"}</label>`;
+    ["a1", "p1", "a2", "p2"].forEach(k => { const inp = document.createElement("input"); inp.type = "number"; inp.title = k; inp.step = k[0] === "p" ? 0.05 : 0.5; inp.value = w[k] || 0;
+      inp.oninput = () => { rig.idle[key] = rig.idle[key] || { offset: 0, a1: 0, p1: 0, a2: 0, p2: 0 }; rig.idle[key][k] = +inp.value; }; row.appendChild(inp); });
+    all.appendChild(row);
+  });
+  if (hasTouch) {
+    all.appendChild(num("만지기 반복 길이", () => rig.touchLoop.length, v => rig.touchLoop.length = v, 0.1)[0]);
+    all.appendChild(num("만지기 최고", () => rig.touch.peakTime, v => rig.touch.peakTime = v, 0.05)[0]);
+    all.appendChild(num("만지기 정리", () => rig.touch.settleTime, v => { rig.touch.settleTime = v; rig.touch.length = Math.max(rig.touch.length, v); }, 0.05)[0]);
+  }
+}
+
+// 그림 미리보기: 회전 중심(분홍), 끝 관절(청록), 자동으로 찾은 관절 후보(점선)
+const pv = $("partView"), pctx = pv.getContext("2d");
+function partFit() {
+  const b = bone(sel), part = b && b.part && rig.parts[b.part], im = part && images[b.part];
+  if (!im) return null;
+  const s = Math.min(pv.width / im.width, pv.height / im.height) * 0.92;
+  return { part, im, s, ox: (pv.width - im.width*s)/2, oy: (pv.height - im.height*s)/2 };
+}
+function drawPart() {
+  pv.width = pv.clientWidth; pv.height = pv.clientHeight;
+  pctx.fillStyle = "#0f0c12"; pctx.fillRect(0, 0, pv.width, pv.height);
+  const f = partFit(); if (!f) return;
+  pctx.drawImage(f.im, f.ox, f.oy, f.im.width*f.s, f.im.height*f.s);
+  const dot = (p, color, r) => { pctx.strokeStyle = color; pctx.lineWidth = 2; pctx.beginPath(); pctx.arc(f.ox + p[0]*f.s, f.oy + p[1]*f.s, r, 0, 7); pctx.stroke(); };
+  (f.part.found || []).forEach(p => { pctx.setLineDash([3, 3]); dot(p, "#9d8fa8", 6); pctx.setLineDash([]); });
+  dot(f.part.pivot, "#ff6b8a", 7);
+  if (f.part.end) dot(f.part.end, "#7fe0d8", 7);
+}
+pv.addEventListener("click", e => {
+  const f = partFit(); if (!f) return;
+  const r = pv.getBoundingClientRect();
+  const p = [Math.round((e.clientX - r.left - f.ox) / f.s), Math.round((e.clientY - r.top - f.oy) / f.s)];
+  if (e.shiftKey) f.part.end = p; else f.part.pivot = p;
+  drawPart();
+});
+
+// ---------------------------------------------------------------- 무대 마우스
+function toRig(e) { const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1; return apply(inv(screenM()), [(e.clientX - r.left)*d, (e.clientY - r.top)*d]); }
+cv.addEventListener("mousedown", e => {
+  if (!rig) return;
+  if (e.button === 1) { drag = { kind: "pan", x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }; e.preventDefault(); return; }
+  const p = toRig(e), W = worlds(pose());
+  let best = null, bd = 14 / view.s;
+  for (const b of rig.bones) { const a = apply(W[b.id], [0, 0]); const d = Math.hypot(a[0]-p[0], a[1]-p[1]); if (d < bd) { bd = d; best = b.id; } }
+  if (best && best !== sel) select(best);
+  if (!best && !sel) return;
+  const b = bone(sel);
+  drag = { kind: e.shiftKey ? "rotate" : "move", start: p, at: b.parent ? [...b.at] : [...rig.rootPos], rest: b.rest || 0 };
+});
+addEventListener("mousemove", e => {
+  if (!drag) return;
+  if (drag.kind === "pan") { view.x = drag.vx + (e.clientX - drag.x) * devicePixelRatio; view.y = drag.vy + (e.clientY - drag.y) * devicePixelRatio; return; }
+  const b = bone(sel), p = toRig(e), W = worlds(pose());
+  if (drag.kind === "move") {
+    if (!b.parent) { rig.rootPos = [Math.round(drag.at[0] + p[0] - drag.start[0]), Math.round(drag.at[1] + p[1] - drag.start[1])]; }
+    else {
+      // 부모 공간에서의 이동량 (부모 회전·배율을 되돌림)
+      const pm = W[b.parent], ip = inv(pm);
+      const a = apply(ip, p), s = apply(ip, drag.start);
+      b.at = [Math.round((drag.at[0] + a[0] - s[0]) * 10) / 10, Math.round((drag.at[1] + a[1] - s[1]) * 10) / 10];
+    }
+  } else {
+    const o = apply(W[b.id], [0, 0]);
+    const a0 = Math.atan2(drag.start[1] - o[1], drag.start[0] - o[0]), a1 = Math.atan2(p[1] - o[1], p[0] - o[0]);
+    b.rest = Math.round((drag.rest + (a1 - a0) * 180 / Math.PI) * 10) / 10;
+  }
+  buildFields();
+});
+addEventListener("mouseup", () => drag = null);
+cv.addEventListener("wheel", e => { e.preventDefault(); view.s *= e.deltaY < 0 ? 1.1 : 1/1.1; }, { passive: false });
+addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); save(); } });
+
+// ---------------------------------------------------------------- 관절 자동 맞춤: 자식 at = 부모 그림의 끝 관절 (부모 회전 중심 기준)
+$("autoJoint").onclick = () => {
+  let n = 0;
+  for (const b of rig.bones) {
+    const par = b.parent && bone(b.parent), part = par && par.part && rig.parts[par.part];
+    if (!part || !part.end || !b.snapToEnd) continue;
+    b.at = [(part.end[0] - part.pivot[0]) * (par.flip ? -1 : 1), part.end[1] - part.pivot[1]];
+    n++;
+  }
+  buildFields(); status(`관절 ${n}개를 끝점에 맞춤`);
+};
+
+$("save").onclick = save;
+$("reload").onclick = load;
+function playButtons() { ["playIdle", "playTalk", "playTouch"].forEach(id => $(id).className = ""); $({ idle: "playIdle", talk: "playTalk", touch: "playTouch" }[mode]).className = "on"; }
+$("playIdle").onclick = () => { mode = "idle"; paused = false; playButtons(); };
+$("playTalk").onclick = () => { mode = "talk"; talkT = 0; paused = false; playButtons(); };
+// 구슬 만지기: 게임에서는 카드를 든 채(talk) 미래 보기 카드를 고르면 만지기로 넘어간다. 여기서도 talk 위에 얹는다.
+$("playTouch").onclick = () => { mode = "touch"; touchT = 0; talkW = 1; talkT = 99; paused = false; playButtons(); };
+$("pause").onclick = () => { paused = !paused; $("pause").className = paused ? "on" : ""; };
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000) * (+$("speed").value || 1); last = now;
+  if (!paused) {
+    t += dt; talkT += dt; touchT += dt;
+    const target = mode === "talk" || mode === "touch" ? 1 : 0;
+    const follow = Math.min(1, dt * (rig && rig.talkFollow || 6));
+    talkW += (target - talkW) * follow;
+    touchW += ((mode === "touch" ? 1 : 0) - touchW) * follow;
+  }
+  draw();
+  requestAnimationFrame(frame);
+}
+// 리그 고르기: 서버 GET /rigs (Assets/Rig/*.json). 고르면 주소(?rig=)도 바꾼다.
+async function listRigs() {
+  let files = [RIG_PATH];
+  try { const res = await fetch("/rigs"); if (res.ok) files = await res.json(); } catch (e) { }
+  if (!files.includes(RIG_PATH)) files.unshift(RIG_PATH);
+  $("rigPick").innerHTML = files.map(f => `<option ${f === RIG_PATH ? "selected" : ""}>${f}</option>`).join("");
+}
+$("rigPick").onchange = async () => {
+  RIG_PATH = $("rigPick").value; sel = null; mode = "idle"; talkW = 0; touchW = 0; playButtons();
+  history.replaceState(null, "", "?rig=" + encodeURIComponent(RIG_PATH));
+  await load();
+};
+listRigs().then(load).then(() => requestAnimationFrame(frame));
+// 확인용: 페이지 밖(자동 조작)에서 값을 읽고 쓸 수 있게
+window.rigEditor = { get path() { return RIG_PATH; }, async open(p) { RIG_PATH = p; sel = null; await listRigs(); await load(); }, setView(x, y, s) { view = { x, y, s }; }, get rig() { return rig; }, set rig(v) { rig = v; buildBones(); buildFields(); buildMotion(); }, save, load, select, setTime(v) { t = v; }, talk(on) { mode = on ? "talk" : "idle"; talkT = 0; talkW = on ? 1 : 0; }, touch(on) { mode = on ? "touch" : "idle"; touchT = 99; touchW = on ? 1 : 0; talkW = on ? 1 : 0; } };
+</script>
+</body>
+</html>

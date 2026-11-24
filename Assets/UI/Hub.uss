@@ -80,5 +80,7 @@
 /* 고른 카드: 금빛 꼬리표, 살짝 들림 */
 .hubpack-cards > .puzzle.hub-taken { translate: 0 -10px; }
 .hubpack-cards > .puzzle.hub-taken > .hub-price { -unity-background-image-tint-color: #b48a2c; color: #fff6dc; }
+/* 22차-ui-fixes: 고른 카드 꼬리표 '선택 중'은 글씨를 절반 크기로 (21 → 11px), 띠도 그만큼 얇게 */
+.hubpack-cards > .puzzle.hub-taken > .hub-price { font-size: 11px; padding: 3px 0 4px 0; margin: 0 86px; bottom: -14px; -unity-text-outline-width: 0.6px; }
 /* 고를 수 없는 카드: 흐리게 (눌러서 이유를 들을 수 있음) */
 .hubpack-cards > .puzzle.hub-blocked { opacity: 0.55; }

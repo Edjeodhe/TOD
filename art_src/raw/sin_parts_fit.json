@@ -1,16 +1,51 @@
 {
  "items": [
   {
+   "name": "enemy_boss_farm_gluttony",
+   "pivot": [
+    0.4871,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_farm_greed",
+   "pivot": [
+    0.565,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_farm_wrath",
+   "pivot": [
+    0.4279,
+    0.5
+   ]
+  },
+  {
    "name": "enemy_boss_head_envy",
    "pivot": [
-    0.4788,
+    0.5348,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_head_gluttony",
+   "pivot": [
+    0.4544,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_head_greed",
+   "pivot": [
+    0.5039,
     0.5
    ]
   },
   {
    "name": "enemy_boss_head_lust",
    "pivot": [
-    0.5332,
+    0.5717,
     0.5
    ]
   },
@@ -29,16 +64,37 @@
    ]
   },
   {
+   "name": "enemy_boss_head_wrath",
+   "pivot": [
+    0.5,
+    0.5
+   ]
+  },
+  {
    "name": "enemy_boss_skirt_envy",
    "pivot": [
-    0.5085,
+    0.5342,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_skirt_gluttony",
+   "pivot": [
+    0.5186,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_skirt_greed",
+   "pivot": [
+    0.5411,
     0.5
    ]
   },
   {
    "name": "enemy_boss_skirt_lust",
    "pivot": [
-    0.5346,
+    0.5449,
     0.5
    ]
   },
@@ -57,23 +113,37 @@
    ]
   },
   {
+   "name": "enemy_boss_skirt_wrath",
+   "pivot": [
+    0.5088,
+    0.5
+   ]
+  },
+  {
    "name": "enemy_boss_torso_envy",
    "pivot": [
-    0.4939,
+    0.5127,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_torso_gluttony",
+   "pivot": [
+    0.4451,
     0.5
    ]
   },
   {
    "name": "enemy_boss_torso_greed",
    "pivot": [
-    0.4933,
+    0.5213,
     0.5
    ]
   },
   {
    "name": "enemy_boss_torso_lust",
    "pivot": [
-    0.4853,
+    0.5316,
     0.5
    ]
   },
@@ -92,9 +162,30 @@
    ]
   },
   {
-   "name": "enemy_boss_uarm_envy",
+   "name": "enemy_boss_torso_wrath",
    "pivot": [
-    0.5,
+    0.4968,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_uarm_gluttony",
+   "pivot": [
+    0.5103,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_uarm_greed",
+   "pivot": [
+    0.4821,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_boss_uarm_lust",
+   "pivot": [
+    0.4813,
     0.5
    ]
   },
@@ -106,6 +197,13 @@
    ]
   },
   {
+   "name": "enemy_boss_uarm_wrath",
+   "pivot": [
+    0.5183,
+    0.5
+   ]
+  },
+  {
    "name": "enemy_charger_farm_envy",
    "pivot": [
     0.5446,
@@ -113,16 +211,58 @@
    ]
   },
   {
-   "name": "enemy_charger_farm_greed",
+   "name": "enemy_charger_farm_gluttony",
    "pivot": [
-    0.49,
+    0.5446,
     0.5
    ]
   },
   {
    "name": "enemy_charger_farm_lust",
    "pivot": [
-    0.5463,
+    0.5741,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_farm_wrath",
+   "pivot": [
+    0.578,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_head_sloth",
+   "pivot": [
+    0.5766,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_shin_gluttony",
+   "pivot": [
+    0.5473,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_shin_greed",
+   "pivot": [
+    0.5411,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_shin_lust",
+   "pivot": [
+    0.5592,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_shin_wrath",
+   "pivot": [
+    0.569,
     0.5
    ]
   },
@@ -134,16 +274,23 @@
    ]
   },
   {
+   "name": "enemy_charger_thigh_gluttony",
+   "pivot": [
+    0.5577,
+    0.5
+   ]
+  },
+  {
    "name": "enemy_charger_thigh_greed",
    "pivot": [
-    0.5455,
+    0.5301,
     0.5
    ]
   },
   {
    "name": "enemy_charger_thigh_lust",
    "pivot": [
-    0.4722,
+    0.5283,
     0.5
    ]
   },
@@ -155,30 +302,107 @@
    ]
   },
   {
+   "name": "enemy_charger_thigh_wrath",
+   "pivot": [
+    0.5684,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_torso_sloth",
+   "pivot": [
+    0.5972,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_uarm_lust",
+   "pivot": [
+    0.4872,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_charger_uarm_wrath",
+   "pivot": [
+    0.5395,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_shooter_arm_lust",
+   "pivot": [
+    0.437,
+    0.5
+   ]
+  },
+  {
    "name": "enemy_shooter_jaw_lust",
    "pivot": [
-    0.5152,
-    0.5575
+    0.6064,
+    0.569
+   ]
+  },
+  {
+   "name": "enemy_shooter_jaw_wrath",
+   "pivot": [
+    0.4649,
+    0.5902
    ]
   },
   {
    "name": "enemy_shooter_leg_lust",
    "pivot": [
-    0.5472,
+    0.5037,
     0.5
    ]
   },
   {
-   "name": "enemy_stalker_farm_lust",
+   "name": "enemy_stalker_farm_gluttony",
    "pivot": [
-    0.5702,
+    0.5086,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_stalker_farm_greed",
+   "pivot": [
+    0.5263,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_stalker_shin_gluttony",
+   "pivot": [
+    0.5071,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_stalker_thigh_gluttony",
+   "pivot": [
+    0.5094,
     0.5
    ]
   },
   {
    "name": "enemy_stalker_thigh_lust",
    "pivot": [
+    0.5278,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_stalker_thigh_wrath",
+   "pivot": [
     0.5,
+    0.5
+   ]
+  },
+  {
+   "name": "enemy_stalker_torso_sloth",
+   "pivot": [
+    0.4956,
     0.5
    ]
   },
@@ -190,9 +414,9 @@
    ]
   },
   {
-   "name": "enemy_stalker_uarm_lust",
+   "name": "enemy_stalker_uarm_gluttony",
    "pivot": [
-    0.4762,
+    0.5275,
     0.5
    ]
   }

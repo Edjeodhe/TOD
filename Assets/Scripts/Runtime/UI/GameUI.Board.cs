@@ -21,13 +21,12 @@ namespace TOD
     public partial class GameUI
     {
         BoardMode boardMode;
-        string inventoryTitle0, inventoryHelp0, unequipLabel0;
+        string inventoryTitle0, inventoryHelp0;
 
         void InitBoard()
         {
             inventoryTitle0 = inventory.Q<Label>("inventory-title")?.text;
             inventoryHelp0 = inventory.Q<Label>("inventory-help")?.text;
-            unequipLabel0 = inventory.Q<Button>("unequip")?.text;
         }
 
         // 아웃게임 판의 제목, 안내, 위쪽 알림 줄
@@ -53,8 +52,6 @@ namespace TOD
             Text(inventory, "inventory-help", help ?? "");
             note.text = noteText ?? "";
             Show(note, !string.IsNullOrEmpty(note.text));
-            Button unequip = inventory.Q<Button>("unequip");
-            unequip.text = mode.pick == null && !string.IsNullOrEmpty(h.unpackLabel) ? h.unpackLabel : unequipLabel0;
         }
 
         // 등반 중 재봉 상자: 처음 문구로 되돌린다
@@ -62,8 +59,24 @@ namespace TOD
         {
             if (inventoryTitle0 != null) Text(inventory, "inventory-title", inventoryTitle0);
             if (inventoryHelp0 != null) Text(inventory, "inventory-help", inventoryHelp0);
-            Button unequip = inventory.Q<Button>("unequip");
-            if (unequipLabel0 != null) unequip.text = unequipLabel0;
+        }
+
+        // 23차: '판에서 빼기' 버튼 대신, 판 위 조각(또는 목록의 장착한 줄)에 마우스를 올리고 우클릭하면 장착 해제.
+        // 등반 중이면 등반 가방, 아웃게임 챙기기 판이면 챙긴 조각 목록으로 돌아간다 (GameController.Unequip).
+        void RightClickUnequip(PointerDownEvent e)
+        {
+            if (dragging || boardMode?.pick != null) return;
+            int id = -1;
+            Vector2Int? cell = BoardCell(e.position);
+            if (cell != null && boardIds.TryGetValue(cell.Value, out int onBoard)) id = onBoard;
+            else
+                for (var element = e.target as VisualElement; element != null && element != inventory; element = element.parent)
+                    if (element.ClassListContains("piece-row") && element.userData is int row) { id = boardIds.ContainsValue(row) ? row : -1; break; }
+            if (id < 0) return;
+            e.StopPropagation();
+            CancelPress();
+            HideTip();
+            game.Unequip(id);
         }
 
         // 줄 고르기 층: 강화한 줄(금빛 띠), 확장 가장자리 띠. 고르기가 아니면 비운다.
@@ -220,6 +233,10 @@ namespace TOD
         }
 
         Grow grow;
+
+        // 22차: 지금 도는 실 잇기 연출이 끝나(실과 머리가 다 사라져)기까지 남은 시간. 확장 도장 알림은 이 뒤에 나온다 (GameUI.Stamp.cs)
+        public float GrowLeft => grow == null || db.hub?.lineGrow == null ? 0
+            : Mathf.Max(0, grow.start + grow.cells.Count * db.hub.lineGrow.cellTime + db.hub.lineGrow.fadeTime - Now);
 
         // 확인 직후 RenderInventory 다음에 부른다. key = 강화 key, pick = 고른 자리 (확장 = 변 0~3, 칸 강화 = 줄 번호 또는 ColBase + 열)
         public void PlayLineGrow(Profile profile, string key, int pick, Action<string> sound)

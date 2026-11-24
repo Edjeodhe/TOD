@@ -85,6 +85,66 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 23차 (2026-11-25 시작) — 문구, 소리 정리, 포션 칸, 우클릭 해제, 층 표시, 보스 파편, 개발자 모드, 라틴어 특수공격, 피해 숫자, 쉬어가기 NPC — 진행 중
+
+> 사용자 요청(스크린샷 4장)과 질문 답입니다. 세션마다 아래에 자기 절(`23차-<세션>`)을 만들어 진행을 적습니다. 커밋, 브랜치 전환 금지. Unity 잠금(`Temp/claude_unity.lock`) 규칙은 22차와 같습니다.
+
+### 결정 (사용자)
+- **특수공격 문구 (실 5가닥 결박 당기기):** 한글("빛의 결박!") 대신 라틴어 죄종 이름, 느낌표 없이: 분노 IRA, 나태 ACEDIA, 시기 INVIDIA, 식탐 GULA, 색욕 LUXURIA, 탐욕 AVARITIA, 교만 SUPERBIA. 글씨체도 라틴어 느낌(로마 비문체, 예: Cinzel OFL).
+- **보스 욕망 문구:** 삼킴 "달다. 그래서 더 무섭다." / 안 삼킴 "손을 거두자, 욕망이 식어 간다."
+- **폰트:** 게임 전체 폰트(주아)는 그대로. 바꾸는 것은 **피해 숫자 그림 폰트**: 크기를 지금의 절반으로, 모습은 **붓 잉크(시안 b, `art_src/raw/number23_b.png`)**. 시안 4종 비교 `Temp/Shots/number23_compare.png`.
+- **토큰 한도:** Claude나 Codex 토큰이 떨어지면 초기화 뒤 자동으로 이어 감. 예약 작업 `tod-23-resume-watch`(매시간)가 멈춘 23차 세션을 깨우고, 모두 끝나면 스스로 꺼짐. Codex 한도는 각 세션이 백그라운드에서 기다렸다 다시 시도(22차 `run_22.sh` 방식).
+- **쉬어가기 NPC 4종 (모두):** 축복(이번 등반 동안 영구 버프), 조각 선물, 경험치, 도박 거래(체력을 내고 무작위 보상). 디자인은 '바느질 요괴들': 축복 = 눈먼 수녀 재봉사(눈을 실로 꿰맨 키 큰 여인, 바늘 묵주), 조각 = 누더기 행상 쥐(등에 천 보따리, 골무 모자), 경험치 = 촛불 유령(녹아내리는 촛농 머리, 기억을 마시는 유령), 도박 = 단추 눈 인형(낡은 헝겊 인형, 주사위 저글링). 리깅은 모이라처럼 관절 점을 잡고 오른쪽 웹 리깅 페이지에서. 한 번 만난 NPC는 재봉실에 나오고 말을 걸면 무작위 템이나 버프를 줌.
+
+### 조율 확인 (02:55) — 남은 것 [ ]
+- [ ] **23-inventory:** "E 증강 고르기" 등 화면 아래 E 안내가 새 포션 칸 5개와 겹침(`Temp/Shots/boss23_6_absorb.png`). 둘이 안 겹치게 고치고 `Temp/Shots/inv23_prompt_*.png`로 확인. (고치던 중 Claude 5시간 한도로 멈춤, 07시 초기화 뒤 이어서)
+- [ ] **23-ui:** 욕망 쪽지(삼킴/안 삼킴)가 다음 층 암시 문구와 화면 가운데에서 겹침(`Temp/Shots/ui23_desire_swallow.png`). 안 겹치게 고치고 `Temp/Shots/ui23_desire_fix_*.png`로 확인. (같은 이유로 멈춤)
+
+### 요청 목록 (나머지는 세션이 판단)
+- 아버지의 일기 제목 밑의 안 보이는 글씨 제거.
+- 단추에게 말을 한 번 더 걸면, 가까이 갈 때 머리 위 글씨가 뜨는 소리가 한 번 더 남 → 제거. 조각 챙길 때 글씨 소리도 제거.
+- 칸 확장 쪽지: "칸이 N칸 확장되었습니다"로 몇 칸인지.
+- 인벤토리 화면: 조각 판 아래 포션 칸 5개(따로). '판에서 빼기' 버튼 없애고, 조각에 마우스를 올린 채 우클릭하면 장착 해제.
+- 우클릭(당기기) 때 위에 뜨는 "실을 거뒀습니다" 제거.
+- 레전더리 조각이 뜰 때 나오는 문구("4칸 조각, 분노 세트: ...") 제거.
+- 재봉 상자 목록: 장착 중인 조각에 테두리 같은 표시를 더해 한눈에.
+- 보스 처치 후 욕망 삼킴/안 삼킴 문구(위 결정).
+- 개발자 모드 고도화: 보스 바로 클리어 등 기능 바로 확인용.
+- 인게임 HUD: 타이머 오른쪽에 지금 몇 층 몇 라운드.
+- 보스 처치: 보스가 죽고 기억의 파편이 바닥에 떨어져 캐릭터 몸으로 자동 흡수. 오른쪽 위 일시정지 버튼 아래에 파편 수를 항상 표시.
+- 탑에서 귀환하면 '등반 결과(재봉사의 귀환)' 창 없이 바로 재봉실.
+
+### 23차-npc (쉬어가기 NPC 4종, 재봉실 NPC, NPC 리깅 페이지) — 완료(커밋 전)
+
+- **NPC 4종 ('바느질 요괴들'):** 축복 = 눈먼 수녀 재봉사, 조각 선물 = 누더기 행상 쥐, 경험치 = 촛불 유령, 도박 = 단추 눈 인형. 데이터 `GameDatabase.npcs`(`Data/NpcData.cs`: `NpcConfig`, `NpcDef`, `NpcReward`), 판정 `Sim/CombatNpc.cs`.
+- **쉬어가기:** 라운드마다 `chance` .85 확률로 한 명(가중 `weight`, 아직 못 만난 NPC 는 `unmetWeight` 3배). 자리는 플레이어 기준 `offset` (200, 120)(상인 (180, -80), 탑 (-170, -90)과 안 겹침), 말 걸기 거리 85.
+  - 다가가면 혼잣말 한 번(`approachLines`), E 로 말을 걸면 대사(말풍선) + 효과 + 알림(`ui.Say`). 받은 뒤 다시 걸면 `doneLines`.
+  - 축복: 능력치 5종 중 하나(공격력 +5, 최대 체력 +25, 발사 간격 ×.85, 사거리 ×1.18, 이동속도 ×1.12), 증강과 같은 계산(`Combat.ApplyEffects`)으로 이번 등반 동안 영구.
+  - 행상 쥐: 등반 가방에 무작위 조각 하나(남은 조각이 없으면 골드 40).
+  - 촛불 유령: 지금 레벨 필요량 × 1.6 경험치(레벨업이면 E 로 증강 고르기).
+  - 단추 눈 인형: 첫 E = 제안("체력 N을 걸고..."), 한 번 더 E = 최대 체력 20%를 내고(1 아래로는 안 내려감) 주사위: 공격력 ×1.25(3), 조각(2), 골드 60(2), 체력 50% 회복(1), 체력 15% 더 잃음(1), 이동속도 ×.92(1), 꽝(1). 나쁜 결과는 `badSound`(hurt).
+- **재봉실:** 한 번 만난 NPC(`Profile.npcMet`)가 재봉실에 나옵니다. 자리 = `hub.facilities` 의 새 station `NpcBlessing/NpcGift/NpcMemory/NpcGamble`(수녀 (135, 470), 쥐 (235, 725), 유령 (880, 365), 인형 (690, 790)), 못 만난 NPC 는 숨고 말도 못 겁니다(`HubView.stationVisible`).
+  - **남용 막기(직접 정함): NPC 마다 등반 사이에 한 번.** 받으면 `Profile.npcGifted`에 남고, 등반이 끝나면(`HubAfterRun`) 비웁니다. 이미 받았으면 `hubDoneLines`.
+  - 선물(`hubRewards`): 수녀 = 다음 등반 축복(공격력 +3 / 최대 체력 +15 / 발사 간격 ×.9), 쥐 = 다음 등반에 챙길 조각(3) 또는 파편 3(1), 유령 = 파편 4(2) 또는 다음 등반 털실 최대 +1(1), 인형 = 조각 / 파편 6 / 공격력 +3 축복 / 파편 1. 다음 등반 축복은 `Profile.npcBoons` 에 두었다가 `StartRun` 에서 걸고 비웁니다(알림 `boonNotice`). 조각 선물은 챙기기 칸 한도와 상관없는 덤입니다.
+- **말풍선:** `UI/GameUI.Npc.cs`가 상인 말풍선 템플릿(`MerchantBubble.uxml` merchant-bubble)을 한 번 더 복제해 같은 층에 둡니다. 이름 줄은 NPC 이름. 글자 간격 `charTime` .035, 머무는 시간 `lineHold` 2.6, 말하기 자세 `talkHold` 2.4.
+- **개발자 모드:** 23-boss-dev 가 만든 'NPC 불러오기' 버튼(`DevTools.SummonNpc`)을 `GameController.Npc.cs InitNpcs`에서 연결했습니다(등반 중 지금 라운드 플레이어 옆에 부름).
+- **그림 (Codex):** 시안 `tools/codex_prompts/npc_<nun|rat|ghost|doll>.txt`(참고 `merchant_idle.png`) → `art_src/raw/npc_*.png`, 파츠 시트 `npc_*_parts.txt`(참고 = 시안) → `art_src/raw/npc_*_parts.png` → `python tools/bake_npc_parts.py [id]` → `Assets/sprites/npc_<id>_<파츠>.png`(배율 .5) + 관절 `art_src/rig/npc_<id>_parts.json`.
+  - 파츠: 수녀 = 머리, 너울, 몸, 윗팔, 아래팔(손), 바늘 묵주 / 쥐 = 머리, 몸(다리 포함), 보따리, 꼬리, 윗팔, 아래팔, 조각 쥔 아래팔(말할 때) / 유령 = 머리(촛농), 불꽃, 몸(로브와 꼬리), 윗팔(소매), 아래팔, 불씨 받친 아래팔(말할 때) / 인형 = 머리, 몸, 윗팔, 아래팔, 주사위.
+  - 관절 자동 분석(모이라 굽기 함수 재사용): 팔 마디 = 위/아래 둥근 끝 중심, 손 = 손목 아래 손바닥, 매달린 것 = 위 끝(고리, 꼬리 뿌리), 머리 = 목 탭 아래.
+  - 자동으로 틀린 곳은 그림을 보고 고쳤습니다(`tools/npc_rig_seed.py` 안): 유령 머리(흘러내린 방울 → 촛농 목), 유령 소매 끝(소매 자락 → 팔꿈치), 불씨 손(불씨 방울 → 손바닥), 인형 머리(털실 → 목 탭), 수녀 머리(목 탭 둥근 끝).
+- **관절 시드:** `python tools/npc_rig_seed.py [id] --force` → `Assets/Rig/npc_<id>.json`. 어깨, 목, 꼬리 뿌리, 보따리 자리를 몸 그림에서 하나하나 잰 값(주석에 그림 좌표). 팔은 한 벌을 양쪽이 같이 쓰고 화면 왼쪽은 뒤집음. 움직임: 대기 반복(숨쉬기와 흔들림, 유령은 둥실 뜨기 rootY, 인형은 주사위 셋 저글링: 그림 없는 축 뼈 `juggle_N`이 크게 흔들리고 주사위가 그 위 180px 에 매달림, 위상 1/3 씩), 말하기(수녀 = 오른손 축복, 쥐 = 조각 든 손 들기, 유령 = 불씨 받친 손 내밀기, 인형 = 고개 까딱).
+- **리깅 페이지 (모이라 페이지 일반화):** `tools/rig_editor/rig.html?rig=Assets/Rig/npc_nun.json`, 위 목록에서 리그 고르기(서버 새 `GET /rigs`). launch.json `npc-rig`(5181, 서버 코드가 바뀌어 새 포트). 대기/말하기 재생, 뿌리 흔들림 편집, 리그 높이 편집, 저장하면 같은 파일. 모이라 전용 '구슬 만지기'는 리그에 touch 가 있을 때만 보입니다. `moira.html` 은 그대로 둠.
+  - 페이지 계산과 같은 미리보기: `python tools/preview_npc_rig.py Assets/Rig/npc_<id>.json out.png [--talk] [--bones] [--ref .3]`.
+- **Unity:** `Rig/CutoutRig.cs` = 페이지 계산의 C# 판(MoiraRig 에서 모이라 전용을 뺀 것). JSON 과 그림을 그대로 읽고, 에디터에서는 0.5초마다 파일을 다시 읽음(페이지 저장 즉시 반영). 씬 `Arena/Npcs/<id>`(SortingGroup Ground 30000, 주인공 Actors 층보다 뒤), `Hub/Npcs/<id>`(SortingGroup Actors 0, 모이라와 같음), 각각 `PartTemplate`(모이라 템플릿 복제, 꺼 둠). `ArenaRenderer.npcRigs`, `HubView.npcRigs` 연결. 쉬어가기 높이: 수녀 160, 쥐 112, 유령 150, 인형 108 (재봉실 185, 118, 155, 112).
+  - 그리기: `View/ArenaRenderer.Npc.cs`(발밑, 그림자, "E  이름" 꼬리표, 말풍선 자리), `HubView`(만난 NPC 만, 방 색 맞춤), 연결 `Game/GameController.Npc.cs`.
+- **확인:**
+  - 컴파일 오류 없음. EditMode 67개 모두 통과(새 `Tests/NpcTests.cs` 6개: 데이터, 쉬어가기 등장, 축복 한 번과 만남 저장, 조각과 경험치, 도박 두 번 E, 재봉실 선물 등반마다 한 번과 다음 등반 축복). `HubTests.HubDataHasAllFiveStations`는 NPC 자리를 그림 없이(리그) 허용하게 고침.
+  - 리깅 미리보기 `Temp/Shots/npc23_rig_<nun|rat|ghost|doll>.png`(왼쪽부터 뼈와 시안 겹침, 대기, 말하기). 페이지는 미리보기 패널에서 4종 모두 열고 관절점(팔꿈치 = 소매 끝, 손바닥 = 묵주 매달림)을 확인함.
+  - 플레이 캡처: 쉬어가기 `npc23_rest_nun.png`(축복, 최대 체력 100 → 125, 오른손 들기), `npc23_rest_rat.png`(조각 0 → 1개, 조각 든 손), `npc23_rest_ghost.png`(레벨 1 → 2, 불씨 손), `npc23_rest_doll_offer.png`(제안), `npc23_rest_doll.png`(체력 125 → 100, 조각). 재봉실 `npc23_hub_all.png`(만난 4종), `npc23_hub_talk.png`(수녀 선물 = 다음 등반 축복 1개).
+  - 캡처로 바뀐 프로필(만남, 선물)은 `Temp/profile_backup_23npc.json`에서 되돌렸습니다. 씬 저장함, Unity 잠금 풀어 둠.
+- **어디까지 / 다음 (02:50):** 요청 범위는 모두 끝났습니다. 다시 깨어나도 이어 할 일은 없고, 아래 '남은 것'은 사람 확인이나 다듬기입니다. Codex 한도에는 걸리지 않았습니다(그림 8장 모두 첫 시도에 받음).
+- **남은 것:** 사람이 실제 속도로 본 움직임(숨쉬기, 저글링). 리깅 값 다듬기는 페이지에서 저장하면 끝. 재봉실 NPC 가 주인공보다 꽤 큽니다(수녀 185). 문구와 수치는 임시. 알림(`ui.Say`)은 캡처 때 이미 사라져 그림에 없음.
+
 ## 22차 (2026-11-24 시작) — 8속성 → 칠죄종, 신화 등급 아버지의 도안, 7층, 미래 보기 구슬 연출(Flow 영상), 인게임 그림 전면 교체 — 진행 중
 
 > 작업이 끊기면 여기서 이어 갑니다. 단계를 마칠 때마다 체크합니다. 사용자가 질문에 답한 결정입니다(2026-11-24 저녁).
@@ -184,7 +244,7 @@
 - [x] 3. 조각 아이콘 35 + 도안 7 (Codex), 붉은 도안 7, 조각 49개 연결
 - [x] 4. Flow 영상 7개 (이집트 벽화풍 탑의 신화, 5초) → `Assets/Video/fate_<죄종>.mp4`
 - [x] 5. 미래 보기 연출: 점성구 등장, 파편, "자세히 살펴보기", 모이라 구슬 만지는 자세, 빨려 드는 줌(PostFX), 구슬 속 영상(원형), 멘트, 죄종 색 주변
-- [~] 6. 몬스터 파츠 4종 × 7 (Codex) + 리그 맞추기 (18/28 구움. 분노, 식탐 전부와 나태 stalker, charger는 Codex 한도로 대기)
+- [x] 6. 몬스터 파츠 4종 × 7 (Codex) + 리그 맞추기 (28/28, 2판 프롬프트로 죄종 느낌 강화)
 - [x] 7. 맵: 층 색조, 정적 소품 7 × 4 (Codex), 움직이는 장식 7 (Blender)
 - [x] 8. Blender 이펙트: 보스 공격(내려찍기, 탄, 장판), 부가 발동, 결박 폭발, 실 리본, 피해 글꼴 7
 - [ ] 9. EditMode 테스트(52개 통과, 각 세션 확인), 플레이 캡처, 검토 자료(사용자 검토)
@@ -205,8 +265,12 @@
 - 원본 시트: 아이콘 `art_src/raw/sin_icons_a`(분노, 나태) `_b`(탐욕, 식탐) `_c`(색욕, 교만) `_d`(시기, 자홍 키), 도안 `sin_patterns.png`, 몬스터 `enemy_<종류>_parts_<죄종>.png`, 소품 `decor_<죄종>.png`. 시기는 자홍 키, 나머지는 초록 키.
 - **리그 맞춤 (이 세션이 정함):** 뼈대 템플릿은 종류마다 하나를 모든 죄종이 같이 쓰므로, 리그 값 대신 **그림을 관절에 맞춥니다.** `bake_22_art.py`가 새 파츠의 가로세로 비율이 원래 파츠와 10% 안이면 16차처럼 원래 칸에 꼭 맞추고, 더 다르면(왕관, 망토, 부푼 배) 찌그러뜨리지 않고 같은 배율로 줄여 관절 끝(팔다리와 몸통은 위 끝 가운데, 머리는 아래 끝 가운데)을 원래 자리에 놓고 튀어나온 만큼 캔버스를 넓힙니다. 넓힌 파츠의 피벗은 `art_src/raw/sin_parts_fit.json`에 적고, `ElementArtSetup.ImportSkins`가 그 피벗(사용자 지정)과 원래 PPU로 가져옵니다(작은 수정). 확인은 `python tools/preview_sin_rig.py [죄종]` → `Temp/Shots/sin22_rig_<죄종>.png`(원래, 죄종 쉬는 자세, 걷기).
 - 붉은 도안: `taint()`가 가장자리부터 스며든 핏빛 + 번진 핏자국 + 흘러내린 자국 + 튄 핏방울을 입힙니다. 모양, 크기, 잉크 외곽선은 그대로입니다. 신화 금빛 테두리는 그림에 없고 UI가 그리므로 그대로 씁니다.
-- **진행:** [x] 아이콘 35 [x] 도안 6, 7 + 붉은 도안 1~7 [~] 몬스터 파츠 28시트(18 구움: 교만, 탐욕, 색욕, 시기 4종 + 나태 슈터, 보스. 남은 10장은 Codex 한도로 22:23 뒤 자동 재시도) [x] 소품 28 [~] 연결 메뉴(Texture Imports → 16. Element Art 실행, 조각 49개 아이콘이 새 그림을 가리킴) [~] 미리보기(5죄종) [~] 플레이 캡처(교만, 탐욕, 색욕, 시기, 나태 `Temp/Shots/sin22_play_<죄종>.png`, 씬 저장함)
+- **진행:** [x] 아이콘 35 [x] 도안 6, 7 + 붉은 도안 1~7 [x] 몬스터 파츠 28시트 [x] 소품 28 [x] 연결 메뉴(Texture Imports → 16. Element Art, 7죄종 모두 파츠 23장, 씬 저장함) [x] 미리보기 7죄종(`sin22_rig_<죄종>.png`, 모아 보기 `sin22_rig_all.png`) [x] 플레이 캡처 7층(`Temp/Shots/sin22_play_<죄종>.png`) [x] EditMode 52개 통과
 - 플레이 캡처 방법: 플레이 → `execute_code`로 `GameController.StartRun()`, `Run.devGod = true`, `Run.enemies.Clear()`(DevKillAll은 보스를 죽여 라운드가 끝나므로 쓰지 않음), `Combat.DevSetFloorElement(Run, Element.X)`, `arena.BeginRound(Run)`, `Combat.DevSpawn` 4종을 주인공 위쪽 한 줄에 놓고 `Run.devFreeze = true` → `manage_camera screenshot`(Temp/Shots). 게임이 포커스를 잃어 일시 정지 창이 뜨면 `TogglePause()`.
+- **죄종 느낌 강화 (22:05~22:45, 이어받은 세션 3, 완료):** 사용자 요청 "층마다 그 죄종 느낌 나게 몬스터와 보스 그림을 다시". 게임 화면에서 탐욕(갈색으로 보임), 색욕(칙칙한 와인색, 원래 분홍 몬스터와 비슷)이 약해 다시 그림. `make_sin_prompts.py` 몬스터 프롬프트 2판: 죄종 색이 몸 전체를 덮고(원래 분홍 눈, 실도 죄종 색으로) 큰 상징 하나(분노 갈라진 붉은 뿔과 불씨, 나태 줄무늬 수면 모자, 시기 옆눈질하는 초록 눈과 가시 덩굴, 탐욕 번쩍이는 금화 비늘과 금사슬, 식탐 부푼 배와 큰 입과 턱받이, 색욕 큰 분홍 리본과 하트와 흰 레이스, 교만 왕관과 망토), 보스는 `BOSS` 줄로 그 층의 주인답게(분노 불타는 뿔 왕관과 달군 쇠사슬 등), 채도 보통. 옛 탐욕, 색욕 원본은 `art_src/raw/sin_v1/`. `run_22.sh` 세 줄을 겹치지 않게 나눔(a: 분노, 식탐, 나태 스토커, 차저 / b: 분노, 식탐, 색욕 슈터, 보스 / c: 탐욕 4, 색욕 스토커, 차저), 하나만은 `run_22.sh enemies_one <종류> <죄종>`. 결과: 18장(없던 10 + 탐욕 4 + 색욕 4)을 22:24~22:32에 그렸고 한도에 안 걸림. 시기 보스도 새 프롬프트로 다시(가시 덩굴 왕관, 감긴 초록 뱀). 옛 시기 보스는 `sin_v1/`. 그대로 둔 것: 교만 4, 시기 스토커, 차저, 슈터, 나태 슈터, 보스(1판, 죄종이 잘 읽힘).
+- **새 파츠 연결 주의:** 새 PNG는 MCP `refresh_unity`(force, assets)로 먼저 가져온 뒤 `TOD/Setup/1`, `16`을 돌려야 합니다(안 하면 그 죄종 파츠 0장). `16. Element Art`는 씬의 `GameDatabase`를 고치므로 씬 저장이 필요합니다.
+- **플레이 캡처 (3판):** 게임 화면 1920x1080에서 주인공 x 기준 −260, −100, +120, +330(왼쪽 상태 창에 가리지 않게), y −20. 라운드가 계속 적을 부르므로 `r.roundKind = RoundKind.Boss`로 바꾸고, 찍기 직전에 `r.enemies.RemoveRange(4, ...)`로 4마리만 남김. 프로필은 찍기 전에 `Temp/profile_backup_sinart3.json`에 두었다가 되돌림.
+- **남은 것 (사용자 검토):** 식탐 보스 머리가 커서(1.74배, 냄비 대신 뼈 엇갈린 모자처럼 보임) 해적 모자 같다는 느낌이 들 수 있음. 마음에 안 들면 `mv art_src/raw/enemy_boss_parts_gluttony.png art_src/raw/sin_v1/` 뒤 `sh tools/codex_prompts/run_22.sh enemies_one boss gluttony` → 굽기 → 위 연결. 실제 움직임(걷기, 공격)은 정지 화면과 `preview_sin_rig.py` 걷기 자세만 봄. 교만 4장과 시기 3장, 나태 슈터, 보스는 1판 프롬프트 그림(분홍 실이 남아 있음).
 - **이어 받은 세션 결정 (20:20):** Codex 한도(22:21까지)라 내장 브라우저 ChatGPT를 열었으나 로그인되어 있지 않아(비밀번호 입력 불가) 쓰지 않고, 22:23에 `run_22.sh enemies_c/a/b` 세 줄을 다시 돌리게 걸었습니다(기록 `tools/codex_prompts/run_22_{ec2,ea2,eb2}.out`). `ElementArtSetup`의 소품 연결은 옛 속성 소품(`decor_fire_*` 등)을 빼고 그 죄종 소품만 남기게 고쳤습니다. `bake_22_art.py` 소품 굽기에서 이웃 칸에서 넘어온 작은 조각(큰 덩어리에서 40px 넘게 떨어진 것)을 뺍니다.
 
 ### 22차-fate-orb (미래 보기 구슬 연출) — 완료(커밋 전)
@@ -243,7 +307,7 @@
 - **찾은 문제(이 단계 밖, 조율 세션 몫):** 신화 도안(`gear.pieces[35~48]`, `set` 빈 문자열)이 판에 있으면 `GameUI.BuildPiece`의 `db.Set(def.set).color`에서 NullReference로 재봉 상자 그리기가 멈춥니다. 목록 줄과 조각 정보 창(`ShowTip`의 `db.Set(def.set).name`)도 같은 문제가 있을 것입니다(`db.Set(` 8곳). 그래서 세트 패널 캡처에는 도안을 넣지 않았습니다.
 - **남은 것:** 사람이 실제 마우스로 올려 본 느낌. 세트 이름이 진한 색(분노 진홍, 교만 보라)이라 어두운 바탕에서 조금 어두울 수 있음(`SetNameColor` 밝힘 값 .3).
 
-### 22차-desire-card (모이라 카드 '욕망 최대치' 강화 연출, 일기 도안 버튼 잘림) — 완료(커밋 전)
+### 22차-desire-card (모이라 카드 '욕망 최대치' 강화 연출, 일기 도안 버튼 잘림, 인벤토리 확장 도장 알림) — 완료(커밋 전)
 - **욕망 최대치 연출:** 강화를 확인하면 아래 작은 알림(`ui.upgradeDone`) 대신 카드 위에 욕망 게이지가 나타납니다. 인게임 욕망 바와 같은 잉크 틀(`bar-frame`, `meter_frame`)과 보라 결(`meter-fill desire`)을 크게 씁니다. 흐름: 나타남(위에서 내려앉음) → 틀이 이전 최대치 길이에서 새 최대치 길이로 **오른쪽으로만** 자람(왼쪽 끝 고정, 살짝 지나쳤다 돌아옴), 숫자가 함께 오름, 이전 최대치 자리에 금빛 바늘땀 → 새로 생긴 자리가 밝은 연보라로 차오름 → 다 차면 번쩍(뒤 빛, 틀 살짝 커짐)하고 원래 욕망 색으로 가라앉음 → 제목 아래 감성 문구가 한 줄씩 떠오름 → 저절로 사라짐. 카드는 그대로 누를 수 있습니다(연출은 picking 무시). 다락을 떠나면 바로 숨습니다.
   - 길이(px) = `barBase + (최대치 - desire.maxBase) * unitPx`, `barMax`까지. 지금 값으로 100 → 110이면 480 → 560px, 최대(10단계, 200)는 1280px.
   - 코드: `UI/GameUI.Vessel.cs`(새, `ShowVessel/HideVessel/TickVessel`, `TickMoira` 첫 줄에서 부름), `GameController.ConfirmUpgrade`(욕망 최대치면 `ui.ShowVessel(이전, 새 최대치)`, 아니면 예전 알림). UXML `Main.uxml` attic 안 `vessel`(제목, 아이콘, 틀, 채움, 새 칸, 바늘땀, 반짝, 숫자, 문구 3줄), 모양 `Moira.uss` 끝 `.vessel*`.
@@ -258,7 +322,25 @@
 {0}". 7장 × 붉은 도안 × 들고 감 상태를 재어 보니 도안 버튼 폭 최대 325px, 두 줄, 닫기 버튼과 17px 이상 떨어짐.
 - **확인:** EditMode 52개 통과. 캡처 `Temp/Shots/`: `desire22_vessel_1appear ~ 7fade.png`(나타남, 자라기 시작, 자라는 중, 다 자람, 차오름, 문구, 사라짐) + 모은 그림 `desire22_vessel_sheet.png`, 일기 `desire22_diary_1normal / 2tainted / 3carried / 4carried_ch7.png` + `desire22_diary_sheet.png`, 7장 버튼 크기 `desire22_diary_bounds.txt`. 프로필은 `Temp/profile_backup_22desire.json`에서 되돌림. 씬 저장함.
 - 확정 문구 캡처: `Temp/Shots/desire22_vessel_final_*.png`, `desire22_vessel_final_sheet.png`.
-- **남은 것:** 사람이 실제 속도로 본 느낌(자라는 길이 80px이 충분한지, 늘리려면 `unitPx`, 최대 길이는 `barMax`). 효과음 `desire`, `unlock`은 기존 것을 빌림.
+- **인벤토리 확장 알림 (조율 세션 요청, 22:00):** 모이라 '인벤토리 확장'과 단추 '퍼즐 칸 추가'를 확인하면 동그란 바느질 번쩍임(`RoomFlash`, stitch.png)과 아래 작은 알림 대신, 화면 위쪽 가운데에 찢어진 종이 쪽지(`panel_light` 9-slice)가 살짝 기울어 내려앉고 문구가 쓰인 뒤, 쪽지 오른쪽 아래 모서리에 **붉은 인주 도장 자국이 '쿵'** 박힙니다. 도장 몸통은 안 보이고 자국만 2.3배 크기로 흐리게 나타났다가 .22초 만에 .9배로 눌린 뒤 제자리(1배)로 박힘, 그 순간 쪽지가 눌렸다 튀며 흔들리고(9px, .32초) 둘레로 옅은 인주 기운이 번졌다 사라짐, 쿵 소리. 1.9초 머문 뒤 사라짐. 욕망 최대치도 이제 동그란 번쩍임을 뺐습니다(게이지가 대신함). 칸 강화는 그대로(번쩍임 + 알림 + 실 잇기).
+  - 쪽지 자리: 화면 위 10%(재봉 상자 판의 제목 아래, 판 윗줄 위). 판의 새 줄이 자라는 모습은 가리지 않습니다.
+  - **순서 (22:18 고침):** 모이라 확장은 판 위 20차 실 잇기(금빛 실 머리가 새 줄을 따라 달림)가 **끝난 뒤** 쪽지가 내려앉고 도장이 찍힙니다(`GameUI.GrowLeft`만큼 기다림, 지금 약 1.2초). 처음에는 동시에 돌아서, 오른쪽 열을 늘리면 그 세로 실이 도장 바로 아래에 겹쳐 도장 손잡이처럼 보였습니다(조율 세션 지적). 단추 '퍼즐 칸 추가'는 실 잇기가 없어 바로 나옵니다.
+  - 코드: `UI/GameUI.Stamp.cs`(새, `ShowStamp/TickStamp`, `TickMoira` 첫머리에서 부름 → 어느 화면에서나 돎), `GameController.ConfirmUpgrade`. UXML `Main.uxml` 맨 위 층 `stamp-note`(notice 바로 뒤), 모양 `Moira.uss` 끝 `.stamp-*`.
+  - 도장 그림: `Assets/UI/Paper/stamp_seal.png`(512, 투명). Codex가 22:21까지 한도라 **파이썬으로 그림**(`tools/make_stamp_seal.py`: 울퉁불퉁한 두 겹 고리 + 홈질 땀 고리 + 2×2 칸(오른쪽 아래 새 칸은 꽉 채움), 눌림이 고르지 않은 인주 결, 가장자리 인주 방울, 주홍~진홍). Codex로 다시 그리려면 프롬프트 `tools/codex_prompts/stamp_seal.txt`(출력 `art_src/raw/stamp_seal.png`, 초록 키) → 키 빼고 512로 줄여 같은 파일에 덮으면 됨. 처음 시안의 대각선 바늘은 '금지' 표시처럼 보여 뺐습니다.
+  - 데이터(MCP, 씬 저장): `hub.expandStamp` "칸이 확장되었습니다"(모이라 확장), `hub.slotStamp` ""(비우면 expandStamp를 씀, 단추 '퍼즐 칸 추가'), `hub.stampShow`: mark = stamp_seal, appear .4, stampDelay .35, punchFrom 2.3, punchTime .22, press .035, shake 9, shakeTime .32, hold 1.9, fade .5, sound `stamp`. 새 합성음 `sounds`에 `stamp`(120 → 40Hz, .2초, 음량 .22, wave 1).
+  - 캡처: `Temp/Shots/stamp22_expand_0grow / 1paper / 2punch / 4press / 5settle / 6hold.png`(모이라 오른쪽 열 확장, 판 위, 모은 그림 `stamp22_expand_sheet.png`), `stamp22_starter_settle.png`(단추 '퍼즐 칸 추가', 상점 위), `stamp22_check.png`(둘 비교). EditMode 52개 통과.
+  - 캡처 요령: 플레이 중 `EditorApplication.update` 콜백이 돌지 않는 때가 있어, execute_code 안에서 `async` 람다 + `Task.Yield()`로 `Time.unscaledTime`을 기다려 찍었습니다(게임 루프에서 돎). 플레이 중 다른 세션이 UXML, USS를 다시 읽게 하면 UI 트리가 새로 만들어져 `GameUI`, `DiaryBoard`가 끊기니 플레이를 다시 켜야 합니다.
+- **남은 것:** 도장 알림은 사람이 실제 속도로 본 느낌(쿵 세기, 머무는 시간)과 Codex 도장 그림으로 바꿀지. 욕망 게이지는 사람이 실제 속도로 본 느낌(자라는 길이 80px이 충분한지, 늘리려면 `unitPx`, 최대 길이는 `barMax`). 효과음 `desire`, `unlock`은 기존 것을 빌림.
+
+### 22차-ui-fixes (단추 '선택 중' 꼬리표, 보스 욕망 창 정리, 레전더리 카드 등장 번쩍임) — 완료(커밋 전)
+- **선택 중 꼬리표:** 시작 조각 챙기기 창에서 고른 카드 꼬리표 문구 `hub.packTaken` "챙김 (누르면 되돌리기)" → "선택 중"(MCP, 씬 저장). 글씨 21 → 11px, 띠 여백과 외곽선도 그만큼 얇게(`Hub.uss` `.puzzle.hub-taken > .hub-price`).
+- **욕망 창:** 제목 "[죄종의 잔향]"에 검은 외곽선 2.6px + 옅은 그림자(`Main.uss` `#dialog-desire #desire-name`, 죄종 색 글씨는 그대로). 오른쪽 보라 원형 문양(`ui-vfx` boss.png)과 아래 회색 수치 줄(`desire-numbers`)을 `Main.uxml`에서 지움. `GameUI.ShowDesire`의 수치 줄 두 줄도 지움(`ui.desireNumbers` 데이터는 이제 안 씀).
+- **레전더리 카드 번쩍임:** 조각 카드(`PieceOfferCard`)를 쓰는 두 장면, 쉬어가는 라운드 3택(`ShowArtifacts`)과 단추 시작 조각 챙기기(`ShowPackCards`, 고를 때마다 다시 그리므로 창을 처음 열 때만)에 넣음. 흐름: 창이 열리고 `delay` 동안 숨음 → 작게(`startScale`) 나타나며 카드 위 섬광 + 뒤로 퍼지는 금빛 빛(soft_disc) + 바느질 고리(stitch.png) + 효과음 → `1 + punch`까지 커졌다 돌아옴 → 테두리, 돌기, 종이가 금빛에서 등급 색으로 가라앉음 → 평소 반짝임(`shines`)이 이어 받음. 여러 장이면 `stagger`만큼 차례로. 신화도 같은 규칙으로 더 세게.
+  - 코드: `UI/GameUI.Entrance.cs`(새), `Data/CardEntrance.cs`(새), `GearConfig.cardEntrance`, `GameUI.Tick`에서 `TickEntrances()`(shines 뒤라 테두리를 덮어씀). 템플릿 `Slots.uxml` puzzle에 `entrance-halo/ring/flash`(숨김), 모양 `Main.uss` `.entrance-*`.
+  - 카드를 많이 그린 직후 첫 프레임이 1초 넘게 걸리는 일이 있어(단추 창 6장에서 1.37초 확인) 그 사이에 번쩍임이 지나가 버렸음 → 50ms 넘는 프레임은 넘친 만큼 시작을 미룸.
+  - 데이터 `gear.cardEntrance`(MCP, 씬 저장): rankStrength [0,0,0,0,1,1.4](레전더리 1, 신화 1.4), delay .3, stagger .15, time 1.0, startScale .78, punch .12, punchAt .22, flashPeak .9, haloScale 1.35, haloPeak .85, edgeHold .5, 섬광 (1,.97,.86), 빛 (1,.82,.42), 테두리 (1,.88,.5), sound `unlock`.
+- **확인:** EditMode 52개 통과. 캡처 `Temp/Shots/`: `uifix22_hubpack_5.png` + `uifix22_hubpack_taken_zoom.png`(선택 중 꼬리표), `uifix22_desire_<sloth|wrath|pride|greed>.png` + `uifix22_desire_sheet.png`, 번쩍임 시간대 시트 `uifix22_flash_a_sheet.png`(레전더리 1장), `_b_sheet`(레전더리 2장 차례로), `_mythic_sheet`(신화 + 레전더리), `uifix22_hubpack_sheet.png`(단추 창). 캡처는 플레이 중 `ui.ShowArtifacts/ShowDesire/ShowPackCards`를 직접 불렀고(프로필 안 바꿈) `EditorApplication.update`로 시간 맞춰 `ScreenCapture`.
+- **남은 것:** 사람이 실제 속도로 본 느낌(섬광 세기 `flashPeak`, 펀치 `punch`). 섬광은 사각형(둥근 모서리)이라 카드의 찢긴 가장자리와 돌기까지 꼭 맞지는 않음. 11px '선택 중'은 1080p에서 작게 보임(더 키우려면 `Hub.uss` 한 줄). 이 단계 밖: 신화 도안 카드의 아랫줄이 "2칸 조각, 신화 세트:"로 세트 효과 칸이 비어 보임(`PieceSet` 가짜 세트의 bonus가 빈 칸).
 
 ## 21차 (2026-11-24) — 칸 강화 "+N" 숫자, 맵 장식 일렁임 줄임, 증강 연출(발밑 파란 아크 + 디졸브), 피해 숫자 그림 시트 — 완료(커밋 전)
 

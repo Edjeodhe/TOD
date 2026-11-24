@@ -73,7 +73,6 @@ namespace TOD
             Bind("attic-back", game.BackFromRoom);
             Bind("rotate", game.Rotate);
             InitSort();   // 21차 목록 정렬 (GameUI.Board.cs)
-            Bind("unequip", game.Unequip);
             root.Q("board").RegisterCallback<PointerLeaveEvent>(_ => { if (!dragging) game.HoverCell(null); });
             // 꾹 눌러 끌기: 판 위 조각·목록 줄을 누른 채 기다리거나 끌면 집어 들고, 놓은 칸에 다시 장착한다.
             inventory.RegisterCallback<PointerDownEvent>(OnPressDown, TrickleDown.TrickleDown);
@@ -82,6 +81,7 @@ namespace TOD
             InitOutgame();
             InitBoard();   // 19차 챙기기 판, 모이라의 줄 고르기: GameUI.Board.cs
             InitHub();   // 15차 재봉실 허브: GameUI.Hub.cs
+            InitPotions();   // 23차 포션 칸: GameUI.Potions.cs
         }
 
         void Bind(string name, Action action) => root.Q<Button>(name).clicked += action;
@@ -148,6 +148,7 @@ namespace TOD
                 SetBorder(card.Q("frame"), edge);
                 foreach (string knob in new[] { "knob-top", "knob-right" }) card.Q(knob).style.backgroundColor = edge;
             }
+            TickEntrances();   // 22차-ui-fixes: 카드 등장 번쩍임 (shines 뒤에 불러 테두리를 덮어씀)
             TickInventory();
             TickMoira();   // 19차 모이라 카드 (GameUI.Moira.cs)
             TickFate();    // 20차 운명 읽기 연출 (GameUI.Fate.cs)
@@ -176,11 +177,12 @@ namespace TOD
 
         // ---------------------------------------------------------------- world labels
 
-        public void BeginLabels() => labelsUsed = 0;
+        public void BeginLabels() { labelsUsed = 0; BeginInscriptions(); }
 
         public void EndLabels()
         {
             for (int i = labelsUsed; i < labels.Count; i++) labels[i].style.display = DisplayStyle.None;
+            EndInscriptions();   // 23차 라틴어 죄종 글자 (GameUI.Inscription.cs)
         }
 
         public void Label(string text, Vector2 canvas, float fontPx, Color fill, Color stroke, float strokePx, float scale, float rotationDeg, bool italic)
@@ -214,6 +216,7 @@ namespace TOD
         public void UpdateMeta(Profile profile)
         {
             Text(root, "meta-shards", profile.shards.ToString());
+            UpdateHudShards(profile);   // 23차: 전투 HUD 일시정지 버튼 아래 (GameUI.BossDev.cs)
             Text(root, "attic-shards", profile.shards.ToString());   // 17차: 실궤 창 종이 오른쪽 위
             Text(root, "best-record", $"◇ 최고 기록  {(profile.best > 0 ? string.Format(T.bestRecord, profile.best) : T.bestNone)}");
         }
@@ -303,7 +306,10 @@ namespace TOD
 
             // 생존 타이머 (분:초)
             bool timing = r.phase == Phase.Combat && r.roundKind == RoundKind.Survival;
-            Show(timer, timing);
+            Enemy boss = r.enemies.FirstOrDefault(e => e.IsBoss);
+            Show(timer, boss == null);          // 23차: 타이머 줄은 층, 라운드 표시와 함께 늘 보인다 (보스 HUD 가 뜨면 그쪽 이름 옆으로)
+            Show(timerText, timing);
+            UpdateFloorRound(r, boss != null);   // GameUI.BossDev.cs
             if (timing)
             {
                 int left = Mathf.CeilToInt(combat.TimeLeft(r));
@@ -316,7 +322,6 @@ namespace TOD
             if (pending) hintText.text = string.Format(T.augmentHint, r.augmentQueue);
             else if (game.CanOpenRunInventory) { Show(hint, true); hintText.text = T.inventoryHint; }
 
-            Enemy boss = r.enemies.FirstOrDefault(e => e.IsBoss);
             Show(hud.Q("boss-hud"), boss != null);
             if (boss != null) Meter(hud, "boss-bar", boss.hp / boss.maxHp);
         }
@@ -416,7 +421,8 @@ namespace TOD
             ShowDialog("augment");
         }
 
-        // 22차: 속삭임 말투. 제목 = "[그 층 죄종의 잔향]"(죄종 색), 속삭임, 흡수/거절 버튼 아래 느낌 문구, 맨 아래 흐린 작은 수치
+        // 22차: 속삭임 말투. 제목 = "[그 층 죄종의 잔향]"(죄종 색, 검은 외곽선은 Main.uss), 속삭임, 흡수/거절 버튼 아래 느낌 문구.
+        // 22차-ui-fixes: 맨 아래 흐린 수치 줄(desire-numbers)과 오른쪽 보스 문양은 지움 (ui.desireNumbers 는 안 씀)
         public void ShowDesire(DesireDef offer, int floor, bool refine, Element sin)
         {
             ElementDef def = db.elements?.Def(sin);
@@ -432,8 +438,6 @@ namespace TOD
             if (!string.IsNullOrEmpty(T.refuseButton)) root.Q<Button>("refuse").text = T.refuseButton;
             Text(root, "absorb-feel", T.absorbFeel ?? "");
             Text(root, "refuse-feel", T.refuseFeel ?? "");
-            string numbers = refine ? offer.penalty : string.Format(T.desirePenalty, offer.penalty);
-            Text(root, "desire-numbers", string.IsNullOrEmpty(T.desireNumbers) ? numbers : string.Format(T.desireNumbers, db.desire.absorb, offer.name, offer.text, numbers));
             ShowDialog("desire");
         }
 
@@ -479,6 +483,7 @@ namespace TOD
             container.Clear();
             foreach (int kind in kinds) PieceOfferCard(container, kind, () => pick(kind));
             ShowDialog("artifact");
+            StartEntrances(container);   // 22차-ui-fixes: 레전더리 카드 번쩍 (GameUI.Entrance.cs)
         }
 
         // 조각 하나를 퍼즐 카드로 (쉬어가기 탑 아이템 창, 15차 허브 상인 단추 상점이 같이 쓴다)
@@ -490,13 +495,13 @@ namespace TOD
             string effect = string.Format(T.pieceEffect, T.statNames[(int)def.stat], value);
             string unique = UniqueText(def);
             if (unique != null) effect += "\n" + unique;
-            string text = string.Format(T.pieceShape, def.shape.Length, set.name, set.bonus) + (string.IsNullOrEmpty(def.flavor) ? "" : "\n" + def.flavor);
+            // 23차: 카드 아래 "N칸 조각, 세트: 보너스" 줄과 소개 글은 쓰지 않는다 (세트는 띠, 효과는 effect 에 이미 있음)
             // 카드 색은 등급(코스트) 색: 일반 회색 · 레어 하늘색 · 유니크 노란색 · 레전더리 붉은색. 세트 색은 조각 모양에 남긴다.
             Color[] ranks = db.gear.rankColors;
             Color rankColor = ranks != null && def.cost < ranks.Length ? ranks[def.cost] : set.color;
             // 띠: 등급 + 세트 이름(밝힌 세트 색 글씨, 리치 텍스트). 글자 전체에 검은 테두리(.puzzle-tag)를 둘러 어떤 띠 색에서도 읽히게.
             string setTag = $"<color=#{ColorUtility.ToHtmlStringRGB(TagColor(set.color))}>{set.name}</color>";
-            Button card = PuzzleCard(container, rankColor, def.icon, $"{db.gear.rankNames[def.cost]}  {setTag}", def.name, effect, text, onClick);
+            Button card = PuzzleCard(container, rankColor, def.icon, $"{db.gear.rankNames[def.cost]}  {setTag}", def.name, effect, null, onClick);
             card.AddToClassList($"rank-{def.cost}");
             float shine = db.gear.rankShine != null && def.cost < db.gear.rankShine.Length ? db.gear.rankShine[def.cost] : 0;
             VisualElement band = card.Q("shine");
@@ -656,7 +661,7 @@ namespace TOD
             VisualElement board = inventory.Q("board");
             board.Clear();
             cells.Clear();
-            pitch = Mathf.Floor(Mathf.Min(560f / width, 640f / height));   // 19차: 가로 줄을 붙여 판이 길어져도 화면 안에
+            pitch = Mathf.Floor(Mathf.Min(560f / width, (game.Run != null ? 560f : 640f) / height));   // 23차: 등반 중에는 판 아래 포션 줄 자리만큼 낮게   // 19차: 가로 줄을 붙여 판이 길어져도 화면 안에
             boardWidth = width;
             boardHeight = height;
             boardIds.Clear();
@@ -802,9 +807,8 @@ namespace TOD
                 game.HoverCell(BoardCell(pointerPos));
             }
             inventory.Q<Button>("rotate").SetEnabled(holding != null);
-            inventory.Q<Button>("unequip").SetEnabled(placed.Any(p => p.Id == selected));
             Show(inventory.Q<Button>("rotate"), mode.pick == null);
-            Show(inventory.Q<Button>("unequip"), mode.pick == null);
+            RenderPotionRow();   // 23차: 판 아래 포션 칸 (GameUI.Potions.cs)
         }
 
         // 22차 세트 목록: 판에 가진 세트만(맞닿아 세는 조각 1개 이상, 신화 도안은 맞닿은 세트마다 1개, Gear.Stats 그대로).
@@ -1289,6 +1293,7 @@ namespace TOD
 
         void OnPressDown(PointerDownEvent e)
         {
+            if (e.button == 1) { RightClickUnequip(e); return; }   // 23차: 조각 위 우클릭 = 장착 해제 (GameUI.Board.cs)
             if (e.button != 0 || dragging || boardMode?.pick != null) return;   // 19차: 줄 고르기 중에는 끌기 없음
             pointerPos = pressPos = e.position;
             pressPointer = e.pointerId;

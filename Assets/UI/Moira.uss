@@ -138,3 +138,27 @@
     -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
     -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
 }
+
+/* 22차 인벤토리 확장 알림 (GameUI.Stamp.cs). 움직임(위치, 크기, 투명도)은 코드가 매 프레임 정하고, 여기는 모양만.
+   쪽지는 찢어진 종이 UI(panel_light 9-slice), 도장 자국은 Assets/UI/Paper/stamp_seal.png(데이터 hub.stampShow.mark). */
+.stamp-note { position: absolute; left: 0; right: 0; top: 10%; align-items: center; }
+.stamp-paper {
+    width: 640px; height: 200px; padding: 0 150px 0 60px; justify-content: center; align-items: center;
+    background-image: url("project://database/Assets/UI/Paper/panel_light.png");
+    -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 72; -unity-slice-bottom: 72; -unity-slice-scale: 0.7px;
+}
+.stamp-text {
+    font-size: 42px; color: #2e2120; -unity-text-align: middle-center; white-space: normal;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+/* 도장 자국: 쪽지 오른쪽 아래 모서리에 걸쳐 비스듬히 */
+.stamp-mark {
+    position: absolute; right: -26px; bottom: -40px; width: 190px; height: 190px; rotate: -14deg; opacity: 0;
+    background-image: url("project://database/Assets/UI/Paper/stamp_seal.png"); -unity-background-scale-mode: scale-to-fit;
+}
+/* 찍히는 순간 둘레로 번지는 옅은 인주 기운 */
+.stamp-ink {
+    position: absolute; right: -86px; bottom: -100px; width: 310px; height: 310px; opacity: 0;
+    background-image: url("project://database/Assets/Art/Generated/soft_disc.png"); -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgba(196, 40, 40, 0.45);
+}

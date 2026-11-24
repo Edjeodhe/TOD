@@ -57,6 +57,7 @@ namespace TOD
             sound.Enabled = true;
             ui.Init(this);
             InitHub();   // 15차 재봉실 허브: GameController.Hub.cs
+            InitNpcs();  // 23차 쉬어가기 NPC, 재봉실 NPC: GameController.Npc.cs
             InitMoira();   // 19차 모이라 카드: 확인 창이 닫히면 카드 갱신
             aim = Center;
             Shader.SetGlobalFloat(CanvasHeightId, db.arena.canvasHeight);
@@ -108,6 +109,7 @@ namespace TOD
             summary = null;
             paused = false;
             Run = Combat.CreateRun(Profile, () => Random.value);
+            ApplyNpcBoons();                  // 23차: 재봉실 NPC 가 걸어 둔 축복
             HubShop.ConsumePacked(Profile);   // 19차: 챙긴 시작 조각은 이번 등반 가방으로 넘어가고 영구 프로필에서는 사라진다
             Moira.ConsumeFate(Profile);       // 19차: 모이라가 읽어 둔 1층 속성은 이번 등반(RunState.fate)에 쓰였다
             Mythic.Ensure(db, Profile);       // 22차: 신화 도안은 영구라 다음 등반을 위해 다시 챙겨 둔다
@@ -135,7 +137,7 @@ namespace TOD
             ui.CloseDialog();
             arena.Clear();
             Shader.SetGlobalFloat(EnabledId, 0);
-            ShowScreen(UiScreen.Summary);
+            ShowScreen(UiScreen.Lobby);   // 23차: '등반 결과(재봉사의 귀환)' 창 없이 바로 재봉실 (Lobby 가 summary 를 비운다)
         }
 
         // 플레이어가 움직일 수 있는 상태 (전투·정화·라운드 종료 모두 포함, 대화 상자·일시 정지 제외)
@@ -243,6 +245,7 @@ namespace TOD
                     break;
                 case Interactable.Altar: ui.ShowArtifacts(Run.floor, Run.artifactOffer, PickArtifact, !Run.artifactRerolled); break;
                 case Interactable.Merchant: ShowShop(); MerchantSay(MerchantCue.Greet); break;   // 16차 상인 대사
+                case Interactable.Npc: TalkNpcRun(); break;   // 23차 쉬어가기 NPC (GameController.Npc.cs)
             }
         }
 
@@ -288,10 +291,11 @@ namespace TOD
             AddPlayerFx(FxSprite.Boss, db.fx.absorb);
             sound.Play("desire");
             ui.CloseDialog();
+            ui.ShowDesireEcho(true);   // 23차: "달다. 그래서 더 무섭다." (데이터 desire.swallowLine)
             if (Run.outcome == Outcome.None) Ascend();
         }
 
-        public void Refuse() { Combat.ChooseDesire(Run, null); Ascend(); }
+        public void Refuse() { Combat.ChooseDesire(Run, null); ui.ShowDesireEcho(false); Ascend(); }
         // ---------------------------------------------------------------- shop (단추)
 
         int Price(WareDef ware)
@@ -321,10 +325,13 @@ namespace TOD
             if (shop.sold.Contains(id)) { MerchantSay(MerchantCue.SoldOut); return; }
             if (Run.gold < Price(ware)) { MerchantSay(MerchantCue.NoMoney); return; }
             if (id == "piece" && Gear.Unowned(db, Run.bag).Count == 0) { ui.Say(db.ui.ownedAll); MerchantSay(MerchantCue.SoldOut); return; }   // 아이템은 고유: 다 가졌으면 팔지 않는다
+            bool potionWare = Potions.Def(db, ware.potion) != null;   // 23차: 포션은 사서 포션 칸에 (칸이 가득이면 못 삼)
+            if (potionWare && !Potions.CanAdd(db, Run.potions, ware.potion)) { ui.Say(db.potions.full); MerchantSay(MerchantCue.SoldOut); return; }
             Run.gold -= Price(ware);
             shop.sold.Add(id);
             float potion = Run.desires.Contains("hunger") ? db.desire.hungerPotion : 1;
-            switch (id)
+            if (potionWare) Potions.Add(db, Run.potions, ware.potion);
+            else switch (id)
             {
                 case "heal": Run.hp = Mathf.Min(Run.maxHp, Run.hp + ware.amount * potion); break;
                 case "pure": Combat.AdjustDesire(Run, -ware.amount * potion); break;
@@ -382,11 +389,15 @@ namespace TOD
             RenderInventory();
         }
 
-        public void Unequip()
+        // 23차: 판 위 조각 우클릭 = 장착 해제 ('판에서 빼기' 버튼은 없앰). 조각은 가방(목록)에 그대로 남는다.
+        public void Unequip(int id)
         {
-            Bag.placements.RemoveAll(p => p.id == selected);
+            if (picking != null || Bag.placements.All(p => p.id != id)) return;
+            Bag.placements.RemoveAll(p => p.id == id);
+            if (selected == id) selected = null;
             SaveBag();
             RenderInventory();
+            sound.Play("reroll");
         }
 
         public void ClickCell(int x, int y)
@@ -649,24 +660,45 @@ namespace TOD
             }
             UpgradeDef u = Upgrade(pendingUpgrade);
             float oldMax = db.desire.maxBase + Profile.capacity * db.desire.capacityStep;   // 22차 욕망 최대치 연출의 시작 길이
+            int oldCells = StampCells(u);   // 23차: 쪽지에 늘어난 칸 수
             if (u == null || !Moira.Apply(db, Profile, u, pendingPick)) return;
+            int addedCells = StampCells(u) - oldCells;
             Gear.Save(db, Profile);
             int picked = pendingPick;
             pendingPick = -1;
             ui.CloseDialog();   // 모이라 창이면 DialogClosed → RenderAttic
             ui.UpdateMeta(Profile);
             sound.Play("upgrade");
-            ui.RoomFlash();
-            if (u.key == Moira.Capacity && db.hub.vesselShow != null)   // 22차: 아래 작은 알림 대신 카드 위 욕망 게이지가 자란다 (GameUI.Vessel.cs)
-                ui.ShowVessel(oldMax, db.desire.maxBase + Profile.capacity * db.desire.capacityStep, id => { if (!string.IsNullOrEmpty(id)) sound.Play(id); });
-            else ui.Say(string.Format(db.ui.upgradeDone, u.name, Level(u)));
-            if (u.key == Unlocks.StarterKey) { ShowHubShop(); return; }   // 단추 메뉴로
+            System.Action<string> play = id => { if (!string.IsNullOrEmpty(id)) sound.Play(id); };
+            string stamp = u.key == Moira.Expansion ? db.hub.expandStamp
+                : u.key == Unlocks.StarterKey ? (string.IsNullOrEmpty(db.hub.slotStamp) ? db.hub.expandStamp : db.hub.slotStamp) : null;
+            if (!string.IsNullOrEmpty(stamp)) stamp = string.Format(stamp, addedCells);   // 데이터 틀 "칸이 {0}칸 확장되었습니다"
+            if (u.key == Moira.Capacity && db.hub.vesselShow != null)   // 22차: 동그란 번쩍임과 아래 작은 알림 대신 카드 위 욕망 게이지가 자란다 (GameUI.Vessel.cs)
+                ui.ShowVessel(oldMax, db.desire.maxBase + Profile.capacity * db.desire.capacityStep, play);
+            else if (!string.IsNullOrEmpty(stamp) && db.hub.stampShow != null) { }   // 22차: 칸이 늘면 종이 쪽지 + 붉은 도장 '쿵' (아래, 실 잇기 뒤)
+            else
+            {
+                ui.RoomFlash();
+                ui.Say(string.Format(db.ui.upgradeDone, u.name, Level(u)));
+            }
+            bool stamped = !string.IsNullOrEmpty(stamp) && db.hub.stampShow != null && u.key != Moira.Capacity;
+            if (u.key == Unlocks.StarterKey) { ShowHubShop(); if (stamped) ui.ShowStamp(stamp, play); return; }   // 단추 메뉴로
             if (picking != null)   // 판에 남아 바뀐 줄을 보여 준다 (이어서 더 고를 수 있음)
             {
                 selected = null;
                 RenderInventory();
                 ui.PlayLineGrow(Profile, picking, picked, id => sound.Play(id));   // 20차: 실이 첫 칸에서 끝 칸까지 이어지며 칸이 생기거나 금빛으로 채워짐
             }
+            if (stamped) ui.ShowStamp(stamp, play, ui.GrowLeft);   // 22차: 칸이 다 자란 뒤 확인 도장 (실 머리가 도장 아래에 겹쳐 손잡이처럼 보이지 않게)
+        }
+
+        // 23차: 확장 쪽지에 쓸 칸 수 (판 확장 = 판 넓이, 퍼즐 칸 추가 = 챙길 수 있는 칸)
+        int StampCells(UpgradeDef u)
+        {
+            if (u == null) return 0;
+            if (u.key == Unlocks.StarterKey) return Unlocks.StarterCells(db, Profile);
+            var (width, height, _) = Gear.Dimensions(db, Profile);
+            return width * height;
         }
 
         // ---------------------------------------------------------------- frame
@@ -697,9 +729,25 @@ namespace TOD
             if (k.enterKey.wasPressedThisFrame && screen == UiScreen.Lobby && Run == null && Opened == "") StartRun();
             if (k.rKey.wasPressedThisFrame && (screen == UiScreen.Inventory || runInventory)) Rotate();
             if (IsCombat && k.spaceKey.wasPressedThisFrame) dashRequested = true;
+            if (IsCombat && Run.freeze <= 0) DrinkPotion(k);   // 23차 포션: 숫자키 1~5
             if (k.eKey.wasPressedThisFrame && ui.FateShowing) ui.AdvanceFate();   // 22차 미래 보기: 자세히 살펴보기, 돌아가기
             else if (k.eKey.wasPressedThisFrame && !runInventory) Interact();
             if (k.iKey.wasPressedThisFrame) { if (Run != null) ToggleRunInventory(); else ToggleOutgameInventory(); }   // 20차: 아웃게임에서도 언제든 I
+        }
+
+        // 23차 포션 칸: 숫자키(위 숫자줄, 숫자 패드) 1~5 → 그 칸의 포션을 마신다 (Combat.UsePotion, CombatPotions.cs)
+        static readonly Key[] PotionKeys = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5, Key.Digit6, Key.Digit7, Key.Digit8, Key.Digit9 };
+        static readonly Key[] PotionPadKeys = { Key.Numpad1, Key.Numpad2, Key.Numpad3, Key.Numpad4, Key.Numpad5, Key.Numpad6, Key.Numpad7, Key.Numpad8, Key.Numpad9 };
+
+        void DrinkPotion(Keyboard k)
+        {
+            for (int i = 0; i < Run.potions.Length && i < PotionKeys.Length; i++)
+            {
+                if (!k[PotionKeys[i]].wasPressedThisFrame && !k[PotionPadKeys[i]].wasPressedThisFrame) continue;
+                PotionDef def = Potions.Def(db, Run.potions[i].id);
+                if (def != null && Combat.UsePotion(Run, i)) ui.PotionUsed(i, def.color);
+                return;
+            }
         }
 
         // 17차 Esc: 맨 위에 열린 창부터 닫는다. 증강·아이템 창은 닫아도 나중에 E 로 다시 연다.
@@ -758,6 +806,7 @@ namespace TOD
             ReadKeys();
             TickHub(dt);   // 15차: 허브 걷기 (로비일 때만)
             TickMerchant();   // 16차: 상인 단추 자세와 말풍선 (GameController.Merchant.cs)
+            TickNpcs(dt);     // 23차: NPC 말하기 자세와 말풍선 (GameController.Npc.cs)
             ui.BeginLabels();
             if (IsCombat)
             {
@@ -780,6 +829,7 @@ namespace TOD
                 arena.Render(Run, aim, Clock, IsCombat, heroTime, Combat.Nearest(Run));
                 ApplyPostFx();
                 ui.UpdateHud(Run, Combat);
+                ui.UpdatePotions(Run);   // 23차 포션 칸 (GameUI.Potions.cs)
                 ui.UpdateMeta(Profile);
                 SyncDialog();
                 if (Opened == "shop" && Run != null)

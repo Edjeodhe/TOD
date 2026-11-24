@@ -65,6 +65,7 @@ namespace TOD
         void HubAfterRun()
         {
             hubFromRun = true;
+            Profile.npcGifted?.Clear();   // 23차: 재봉실 NPC 선물은 등반마다 한 번
             if (HubShop.Ensure(db, Profile, () => Random.value, UnixNow)) Gear.Save(db, Profile);
         }
 
@@ -108,6 +109,8 @@ namespace TOD
                 case HubStation.Merchant: ShowHubShop(); MerchantSay(MerchantCue.Greet); break;
                 case HubStation.Tower: StartRun(); break;
                 case HubStation.Diary: ui.ShowDiary(); break;
+                case HubStation.NpcBlessing: case HubStation.NpcGift: case HubStation.NpcMemory: case HubStation.NpcGamble:
+                    TalkNpcHub(HubView.NpcOf(station)); break;   // 23차: 만난 NPC 의 선물 (등반마다 한 번)
             }
         }
 
@@ -157,7 +160,7 @@ namespace TOD
                     case PackResult.Packed:
                         sound.Play(string.IsNullOrEmpty(h.buySound) ? "loot" : h.buySound);
                         ui.Say(string.Format(h.packed ?? "{0}", name));
-                        MerchantSay(MerchantCue.Buy);
+                        MerchantSay(MerchantCue.Buy, false);   // 23차: 챙길 때 말풍선 글자 소리 없음
                         break;
                     default: RenderPackCards(); return;
                 }

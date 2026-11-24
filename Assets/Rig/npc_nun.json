@@ -1,0 +1,376 @@
+{
+ "name": "nun",
+ "height": 400,
+ "rootPos": [
+  0,
+  0
+ ],
+ "talkFollow": 6,
+ "swapAt": 0.35,
+ "swapAfter": 0.6,
+ "reference": {
+  "file": "art_src/raw/npc_nun.png",
+  "x": 0,
+  "y": 13.9,
+  "scale": 0.41
+ },
+ "parts": {
+  "head": {
+   "file": "Assets/sprites/npc_nun_head.png",
+   "w": 167,
+   "h": 186,
+   "pivot": [
+    86,
+    178
+   ]
+  },
+  "veil": {
+   "file": "Assets/sprites/npc_nun_veil.png",
+   "w": 162,
+   "h": 243,
+   "pivot": [
+    85,
+    8
+   ],
+   "end": [
+    121,
+    236
+   ],
+   "found": [
+    [
+     85,
+     8
+    ],
+    [
+     121,
+     236
+    ]
+   ]
+  },
+  "body": {
+   "file": "Assets/sprites/npc_nun_body.png",
+   "w": 279,
+   "h": 381,
+   "pivot": [
+    134,
+    378
+   ]
+  },
+  "arm_upper": {
+   "file": "Assets/sprites/npc_nun_arm_upper.png",
+   "w": 76,
+   "h": 205,
+   "pivot": [
+    45,
+    14
+   ],
+   "end": [
+    31,
+    190
+   ],
+   "found": [
+    [
+     45,
+     14
+    ],
+    [
+     31,
+     190
+    ]
+   ]
+  },
+  "arm_lower": {
+   "file": "Assets/sprites/npc_nun_arm_lower.png",
+   "w": 61,
+   "h": 208,
+   "pivot": [
+    35,
+    13
+   ],
+   "end": [
+    30,
+    151
+   ],
+   "found": [
+    [
+     35,
+     13
+    ],
+    [
+     30,
+     151
+    ],
+    [
+     30,
+     128
+    ]
+   ]
+  },
+  "rosary": {
+   "file": "Assets/sprites/npc_nun_rosary.png",
+   "w": 48,
+   "h": 231,
+   "pivot": [
+    23,
+    8
+   ],
+   "end": [
+    26,
+    224
+   ],
+   "found": [
+    [
+     23,
+     8
+    ],
+    [
+     26,
+     224
+    ]
+   ]
+  }
+ },
+ "bones": [
+  {
+   "id": "root",
+   "parent": null,
+   "part": null,
+   "at": [
+    0,
+    0
+   ],
+   "rest": 0,
+   "order": 0
+  },
+  {
+   "id": "body",
+   "parent": "root",
+   "part": "body",
+   "at": [
+    0,
+    0
+   ],
+   "rest": 0,
+   "order": 10
+  },
+  {
+   "id": "veil",
+   "parent": "body",
+   "part": "veil",
+   "at": [
+    2,
+    -364
+   ],
+   "rest": 0,
+   "order": 2,
+   "scale": 0.78,
+   "shade": 0.25
+  },
+  {
+   "id": "head",
+   "parent": "body",
+   "part": "head",
+   "at": [
+    2,
+    -348
+   ],
+   "rest": 0,
+   "order": 20,
+   "scale": 0.62
+  },
+  {
+   "id": "L_up",
+   "parent": "body",
+   "part": "arm_upper",
+   "at": [
+    -18,
+    -348
+   ],
+   "rest": 24,
+   "order": 13,
+   "scale": 0.7,
+   "flip": true
+  },
+  {
+   "id": "L_low",
+   "parent": "L_up",
+   "part": "arm_lower",
+   "at": [
+    14,
+    176
+   ],
+   "rest": -16,
+   "order": 14,
+   "flip": true,
+   "snapToEnd": true
+  },
+  {
+   "id": "R_up",
+   "parent": "body",
+   "part": "arm_upper",
+   "at": [
+    37,
+    -348
+   ],
+   "rest": -16,
+   "order": 13,
+   "scale": 0.7,
+   "flip": false
+  },
+  {
+   "id": "R_low",
+   "parent": "R_up",
+   "part": "arm_lower",
+   "at": [
+    -14,
+    176
+   ],
+   "rest": 10,
+   "order": 14,
+   "flip": false,
+   "snapToEnd": true
+  },
+  {
+   "id": "rosary",
+   "parent": "L_low",
+   "part": "rosary",
+   "at": [
+    5,
+    138
+   ],
+   "rest": -8,
+   "order": 16,
+   "scale": 0.68,
+   "snapToEnd": true
+  }
+ ],
+ "idle": {
+  "length": 4.2,
+  "bones": [
+   {
+    "bone": "body",
+    "offset": 0,
+    "a1": 0.8,
+    "p1": 0,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "head",
+    "offset": 0,
+    "a1": 2.2,
+    "p1": 0.2,
+    "a2": 0.6,
+    "p2": 0.1
+   },
+   {
+    "bone": "veil",
+    "offset": 0,
+    "a1": -1,
+    "p1": 0.35,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "L_up",
+    "offset": 0,
+    "a1": 1.5,
+    "p1": 0.1,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "L_low",
+    "offset": 0,
+    "a1": 2,
+    "p1": 0.2,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "rosary",
+    "offset": 0,
+    "a1": 4,
+    "p1": 0.35,
+    "a2": 1.2,
+    "p2": 0.1
+   },
+   {
+    "bone": "R_up",
+    "offset": 0,
+    "a1": -1.5,
+    "p1": 0.6,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "R_low",
+    "offset": 0,
+    "a1": -2.5,
+    "p1": 0.7,
+    "a2": 0,
+    "p2": 0
+   }
+  ]
+ },
+ "hold": {
+  "length": 1.6,
+  "bones": [
+   {
+    "bone": "R_low",
+    "offset": 0,
+    "a1": 5,
+    "p1": 0,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "head",
+    "offset": 0,
+    "a1": 1.5,
+    "p1": 0.25,
+    "a2": 0,
+    "p2": 0
+   }
+  ]
+ },
+ "raise": {
+  "length": 0.8,
+  "peakTime": 0.45,
+  "settleTime": 0.8,
+  "keepEnd": true,
+  "easeIn": true,
+  "bones": [
+   {
+    "bone": "R_up",
+    "start": 0,
+    "peak": -62,
+    "settle": -56
+   },
+   {
+    "bone": "R_low",
+    "start": 0,
+    "peak": -78,
+    "settle": -70
+   },
+   {
+    "bone": "head",
+    "start": 0,
+    "peak": 6,
+    "settle": 4
+   },
+   {
+    "bone": "body",
+    "start": 0,
+    "peak": -1.5,
+    "settle": -1
+   },
+   {
+    "bone": "L_up",
+    "start": 0,
+    "peak": 6,
+    "settle": 4
+   }
+  ]
+ }
+}

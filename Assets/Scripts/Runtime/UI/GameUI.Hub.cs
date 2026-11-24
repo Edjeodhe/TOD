@@ -96,7 +96,9 @@ namespace TOD
                 bool blocked = !isTaken && (chosen >= picks || usedCells + size > cells);
                 card.EnableInClassList("hub-blocked", blocked);
             }
+            bool fresh = Opened != "hubpack";   // 고를 때마다 다시 그리므로 처음 열 때만 번쩍
             ShowDialog("hubpack");
+            if (fresh) StartEntrances(container);   // 22차-ui-fixes: 레전더리 카드 번쩍 (GameUI.Entrance.cs)
         }
     }
 }

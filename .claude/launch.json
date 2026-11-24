@@ -12,6 +12,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["tools/rig_editor/server.py", "5180"],
       "port": 5180
+    },
+    {
+      "name": "npc-rig",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["tools/rig_editor/server.py", "5181"],
+      "port": 5181
     }
   ]
 }

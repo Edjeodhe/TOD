@@ -1,0 +1,9 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/potions23.png
+Size: landscape 1536x1024.
+Create a game icon sheet: 3 separate potion bottle icons in ONE row, left to right, each about 380px tall, fully separated with wide empty gaps, nothing touching, front view, same bottle family as the reference image (small round corked glass flask, thick rough black outline, paper grain inside shapes):
+(1) HEALING potion: round flask with deep cherry RED liquid (#C8283C to #8E1426), a tiny cream cross-stitch plus sign sewn on a small cloth label tied around the neck with red thread, cork stopper.
+(2) PURIFYING potion: slim teardrop flask with pale ivory-teal glowing clear liquid (#DCEFE8 to #8CC7BE), a few tiny sparkles inside, a little white ribbon bow around the neck, wax-sealed cork.
+(3) YARN potion: squat wide flask filled with GOLDEN amber liquid (#F2C14E to #B9802A) with a tiny ball of golden yarn floating inside and a loose golden thread trailing out from under the cork and curling around the bottle.
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D paper cutout look, rough consistent-weight thick black outline around every shape, slightly paper-grain texture INSIDE the shapes, glossy white highlight on the glass, readable at 40 pixels.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no ground shadow, no text, no labels. Do not use any green color inside the artwork itself.

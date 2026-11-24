@@ -6,6 +6,7 @@
     <Style src="project://database/Assets/UI/Hub.uss" />
     <Style src="project://database/Assets/UI/Merchant.uss" />
     <Style src="project://database/Assets/UI/Moira.uss" />
+    <Style src="project://database/Assets/UI/Potion.uss" />
     <ui:VisualElement name="root" class="root" picking-mode="Ignore">
 
         <!-- 전투 중 글자 (피해 숫자, N HIT, ×N) -->
@@ -91,20 +92,25 @@
             </ui:VisualElement>
 
             <ui:Button name="pause" text="Ⅱ" class="icon-button pause-button" tooltip="일시 정지 (Esc)" />
+            <!-- 23차: 일시정지 버튼 아래 기억의 파편 보유 수 (흡수될 때 bump 로 튀어 오름) -->
+            <ui:VisualElement name="hud-shards" class="shards hud-shards" tooltip="기억의 파편" picking-mode="Ignore"><ui:VisualElement picking-mode="Ignore" /><ui:Label name="hud-shards-count" text="0" picking-mode="Ignore" /></ui:VisualElement>
             <ui:VisualElement name="banner" class="banner hidden" picking-mode="Ignore"><ui:Label name="banner-text" /></ui:VisualElement>
-            <ui:VisualElement name="timer" class="round-timer hidden" picking-mode="Ignore"><ui:Label name="timer-text" /></ui:VisualElement>
+            <ui:VisualElement name="timer" class="round-timer hidden" picking-mode="Ignore"><ui:Label name="timer-text" /><ui:Label name="floor-round" class="floor-round" picking-mode="Ignore" /></ui:VisualElement>
             <ui:VisualElement name="hint" class="hint-bar hidden" picking-mode="Ignore"><ui:Label name="hint-text" /></ui:VisualElement>
             <!-- 보스 HUD: 화면 위 가운데, 크게 (이름 띠 + 잉크 틀 게이지) -->
             <ui:VisualElement name="boss-hud" class="boss-hud hidden" picking-mode="Ignore">
                 <ui:VisualElement class="boss-title" picking-mode="Ignore">
                     <ui:VisualElement class="boss-seal" picking-mode="Ignore"><ui:Label text="♜" picking-mode="Ignore" /></ui:VisualElement>
                     <ui:Label name="boss-name" text="실타래의 지배자" class="boss-name" picking-mode="Ignore" />
+                    <ui:Label name="boss-floor" class="boss-floor" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement class="bar-frame boss-frame" picking-mode="Ignore">
                     <ui:VisualElement class="bar-track meter" picking-mode="Ignore"><ui:VisualElement name="boss-bar" class="meter-fill boss" picking-mode="Ignore" /></ui:VisualElement>
                     <ui:VisualElement class="bar-ink" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <!-- 23차 포션 칸 (숫자키 1~5로 마심): Slots.uxml potion-slot 복제 (GameUI.Potions.cs, Potion.uss) -->
+            <ui:VisualElement name="potion-bar" class="potion-bar" picking-mode="Ignore" />
             <!-- 메이플식 하단 경험치 바 -->
             <ui:VisualElement name="exp" class="exp-bar" picking-mode="Ignore">
                 <ui:Label name="exp-level" text="LV. 1" class="exp-level" />
@@ -123,6 +129,7 @@
                 <ui:Label text="우클릭 실 당기기" />
                 <ui:Label text="Space 대쉬" />
                 <ui:Label text="E 상호작용" />
+                <ui:Label text="1~5 포션" />
                 <ui:Label text="Esc 일시 정지" />
             </ui:VisualElement>
         </ui:VisualElement>
@@ -163,7 +170,7 @@
                 <ui:Label name="inventory-header" class="eyebrow" />
                 <ui:Label name="inventory-title" text="재봉 상자" class="room-title" />
                 <ui:Label name="inventory-run-note" class="room-note hidden" />
-                <ui:Label name="inventory-help" text="조각을 고르고(R로 회전) 판의 칸을 누르세요. 같은 색의 변을 맞대면 세트 효과가 켜집니다." class="room-text" />
+                <ui:Label name="inventory-help" text="조각을 고르고(R로 회전) 판의 칸을 누르세요. 판 위 조각에 마우스를 올리고 우클릭하면 뺍니다. 같은 색의 변을 맞대면 세트 효과가 켜집니다." class="room-text" />
                 <ui:VisualElement class="inventory-layout">
                     <!-- 세트 효과 패널 (22차): 판에 가진 세트만, 이름 (개수) + 켜진 효과 짧게, 못 미친 세트는 회색. 마우스를 올리면 set-tip (GameUI 가 Slots.uxml set-entry 를 복제) -->
                     <ui:VisualElement name="sets" class="set-panel">
@@ -171,6 +178,8 @@
                         <ui:ScrollView name="set-list" class="set-list" mode="Vertical" horizontal-scroller-visibility="Hidden" />
                         <ui:Label name="set-empty" text="판에 조각을 놓으면 여기에 세트가 나옵니다." class="set-empty" />
                     </ui:VisualElement>
+                    <!-- 23차: 판 + 그 아래 포션 칸 줄 -->
+                    <ui:VisualElement name="board-col" class="board-col">
                     <!-- 판: 칸(누르기) 위에 조각 그림 층과 반투명 미리보기 층을 겹친다 -->
                     <ui:VisualElement name="board-wrap" class="board-wrap">
                         <ui:VisualElement name="board" class="board" />
@@ -181,6 +190,12 @@
                         <!-- 19차 모이라 줄 고르기: 강화한 줄 띠, 확장 가장자리 띠(누름) -->
                         <ui:VisualElement name="board-pick" class="board-layer board-pick" picking-mode="Ignore" />
                         <ui:VisualElement name="needle" class="sew-needle hidden" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <!-- 23차 포션 칸 5개 (등반 중에만): Slots.uxml potion-slot 을 복제, 마우스를 올리면 potion-tip (GameUI.Potions.cs, Potion.uss) -->
+                    <ui:VisualElement name="potion-row" class="potion-row hidden">
+                        <ui:Label name="potion-title" class="potion-title" picking-mode="Ignore" />
+                        <ui:VisualElement name="potion-slots" class="potion-slots" />
+                    </ui:VisualElement>
                     </ui:VisualElement>
                     <!-- 21차 목록 + 오른쪽 위 정렬 버튼 (누르면 기준 목록이 펼쳐짐, GameUI.Board.cs InitSort) -->
                     <ui:VisualElement name="stash-col" class="stash-col">
@@ -198,7 +213,6 @@
                 </ui:VisualElement>
                 <ui:VisualElement class="actions">
                     <ui:Button name="rotate" text="회전 (R)" />
-                    <ui:Button name="unequip" text="판에서 빼기" />
                     <ui:Button name="inventory-back" text="돌아가기" class="primary" />
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -233,6 +247,18 @@
                 <ui:Label name="set-tip-role" class="set-tip-role" picking-mode="Ignore" />
                 <ui:Label name="set-tip-desc" class="set-tip-desc" picking-mode="Ignore" />
                 <ui:VisualElement name="set-tip-tiers" class="set-tip-tiers" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <!-- 23차 포션 정보 창 (포션 칸에 마우스를 올리면): 아이콘, 이름, 개수, 설명, 숫자키 -->
+            <ui:VisualElement name="potion-tip" class="piece-tip potion-tip hidden" picking-mode="Ignore">
+                <ui:VisualElement class="tip-head" picking-mode="Ignore">
+                    <ui:VisualElement name="potion-tip-icon" class="tip-icon" picking-mode="Ignore" />
+                    <ui:VisualElement class="tip-title" picking-mode="Ignore">
+                        <ui:Label name="potion-tip-name" class="tip-name" picking-mode="Ignore" />
+                        <ui:Label name="potion-tip-count" class="tip-rank" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="potion-tip-text" class="tip-effect potion-tip-text" picking-mode="Ignore" />
+                <ui:Label name="potion-tip-key" class="tip-flavor" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -339,7 +365,6 @@
                 <ui:VisualElement class="actions reroll-row"><ui:Button name="reroll-augment" text="다시 굴리기" class="reroll" /></ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="dialog-desire" class="dialog hidden">
-                <ui:VisualElement class="ui-vfx" picking-mode="Ignore" style="background-image: url('project://database/Assets/vfx/boss.png');" />
                 <ui:Label name="desire-eyebrow" class="eyebrow" />
                 <ui:Label name="desire-name" class="dialog-title" />
                 <ui:Label name="desire-text" class="dialog-text" />
@@ -354,7 +379,6 @@
                         <ui:Label name="refuse-feel" class="desire-feel" />
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:Label name="desire-numbers" class="desire-numbers" />
             </ui:VisualElement>
             <ui:VisualElement name="dialog-shop" class="dialog hidden">
                 <ui:VisualElement class="merchant-peek-slot" picking-mode="Ignore" />
@@ -409,6 +433,23 @@
         <!-- 17차: 재봉실 ↔ 다락 방을 오갈 때 잠깐 어두워지는 판 -->
         <ui:VisualElement name="room-fade" class="room-fade hidden" picking-mode="Ignore" />
         <ui:VisualElement name="notice" class="notice hidden" picking-mode="Ignore"><ui:Label name="notice-text" /></ui:VisualElement>
+        <!-- 22차 인벤토리 확장 알림 (GameUI.Stamp.cs, Moira.uss): 찢어진 종이 쪽지 + 오른쪽 아래 붉은 도장 자국이 '쿵' -->
+        <ui:VisualElement name="stamp-note" class="stamp-note hidden" picking-mode="Ignore">
+            <ui:VisualElement name="stamp-paper" class="stamp-paper" picking-mode="Ignore">
+                <ui:Label name="stamp-text" class="stamp-text" picking-mode="Ignore" />
+                <ui:VisualElement name="stamp-ink" class="stamp-ink" picking-mode="Ignore" />
+                <ui:VisualElement name="stamp-mark" class="stamp-mark" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 23차: 보스 욕망을 고른 뒤 잠깐 뜨는 한 줄 (GameUI.DesireEcho.cs, Main.uss .desire-echo). 삼킴 = 붉은 잉크와 핏자국, 안 삼킴 = 식은 잿빛 잉크 -->
+        <ui:VisualElement name="desire-echo" class="desire-echo hidden" picking-mode="Ignore">
+            <ui:VisualElement name="desire-echo-paper" class="desire-echo-paper" picking-mode="Ignore">
+                <ui:VisualElement name="desire-echo-blot" class="desire-echo-blot" picking-mode="Ignore" />
+                <ui:Label name="desire-echo-text" class="desire-echo-text" picking-mode="Ignore" />
+                <ui:VisualElement class="desire-echo-seam" picking-mode="Ignore"><ui:VisualElement name="desire-echo-thread" class="desire-echo-thread" picking-mode="Ignore" /></ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
 
         <!-- 15차: 세트 해금 알림 (세트 색 종이 띠 + 이름 + 반짝임, 클릭하면 넘김). GameUI.Outgame.cs, Outgame.uss -->
         <ui:VisualElement name="unlock-notice" class="unlock-notice hidden">
@@ -436,48 +477,73 @@
         <ui:VisualElement name="dev-panel" class="dev-panel hidden">
             <ui:Label text="개발자 모드 (F1)" class="dev-title" />
             <ui:Label name="dev-status" class="dev-status" />
-            <ui:Label text="주인공" class="dev-head" />
-            <ui:VisualElement class="dev-row">
-                <ui:Button name="dev-god" text="무적" class="dev-btn" />
-                <ui:Button name="dev-heal" text="체력 회복" class="dev-btn" />
-                <ui:Button name="dev-level" text="레벨 +1" class="dev-btn" />
-                <ui:Button name="dev-yarn" text="털실 채우기" class="dev-btn" />
-            </ui:VisualElement>
-            <ui:VisualElement class="dev-row">
-                <ui:Button name="dev-gold" text="골드 +" class="dev-btn" />
-                <ui:Button name="dev-shards" text="파편 +" class="dev-btn" />
-                <ui:Button name="dev-desire-up" text="욕망 +" class="dev-btn" />
-                <ui:Button name="dev-desire-down" text="욕망 −" class="dev-btn" />
-            </ui:VisualElement>
-            <ui:Label text="전투" class="dev-head" />
-            <ui:VisualElement class="dev-row">
-                <ui:Button name="dev-spawn-stalker" text="스토커" class="dev-btn" />
-                <ui:Button name="dev-spawn-charger" text="차저" class="dev-btn" />
-                <ui:Button name="dev-spawn-shooter" text="슈터" class="dev-btn" />
-                <ui:Button name="dev-spawn-boss" text="보스" class="dev-btn" />
-            </ui:VisualElement>
-            <ui:VisualElement class="dev-row">
-                <ui:Button name="dev-bind" text="결박 실 걸기" class="dev-btn" />
-                <ui:Button name="dev-kill" text="적 전부 처치" class="dev-btn" />
-                <ui:Button name="dev-end-round" text="라운드 끝내기" class="dev-btn" />
-                <ui:Button name="dev-freeze" text="적 멈춤" class="dev-btn" />
-            </ui:VisualElement>
-            <ui:Label text="층 속성 (16차, 누르면 지금 층이 그 속성으로)" class="dev-head" />
-            <ui:VisualElement name="dev-floor-elements" class="dev-row" />
-            <ui:Label text="재봉 상자 (세트 조각을 판에 바로 붙임)" class="dev-head" />
-            <ui:VisualElement name="dev-sets" class="dev-row" />
-            <ui:VisualElement class="dev-row">
-                <ui:Button name="dev-all-items" text="모든 조각 지급" class="dev-btn" />
-                <ui:Button name="dev-clear-board" text="판 비우기" class="dev-btn" />
-                <ui:Button name="dev-clear-items" text="조각 전부 버리기" class="dev-btn" />
-            </ui:VisualElement>
-            <ui:Label text="해금 (15차)" class="dev-head" />
-            <ui:VisualElement class="dev-row">
-                <ui:Button name="dev-ignore-locks" text="세트 잠금 무시" class="dev-btn" />
-                <ui:Button name="dev-best-up" text="최고 층 +1" class="dev-btn" />
-                <ui:Button name="dev-best-reset" text="최고 층, 해금 알림 초기화" class="dev-btn" />
-                <ui:Button name="dev-unlock-notice" text="해금 알림 보기" class="dev-btn" />
-            </ui:VisualElement>
+            <ui:ScrollView name="dev-scroll" class="dev-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden">
+                <!-- 23차: 분류 머리말(dev-head)마다 버튼 줄. 지정 층, 층 속성, 세트 버튼은 DevSetButton.uxml 을 복제한다. -->
+                <ui:Label text="진행" class="dev-head" />
+                <ui:VisualElement class="dev-row">
+                    <ui:Button name="dev-boss-clear" text="보스 바로 클리어" class="dev-btn dev-key" />
+                    <ui:Button name="dev-end-round" text="현재 라운드 클리어" class="dev-btn dev-key" />
+                    <ui:Button name="dev-next-round" text="다음 라운드로" class="dev-btn" />
+                    <ui:Button name="dev-next-floor" text="다음 층으로" class="dev-btn" />
+                    <ui:Button name="dev-rest" text="쉬어가기 라운드로" class="dev-btn" />
+                </ui:VisualElement>
+                <ui:Label text="지정 층으로 (1라운드부터)" class="dev-sub" />
+                <ui:VisualElement name="dev-floors" class="dev-row" />
+                <ui:Label text="주인공" class="dev-head" />
+                <ui:VisualElement class="dev-row">
+                    <ui:Button name="dev-god" text="무적" class="dev-btn" />
+                    <ui:Button name="dev-heal" text="체력 가득" class="dev-btn" />
+                    <ui:Button name="dev-level" text="경험치 레벨업" class="dev-btn" />
+                    <ui:Button name="dev-yarn" text="털실 채우기" class="dev-btn" />
+                </ui:VisualElement>
+                <ui:VisualElement class="dev-row">
+                    <ui:Button name="dev-desire-max" text="욕망 최대" class="dev-btn" />
+                    <ui:Button name="dev-desire-up" text="욕망 +" class="dev-btn" />
+                    <ui:Button name="dev-desire-down" text="욕망 −" class="dev-btn" />
+                    <ui:Button name="dev-gold" text="골드 +" class="dev-btn" />
+                </ui:VisualElement>
+                <ui:Label text="보상" class="dev-head" />
+                <ui:VisualElement class="dev-row">
+                    <ui:Button name="dev-legendary" text="레전더리 조각 받기" class="dev-btn" />
+                    <ui:Button name="dev-mythic" text="신화 도안 받기" class="dev-btn" />
+                    <ui:Button name="dev-shards" text="파편 +" class="dev-btn" />
+                </ui:VisualElement>
+                <ui:Label text="전투" class="dev-head" />
+                <ui:VisualElement class="dev-row">
+                    <ui:Button name="dev-spawn-stalker" text="스토커" class="dev-btn" />
+                    <ui:Button name="dev-spawn-charger" text="차저" class="dev-btn" />
+                    <ui:Button name="dev-spawn-shooter" text="슈터" class="dev-btn" />
+                    <ui:Button name="dev-spawn-boss" text="보스" class="dev-btn" />
+                </ui:VisualElement>
+                <ui:VisualElement class="dev-row">
+                    <ui:Button name="dev-bind" text="결박 당기기 준비" class="dev-btn" />
+                    <ui:Button name="dev-kill" text="적 전부 처치" class="dev-btn" />
+                    <ui:Button name="dev-freeze" text="적 멈춤" class="dev-btn" />
+                </ui:VisualElement>
+                <ui:Label text="쉬어가기 NPC (불러오기)" class="dev-head" />
+                <ui:VisualElement name="dev-npcs" class="dev-row">
+                    <ui:Button name="dev-npc-blessing" text="축복 수녀" class="dev-btn" />
+                    <ui:Button name="dev-npc-gift" text="행상 쥐" class="dev-btn" />
+                    <ui:Button name="dev-npc-xp" text="촛불 유령" class="dev-btn" />
+                    <ui:Button name="dev-npc-gamble" text="단추 인형" class="dev-btn" />
+                </ui:VisualElement>
+                <ui:Label text="층 속성 (누르면 지금 층이 그 속성으로)" class="dev-head" />
+                <ui:VisualElement name="dev-floor-elements" class="dev-row" />
+                <ui:Label text="재봉 상자 (세트 조각을 판에 바로 붙임)" class="dev-head" />
+                <ui:VisualElement name="dev-sets" class="dev-row" />
+                <ui:VisualElement class="dev-row">
+                    <ui:Button name="dev-all-items" text="모든 조각 지급" class="dev-btn" />
+                    <ui:Button name="dev-clear-board" text="판 비우기" class="dev-btn" />
+                    <ui:Button name="dev-clear-items" text="조각 전부 버리기" class="dev-btn" />
+                </ui:VisualElement>
+                <ui:Label text="해금" class="dev-head" />
+                <ui:VisualElement class="dev-row">
+                    <ui:Button name="dev-ignore-locks" text="세트 잠금 무시" class="dev-btn" />
+                    <ui:Button name="dev-best-up" text="최고 층 +1" class="dev-btn" />
+                    <ui:Button name="dev-best-reset" text="최고 층, 해금 알림 초기화" class="dev-btn" />
+                    <ui:Button name="dev-unlock-notice" text="해금 알림 보기" class="dev-btn" />
+                </ui:VisualElement>
+            </ui:ScrollView>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

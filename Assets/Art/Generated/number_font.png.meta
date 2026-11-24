@@ -128,8 +128,8 @@ TextureImporter:
         serializedVersion: 2
         x: 6
         y: 6
-        width: 127
-        height: 154
+        width: 105
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -148,10 +148,10 @@ TextureImporter:
       name: number_font_31
       rect:
         serializedVersion: 2
-        x: 139
+        x: 117
         y: 6
-        width: 101
-        height: 154
+        width: 99
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -170,10 +170,10 @@ TextureImporter:
       name: number_font_32
       rect:
         serializedVersion: 2
-        x: 246
+        x: 222
         y: 6
-        width: 124
-        height: 154
+        width: 109
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -192,10 +192,10 @@ TextureImporter:
       name: number_font_33
       rect:
         serializedVersion: 2
-        x: 376
+        x: 337
         y: 6
-        width: 120
-        height: 154
+        width: 104
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -214,10 +214,10 @@ TextureImporter:
       name: number_font_34
       rect:
         serializedVersion: 2
-        x: 502
+        x: 447
         y: 6
-        width: 129
-        height: 154
+        width: 111
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -236,10 +236,10 @@ TextureImporter:
       name: number_font_35
       rect:
         serializedVersion: 2
-        x: 637
+        x: 564
         y: 6
-        width: 123
-        height: 154
+        width: 103
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -258,10 +258,10 @@ TextureImporter:
       name: number_font_36
       rect:
         serializedVersion: 2
-        x: 766
+        x: 673
         y: 6
-        width: 128
-        height: 154
+        width: 105
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -280,10 +280,10 @@ TextureImporter:
       name: number_font_37
       rect:
         serializedVersion: 2
-        x: 900
+        x: 784
         y: 6
-        width: 125
-        height: 154
+        width: 108
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -302,10 +302,10 @@ TextureImporter:
       name: number_font_38
       rect:
         serializedVersion: 2
-        x: 1031
+        x: 898
         y: 6
-        width: 125
-        height: 154
+        width: 106
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -324,10 +324,10 @@ TextureImporter:
       name: number_font_39
       rect:
         serializedVersion: 2
-        x: 1162
+        x: 1010
         y: 6
-        width: 125
-        height: 154
+        width: 106
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -346,10 +346,10 @@ TextureImporter:
       name: number_font_2b
       rect:
         serializedVersion: 2
-        x: 1293
+        x: 1122
         y: 6
-        width: 118
-        height: 154
+        width: 116
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -368,10 +368,10 @@ TextureImporter:
       name: number_font_2d
       rect:
         serializedVersion: 2
-        x: 1417
+        x: 1244
         y: 6
-        width: 113
-        height: 154
+        width: 110
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -390,10 +390,10 @@ TextureImporter:
       name: number_font_21
       rect:
         serializedVersion: 2
-        x: 1536
+        x: 1360
         y: 6
-        width: 87
-        height: 154
+        width: 90
+        height: 148
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}

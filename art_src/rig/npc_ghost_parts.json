@@ -1,0 +1,106 @@
+{
+ "head": {
+  "file": "Assets/sprites/npc_ghost_head.png",
+  "w": 164,
+  "h": 212,
+  "pivot": [
+   71,
+   209
+  ]
+ },
+ "flame": {
+  "file": "Assets/sprites/npc_ghost_flame.png",
+  "w": 71,
+  "h": 103,
+  "pivot": [
+   34,
+   100
+  ]
+ },
+ "body": {
+  "file": "Assets/sprites/npc_ghost_body.png",
+  "w": 180,
+  "h": 246,
+  "pivot": [
+   94,
+   2
+  ]
+ },
+ "arm_upper": {
+  "file": "Assets/sprites/npc_ghost_arm_upper.png",
+  "w": 79,
+  "h": 185,
+  "pivot": [
+   51,
+   16
+  ],
+  "end": [
+   27,
+   179
+  ],
+  "found": [
+   [
+    51,
+    16
+   ],
+   [
+    27,
+    179
+   ]
+  ]
+ },
+ "arm_lower": {
+  "file": "Assets/sprites/npc_ghost_arm_lower.png",
+  "w": 58,
+  "h": 182,
+  "pivot": [
+   32,
+   15
+  ],
+  "end": [
+   30,
+   123
+  ],
+  "found": [
+   [
+    32,
+    15
+   ],
+   [
+    30,
+    123
+   ],
+   [
+    30,
+    99
+   ]
+  ]
+ },
+ "arm_wisp": {
+  "file": "Assets/sprites/npc_ghost_arm_wisp.png",
+  "w": 74,
+  "h": 224,
+  "pivot": [
+   18,
+   16
+  ],
+  "end": [
+   49,
+   155
+  ],
+  "found": [
+   [
+    18,
+    16
+   ],
+   [
+    49,
+    155
+   ],
+   [
+    49,
+    128
+   ]
+  ]
+ }
+}

@@ -53,16 +53,15 @@ Button {
 /* ---------- 게시판 ---------- */
 .diary-shade { align-items: center; justify-content: center; background-color: rgba(14, 8, 11, 0.78); }
 .diary-board {
-    width: 1640px; height: 860px; padding: 56px 70px 44px 70px;
+    width: 1640px; height: 860px; padding: 40px 70px 40px 70px;
     background-image: url("project://database/Assets/UI/Paper/panel_dark.png");
     -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 64; -unity-slice-bottom: 64;
     -unity-slice-scale: 0.9px;
     -unity-background-image-tint-color: #c08a5e;   /* 코르크 색 */
 }
-.diary-head { align-items: center; margin-bottom: 18px; }
+.diary-head { align-items: center; margin-bottom: 6px; }   /* 23차: 부제를 없애고 쪽지 두 줄이 제목을 덮지 않게 */
 .diary-title { font-size: 46px; color: #f3e2c8; -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
-.diary-subtitle { font-size: 18px; color: #e3c9a0; margin-top: 6px; }
-.diary-notes { flex-grow: 1; flex-direction: row; flex-wrap: wrap; justify-content: center; align-content: center; align-items: center; }
+.diary-notes { flex-grow: 1; flex-direction: row; flex-wrap: wrap; justify-content: center; align-content: flex-start; align-items: center; }
 .diary-foot { flex-direction: row; align-items: center; justify-content: space-between; margin-top: 12px; }
 .diary-hint { color: #e9d2b0; font-size: 18px; }
 .diary-close {
@@ -82,7 +81,7 @@ Button {
 
 /* ---------- 쪽지 ---------- */
 .diary-note {
-    width: 270px; height: 350px; margin: 14px 14px 14px 14px; padding: 0;
+    width: 270px; height: 310px; margin: 10px 14px 10px 14px; padding: 0;
     background-image: none; overflow: visible;
     transition-property: scale, translate; transition-duration: 0.14s;
 }

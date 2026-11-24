@@ -2,7 +2,8 @@
 
 python tools/rig_editor/server.py [port]
 
-- 프로젝트 폴더를 그대로 정적 파일로 내준다 (리깅 페이지 = /tools/rig_editor/moira.html, 그림 = /Assets/sprites/...).
+- 프로젝트 폴더를 그대로 정적 파일로 내준다 (리깅 페이지 = /tools/rig_editor/moira.html, 23차 일반 페이지 = /tools/rig_editor/rig.html?rig=Assets/Rig/<이름>.json,
+  그림 = /Assets/sprites/...). GET /rigs = Assets/Rig/*.json 목록 (rig.html 의 리그 고르기).
 - POST /save?path=Assets/Rig/<이름>.json 으로 받은 JSON 을 저장한다. Assets/Rig, art_src/rig 안에만 쓸 수 있다.
   Assets/Rig 의 리그 JSON 은 Unity 가 TextAsset 으로 그대로 읽는다(MoiraRig). 저장하면 Unity 에 바로 반영된다.
 """
@@ -23,6 +24,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
+
+    def do_GET(self):
+        # 23차: 리깅 페이지(rig.html)의 리그 목록 = Assets/Rig/*.json
+        if urlparse(self.path).path == "/rigs":
+            files = sorted(f"Assets/Rig/{p.name}" for p in (ROOT / "Assets" / "Rig").glob("*.json"))
+            body = json.dumps(files, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        super().do_GET()
 
     def do_POST(self):
         url = urlparse(self.path)

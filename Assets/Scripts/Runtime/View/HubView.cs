@@ -23,6 +23,10 @@ namespace TOD
         public MerchantTalk merchant { get; set; }   // 16차: 상인 단추 자세와 트윈 (GameController 가 넣음)
         public MoiraRig moira;                // 19차: 다락의 모이라 뼈대 리그 (씬 Hub/Moira). 있으면 Moira 시설 그림 대신 그린다
         public FateOrbView fateOrb;           // 22차 미래 보기: 점성구 줌, 구슬 속 영상 (씬 Hub/Moira/FateOrb)
+        [Header("23차 만난 NPC (NpcKind 순서, 씬 Hub/Npcs). 시설 자리는 hub.facilities 의 Npc* station")]
+        public CutoutRig[] npcRigs;
+        public System.Func<HubStation, bool> stationVisible;   // false 면 그 시설은 숨고 말도 못 건다 (아직 못 만난 NPC). GameController 가 넣음
+        public NpcKind? npcTalking;           // 지금 말하는 NPC (말하기 자세)
         readonly Player player = new();
         readonly Dictionary<HubStation, SpriteRenderer> renderers = new();
         readonly Dictionary<HubStation, SpriteRenderer> shadows = new();
@@ -97,8 +101,8 @@ namespace TOD
             }
             var here = new HashSet<HubStation>();
             foreach (HubFacility f in room.facilities ?? new HubFacility[0]) here.Add(f.station);
-            foreach (var pair in renderers) pair.Value.gameObject.SetActive(here.Contains(pair.Key) && !(pair.Key == HubStation.Moira && moira != null));
-            foreach (var pair in shadows) pair.Value.gameObject.SetActive(here.Contains(pair.Key));
+            foreach (var pair in renderers) pair.Value.gameObject.SetActive(here.Contains(pair.Key) && !(pair.Key == HubStation.Moira && moira != null) && !IsNpc(pair.Key));
+            foreach (var pair in shadows) pair.Value.gameObject.SetActive(here.Contains(pair.Key) && Visible(pair.Key));
             foreach (var pair in casts) pair.Value.gameObject.SetActive(here.Contains(pair.Key));
             if (moira != null)
             {
@@ -111,7 +115,58 @@ namespace TOD
                     moira.transform.localScale = new Vector3(s * (f.flip ? -1 : 1), s, 1);
                 }
             }
+            PlaceNpcs();
             Near = null;
+        }
+
+        // ---------------------------------------------------------------- 23차 만난 NPC
+        public static bool IsNpc(HubStation s) => s is HubStation.NpcBlessing or HubStation.NpcGift or HubStation.NpcMemory or HubStation.NpcGamble;
+        public static NpcKind NpcOf(HubStation s) => (NpcKind)((int)s - (int)HubStation.NpcBlessing);
+        bool Visible(HubStation s) => stationVisible == null || stationVisible(s);
+
+        // 지금 방에 있고 만난 NPC 만 켜서 시설 자리에 발밑, 데이터 높이에 맞춘 배율
+        void PlaceNpcs()
+        {
+            if (npcRigs == null) return;
+            for (int i = 0; i < npcRigs.Length; i++)
+            {
+                CutoutRig rig = npcRigs[i];
+                if (rig == null) continue;
+                HubStation station = (HubStation)((int)HubStation.NpcBlessing + i);
+                HubFacility f = System.Array.Find(Room.facilities ?? new HubFacility[0], x => x.station == station);
+                bool on = f != null && Visible(station);
+                if (rig.gameObject.activeSelf != on) rig.gameObject.SetActive(on);
+                if (shadows.TryGetValue(station, out SpriteRenderer sh) && sh.gameObject.activeSelf != on) sh.gameObject.SetActive(on);
+                if (!on) continue;
+                rig.transform.localPosition = Space.Ground(f.position.x, f.position.y);
+                float s = rig.height > 0 ? f.height / rig.height : 1;
+                rig.transform.localScale = new Vector3(s * (f.flip ? -1 : 1), s, 1);
+                FacilityLook look = H.look;
+                if (look != null && look.brightness > 0) { rig.tint = look.tint; rig.saturation = look.saturation; rig.brightness = look.brightness * (f.brightness > 0 ? f.brightness : 1); }
+            }
+        }
+
+        // 매 프레임 (대화 상자가 열려도 움직인다)
+        public void AnimateNpcs(float dt)
+        {
+            if (npcRigs == null) return;
+            PlaceNpcs();
+            for (int i = 0; i < npcRigs.Length; i++)
+            {
+                CutoutRig rig = npcRigs[i];
+                if (rig == null || !rig.gameObject.activeInHierarchy) continue;
+                HubStation station = (HubStation)((int)HubStation.NpcBlessing + i);
+                rig.Talking = npcTalking == (NpcKind)i;
+                rig.Animate(dt, Near != null && Near.station == station ? H.highlight : 1);
+            }
+        }
+
+        // 말풍선 자리: 시설 그림 위쪽 끝에서 bubbleLift 위 (캔버스 px)
+        public Vector2? NpcHead(NpcKind kind, float bubbleLift)
+        {
+            HubFacility f = Facility((HubStation)((int)HubStation.NpcBlessing + (int)kind));
+            if (f == null) return null;
+            return new Vector2(f.position.x, Space.ProjectY(f.position.y) - f.height - bubbleLift);
         }
 
         // 17차: 다락 방으로 올라가기(true) / 재봉실로 내려오기(false). 내려오면 다락 사다리 앞(atticReturn)에 선다.
@@ -272,7 +327,7 @@ namespace TOD
         {
             foreach (HubFacility f in Room.facilities)
             {
-                if (f.block.x <= 0 || f.block.y <= 0) continue;
+                if (f.block.x <= 0 || f.block.y <= 0 || !Visible(f.station)) continue;
                 Vector2 c = f.position + f.blockOffset;
                 float nx = (player.x - c.x) / f.block.x, ny = (player.y - c.y) / f.block.y;
                 float d = Mathf.Sqrt(nx * nx + ny * ny);
@@ -289,6 +344,7 @@ namespace TOD
             float bestD = float.MaxValue;
             foreach (HubFacility f in Room.facilities)
             {
+                if (!Visible(f.station)) continue;   // 23차: 아직 못 만난 NPC
                 float radius = f.radius > 0 ? f.radius : H.interactRadius;
                 float d = Vector2.Distance(new Vector2(player.x, player.y), f.position);
                 if (d <= radius && d < bestD) { best = f; bestD = d; }

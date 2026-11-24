@@ -1,0 +1,10 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/number23_b.png
+Size: landscape 1536x1024.
+The attached reference shows the LAYOUT only. Draw a custom illustrated DAMAGE NUMBER typography sheet for a dark-fantasy sewing-themed 2D action game (a cursed tower, needles and thread, torn parchment, candlelight).
+Exactly these 13 separate characters in the same positions as the reference, two rows, each fully separated by a wide empty gap (at least 60px), nothing touching:
+Row 1 (left to right): 0 1 2 3 4 5 6
+Row 2 (left to right): 7 8 9 + - !
+Every digit the SAME height (about 260px), all characters clearly belonging to ONE consistent typeface, perfectly readable at small size.
+Style: rough INK BRUSH lettering: each digit painted with a single loaded calligraphy brush, dry-brush streaks and split bristle ends, slightly uneven baseline, fill ivory (#F6EEDC) with darker ivory streaks inside the strokes, surrounded by a soft ragged black ink bleed outline (about 10px) like ink soaking into old paper, a few tiny ink droplets very close to each character (touching it, not floating far). Dark fairytale mood.
+BACKGROUND RULE (critical): the background must be ONE perfectly flat solid pure chroma-key green (#00FF00) everywhere, no gradient, no texture, no vignette, no drop shadows, no text other than what is asked. Do not use any green color inside the artwork.

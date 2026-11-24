@@ -1,8 +1,10 @@
 """21차 피해 숫자 그림 글꼴: Codex 로 그린 글자 시트(0~9 + - !) → 흐린 검은 외곽을 두른 아틀라스.
 
-python tools/bake_number_font.py [a|b]      (기본 a)
+python tools/bake_number_font.py [a|b|23_a|23_b|23_c|23_d]      (기본 a)
   art_src/raw/number21_<판>.png  (Codex, tools/codex_prompts/number21_<판>.txt, 참고 art_src/raw/number21_ref.png = 주아 배치)
       a = 두툼한 펠트 + 안쪽 홈질,  b = 찢은 양피지
+  23차: "23_b" 처럼 차수를 붙이면 art_src/raw/number23_b.png (같은 배치: 윗줄 0~6,아랫줄 7 8 9 + - !)
+      23_a 만화, 23_b 붓 잉크 (사용자가 고름, 지금 게임에 들어간 것), 23_c 금박 필사본, 23_d 십자수
   → Assets/Art/Generated/number_font.png        흰 글자 (게임에서 피해 색을 곱해 물들인다 = visual.damageFont)
   → Assets/Art/Generated/number_font_crit.png   치명타: 흰빛 → 노랑 → 주황 (= visual.critFont)
   → art_src/fonts/number_font.json              글자별 x, y, w, h (위에서 아래 기준, 두 아틀라스 공용)
@@ -20,7 +22,7 @@ from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parents[1]
 VARIANT = (sys.argv[1:] or ["a"])[0]
-SRC = ROOT / f"art_src/raw/number21_{VARIANT}.png"
+SRC = ROOT / (f"art_src/raw/number{VARIANT}.png" if "_" in VARIANT else f"art_src/raw/number21_{VARIANT}.png")
 OUT = ROOT / "Assets/Art/Generated"
 OUT_JSON = ROOT / "art_src/fonts/number_font.json"
 CHARS = "0123456789+-!"
@@ -38,7 +40,8 @@ alpha = np.clip(1 - (dom - 40) / 60, 0, 1)
 g2 = np.where(g > np.maximum(r, b), np.maximum(r, b), g)
 col = np.stack([r, g2, b], -1).clip(0, 255) / 255
 mask = alpha > .16
-lab, _ = ndimage.label(ndimage.binary_dilation(mask, iterations=20))   # ! 의 점까지 한 글자로
+DILATE = 10 if "_" in VARIANT else 20   # 23차 시트는 글자 사이가 좁아 20이면 이웃 글자가 붙는다 (4~12 모두 13자)
+lab, _ = ndimage.label(ndimage.binary_dilation(mask, iterations=DILATE))   # ! 의 점까지 한 글자로
 pieces = [(sl, i + 1, int((mask[sl] & (lab[sl] == i + 1)).sum())) for i, sl in enumerate(ndimage.find_objects(lab))]
 pieces = sorted([p for p in pieces if p[2] > 400], key=lambda p: -p[2])[:len(CHARS)]
 assert len(pieces) == len(CHARS), f"글자 {len(pieces)}개 (필요 {len(CHARS)})"
@@ -94,9 +97,13 @@ def white(h, w):
     return np.ones((h, w, 3), np.float32)
 
 
+# 치명타 색 (위 → 가운데 → 아래). 21차 = 흰빛 → 노랑 → 주황, 23차 붓 잉크 = 피빛 붉은 붓글씨 (밝은 핏빛 → 진홍 → 검붉음)
+CRIT = ((255, 175, 160), (235, 45, 45), (135, 8, 22)) if "_" in VARIANT else ((255, 255, 250), (255, 232, 100), (255, 165, 30))
+
+
 def crit(h, w):
     v = np.clip((np.arange(h, dtype=np.float32) - MARGIN) / (h - MARGIN * 2), 0, 1)[:, None, None]
-    t, m, b = (np.array(c, np.float32) / 255 for c in ((255, 255, 250), (255, 232, 100), (255, 165, 30)))
+    t, m, b = (np.array(c, np.float32) / 255 for c in CRIT)
     return np.broadcast_to(np.where(v < .45, t + (m - t) * (v / .45), m + (b - m) * ((v - .45) / .55)), (h, w, 3)).astype(np.float32)
 
 
@@ -115,6 +122,9 @@ def atlas(tint):
         out[PAD:PAD + gl.shape[0], x:x + gl.shape[1]] = gl
         meta.append({"ch": ch, "x": x, "y": PAD, "w": gl.shape[1], "h": cell_h})
         x += gl.shape[1] + PAD
+    # 크로마키 초록이 붓 가장자리에 남지 않게: 초록이 빨강·파랑보다 세면 그 둘 중 큰 값으로 누른다
+    rb = np.maximum(out[..., 0], out[..., 2])
+    out[..., 1] = np.minimum(out[..., 1], rb)
     return Image.fromarray((out * 255).round().clip(0, 255).astype(np.uint8), "RGBA"), meta, width, height
 
 

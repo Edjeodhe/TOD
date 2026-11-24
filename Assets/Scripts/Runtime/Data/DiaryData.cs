@@ -23,7 +23,7 @@ namespace TOD
     [Serializable] public class DiaryConfig
     {
         public DiaryEntry[] entries;
-        public string boardTitle, boardSubtitle;   // 게시판 머리글
+        public string boardTitle, boardSubtitle;   // 게시판 머리글 (23차: 부제는 화면에 쓰지 않음)
         public string lockedText;                  // 찢긴 빈 쪽지 문구 ({0} = 층)
         public string newTag;                      // 새 조각 표시
         public string undecidedLine;               // 아직 흡수/거절을 고르지 않은 층의 마지막 줄

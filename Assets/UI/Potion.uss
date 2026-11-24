@@ -1,0 +1,59 @@
+/* 23차 포션 칸: 재봉 상자 판 아래 줄(potion-row)과 전투 HUD 아래 줄(potion-bar). 칸 하나 = Slots.uxml potion-slot (GameUI.Potions.cs) */
+
+/* 판 + 포션 줄을 세로로 */
+.board-col { flex-direction: column; align-items: center; flex-shrink: 0; }
+
+/* 판 아래 찢어진 어두운 종이 띠 */
+.potion-row {
+    flex-direction: row; align-items: center; margin-top: 14px; padding: 10px 22px 12px 22px;
+    background-image: url("project://database/Assets/UI/Paper/panel_dark.png");
+    -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 64; -unity-slice-bottom: 64;
+    -unity-slice-scale: 0.4px;
+}
+.potion-title {
+    font-size: 24px; color: #d6b06e; margin-right: 14px;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013;
+}
+.potion-slots { flex-direction: row; }
+
+/* 칸: 퍼즐 판 칸과 같은 눌린 홈 종이 */
+.potion-slot {
+    width: 74px; height: 74px; margin: 0 5px; position: relative;
+    background-image: url("project://database/Assets/UI/Puzzle/slot_empty.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: #4e3e46;
+}
+.potion-slot:hover { -unity-background-image-tint-color: #7a6470; }
+.potion-slot.filled { -unity-background-image-tint-color: #6a5560; }
+.potion-slot.filled:hover { -unity-background-image-tint-color: #8f7682; }
+.potion-glow {
+    position: absolute; left: -10px; right: -10px; top: -10px; bottom: -10px; opacity: 0;
+    background-image: url("project://database/Assets/Art/Generated/soft_disc.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+.potion-icon { position: absolute; left: 7px; right: 7px; top: 5px; bottom: 7px; -unity-background-scale-mode: scale-to-fit; }
+.potion-slot.cooling .potion-icon { opacity: 0.5; }
+.potion-key {
+    position: absolute; left: 5px; top: 1px; font-size: 15px; color: #eadcc4;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013;
+}
+.potion-count {
+    position: absolute; right: 5px; bottom: 0; font-size: 22px; color: #ffffff; -unity-text-align: lower-right;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    -unity-text-outline-width: 2px; -unity-text-outline-color: #1a1013;
+}
+.potion-slot.empty .potion-count { display: none; }
+
+/* 전투 HUD: 오른쪽 아래, 경험치 바 바로 위 (조작 안내 줄과 같은 높이, 안내는 왼쪽).
+   아래 가운데는 E 안내 줄(.hint-bar, bottom 100px)과 알림(.notice, bottom 58px)이 쓰므로 피한다 (23차 겹침 수정) */
+.potion-bar { position: absolute; right: 26px; bottom: 50px; flex-direction: row; justify-content: flex-end; }
+.potion-bar .potion-slot { width: 60px; height: 60px; margin: 0 4px; }
+.potion-bar .potion-slot.empty { opacity: 0.6; }
+.potion-bar .potion-count { font-size: 19px; }
+.potion-bar .potion-key { font-size: 14px; }
+
+/* 포션 정보 창 (piece-tip 양피지 그대로, 폭만 좁게) */
+.potion-tip { width: 380px; }
+.potion-tip-text { font-size: 22px; white-space: normal; }

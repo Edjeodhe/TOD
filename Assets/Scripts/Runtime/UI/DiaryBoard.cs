@@ -37,7 +37,6 @@ namespace TOD
             lobbyButton = root.Q("diary-lobby-button");
             lobbyDot = root.Q("diary-lobby-new");
             root.Q<Label>("diary-title").text = D.boardTitle;
-            root.Q<Label>("diary-subtitle").text = D.boardSubtitle;
             root.Q<Label>("diary-hint").text = D.readHint;
             root.Q<Label>("diary-lobby-label").text = D.lobbyButton;
             root.Q<Button>("diary-close").text = D.closeText;

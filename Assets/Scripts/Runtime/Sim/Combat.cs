@@ -112,6 +112,7 @@ namespace TOD
             r.player.y = A.height / 2;
             r.player.angle = H.initialAngle;
             r.player.dashCharges = Mathf.Max(1, F.dashCharges);
+            r.potions = Potions.NewSlots(db);   // 23차 포션 칸 (시작 포션 포함)
             return r;
         }
 
@@ -177,11 +178,13 @@ namespace TOD
             r.player.y = A.height / 2;
             r.elapsed = 0; r.spawned = 0;
             foreach (Enemy e in r.enemies) r.enemyPool.Push(e);
+            FlushShards(r);   // 23차: 아직 날아오던 기억의 파편은 잃지 않게 바로 넣는다
             r.enemies.Clear(); r.drops.Clear();
             r.bullets.Clear(); r.strands.Clear(); r.knots.Clear(); r.trails.Clear(); r.effects.Clear();
             r.echo = null; r.shotCount = 0; r.winding = 0; r.dry = 0; r.nextKnot = 0;
             r.yarn = YarnMax(r);
             r.stairs = r.altar = r.merchant = null;
+            r.npc = null; r.npcStage = 0; r.npcGreeted = false;   // 23차 쉬어가기 NPC
             r.artifactOffer.Clear(); r.artifactTaken = false; r.desirePending = false; r.artifactRerolled = false; r.bossDeath = null;
             r.purifyTime = -1; r.purifyCenter = null;
             if (r.roundKind != RoundKind.Boss) r.purified = false;
@@ -210,6 +213,7 @@ namespace TOD
                     r.roundLength = 0;
                     RaiseTower(r, R.altarOffset);
                     if (r.random() < R.merchantChance) r.merchant = Near(r, R.merchantOffset);
+                    SpawnNpc(r);   // 23차: 확률로 NPC 한 명 (CombatNpc.cs)
                     r.stairs = Near(r, R.restStairsOffset);
                     r.stairsAge = R.stairsRevealTime;
                     name = db.ui.restRoundName;
@@ -266,6 +270,7 @@ namespace TOD
                 Check(r.stairs, Interactable.Stairs, Mathf.Max(R.interactRadius, R.stairsRadius), R.stairsHitOffset);
             if (!r.artifactTaken && TowerReady(r)) Check(r.altar, Interactable.Altar, R.interactRadius);
             Check(r.merchant, Interactable.Merchant, R.interactRadius);
+            Check(r.npc, Interactable.Npc, db.npcs != null && db.npcs.interactRadius > 0 ? db.npcs.interactRadius : R.interactRadius);   // 23차
             return best;
         }
 
@@ -514,7 +519,7 @@ namespace TOD
                 Retire(r, e);
             }
             r.bullets.Clear();
-            r.profile.shards += db.rewards.shardFloorClear;
+            DropBossShards(r);   // 23차: 보스 파편 + 층 돌파 파편은 바닥에 떨어졌다가 몸으로 빨려 들 때 오른다
             r.profile.best = Mathf.Max(r.profile.best, r.floor);
             Gear.Save(db, r.profile);
             DesireDef[] unowned = db.desire.desires.Where(d => !r.desires.Contains(d.id)).ToArray();
@@ -560,15 +565,53 @@ namespace TOD
             r.drops.Add(d);
         }
 
+        // 23차 보스 처치: 보스가 있던 자리에서 기억의 파편 여러 알이 위에서 떨어져 흩어지고, 잠깐 바닥에 머문 뒤 몸으로 빨려 든다.
+        // 합계(shardBoss + shardFloorClear)는 알마다 나눠 담고, 몸에 닿을 때 프로필에 더한다.
+        void DropBossShards(RunState r)
+        {
+            RewardConfig rw = db.rewards;
+            int total = rw.shardBoss + rw.shardFloorClear;
+            if (total <= 0) return;
+            int pieces = Mathf.Clamp(rw.bossShardPieces, 1, total);
+            Point at = r.bossDeath != null ? new Point(r.bossDeath.x, r.bossDeath.y) : new Point(r.player.x, r.player.y);
+            for (int i = 0; i < pieces; i++)
+            {
+                float angle = (i + r.random() * .7f) / pieces * Mathf.PI * 2;
+                float speed = rw.bossShardSpread * (.55f + r.random() * .45f);
+                r.drops.Add(new Drop
+                {
+                    x = at.x, y = at.y, shower = true,
+                    shard = total / pieces + (i < total % pieces ? 1 : 0),
+                    vx = Mathf.Cos(angle) * speed, vy = Mathf.Sin(angle) * speed / WorldVertical,
+                    age = -i * rw.bossShardStagger,
+                    hold = rw.bossShardHold + r.random() * rw.bossShardStagger * 2,
+                });
+            }
+        }
+
+        // 다음 라운드로 넘어갈 때 아직 몸에 닿지 않은 파편 (드롭 목록을 비우기 전에)
+        void FlushShards(RunState r)
+        {
+            int left = r.drops.Sum(d => d.shard);
+            if (left <= 0) return;
+            r.profile.shards += left;
+            Gear.Save(db, r.profile);
+        }
+
+        // 바닥에 머무는 시간: 보통 드롭은 튀어나오는 시간, 보스 파편은 떨어지는 시간 + 머무는 시간
+        float DropRest(Drop d) => d.shower ? db.rewards.bossShardFall + d.hold : db.rewards.dropPopTime;
+
         // 드롭 한 알: 튀어나와 미끄러지다가, popTime 뒤에는 점점 빨라지며 몸으로 빨려 든다.
         bool UpdateDrop(RunState r, Drop d, float dt)
         {
             RewardConfig rw = db.rewards;
             Player p = r.player;
             d.age += dt;
+            if (d.shower && d.age < 0) return false;   // 엇갈려 아직 떨어지기 전
             float gap = Distance(d, p);
-            if (d.age >= rw.dropPopTime && gap < H.pickupRadius) { Collect(r, d); return true; }
-            if (d.age < rw.dropPopTime)
+            float rest = DropRest(d);
+            if (d.age >= rest && gap < H.pickupRadius) { Collect(r, d); return true; }
+            if (d.age < rest)
             {
                 float drag = Mathf.Exp(-6 * dt);
                 d.x = Mathf.Clamp(d.x + d.vx * dt, A.wallLeft, A.wallRight);
@@ -576,7 +619,7 @@ namespace TOD
                 d.vx *= drag; d.vy *= drag;
                 return false;
             }
-            d.speed = d.speed <= 0 ? rw.dropVacuumSpeed : d.speed + rw.dropVacuumAccel * dt;
+            d.speed = d.speed <= 0 ? rw.dropVacuumSpeed : d.speed + (d.shower && rw.bossShardAccel > 0 ? rw.bossShardAccel : rw.dropVacuumAccel) * dt;
             Vector2 dir = Unit(p.x - d.x, p.y - d.y);
             float step = Mathf.Min(gap, d.speed * dt);
             d.x += dir.x * step; d.y += dir.y * step;
@@ -595,6 +638,14 @@ namespace TOD
                 glint.lift = 20;
             }
             if (drop.xp > 0 || drop.gold > 0) Event(r, drop.xp > 0 ? "xp" : "gold");
+            if (drop.shower)
+            {
+                // 23차: 몸에서 작게 반짝 (기억의 파편 색). HUD 파편 수는 프로필 값이 오르는 것을 보고 튀어 오른다.
+                Fx glint = Spawn(r, FxKind.Burst, r.player.x + (r.random() - .5f) * 12, r.player.y + (r.random() - .5f) * 8, X.pickup);
+                glint.color = rw.shardColor;
+                glint.lift = 24;
+                if (!string.IsNullOrEmpty(rw.shardSound)) Event(r, rw.shardSound);
+            }
             if (drop.heal > 0)
             {
                 // 하트: 최대 체력 비율만큼 회복하고, 몸에 피가 차오르는 연출을 켠다.
@@ -606,6 +657,7 @@ namespace TOD
                 number.text = "+" + Mathf.Max(0, healed).ToString("0"); number.color = rw.healColor; number.lift = 44;
                 Event(r, "heal");
             }
+            if (drop.potion != null && Potions.Add(db, r.potions, drop.potion) >= 0) Event(r, string.IsNullOrEmpty(db.potions?.pickupSound) ? "loot" : db.potions.pickupSound);   // 23차 포션 칸으로
             GainXp(r, drop.xp);
             r.gold += drop.gold;
             if (drop.shard > 0) r.profile.shards += drop.shard;
@@ -629,7 +681,9 @@ namespace TOD
             for (int i = 0; i < coins; i++) DropPiece(r, e, new Drop { gold = gold / coins + (i < gold % coins ? 1 : 0) });
             // 낮은 확률로 체력 회복 하트 (정예는 조금 더 자주)
             if (r.random() < (e.elite ? rw.healEliteChance : rw.healChance)) DropPiece(r, e, new Drop { heal = rw.healAmount });
-            int shard = boss ? rw.shardBoss : e.elite ? rw.shardElite : 0;
+            string potion = Potions.EliteDrop(db, r, e);   // 23차: 정예는 가끔 포션 (칸에 자리가 있을 때만)
+            if (potion != null) DropPiece(r, e, new Drop { potion = potion });
+            int shard = boss ? 0 : e.elite ? rw.shardElite : 0;   // 23차: 보스 파편은 처치 연출 뒤 DropBossShards 가 흩뿌린다
             bool item = (boss && rw.bossDropsItem) || (e.elite && r.random() < rw.eliteItemChance);
             if (shard > 0 || item) DropPiece(r, e, new Drop { shard = shard, item = item });
             SinOnKill(r, e);   // 22차: 시기 독 옮기기 · 식탐 털실 · 탐욕 저당 금화
@@ -940,11 +994,16 @@ namespace TOD
                     burst.angle = angle;   // 주인공 쪽 (속도선 방향)
                     burst.follow = e;      // 끌려가는 적을 따라 터진다
                     burst.size = db.bind.burst.size * (e.IsBoss ? X.bossScale : 1);
-                    BindLook look = db.Look(db.Tone(rage ? Element.Wrath : element).bindStyle);
+                    Element sinOf = rage ? Element.Wrath : element;
+                    BindLook look = db.Look(db.Tone(sinOf).bindStyle);
                     if (look != null && !string.IsNullOrEmpty(look.text))
                     {
-                        Fx title = Spawn(r, FxKind.Combo, e.x, e.y, X.combo);
-                        title.text = look.text; title.color = look.core;
+                        // 23차: 라틴어 죄종 이름이 로마 비문체로 쾅 찍힌다 (bound = 비문 글자, 뷰가 DrawInscription 으로 그림)
+                        Fx title = Spawn(r, FxKind.Combo, e.x, e.y, db.bind.title != null && db.bind.title.fx.time > 0 ? db.bind.title.fx : X.combo);
+                        title.text = look.text; title.color = look.titleFill.a > 0 ? look.titleFill : look.core;
+                        title.bound = true; title.element = sinOf; title.follow = e; title.seed = r.random();
+                        title.lift = EnemyHeight(e) + (float.IsNaN(title.lift) ? 0 : title.lift);   // 머리 위 (크기가 다른 적도)
+                        title.size = e.IsBoss ? X.bossScale : 1;
                     }
                 }
                 float cut = cutAngle.TryGetValue(e, out float c) ? c : angle;
@@ -1027,7 +1086,7 @@ namespace TOD
                     combo.text = string.Format(M.combo, impacts); combo.color = rage ? X.rageComboColor : X.comboColor;
                 }
             }
-            string message = impacts > 0 ? string.Format(M.pullHits, impacts) + (transfers > 0 ? string.Format(M.pullTransfers, transfers) : "") : M.pullNone;
+            string message = impacts > 0 ? string.Format(M.pullHits, impacts) + (transfers > 0 ? string.Format(M.pullTransfers, transfers) : "") : null;   // 23차: 빈 당기기는 문구 없이 (pullNone 안 씀)
             Event(r, "pull", message);
         }
 
@@ -1069,6 +1128,25 @@ namespace TOD
                 r.strands.Add(new Strand { x = target.x, y = target.y, target = target, state = StrandState.Stuck, element = r.element, birth = r.time + i * .37f, landed = r.time });
             return true;
         }
+
+        // 23차: 라운드, 층 바로 가기 (맵 다시 깔기는 GameController.DevJump)
+        public bool DevGoToRound(RunState r, RoundKind kind)
+        {
+            int index = System.Array.IndexOf(R.sequence, kind);
+            if (index < 0) return false;
+            r.roundIndex = index;
+            BeginRound(r);
+            return true;
+        }
+
+        public void DevGoToFloor(RunState r, int floor)
+        {
+            r.floor = Mathf.Clamp(floor, 1, A.finalFloor);
+            BeginFloor(r);
+        }
+
+        // 욕망 최대: 게이지를 끝 바로 아래까지 채운다 (끝에 닿으면 폭주/각성, 폭주 중이면 엔딩이라 그것은 '욕망 +'로 넘긴다)
+        public void DevMaxDesire(RunState r) => r.desire = Mathf.Max(r.desire, r.maxDesire - .5f);
 
         // ---------------------------------------------------------------- 세트 속성 · 고유 효과
 

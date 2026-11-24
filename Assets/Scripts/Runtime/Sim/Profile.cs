@@ -45,6 +45,10 @@ namespace TOD
         public List<int> hubTaken = new();
         // 22차 신화: 다음 등반에 들고 갈 아버지의 도안 (일기 장의 층 번호, 0 = 안 고름). Mythic.cs
         public int mythicPick;
+        // 23차 쉬어가기 NPC: 만난 NPC(NpcKind 번호), 이번 등반 사이에 재봉실 선물을 이미 준 NPC(등반이 끝나면 비움), 다음 등반에 걸 재봉실 축복
+        public List<int> npcMet = new();
+        public List<int> npcGifted = new();
+        public List<NpcBoon> npcBoons = new();
     }
 
     public class PlacedPiece

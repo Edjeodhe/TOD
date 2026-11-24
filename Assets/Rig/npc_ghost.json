@@ -1,0 +1,353 @@
+{
+ "name": "ghost",
+ "height": 420,
+ "rootPos": [
+  0,
+  0
+ ],
+ "talkFollow": 6,
+ "swapAt": 0.35,
+ "swapAfter": 0.6,
+ "reference": {
+  "file": "art_src/raw/npc_ghost.png",
+  "x": 0,
+  "y": 27.0,
+  "scale": 0.45
+ },
+ "parts": {
+  "head": {
+   "file": "Assets/sprites/npc_ghost_head.png",
+   "w": 164,
+   "h": 212,
+   "pivot": [
+    78,
+    182
+   ]
+  },
+  "flame": {
+   "file": "Assets/sprites/npc_ghost_flame.png",
+   "w": 71,
+   "h": 103,
+   "pivot": [
+    34,
+    100
+   ]
+  },
+  "body": {
+   "file": "Assets/sprites/npc_ghost_body.png",
+   "w": 180,
+   "h": 246,
+   "pivot": [
+    94,
+    2
+   ]
+  },
+  "arm_upper": {
+   "file": "Assets/sprites/npc_ghost_arm_upper.png",
+   "w": 79,
+   "h": 185,
+   "pivot": [
+    51,
+    16
+   ],
+   "end": [
+    46,
+    104
+   ],
+   "found": [
+    [
+     51,
+     16
+    ],
+    [
+     27,
+     179
+    ]
+   ]
+  },
+  "arm_lower": {
+   "file": "Assets/sprites/npc_ghost_arm_lower.png",
+   "w": 58,
+   "h": 182,
+   "pivot": [
+    32,
+    15
+   ],
+   "end": [
+    30,
+    123
+   ],
+   "found": [
+    [
+     32,
+     15
+    ],
+    [
+     30,
+     123
+    ],
+    [
+     30,
+     99
+    ]
+   ]
+  },
+  "arm_wisp": {
+   "file": "Assets/sprites/npc_ghost_arm_wisp.png",
+   "w": 74,
+   "h": 224,
+   "pivot": [
+    18,
+    16
+   ],
+   "end": [
+    35,
+    112
+   ],
+   "found": [
+    [
+     18,
+     16
+    ],
+    [
+     49,
+     155
+    ],
+    [
+     49,
+     128
+    ]
+   ]
+  }
+ },
+ "bones": [
+  {
+   "id": "root",
+   "parent": null,
+   "part": null,
+   "at": [
+    0,
+    0
+   ],
+   "rest": 0,
+   "order": 0
+  },
+  {
+   "id": "body",
+   "parent": "root",
+   "part": "body",
+   "at": [
+    0,
+    -274
+   ],
+   "rest": 0,
+   "order": 10
+  },
+  {
+   "id": "head",
+   "parent": "body",
+   "part": "head",
+   "at": [
+    0,
+    20
+   ],
+   "rest": 0,
+   "order": 20,
+   "scale": 0.78
+  },
+  {
+   "id": "flame",
+   "parent": "head",
+   "part": "flame",
+   "at": [
+    18,
+    -170
+   ],
+   "rest": 0,
+   "order": 21,
+   "scale": 0.9
+  },
+  {
+   "id": "L_up",
+   "parent": "body",
+   "part": "arm_upper",
+   "at": [
+    -52,
+    60
+   ],
+   "rest": 38,
+   "order": 12,
+   "scale": 0.62,
+   "flip": true
+  },
+  {
+   "id": "L_low",
+   "parent": "L_up",
+   "part": "arm_lower",
+   "at": [
+    5,
+    88
+   ],
+   "rest": 62,
+   "order": 13,
+   "flip": true,
+   "snapToEnd": true,
+   "talkPart": "arm_wisp"
+  },
+  {
+   "id": "R_up",
+   "parent": "body",
+   "part": "arm_upper",
+   "at": [
+    54,
+    60
+   ],
+   "rest": -38,
+   "order": 12,
+   "scale": 0.62,
+   "flip": false
+  },
+  {
+   "id": "R_low",
+   "parent": "R_up",
+   "part": "arm_lower",
+   "at": [
+    -5,
+    88
+   ],
+   "rest": -62,
+   "order": 13,
+   "flip": false,
+   "snapToEnd": true
+  }
+ ],
+ "idle": {
+  "length": 3.4,
+  "rootY": {
+   "offset": 0,
+   "a1": 6,
+   "p1": 0,
+   "a2": 1.5,
+   "p2": 0.3
+  },
+  "rootX": {
+   "offset": 0,
+   "a1": 2,
+   "p1": 0.25,
+   "a2": 0,
+   "p2": 0
+  },
+  "bones": [
+   {
+    "bone": "body",
+    "offset": 0,
+    "a1": 1.5,
+    "p1": 0.1,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "head",
+    "offset": 0,
+    "a1": 2.5,
+    "p1": 0.3,
+    "a2": 0.8,
+    "p2": 0.1
+   },
+   {
+    "bone": "flame",
+    "offset": 0,
+    "a1": 5,
+    "p1": 0,
+    "a2": 3,
+    "p2": 0.2
+   },
+   {
+    "bone": "L_up",
+    "offset": 0,
+    "a1": 3,
+    "p1": 0.2,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "L_low",
+    "offset": 0,
+    "a1": 4,
+    "p1": 0.3,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "R_up",
+    "offset": 0,
+    "a1": -3,
+    "p1": 0.7,
+    "a2": 0,
+    "p2": 0
+   },
+   {
+    "bone": "R_low",
+    "offset": 0,
+    "a1": -4,
+    "p1": 0.8,
+    "a2": 0,
+    "p2": 0
+   }
+  ]
+ },
+ "hold": {
+  "length": 1.4,
+  "bones": [
+   {
+    "bone": "flame",
+    "offset": 0,
+    "a1": 8,
+    "p1": 0,
+    "a2": 4,
+    "p2": 0.1
+   },
+   {
+    "bone": "L_low",
+    "offset": 0,
+    "a1": 4,
+    "p1": 0,
+    "a2": 0,
+    "p2": 0
+   }
+  ]
+ },
+ "raise": {
+  "length": 0.9,
+  "peakTime": 0.5,
+  "settleTime": 0.9,
+  "keepEnd": true,
+  "easeIn": true,
+  "bones": [
+   {
+    "bone": "L_up",
+    "start": 0,
+    "peak": 30,
+    "settle": 26
+   },
+   {
+    "bone": "L_low",
+    "start": 0,
+    "peak": 10,
+    "settle": 8
+   },
+   {
+    "bone": "head",
+    "start": 0,
+    "peak": -5,
+    "settle": -3
+   },
+   {
+    "bone": "R_up",
+    "start": 0,
+    "peak": -10,
+    "settle": -8
+   }
+  ]
+ }
+}

@@ -22,17 +22,19 @@ case "$1" in
     run sin_patterns art_src/raw/pattern_icons.png ;;
   decor)
     for s in pride greed lust envy gluttony wrath sloth; do run decor_$s Assets/sprites/floor.png; done ;;
+  # 2판(죄종 느낌 강화): 세 줄이 겹치지 않게 나눔. 없는 그림 먼저, 다시 그리는 탐욕, 색욕은 뒤 (옛 그림은 art_src/raw/sin_v1/)
   enemies_a)
-    for s in pride greed lust envy gluttony wrath sloth; do
+    for s in wrath gluttony sloth; do
       for t in stalker charger; do run enemy_${t}_parts_$s art_src/raw/enemy_${t}_parts.png; done
     done ;;
   enemies_b)
-    for s in pride greed lust envy gluttony wrath sloth; do
+    for s in wrath gluttony lust; do
       for t in shooter boss; do run enemy_${t}_parts_$s art_src/raw/enemy_${t}_parts.png; done
     done ;;
-  enemies_c)   # 뒤에서부터 (다른 줄과 끝에서 만나면 이미 있는 그림은 건너뜀)
-    for s in sloth wrath gluttony envy; do
-      for t in boss shooter charger stalker; do run enemy_${t}_parts_$s art_src/raw/enemy_${t}_parts.png; done
-    done ;;
+  enemies_c)
+    for t in stalker charger shooter boss; do run enemy_${t}_parts_greed art_src/raw/enemy_${t}_parts.png; done
+    for t in stalker charger; do run enemy_${t}_parts_lust art_src/raw/enemy_${t}_parts.png; done ;;
+  enemies_one)  # sh run_22.sh enemies_one <종류> <죄종>
+    run enemy_$2_parts_$3 art_src/raw/enemy_$2_parts.png ;;
 esac
 echo ALLDONE $1

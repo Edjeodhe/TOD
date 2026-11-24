@@ -1,0 +1,116 @@
+{
+ "head": {
+  "file": "Assets/sprites/npc_nun_head.png",
+  "w": 167,
+  "h": 186,
+  "pivot": [
+   86,
+   183
+  ]
+ },
+ "veil": {
+  "file": "Assets/sprites/npc_nun_veil.png",
+  "w": 162,
+  "h": 243,
+  "pivot": [
+   85,
+   8
+  ],
+  "end": [
+   121,
+   236
+  ],
+  "found": [
+   [
+    85,
+    8
+   ],
+   [
+    121,
+    236
+   ]
+  ]
+ },
+ "body": {
+  "file": "Assets/sprites/npc_nun_body.png",
+  "w": 279,
+  "h": 381,
+  "pivot": [
+   134,
+   378
+  ]
+ },
+ "arm_upper": {
+  "file": "Assets/sprites/npc_nun_arm_upper.png",
+  "w": 76,
+  "h": 205,
+  "pivot": [
+   45,
+   14
+  ],
+  "end": [
+   31,
+   190
+  ],
+  "found": [
+   [
+    45,
+    14
+   ],
+   [
+    31,
+    190
+   ]
+  ]
+ },
+ "arm_lower": {
+  "file": "Assets/sprites/npc_nun_arm_lower.png",
+  "w": 61,
+  "h": 208,
+  "pivot": [
+   35,
+   13
+  ],
+  "end": [
+   30,
+   151
+  ],
+  "found": [
+   [
+    35,
+    13
+   ],
+   [
+    30,
+    151
+   ],
+   [
+    30,
+    128
+   ]
+  ]
+ },
+ "rosary": {
+  "file": "Assets/sprites/npc_nun_rosary.png",
+  "w": 48,
+  "h": 231,
+  "pivot": [
+   23,
+   8
+  ],
+  "end": [
+   26,
+   224
+  ],
+  "found": [
+   [
+    23,
+    8
+   ],
+   [
+    26,
+    224
+   ]
+  ]
+ }
+}

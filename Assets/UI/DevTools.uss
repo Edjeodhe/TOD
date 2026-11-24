@@ -1,11 +1,21 @@
 /* 개발자 모드 패널 (F1). 게임 화면과 섞이지 않게 단색 어두운 판 + 주아 15px. */
 .dev-panel {
-    position: absolute; right: 16px; top: 16px; width: 520px; padding: 12px 14px 10px 14px;
+    position: absolute; right: 16px; top: 16px; width: 540px; max-height: 94%; padding: 12px 14px 10px 14px;
     background-color: rgba(12, 8, 14, 0.98); border-width: 2px; border-color: #6fd3a8; border-radius: 4px;
 }
 .dev-title { font-size: 15px; color: #6fd3a8; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
 .dev-status { font-size: 15px; color: #e8dcc8; margin: 4px 0 2px 0; white-space: normal; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
-.dev-head { font-size: 15px; color: #9a8f86; margin-top: 8px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+/* 23차: 분류 머리말은 초록 줄 + 밑줄로 묶음을 나눈다. 버튼이 길어지면 dev-scroll 안에서 굴린다. */
+.dev-head {
+    font-size: 16px; color: #6fd3a8; margin-top: 10px; padding: 0 0 2px 8px;
+    border-left-width: 3px; border-left-color: #6fd3a8; border-bottom-width: 1px; border-bottom-color: #3a3340;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.dev-sub { font-size: 14px; color: #9a8f86; margin: 2px 0 0 11px; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+.dev-scroll { flex-shrink: 1; min-height: 0; }
+.dev-scroll .unity-scroller--vertical { width: 10px; }
+.dev-key { border-color: #6fd3a8; }
+.dev-floor-dot { display: none; }
 .dev-row { flex-direction: row; flex-wrap: wrap; margin-top: 4px; }
 .dev-btn {
     margin: 0 6px 6px 0; padding: 4px 10px; min-height: 0; font-size: 15px; color: #f1e6d6;

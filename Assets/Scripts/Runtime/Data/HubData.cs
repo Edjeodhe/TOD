@@ -7,7 +7,8 @@ namespace TOD
 {
     // Moira = 다락 방의 모이라(19차, 17차 '모이라의 실궤' 자리. 강화 4종), AtticExit = 다락 방의 뚜껑문(재봉실로 내려감)
     // SewingBox 는 19차에 아웃게임에서 뺐다(직렬화 번호를 지키려고 값만 남김). 재봉 상자는 등반 중(I)과 단추의 '시작 조각 챙기기'에서만 연다.
-    public enum HubStation { SewingBox, Attic, Merchant, Tower, Diary, Moira, AtticExit }
+    // 23차: Npc* = 쉬어가기에서 만난 NPC 4종의 재봉실 자리 (만난 NPC 만 보인다. NpcDef.station)
+    public enum HubStation { SewingBox, Attic, Merchant, Tower, Diary, Moira, AtticExit, NpcBlessing, NpcGift, NpcMemory, NpcGamble }
 
     // 20차 운명 읽기 연출: 파편 불티가 점성구로 빨려 들어감 → 점성구가 탁자에서 화면 가운데로 나옴 → 빛이 퍼짐 → 암시가 어두운 글자로 한 자씩 번짐.
     // 누르거나 Esc(또는 hold 초 뒤)면 빛이 걷히고 점성구가 탁자로 돌아간다. 시간은 초, 크기는 패널 px.
@@ -100,6 +101,20 @@ namespace TOD
         public string growSound, fullSound;    // 효과음 id (자라기 시작, 다 참)
     }
 
+    // 22차 인벤토리 확장 알림 (GameUI.Stamp.cs): 찢어진 종이 쪽지에 문구가 쓰이고, 오른쪽 아래에 붉은 인주 도장 자국이 '쿵' 박힌다.
+    [Serializable]
+    public class StampShow
+    {
+        public Texture2D mark;                 // 도장 자국 그림 (Assets/UI/Paper/stamp_seal.png)
+        public float appear;                   // 쪽지가 내려앉는 시간
+        public float stampDelay;               // 쪽지가 앉은 뒤 도장이 찍히기까지
+        public float punchFrom, punchTime;     // 도장 자국이 처음 나타나는 크기(배), 제자리로 눌리는 시간
+        public float press;                    // 찍힐 때 쪽지가 눌리는 정도 (크기 비율)
+        public float shake, shakeTime;         // 찍힐 때 쪽지 흔들림 (px), 시간
+        public float hold, fade;               // 찍힌 뒤 머무는 시간, 사라지는 시간
+        public string sound;                   // 쿵 효과음 id
+    }
+
     // 17차: 걸어 다니는 방 하나 (재봉실 본방은 HubConfig 의 옛 필드를 그대로 쓰고, 다락 방은 HubConfig.attic)
     [Serializable] public class HubRoom
     {
@@ -183,7 +198,7 @@ namespace TOD
         public string packTitle, packHelp;    // 챙기기 판 제목, 안내 줄
         public string packNote;               // 판 위 안내 ({0} 챙긴 수, {1} 들고 갈 수, {2} 파편)
         public string packed, unpacked;       // "{0}을 챙겼습니다", "{0}을 돌려주고 파편 {1}개를 받았습니다"
-        public string unpackLabel;            // 판에서 빼기 버튼 (챙기기 판)
+        public string unpackLabel;            // (23차부터 안 씀) 판에서 빼기 버튼 → 판 위 조각 우클릭
         public string slotEyebrow, slotTitle, slotConfirm;   // '퍼즐 칸 추가'(옛 들고 갈 수 늘리기) 확인 창
 
         [Header("20차 시작 조각 챙기기: 무작위 진열에서 카드로 고르기 (칸 수 한도)")]
@@ -238,6 +253,11 @@ namespace TOD
         public string[] vesselLines;          // 게이지 아래 감성 문구, 한 줄씩 차례로 (자리는 vesselTitle 과 같음, 2줄 권장)
         public string vesselValue;            // 게이지 옆 숫자 ({0} 지금 올라가는 최대치), 예: "{0}"
         public VesselShow vesselShow;
+
+        [Header("22차 인벤토리 확장 알림 (GameUI.Stamp.cs)")]
+        public string expandStamp;            // 모이라 '인벤토리 확장' 뒤 쪽지 문구 (한 줄, {0} = 늘어난 칸 수, 예: "칸이 {0}칸 확장되었습니다")
+        public string slotStamp;              // 단추 '퍼즐 칸 추가' 뒤 쪽지 문구 (비우면 expandStamp)
+        public StampShow stampShow;
 
         [Header("안내")]
         public string hint;                   // 화면 아래 조작 안내

@@ -1,0 +1,129 @@
+{
+ "head": {
+  "file": "Assets/sprites/npc_rat_head.png",
+  "w": 228,
+  "h": 220,
+  "pivot": [
+   118,
+   217
+  ]
+ },
+ "body": {
+  "file": "Assets/sprites/npc_rat_body.png",
+  "w": 194,
+  "h": 246,
+  "pivot": [
+   92,
+   243
+  ]
+ },
+ "bundle": {
+  "file": "Assets/sprites/npc_rat_bundle.png",
+  "w": 177,
+  "h": 247,
+  "pivot": [
+   85,
+   138
+  ]
+ },
+ "tail": {
+  "file": "Assets/sprites/npc_rat_tail.png",
+  "w": 120,
+  "h": 215,
+  "pivot": [
+   88,
+   8
+  ],
+  "end": [
+   55,
+   208
+  ],
+  "found": [
+   [
+    88,
+    8
+   ],
+   [
+    55,
+    208
+   ]
+  ]
+ },
+ "arm_upper": {
+  "file": "Assets/sprites/npc_rat_arm_upper.png",
+  "w": 76,
+  "h": 188,
+  "pivot": [
+   38,
+   16
+  ],
+  "end": [
+   38,
+   170
+  ],
+  "found": [
+   [
+    38,
+    16
+   ],
+   [
+    38,
+    170
+   ]
+  ]
+ },
+ "arm_lower": {
+  "file": "Assets/sprites/npc_rat_arm_lower.png",
+  "w": 80,
+  "h": 198,
+  "pivot": [
+   42,
+   15
+  ],
+  "end": [
+   40,
+   154
+  ],
+  "found": [
+   [
+    42,
+    15
+   ],
+   [
+    40,
+    154
+   ],
+   [
+    40,
+    137
+   ]
+  ]
+ },
+ "arm_piece": {
+  "file": "Assets/sprites/npc_rat_arm_piece.png",
+  "w": 79,
+  "h": 224,
+  "pivot": [
+   42,
+   16
+  ],
+  "end": [
+   39,
+   165
+  ],
+  "found": [
+   [
+    42,
+    16
+   ],
+   [
+    39,
+    165
+   ],
+   [
+    39,
+    142
+   ]
+  ]
+ }
+}

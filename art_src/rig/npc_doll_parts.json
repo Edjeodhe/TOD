@@ -1,0 +1,79 @@
+{
+ "head": {
+  "file": "Assets/sprites/npc_doll_head.png",
+  "w": 318,
+  "h": 228,
+  "pivot": [
+   156,
+   225
+  ]
+ },
+ "body": {
+  "file": "Assets/sprites/npc_doll_body.png",
+  "w": 197,
+  "h": 262,
+  "pivot": [
+   95,
+   259
+  ]
+ },
+ "arm_upper": {
+  "file": "Assets/sprites/npc_doll_arm_upper.png",
+  "w": 86,
+  "h": 159,
+  "pivot": [
+   44,
+   17
+  ],
+  "end": [
+   43,
+   139
+  ],
+  "found": [
+   [
+    44,
+    17
+   ],
+   [
+    43,
+    139
+   ]
+  ]
+ },
+ "arm_lower": {
+  "file": "Assets/sprites/npc_doll_arm_lower.png",
+  "w": 96,
+  "h": 184,
+  "pivot": [
+   52,
+   17
+  ],
+  "end": [
+   43,
+   124
+  ],
+  "found": [
+   [
+    52,
+    17
+   ],
+   [
+    43,
+    124
+   ],
+   [
+    43,
+    100
+   ]
+  ]
+ },
+ "die": {
+  "file": "Assets/sprites/npc_doll_die.png",
+  "w": 98,
+  "h": 110,
+  "pivot": [
+   48,
+   53
+  ]
+ }
+}
