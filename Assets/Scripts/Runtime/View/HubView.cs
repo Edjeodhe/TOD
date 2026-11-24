@@ -16,6 +16,7 @@ namespace TOD
         public SpriteRenderer backdrop;
         public SpriteRenderer facilityTemplate;
         public SpriteRenderer shadowTemplate;  // 20차: 시설 발밑 그림자 (soft_disc, 배경 바로 위 층. 꺼 둔 템플릿을 시설마다 복제)
+        public SpriteRenderer castTemplate;    // 20차: 시설 드리운 그림자 (SpriteFX _Cast. 시설 그림을 뒤집어 납작하게, 꺼 둔 템플릿을 복제)
         public Transform facilityRoot;
 
         HeroView hero;
@@ -24,12 +25,14 @@ namespace TOD
         readonly Player player = new();
         readonly Dictionary<HubStation, SpriteRenderer> renderers = new();
         readonly Dictionary<HubStation, SpriteRenderer> shadows = new();
+        readonly Dictionary<HubStation, SpriteRenderer> casts = new();
         MaterialPropertyBlock block;
         bool placed;
         HubRoom main;                          // 재봉실 본방 (HubConfig 옛 필드를 묶은 것)
         public bool InAttic { get; private set; }
         public HubRoom Room => InAttic && H.attic != null ? H.attic : main;
         static readonly int BrightId = Shader.PropertyToID("_Bright"), SatId = Shader.PropertyToID("_Sat");
+        static readonly int CastId = Shader.PropertyToID("_Cast"), FillId = Shader.PropertyToID("_Fill");
 
         HubConfig H => db.hub;
         public Player Player => player;
@@ -48,6 +51,7 @@ namespace TOD
             };
             facilityTemplate.gameObject.SetActive(false);
             if (shadowTemplate != null) shadowTemplate.gameObject.SetActive(false);
+            if (castTemplate != null) castTemplate.gameObject.SetActive(false);
             foreach (HubRoom room in Rooms())
                 foreach (HubFacility f in room.facilities ?? new HubFacility[0])
                 {
@@ -60,7 +64,13 @@ namespace TOD
                         SpriteRenderer sh = Instantiate(shadowTemplate, facilityRoot);
                         sh.name = f.station + "Shadow";
                         shadows[f.station] = sh;
-                        PlaceShadow(f, sh);
+                        PlaceShadow(f, sh, sr);
+                    }
+                    if (castTemplate != null && f.station is not (HubStation.Moira or HubStation.AtticExit))
+                    {
+                        SpriteRenderer cast = Instantiate(castTemplate, facilityRoot);
+                        cast.name = f.station + "Cast";
+                        casts[f.station] = cast;
                     }
                 }
             ShowRoom();
@@ -88,6 +98,7 @@ namespace TOD
             foreach (HubFacility f in room.facilities ?? new HubFacility[0]) here.Add(f.station);
             foreach (var pair in renderers) pair.Value.gameObject.SetActive(here.Contains(pair.Key) && !(pair.Key == HubStation.Moira && moira != null));
             foreach (var pair in shadows) pair.Value.gameObject.SetActive(here.Contains(pair.Key));
+            foreach (var pair in casts) pair.Value.gameObject.SetActive(here.Contains(pair.Key));
             if (moira != null)
             {
                 moira.gameObject.SetActive(here.Contains(HubStation.Moira));
@@ -118,20 +129,63 @@ namespace TOD
         public void Paint(HubFacility f, SpriteRenderer sr)
         {
             sr.sprite = f.sprite;
-            sr.transform.localPosition = Space.Ground(f.position.x, f.position.y);
             float scale = f.sprite != null ? f.height / (f.sprite.bounds.size.y * Space.Ppu) : 1;
             sr.transform.localScale = new Vector3(scale * (f.flip ? -1 : 1), scale, 1);
+            // 20차: 그림 아래 끝이 데이터 자리에 닿게 (그림은 가운데 피벗으로 가져와서, 피벗 높이만큼 올린다. 전투의 상인 그리기와 같은 방식)
+            sr.transform.localPosition = Space.Ground(f.position.x, f.position.y) + Vector3.up * PivotLift(f.sprite, scale);
         }
 
-        // 20차: 발밑 그림자 = 부드러운 타원 (그림 아래 가운데 + shadowOffset, 지름 shadowSize 캔버스 px)
-        void PlaceShadow(HubFacility f, SpriteRenderer sh)
+        // 피벗(그림 px)이 아래 끝에서 얼마나 위인지 (월드 단위, 배율 적용)
+        static float PivotLift(Sprite sprite, float scale) => sprite != null ? sprite.pivot.y / sprite.pixelsPerUnit * Mathf.Abs(scale) : 0;
+
+        // 그림의 실제 아래 끝 가운데 (facilityRoot 좌표). 시설 그림은 가운데 피벗으로 가져와서 데이터 자리 = 그림 가운데다.
+        static Vector3 Foot(SpriteRenderer sr)
         {
-            Vector3 at = Space.Ground(f.position.x, f.position.y);
+            Vector3 p = sr.transform.localPosition;
+            if (sr.sprite == null) return p;
+            return new Vector3(p.x, p.y - sr.sprite.pivot.y / sr.sprite.pixelsPerUnit * Mathf.Abs(sr.transform.localScale.y), p.z);
+        }
+
+        // 20차: 발밑 그림자 = 부드러운 타원 (그림 아래 끝 가운데 + shadowOffset, 지름 shadowSize 캔버스 px)
+        void PlaceShadow(HubFacility f, SpriteRenderer sh, SpriteRenderer sr)
+        {
+            Vector3 at = sr != null ? Foot(sr) : Space.Ground(f.position.x, f.position.y);
             sh.transform.localPosition = at + new Vector3(f.shadowOffset.x, -f.shadowOffset.y, 0) / Space.Ppu;
             Vector2 px = sh.sprite != null ? (Vector2)sh.sprite.bounds.size * Space.Ppu : Vector2.one;
             sh.transform.localScale = new Vector3(f.shadowSize.x / px.x, f.shadowSize.y / px.y, 1);
             FacilityLook look = H.look;
             if (look != null) sh.color = look.shadowColor;
+        }
+
+        // 20차 드리운 그림자: 시설 그림(상인은 지금 자세)을 발밑에서 뒤집어 castLength 만큼 납작하게 앞으로 눕힌다.
+        // 방 가운데에서 바깥쪽으로 castLean 만큼 기운다. 끝으로 갈수록 옅고 흐릿한 건 SpriteFX _Cast 가 맡는다.
+        void UpdateCasts()
+        {
+            FacilityLook look = H.look;
+            if (look == null || look.castLength <= 0) { foreach (var pair in casts) pair.Value.enabled = false; return; }
+            float cx = Room.backdropRect.center.x;
+            foreach (HubFacility f in Room.facilities)
+            {
+                if (!casts.TryGetValue(f.station, out SpriteRenderer cast) || !renderers.TryGetValue(f.station, out SpriteRenderer sr)) continue;
+                cast.enabled = sr.sprite != null;
+                if (sr.sprite == null) continue;
+                cast.sprite = sr.sprite;
+                cast.flipX = sr.flipX;
+                Vector3 s = sr.transform.localScale;
+                cast.transform.localScale = new Vector3(s.x, -Mathf.Abs(s.y) * look.castLength, 1);
+                float side = Mathf.Sign(f.position.x - cx);
+                float angle = Mathf.Atan(look.castLean) * side;
+                cast.transform.localRotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg);
+                // 뒤집힌 그림의 가까운 끝(그림 아래 끝)이 시설 발밑에 오도록 가운데를 옮긴다 (기운 만큼 돌려서)
+                Vector3 foot = Foot(sr);
+                float near = sr.sprite.pivot.y / sr.sprite.pixelsPerUnit * Mathf.Abs(s.y) * look.castLength;
+                cast.transform.localPosition = foot + new Vector3(Mathf.Sin(angle) * near, -Mathf.Cos(angle) * near, 0);
+                cast.color = new Color(1, 1, 1, look.castColor.a);
+                block.Clear();
+                block.SetVector(CastId, new Vector4(1, look.castFade, look.castBlur, 0));
+                block.SetColor(FillId, look.castColor);
+                cast.SetPropertyBlock(block);
+            }
         }
 
         public SpriteRenderer FacilityRenderer(HubStation station) => renderers.TryGetValue(station, out SpriteRenderer sr) ? sr : null;
@@ -197,9 +251,10 @@ namespace TOD
                 block.SetFloat(SatId, styled ? look.saturation : 1);
                 block.SetFloat(BrightId, (f == Near ? H.highlight : 1) * (styled ? look.brightness : 1) * (f.brightness > 0 ? f.brightness : 1));
                 sr.SetPropertyBlock(block);
-                if (shadows.TryGetValue(f.station, out SpriteRenderer sh)) PlaceShadow(f, sh);
+                if (shadows.TryGetValue(f.station, out SpriteRenderer sh)) PlaceShadow(f, sh, sr);
             }
             AnimateMerchant(clock);
+            UpdateCasts();
             float zoom = Room.cameraZoom > 0 ? Room.cameraZoom : 1;
             cameraRig.Apply(Space.ToCanvas(player.x, player.y), Room.backdropRect, zoom, 0, null, clock);
         }
@@ -253,7 +308,7 @@ namespace TOD
             float scale = f.height / (sprite.bounds.size.y * Space.Ppu);
             sr.transform.localScale = new Vector3(scale * frame.scaleX * (f.flip ? -1 : 1), scale * frame.scaleY, 1);
             sr.transform.localRotation = Quaternion.Euler(0, 0, -frame.angle);
-            sr.transform.localPosition = Space.Ground(f.position.x, f.position.y, frame.hop);
+            sr.transform.localPosition = Space.Ground(f.position.x, f.position.y, frame.hop) + Vector3.up * PivotLift(sprite, scale * frame.scaleY);   // 20차: 발밑 = 데이터 자리
         }
 
         // 상인 말풍선 자리: 머리 위 bubbleLift (캔버스 px)

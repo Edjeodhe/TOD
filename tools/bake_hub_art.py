@@ -56,6 +56,24 @@ def grid(path, cols, rows, merge=24):
     return out
 
 
+def vignette(col, a, rim=.38, bottom=.45, side=.22):
+    """20차: 그림 안쪽 비네트. 실루엣 가장자리 안쪽(rim), 아래쪽 40%(bottom, 바닥에 닿는 곳), 양옆(side)을
+    방의 어두운 자두색(#16131B) 쪽으로 눌러 방에 녹아들게 한다."""
+    mask = a > .3
+    ys, xs = np.nonzero(mask)
+    size = max(ys.max() - ys.min(), xs.max() - xs.min()) + 1
+    dist = ndimage.distance_transform_edt(mask)
+    r = np.clip(1 - dist / (.06 * size), 0, 1) ** 1.5
+    h, w = a.shape
+    yy, xx = np.mgrid[0:h, 0:w]
+    v = np.clip((yy - (ys.min() + .6 * (ys.max() - ys.min()))) / (.4 * (ys.max() - ys.min()) + 1), 0, 1) ** 1.3
+    cx, half = (xs.min() + xs.max()) / 2, (xs.max() - xs.min()) / 2 + 1
+    sd = np.clip(np.abs(xx - cx) / half, 0, 1) ** 2
+    k = 1 - (1 - (1 - rim * r) * (1 - bottom * v) * (1 - side * sd))
+    dark = np.array([22, 19, 27], np.float32)
+    return (col.astype(np.float32) * k[..., None] + dark * (1 - k[..., None])).clip(0, 255).astype(np.uint8)
+
+
 def save(col, a, name, max_side):
     im = Image.fromarray(np.dstack([col, (a * 255).astype(np.uint8)]), "RGBA")
     scale = min(1, max_side / max(im.size))
@@ -70,7 +88,10 @@ if (RAW / "hub_facilities.png").exists():
         save(col, a, f"hub_{name}", 512)
 if (RAW / "hub_facilities2.png").exists():   # 20차: 같은 이름을 덮어씀 (옛 시트의 재봉 상자는 그대로)
     for (col, a), name in zip(grid(RAW / "hub_facilities2.png", 3, 1), ["attic", "tower_door", "diary_board"]):
-        save(col, a, f"hub_{name}", 512)
+        save(vignette(col, a), a, f"hub_{name}", 512)
 if (RAW / "hub_room.png").exists():
     Image.open(RAW / "hub_room.png").convert("RGB").save(OUT / "hub_room.png")
     print("wrote hub_room")
+if (RAW / "hub_room2.png").exists():   # 20차: 오브젝트 자리에 맞춰 다시 그린 재봉실 (데이터 hub.backdrop 이 이 그림)
+    Image.open(RAW / "hub_room2.png").convert("RGB").save(OUT / "hub_room2.png")
+    print("wrote hub_room2")

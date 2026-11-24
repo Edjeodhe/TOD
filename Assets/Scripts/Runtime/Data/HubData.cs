@@ -92,6 +92,12 @@ namespace TOD
         public Color tint;                    // 그림에 곱하는 색 (방의 보랏빛 어둠)
         [Range(0, 2)] public float saturation, brightness;
         public Color shadowColor;             // 발밑 그림자 색 (알파 = 진하기)
+        [Header("드리운 그림자 (방 뒤쪽 등불에서 앞으로 떨어짐)")]
+        public Color castColor;               // 그림자 색 (알파 = 발밑에서의 진하기)
+        public float castLength;              // 그림 높이에 대한 그림자 길이 비율 (0 = 없음)
+        public float castFade;                // 끝으로 갈수록 옅어지는 정도 (지수)
+        public float castBlur;                // 끝으로 갈수록 흐릿한 정도 (그림 uv)
+        public float castLean;                // 그림자가 방 가운데에서 바깥으로 기우는 정도 (가로 이동 / 길이)
     }
 
     [Serializable] public class HubConfig

@@ -20903,6 +20903,97 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!1 &1495921574
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1495921575}
+  - component: {fileID: 1495921576}
+  m_Layer: 0
+  m_Name: CastTemplate
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &1495921575
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1495921574}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1984695423}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &1495921576
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1495921574}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 7b219dd95237987498329f4937b7aa6c, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 1101
+  m_SortingLayer: 1
+  m_SortingOrder: 6
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 0
+  m_SpriteSortPoint: 0
 --- !u!1 &1522707493
 GameObject:
   m_ObjectHideFlags: 0
@@ -31159,7 +31250,7 @@ MonoBehaviour:
     bloodAlpha: {x: 0.7, y: 1}
     bloodTint: {r: 0.9019608, g: 0.8392157, b: 0.80784315, a: 1}
   hub:
-    backdrop: {fileID: 21300000, guid: 7ff55e61aab5d29489949f508e81fa4b, type: 3}
+    backdrop: {fileID: 21300000, guid: 3a4bc068de8ebb34bbe2513e9bc27ace, type: 3}
     backdropRect:
       serializedVersion: 2
       x: 0
@@ -31176,7 +31267,7 @@ MonoBehaviour:
     returnSpot: {x: 500, y: 290}
     walkSpeed: 220
     verticalFactor: 1
-    cameraZoom: 0.95
+    cameraZoom: 1.06
     interactRadius: 110
     highlight: 1.25
     look:
@@ -31184,6 +31275,11 @@ MonoBehaviour:
       saturation: 0.92
       brightness: 1.1
       shadowColor: {r: 0.04, g: 0.025, b: 0.06, a: 0.9}
+      castColor: {r: 0.03, g: 0.02, b: 0.05, a: 0.55}
+      castLength: 0.42
+      castFade: 1.6
+      castBlur: 0.03
+      castLean: 0.35
     facilities:
     - station: 3
       name: "\uD0D1 \uC785\uAD6C"
@@ -31279,7 +31375,7 @@ MonoBehaviour:
       - station: 6
         name: "\uB69C\uAED1\uBB38"
         prompt: "\uC7AC\uBD09\uC2E4\uB85C \uB0B4\uB824\uAC00\uAE30"
-        position: {x: 175, y: 640}
+        position: {x: 175, y: 725.94916}
         sprite: {fileID: 21300000, guid: 1600f6b603f6a104da4b6b5abec15959, type: 3}
         height: 115
         flip: 0
@@ -32196,6 +32292,7 @@ MonoBehaviour:
   backdrop: {fileID: 7632946}
   facilityTemplate: {fileID: 1366584956}
   shadowTemplate: {fileID: 158813295}
+  castTemplate: {fileID: 1495921576}
   facilityRoot: {fileID: 1984695423}
   moira: {fileID: 1688649516}
 --- !u!4 &1661311886
@@ -34863,6 +34960,7 @@ Transform:
   m_Children:
   - {fileID: 1366584955}
   - {fileID: 158813294}
+  - {fileID: 1495921575}
   m_Father: {fileID: 1661311886}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1996666273

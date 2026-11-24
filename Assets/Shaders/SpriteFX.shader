@@ -20,6 +20,7 @@ Shader "TOD/SpriteFX"
         _Shape ("Shape", Float) = 0
         _Ring ("Ring thickness", Float) = 0.1
         _Purify ("Purify floor", Float) = 0
+        _Cast ("Cast shadow (on, fade power, blur uv, -)", Vector) = (0, 0, 0, 0)
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src Blend", Float) = 5
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst Blend", Float) = 10
     }
@@ -67,6 +68,7 @@ Shader "TOD/SpriteFX"
                 float _Shape;
                 float _Ring;
                 float _Purify;
+                float4 _Cast;
                 float _SrcBlend;
                 float _DstBlend;
             CBUFFER_END
@@ -96,6 +98,18 @@ Shader "TOD/SpriteFX"
 
             half4 frag(Varyings i) : SV_Target
             {
+                if (_Cast.x > 0.5)
+                {
+                    // 20차 드리운 그림자: 그림의 실루엣을 _Fill 색으로. 발밑(uv.y 0)에서 멀어질수록 옅고(fade) 흐릿하게(blur, 5탭).
+                    float far = saturate(i.uv.y);
+                    float b = _Cast.z * (0.25 + far);
+                    half a = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv).a * 0.2;
+                    a += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv + float2(b, 0)).a * 0.2;
+                    a += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv - float2(b, 0)).a * 0.2;
+                    a += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv + float2(0, b)).a * 0.2;
+                    a += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv - float2(0, b)).a * 0.2;
+                    return half4(_Fill.rgb, a * i.color.a * pow(1 - far, max(_Cast.y, 0.01)));
+                }
                 half4 c = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * i.color;
                 if (_Shape > 0.5)
                 {
