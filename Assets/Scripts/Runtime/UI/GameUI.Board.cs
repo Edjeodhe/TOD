@@ -125,7 +125,7 @@ namespace TOD
             layer.Add(strip);
         }
 
-        // 21차: 강화한 칸 오른쪽 위에 "+N" (N = 그 칸을 지나는 강화한 가로 줄 + 세로 줄). 등반 중 재봉 상자에서도 보인다.
+        // 21차: 강화한 칸 오른쪽 아래에 "+N" (N = 그 칸을 지나는 강화한 가로 줄 + 세로 줄). 등반 중 재봉 상자에서도 보인다.
         readonly Dictionary<Vector2Int, Label> badges = new();
 
         void DrawBadges(Profile profile, int width, int height)
@@ -138,11 +138,13 @@ namespace TOD
                 {
                     var at = new Vector2Int(x, y);
                     var badge = (Label)Slot(slots, "cell-badge");
+                    // 오른쪽 아래 모서리 (위쪽 가운데의 세트 이름 꼬리표와 겹치지 않게)
                     badge.style.left = x * pitch;
-                    badge.style.top = y * pitch + 1;
-                    badge.style.width = pitch - 2;
-                    badge.style.fontSize = Mathf.Max(13, Mathf.Round(pitch * .3f));
-                    badge.style.transformOrigin = new TransformOrigin(Length.Percent(88), Length.Percent(20));
+                    badge.style.top = y * pitch;
+                    badge.style.width = pitch - 4;
+                    badge.style.height = pitch - 4;
+                    badge.style.fontSize = Mathf.Max(11, Mathf.Round(pitch * .2f));
+                    badge.style.transformOrigin = new TransformOrigin(Length.Percent(88), Length.Percent(85));
                     SetBadge(badge, Gear.Reinforced(profile, at));
                     layer.Add(badge);
                     badges[at] = badge;
