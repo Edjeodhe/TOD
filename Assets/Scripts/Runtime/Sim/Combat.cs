@@ -100,7 +100,7 @@ namespace TOD
             float hp = Round(H.baseHp + gear[StatKind.Health]);
             var r = new RunState
             {
-                profile = profile, bag = bag, random = random, gearStats = gear,
+                profile = profile, bag = bag, random = random, gearStats = gear, fate = profile.fate,
                 element = Gear.ThreadElement(gear), maxDesire = db.desire.maxBase + profile.capacity * db.desire.capacityStep,
                 hp = hp, maxHp = hp, yarn = Round(H.baseYarn + gear[StatKind.Yarn]), recharge = 1 + gear[StatKind.Recharge],
                 damage = H.baseDamage + gear[StatKind.Damage], encumbrance = H.encumbrance,

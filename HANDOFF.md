@@ -126,6 +126,49 @@
   - 모이라 그림이 주인공보다 꽤 큽니다(높이 210).
   - 문구와 가격은 임시입니다.
 
+## 19차 2부 (2026-11-24) — 모이라 리깅, 하스스톤식 카드 고르기, 인벤토리 칸 강화, 운명 읽기 — 완료(커밋 전)
+
+- **사용자 결정:**
+  - 모이라를 뼈대 리그로 움직입니다. 리깅은 오른쪽 브라우저 창에 띄운 리깅 페이지에서 합니다.
+  - 말을 걸면 거미 손이 카드 넷을 쥐고 들어 올립니다('함정 카드' 밈 자세, 다른 앞다리로 가리킴).
+  - 카드는 하스스톤처럼 날아와 펼쳐집니다. 카드는 인벤토리 확장, 인벤토리 칸 강화, 욕망 최대치, 운명 읽기 4장입니다.
+  - 칸 강화는 가로/세로 줄 강화를 합친 것입니다. 확장처럼 판에서 가로 줄 또는 세로 줄을 고릅니다.
+  - 운명 읽기는 파편을 내면 모이라가 다음 등반 1층의 속성을 암시해 줍니다.
+  - 카드 아래 설명 줄은 뺐습니다. 카드 위에 지금 단계 꼬리표(`hub.cardLevel` "{0}단계", 운명 읽기는 없음)를 달고, 아래에는 드는 파편만(`hub.cardPrice` "파편 {0}개", 최대면 "최대 단계") 씁니다. 캡처는 `Temp/Shots/moira19c_cards_level.png`입니다.
+- **리깅 페이지:** `python tools/rig_editor/server.py 5180`(launch.json `moira-rig`) → `http://localhost:5180/tools/rig_editor/moira.html`.
+  - 뼈 고르기, 끌어서 자리(at), Shift+끌기로 기본 각도(rest)를 정합니다.
+  - 그림 미리보기에서 클릭은 회전 중심, Shift+클릭은 끝 관절입니다.
+  - 동작 파형을 편집하고 대기/말 걸기를 재생할 수 있으며, 참고 그림을 겹쳐 볼 수 있습니다.
+  - 저장하면 `art_src/rig/moira_rig.json`에 씁니다.
+- **그림, 관절:**
+  - `tools/codex_prompts/moira_parts.txt`(머리, 몸, 탁자, 점성구, 윗다리, 아랫다리(손), 카드 부채), `moira_hand_cards.txt`(카드 넷을 쥔 손, 위를 향함), `moira_cards.txt`(카드 앞, 뒤).
+  - 굽기는 `python tools/bake_moira_parts.py`로 하고, 다리 마디의 위/아래 둥근 끝 중심(회전 중심, 끝 관절)과 손목(팔찌 아래 손바닥)을 자동으로 찾아 `art_src/rig/moira_parts.json`에 씁니다.
+  - 첫 값은 `tools/moira_rig_seed.py`(참고 그림에서 잰 소켓 → 무릎 → 손끝, 다리 8개는 그림 한 벌을 뒤집어 씀), 카드 들기 자세는 `tools/moira_rig_ik.py`(두 마디 IK)로 만들었습니다.
+  - 확인용 그림은 `tools/preview_moira_rig.py out.png [--talk] [--ref 1] [--bones]`로 뽑습니다.
+- **Unity:**
+  - `Rig/MoiraRig.cs`(BoneRig): idle, hold 반복, raise(시작 → 최고 → 유지). 말하는 동안 RB_low 그림을 `TalkArt`(카드 쥔 손)로 바꾸는데, 팔이 얼굴 앞을 지날 때는 바꾸지 않게 `swapAfter`로 미룹니다. 점성구는 맥동하고, 카드가 날아 나가는 자리는 `CardPoint`입니다.
+  - 씬 `Hub/Moira`(SortingGroup, 뼈 21개)는 `python tools/moira_rig_export.py` → `art_src/rig/moira_rig_unity.txt`를 MCP `execute_code`로 읽어 조립했습니다. 조립 뒤에는 씬이 원본입니다.
+  - `HubView.moira`가 Moira 시설 그림 대신 리그를 그리고, `AnimateMoira`는 카드 창이 열린 동안에도 돕니다.
+  - 카드 창: `UI/GameUI.Moira.cs`, 카드 템플릿 `MoiraCard.uxml`, `Moira.uss`. 매 프레임 계산으로 움직입니다.
+    - 손에서 호를 그리며 날아와 뒤집히고, 그 뒤 둥실 떠 있습니다. 마우스를 올리면 떠오르며 빛납니다.
+    - 판을 여는 카드를 고르면 그 카드가 가운데로 나오고 나머지는 손으로 돌아갑니다. 확인 창 카드는 제자리에서 번쩍입니다.
+    - 못 고르는 카드는 흔들립니다. Esc를 누르면 카드가 모두 손으로 돌아간 뒤 닫힙니다.
+  - 칸 강화: `Moira.Lines`(pick = 가로 줄 번호, 또는 `ColBase`(1000) + 세로 줄 번호). 단계는 가로와 세로를 합쳐서 셉니다. 판 왼쪽(▶)과 위쪽(▼) 손잡이에 마우스를 올리면 그 줄이 반투명하게 덮입니다(`GameUI.Board.cs`). 데이터에서 rows/cols 강화는 뺐습니다.
+  - 운명 읽기: `Profile.fate`(Element + 1), `Moira.ReadFate/ConsumeFate`, `RunState.fate` → 1층 `PickFloorElement`가 그 속성을 씁니다. 암시는 `ElementDef.fateLine`(8속성), 가격은 `hub.fatePrice` 3입니다. 이미 읽었으면 '다시 듣기'(무료)입니다.
+- **MCP 데이터:**
+  - `upgrades` = 확장, 칸 강화(4+3, 최대 = 판 줄 수), 욕망 최대치, starter.
+  - `hub.card*`(앞/뒤 그림, 지연 .55초, 비행 .5초, 간격 .12초), `fate*`, `pickLines`, `confirmLine`, `rowName/colName`.
+  - Moira 시설: (500, 410), 높이 240, 반지름 150. `GameUI.moiraCard`를 연결했습니다.
+- **확인:**
+  - EditMode 46개 통과(새 테스트 `FateSetsFirstFloorElement`, 칸 강화로 바꾼 `MoiraUpgradesChosenLineAndSide`).
+  - 캡처: `Temp/Shots/moira19b_deal_mid`(카드 펼침), `_hover`, `_choose`(고른 카드가 가운데), `_lines_board`, `_lines_done`(세로 3번째 + 가로 2번째 금빛), `_fate`(번개 암시), `_cards_clean`(설명 줄 없음).
+  - 운명 읽기를 하고 등반을 시작하면 1층이 번개였고, 읽은 운명은 비워졌습니다. 프로필은 백업에서 되돌렸습니다.
+- **남은 것:**
+  - 사람이 실제 속도로 본 움직임. 카드 비행, 뒤집기, 모이라가 손 드는 속도는 캡처로만 봤습니다.
+  - 모이라 그림이 작아 다리가 가늘어 보입니다.
+  - 확장 띠와 손잡이의 투명도.
+  - 리깅 값 다듬기는 리깅 페이지에서 할 수 있습니다. 저장한 뒤 `moira_rig_export.py` → MCP 재조립 코드(위 절차)를 다시 돌려야 씬에 반영됩니다.
+
 ## 18차 요청 (2026-11-24) — 일기가 뒤로 갈수록 피에 젖고 욕망에 사로잡힌 말투 — 완료
 
 - **문구 (`GameDatabase.diary.entries`, MCP):**

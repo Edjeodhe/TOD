@@ -89,6 +89,25 @@ namespace TOD
         public string[] sideNames;            // 위, 오른쪽, 아래, 왼쪽
         public string lineTaken;              // 이미 강화한 줄을 골랐을 때
         public string moiraEyebrowConfirm, moiraTitleConfirm, moiraConfirmButton;   // 확인 창 머리 (예: "모이라의 의식", "미래를 읽을까요?")
+        public string pickLines, confirmLine; // 칸 강화 판 안내, 확인 문구 ({0} "위에서 3번째 가로 줄" 같은 줄 이름, {1} 파편, {2} 강화 이름)
+        public string rowName, colName;       // 줄 이름 ({0} 번호): "위에서 {0}번째 가로 줄", "왼쪽에서 {0}번째 세로 줄"
+
+        [Header("19차 모이라 카드 (하스스톤식 고르기)")]
+        public Texture2D cardFront, cardBack; // 카드 앞(빈 창, 이름 띠), 뒤
+        public float cardDelay;               // 말을 건 뒤 모이라가 카드를 드는 동안 기다리는 시간 (초)
+        public float cardFly, cardStagger;    // 카드가 손에서 자리로 날아가는 시간, 카드 사이 간격 (초)
+        public string cardLocked;             // (안 씀) 파편이 모자랄 때 카드 아랫줄
+        public string cardLevel;              // 카드 위 단계 꼬리표 ({0} 지금 단계), 예: "{0}단계"
+        public string cardPrice;              // 카드 아래 가격 ({0} 파편), 예: "파편 {0}개"
+        public string cardHint;               // 카드 아래 안내 ("카드를 고르세요   Esc 그만두기")
+
+        [Header("19차 운명 읽기 (네 번째 카드)")]
+        public Sprite fateIcon;
+        public string fateName, fateText;     // 카드 이름, 설명
+        public int fatePrice;                 // 기억의 파편
+        public string fateFoot, fateReadFoot; // 카드 아랫줄 ({0} 파편), 이미 읽었을 때 ("다시 듣기")
+        public string fateConfirm;            // 확인 문구 ({0} 파편)
+        public string fateIntro;              // 모이라가 암시 앞에 붙이는 말 (비우면 암시만)
 
         [Header("안내")]
         public string hint;                   // 화면 아래 조작 안내

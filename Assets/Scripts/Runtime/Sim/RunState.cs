@@ -176,6 +176,7 @@ namespace TOD
         // 16차 층 속성 · 부가 세트 충전
         public Element floorElement;
         public readonly List<Element> floorElements = new();   // 이번 등반에서 이미 나온 층 속성 (겹치지 않게)
+        public int fate;                                        // 19차 모이라가 읽어 둔 1층 속성 (Profile.fate 와 같은 값, 0 = 없음)
         public int hintSerial;               // 층 암시 문구를 다시 띄울 때마다 +1 (라운드 시작 · 개발자 모드)
         public readonly Dictionary<SetDef, int> procCharges = new();   // 부가 세트 → 충전 수 (procCharge 이상 = 준비)
         public readonly List<GameEvent> events = new();

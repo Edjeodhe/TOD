@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["server.js"],
       "port": 5173
+    },
+    {
+      "name": "moira-rig",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["tools/rig_editor/server.py", "5180"],
+      "port": 5180
     }
   ]
 }

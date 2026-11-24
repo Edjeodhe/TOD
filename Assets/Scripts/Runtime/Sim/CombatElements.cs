@@ -115,6 +115,7 @@ namespace TOD
             List<Element> pool = defs.Select(d => d.element).Where(e => !r.floorElements.Contains(e)).ToList();
             if (pool.Count == 0) { r.floorElements.Clear(); pool = defs.Select(d => d.element).ToList(); }
             Element pick = pool[Mathf.Min(pool.Count - 1, Mathf.FloorToInt(r.random() * pool.Count))];
+            if (r.floor <= 1 && r.fate > 0 && pool.Contains((Element)(r.fate - 1))) pick = (Element)(r.fate - 1);   // 19차: 모이라가 읽어 둔 1층
             r.floorElements.Add(pick);
             r.floorElement = pick;
         }

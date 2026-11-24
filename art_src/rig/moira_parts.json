@@ -1,0 +1,111 @@
+{
+ "head": {
+  "file": "Assets/sprites/moira_head.png",
+  "w": 230,
+  "h": 227,
+  "pivot": [
+   119,
+   224
+  ]
+ },
+ "body": {
+  "file": "Assets/sprites/moira_body.png",
+  "w": 194,
+  "h": 224,
+  "pivot": [
+   97,
+   2
+  ]
+ },
+ "table": {
+  "file": "Assets/sprites/moira_table.png",
+  "w": 336,
+  "h": 212,
+  "pivot": [
+   169,
+   209
+  ]
+ },
+ "ball": {
+  "file": "Assets/sprites/moira_ball.png",
+  "w": 136,
+  "h": 149,
+  "pivot": [
+   68,
+   146
+  ]
+ },
+ "leg_upper": {
+  "file": "Assets/sprites/moira_leg_upper.png",
+  "w": 43,
+  "h": 185,
+  "pivot": [
+   21,
+   13
+  ],
+  "end": [
+   21,
+   174
+  ],
+  "found": [
+   [
+    21,
+    13
+   ],
+   [
+    21,
+    174
+   ]
+  ]
+ },
+ "leg_lower": {
+  "file": "Assets/sprites/moira_leg_lower.png",
+  "w": 52,
+  "h": 218,
+  "pivot": [
+   24,
+   12
+  ],
+  "end": [
+   24,
+   146
+  ],
+  "found": [
+   [
+    24,
+    12
+   ],
+   [
+    24,
+    146
+   ],
+   [
+    24,
+    118
+   ]
+  ]
+ },
+ "fan": {
+  "file": "Assets/sprites/moira_fan.png",
+  "w": 254,
+  "h": 128,
+  "pivot": [
+   138,
+   125
+  ]
+ },
+ "hand_cards": {
+  "file": "Assets/sprites/moira_hand_cards.png",
+  "w": 137,
+  "h": 286,
+  "pivot": [
+   67,
+   276
+  ],
+  "rot": 180,
+  "cardPoint": [
+   68,
+   41
+  ]
+ }
+}

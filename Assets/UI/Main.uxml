@@ -5,6 +5,7 @@
     <Style src="project://database/Assets/UI/Outgame.uss" />
     <Style src="project://database/Assets/UI/Hub.uss" />
     <Style src="project://database/Assets/UI/Merchant.uss" />
+    <Style src="project://database/Assets/UI/Moira.uss" />
     <ui:VisualElement name="root" class="root" picking-mode="Ignore">
 
         <!-- 전투 중 글자 (피해 숫자, N HIT, ×N) -->
@@ -210,19 +211,18 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- 예견의 다락: 19차 모이라 창 (다락 방의 모이라에게 말을 걸면, 방이 뒤에 비침 .over-room). 강화 4종 카드 -->
-        <ui:VisualElement name="attic" class="layer room attic hidden">
+        <!-- 예견의 다락: 19차 모이라 카드 창 (다락 방이 뒤에 비침). 모이라가 든 카드 넷이 손에서 날아와 펼쳐진다 (GameUI.Moira.cs, Moira.uss) -->
+        <ui:VisualElement name="attic" class="layer room attic moira-layer hidden">
             <ui:VisualElement class="room-shade" picking-mode="Ignore" />
-            <ui:VisualElement class="room-body attic-body">
-                <!-- 17차: 종이 오른쪽 위 기억의 파편 -->
-                <ui:VisualElement class="shards attic-shards" tooltip="기억의 파편" picking-mode="Ignore"><ui:VisualElement picking-mode="Ignore" /><ui:Label name="attic-shards" text="0" picking-mode="Ignore" /></ui:VisualElement>
-                <ui:VisualElement name="attic-portrait" class="attic-portrait hidden" picking-mode="Ignore" />
-                <ui:Label name="attic-eyebrow" text="✧  예견의 다락" class="eyebrow" />
-                <ui:Label name="attic-title" text="모이라" class="room-title" />
-                <ui:Label name="attic-text" text="기억의 파편을 건네면 모이라가 다음 등반의 실을 미리 읽어 둡니다." class="room-text attic-line" />
-                <ui:VisualElement name="upgrades" class="choice-grid attic-grid" />
-                <ui:VisualElement class="actions"><ui:Button name="attic-back" text="돌아가기 (Esc)" /></ui:VisualElement>
+            <ui:VisualElement class="moira-head" picking-mode="Ignore">
+                <ui:Label name="attic-eyebrow" text="✧  예견의 다락" class="eyebrow" picking-mode="Ignore" />
+                <ui:Label name="attic-title" text="모이라" class="moira-title" picking-mode="Ignore" />
+                <ui:Label name="moira-line" class="moira-line" picking-mode="Ignore" />
             </ui:VisualElement>
+            <ui:VisualElement class="shards moira-shards" tooltip="기억의 파편" picking-mode="Ignore"><ui:VisualElement picking-mode="Ignore" /><ui:Label name="attic-shards" text="0" picking-mode="Ignore" /></ui:VisualElement>
+            <ui:VisualElement name="moira-cards" class="moira-cards" picking-mode="Ignore" />
+            <ui:Label name="moira-hint" class="moira-hint" picking-mode="Ignore" />
+            <ui:Button name="attic-back" text="돌아가기 (Esc)" class="moira-back" />
         </ui:VisualElement>
 
         <!-- 등반 결과 -->

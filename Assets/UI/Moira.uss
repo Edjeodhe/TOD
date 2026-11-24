@@ -1,0 +1,64 @@
+/* 19차 모이라 카드 창 (GameUI.Moira.cs). 카드 그림은 Assets/UI/Moira/card_front.png, card_back.png (데이터 hub.cardFront/Back) */
+
+/* 창: 다락 방이 그대로 보이게 아래쪽만 살짝 어둡게 */
+.room.attic.moira-layer { background-image: none; background-color: rgba(0, 0, 0, 0); align-items: stretch; justify-content: flex-start; }
+.moira-layer > .room-shade { background-color: rgba(10, 6, 14, 0.28); }
+.moira-head { position: absolute; left: 56px; top: 108px; width: 560px; align-items: flex-start; }
+.moira-head .eyebrow { color: #d6b06e; }
+.moira-title { font-size: 40px; color: #f3e6d0; -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset"); }
+/* 모이라의 말 (말을 걸 때마다 한 줄, 운명 읽기의 암시) */
+.moira-line {
+    margin-top: 6px; max-width: 560px; font-size: 21px; -unity-text-align: middle-left; white-space: normal;
+    color: #e4d4f2; -unity-font-style: italic; -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013;
+    padding: 8px 26px; background-color: rgba(26, 16, 32, 0.72); border-radius: 18px; border-width: 1px; border-color: rgba(216, 207, 240, 0.35);
+    opacity: 0; translate: 0 8px; transition-property: opacity, translate; transition-duration: 0.35s;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.moira-line.show { opacity: 1; translate: 0 0; }
+.moira-shards { position: absolute; top: 112px; right: 60px; margin-right: 0; }
+.moira-cards { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.moira-hint { position: absolute; left: 0; right: 0; bottom: 84px; -unity-text-align: middle-center; font-size: 18px; color: #cdbfd8; -unity-text-outline-width: 1px; -unity-text-outline-color: #1a1013; }
+.moira-back { position: absolute; left: 40px; bottom: 30px; }
+
+/* 카드 한 장 */
+.moira-card {
+    position: absolute; margin: 0; padding: 0; min-height: 0; min-width: 0;
+    background-image: none; background-color: rgba(0, 0, 0, 0); border-width: 0;
+    transition-duration: 0s; translate: 0 0;
+}
+.moira-card:hover { translate: 0 0; background-color: rgba(0, 0, 0, 0); }
+.moira-card:active { scale: 1 1; translate: 0 0; }
+.card-glow {
+    position: absolute; left: -22px; right: -22px; top: -22px; bottom: -22px; border-radius: 30px; opacity: 0;
+    background-color: rgba(214, 190, 255, 0.28); border-width: 4px; border-color: rgba(255, 236, 190, 0.95);
+}
+.card-inner { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.card-face, .card-back { position: absolute; left: 0; right: 0; top: 0; bottom: 0; -unity-background-scale-mode: stretch-to-fill; }
+.card-face { align-items: center; }
+/* 앞면 빈 창(위쪽 2/3) 안 그림, 이름 띠, 설명 칸 (card_front.png 의 비율에 맞춤) */
+.card-icon { position: absolute; left: 22%; right: 22%; top: 15%; height: 36%; -unity-background-scale-mode: scale-to-fit; }
+.card-name {
+    position: absolute; left: 12%; right: 12%; top: 69.5%; height: 8%; -unity-text-align: middle-center;
+    font-size: 21px; color: #3a2430; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+/* 설명 줄은 보이지 않는다 (사용자 요청: 카드에는 그림, 이름, 가격만) */
+.card-text {
+    display: none;
+    position: absolute; left: 13%; right: 13%; top: 79.5%; height: 13%; -unity-text-align: upper-center; white-space: normal;
+    font-size: 13px; color: #eadcf2; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.card-foot {
+    position: absolute; left: 10%; right: 10%; bottom: -34px; -unity-text-align: middle-center; font-size: 17px;
+    color: #fbeedd; padding: 4px 0 5px 0; background-color: rgba(47, 111, 99, 0.92); border-radius: 12px; border-width: 1px; border-color: #12302a;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.moira-card.locked .card-face { -unity-background-image-tint-color: rgb(150, 140, 155); }
+.moira-card.locked .card-icon { opacity: 0.55; }
+.moira-card.locked .card-foot { background-color: rgba(106, 82, 79, 0.92); }
+/* 카드 위 단계 꼬리표 (위 가운데 별 장식 아래 걸친 작은 띠) */
+.card-level {
+    position: absolute; top: -16px; left: 28%; right: 28%; -unity-text-align: middle-center; font-size: 17px;
+    color: #3a2430; padding: 3px 0 4px 0; background-color: rgb(232, 214, 168); border-radius: 12px; border-width: 2px; border-color: #5a3d2a;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.moira-card.locked .card-level { background-color: rgb(190, 180, 170); }

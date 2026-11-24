@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <!-- 19차 모이라 카드 한 장 (GameUI.Moira.cs 가 복제). card-inner 가 뒤집기(가로 폭)를 맡고, 위치와 회전은 카드 자체가 맡는다 -->
+    <ui:Button name="moira-card" class="moira-card">
+        <ui:VisualElement name="card-glow" class="card-glow" picking-mode="Ignore" />
+        <ui:VisualElement name="card-inner" class="card-inner" picking-mode="Ignore">
+            <ui:VisualElement name="card-face" class="card-face" picking-mode="Ignore">
+                <ui:VisualElement name="card-icon" class="card-icon" picking-mode="Ignore" />
+                <ui:Label name="card-name" class="card-name" picking-mode="Ignore" />
+                <ui:Label name="card-text" class="card-text" picking-mode="Ignore" />
+                <ui:Label name="card-foot" class="card-foot" picking-mode="Ignore" />
+                <ui:Label name="card-level" class="card-level" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement name="card-back" class="card-back" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:Button>
+</ui:UXML>

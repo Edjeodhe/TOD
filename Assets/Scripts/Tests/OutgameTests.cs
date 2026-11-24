@@ -239,21 +239,25 @@ namespace TOD.Tests
             Assert.AreEqual(0, p.placements.Count);
         }
 
-        // 19차 모이라: 고른 가로 줄 하나만 강화, 같은 줄은 다시 못 고름. 확장은 고른 쪽에 줄이 붙고 위/왼쪽이면 조각과 줄 번호가 밀린다.
+        // 19차 모이라 칸 강화: 판 가장자리 손잡이로 고른 가로 줄 또는 세로 줄 하나, 같은 줄은 다시 못 고름(단계는 둘을 같이 셈).
+        // 확장은 고른 쪽에 줄이 붙고 위/왼쪽이면 조각과 줄 번호가 밀린다.
         [Test]
         public void MoiraUpgradesChosenLineAndSide()
         {
-            UpgradeDef rows = db.upgrades.First(u => u.key == Moira.Rows);
-            UpgradeDef cols = db.upgrades.First(u => u.key == Moira.Cols);
+            UpgradeDef lines = db.upgrades.First(u => u.key == Moira.Lines);
             UpgradeDef expand = db.upgrades.First(u => u.key == Moira.Expansion);
+            Assert.IsFalse(db.upgrades.Any(u => u.key is Moira.Rows or Moira.Cols), "옛 가로/세로 줄 강화가 데이터에 남아 있습니다");
             Profile p = EmptyProfile();
             p.shards = 999;
-            Assert.IsTrue(Moira.Apply(db, p, rows, 2));
+            Assert.IsTrue(Moira.Apply(db, p, lines, 2));
             CollectionAssert.AreEqual(new[] { 2 }, p.rowLines);
-            Assert.AreEqual(999 - rows.price, p.shards);
-            Assert.IsFalse(Moira.Apply(db, p, rows, 2), "같은 줄을 두 번 강화함");
-            Assert.IsFalse(Moira.Apply(db, p, rows, 99), "판 밖 줄을 강화함");
-            Assert.IsTrue(Moira.Apply(db, p, cols, 0));
+            Assert.AreEqual(999 - lines.price, p.shards);
+            Assert.IsFalse(Moira.Apply(db, p, lines, 2), "같은 줄을 두 번 강화함");
+            Assert.IsFalse(Moira.Apply(db, p, lines, 99), "판 밖 줄을 강화함");
+            Assert.IsTrue(Moira.Apply(db, p, lines, Moira.ColBase + 0));
+            CollectionAssert.AreEqual(new[] { 0 }, p.colLines);
+            Assert.AreEqual(2, Moira.Level(p, Moira.Lines), "가로, 세로를 같이 센 단계");
+            Assert.AreEqual(999 - lines.price * 2 - lines.priceStep, p.shards);
 
             Gear.AddItem(db, p, Kind("fire"));
             p.placements.Add(new Placement { id = p.items[0].id, x = 1, y = 1 });
@@ -270,6 +274,31 @@ namespace TOD.Tests
             Assert.AreEqual(w0 + 2, Gear.Dimensions(db, p).width);
             Assert.AreEqual(limit0 + 3 * db.gear.costLimitStep, Gear.Dimensions(db, p).limit);
             Assert.AreEqual(3, Moira.Level(p, Moira.Expansion));
+        }
+
+        // 19차 운명 읽기: 파편을 내고 다음 등반 1층 속성을 정한다. 다시 읽으면 값을 안 내고 같은 속성, 등반 1층이 그 속성이 되고 쓰고 나면 비운다.
+        [Test]
+        public void FateSetsFirstFloorElement()
+        {
+            Assert.Greater(db.hub.fatePrice, 0);
+            Assert.IsTrue(db.elements.defs.All(d => !string.IsNullOrEmpty(d.fateLine)), "속성마다 모이라의 암시(fateLine)가 있어야 합니다");
+            Profile p = EmptyProfile();
+            p.shards = db.hub.fatePrice - 1;
+            Assert.IsNull(Moira.ReadFate(db, p, () => .5f), "파편이 모자라도 읽었음");
+            p.shards = db.hub.fatePrice + 4;
+            ElementDef read = Moira.ReadFate(db, p, () => .99f);
+            Assert.IsNotNull(read);
+            Assert.AreEqual(4, p.shards);
+            Assert.AreSame(read, Moira.ReadFate(db, p, () => .1f), "다시 읽었는데 속성이 바뀜");
+            Assert.AreEqual(4, p.shards, "다시 읽을 때 파편을 냄");
+            for (int i = 0; i < 6; i++)
+            {
+                RunState r = combat.CreateRun(p, () => Random.value);
+                combat.BeginFloor(r);
+                Assert.AreEqual(read.element, r.floorElement, "1층 속성이 읽은 운명과 다릅니다");
+            }
+            Moira.ConsumeFate(p);
+            Assert.IsFalse(Moira.FateRead(p));
         }
 
         // 17차: 시작 조각 가격 = 일반 3, 레어 4, 유니크 5, 레전더리 6

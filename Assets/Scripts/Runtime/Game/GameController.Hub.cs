@@ -68,6 +68,7 @@ namespace TOD
 
         void TickHub(float dt)
         {
+            if (hub != null && hubRoot != null && hubRoot.activeSelf) hub.AnimateMoira(dt);   // 19차: 모이라 카드 창 동안에도
             if (!InHub) return;
             Vector2 move = Vector2.zero;
             Keyboard k = Keyboard.current;

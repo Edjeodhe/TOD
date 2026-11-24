@@ -39,7 +39,7 @@ namespace TOD
             {
                 UpgradeDef u = Array.Find(db.upgrades, x => x.key == mode.pick);
                 title = string.Format(h.pickTitle ?? "{0}", u?.name);
-                help = mode.pick switch { Moira.Rows => h.pickRows, Moira.Cols => h.pickCols, _ => h.pickExpand };
+                help = mode.pick switch { Moira.Lines => h.pickLines, Moira.Rows => h.pickRows, Moira.Cols => h.pickCols, _ => h.pickExpand };
                 noteText = u == null ? "" : Moira.Maxed(db, profile, u) ? T.upgradeMax : string.Format(T.upgradeCost, Moira.Cost(profile, u), Moira.Level(profile, u.key));
             }
             else
@@ -72,18 +72,27 @@ namespace TOD
             VisualElement layer = inventory.Q("board-pick");
             VisualElement wrap = inventory.Q("board-wrap");
             layer.Clear();
-            bool expand = boardMode?.pick == Moira.Expansion;
-            // 확장 띠가 판 밖으로 나오므로 그만큼 판 둘레를 띄운다 (아니면 USS 값)
-            StyleLength margin = expand ? new StyleLength(pitch + 10) : new StyleLength(StyleKeyword.Null);
-            wrap.style.marginTop = margin; wrap.style.marginBottom = margin;
-            wrap.style.marginLeft = margin; wrap.style.marginRight = margin;
+            bool expand = boardMode?.pick == Moira.Expansion, lines = boardMode?.pick == Moira.Lines;
+            float handle = Mathf.Round(pitch * .62f);
+            // 확장 띠, 칸 강화 손잡이가 판 밖으로 나오므로 그만큼 판 둘레를 띄운다 (아니면 USS 값)
+            StyleLength Margin(float v) => v > 0 ? new StyleLength(v) : new StyleLength(StyleKeyword.Null);
+            float around = expand ? pitch + 10 : 0, lead = expand ? pitch + 10 : lines ? handle + 12 : 0;
+            wrap.style.marginTop = Margin(lead); wrap.style.marginLeft = Margin(lead);
+            wrap.style.marginBottom = Margin(around); wrap.style.marginRight = Margin(around);
             if (boardMode?.pick == null) return;
 
             // 강화한 줄: 판 위 금빛 띠 (가로 줄 = 가로 띠, 세로 줄 = 세로 띠). 고르는 종류의 줄만 진하게.
             foreach (int y in profile.rowLines ?? new List<int>())
-                layer.Add(Band(0, y * pitch, width * pitch, pitch, boardMode.pick == Moira.Rows ? "pick-done" : "pick-done-faint"));
+                layer.Add(Band(0, y * pitch, width * pitch, pitch, boardMode.pick is Moira.Rows or Moira.Lines ? "pick-done" : "pick-done-faint"));
             foreach (int x in profile.colLines ?? new List<int>())
-                layer.Add(Band(x * pitch, 0, pitch, height * pitch, boardMode.pick == Moira.Cols ? "pick-done" : "pick-done-faint"));
+                layer.Add(Band(x * pitch, 0, pitch, height * pitch, boardMode.pick is Moira.Cols or Moira.Lines ? "pick-done" : "pick-done-faint"));
+
+            if (lines)   // 칸 강화: 왼쪽 = 가로 줄 손잡이, 위 = 세로 줄 손잡이. 올리면 그 줄 전체가 반투명하게 덮인다
+            {
+                for (int y = 0; y < height; y++) AddHandle(layer, profile, y, new Rect(-handle - 8, y * pitch + 3, handle, pitch - 6), "▶");
+                for (int x = 0; x < width; x++) AddHandle(layer, profile, Moira.ColBase + x, new Rect(x * pitch + 3, -handle - 8, pitch - 6, handle), "▼");
+                return;
+            }
 
             if (!expand) return;
             // 확장: 네 가장자리 띠 (위, 오른쪽, 아래, 왼쪽). 누르면 그쪽에 줄 하나.
@@ -107,6 +116,34 @@ namespace TOD
             }
         }
 
+        void AddHandle(VisualElement layer, Profile profile, int pick, Rect r, string glyph)
+        {
+            var strip = (Button)Slot(slots, "pick-strip");
+            strip.AddToClassList("pick-handle");
+            bool taken = !Moira.CanPick(db, profile, Moira.Lines, pick);
+            strip.EnableInClassList("pick-taken", taken);
+            strip.style.left = r.x; strip.style.top = r.y; strip.style.width = r.width; strip.style.height = r.height;
+            strip.text = glyph;
+            strip.RegisterCallback<PointerEnterEvent>(_ => HoverLine(profile, pick));
+            strip.RegisterCallback<PointerLeaveEvent>(_ => HoverLine(profile, -1));
+            strip.clicked += () => game.PickHandle(pick);
+            layer.Add(strip);
+        }
+
+        // 칸 강화 손잡이에 올린 줄을 반투명하게 덮는다 (이미 강화한 줄이면 붉게). -1 = 지움
+        void HoverLine(Profile profile, int pick)
+        {
+            VisualElement ghost = inventory.Q("board-ghost");
+            ghost.Clear();
+            if (pick < 0) return;
+            var (width, height, _) = Gear.Dimensions(db, profile);
+            bool col = pick >= Moira.ColBase;
+            int line = col ? pick - Moira.ColBase : pick;
+            VisualElement band = col ? Band(line * pitch, 0, pitch, height * pitch, "pick-hover") : Band(0, line * pitch, width * pitch, pitch, "pick-hover");
+            band.EnableInClassList("pick-taken", !Moira.CanPick(db, profile, Moira.Lines, pick));
+            ghost.Add(band);
+        }
+
         VisualElement Band(float x, float y, float w, float h, string cls)
         {
             VisualElement band = Slot(slots, "pick-band");
@@ -121,7 +158,7 @@ namespace TOD
             VisualElement ghost = inventory.Q("board-ghost");
             ghost.Clear();
             ghost.RemoveFromClassList("invalid");
-            if (at == null || key == Moira.Expansion) return;
+            if (at == null || key is Moira.Expansion or Moira.Lines) return;   // 확장, 칸 강화는 가장자리 손잡이에서
             var (width, height, _) = Gear.Dimensions(db, profile);
             bool rows = key == Moira.Rows;
             int line = rows ? at.Value.y : at.Value.x;

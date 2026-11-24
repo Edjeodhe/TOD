@@ -57,6 +57,7 @@ namespace TOD
             sound.Enabled = true;
             ui.Init(this);
             InitHub();   // 15차 재봉실 허브: GameController.Hub.cs
+            InitMoira();   // 19차 모이라 카드: 확인 창이 닫히면 카드 갱신
             aim = Center;
             Shader.SetGlobalFloat(CanvasHeightId, db.arena.canvasHeight);
             ShowScreen(UiScreen.Lobby);
@@ -77,6 +78,7 @@ namespace TOD
             SyncHub(next);   // 15차: 로비 = 재봉실 허브
             if (next == UiScreen.Inventory) RenderInventory();
             if (next == UiScreen.Attic) RenderAttic();
+            if (hub != null && hub.moira != null) hub.moira.Talking = next == UiScreen.Attic;   // 19차: 모이라가 카드 넷을 든다
             if (next == UiScreen.Summary && summary is { } s) ui.RenderSummary(s.outcome, s.floor, s.kills, Profile.shards);
             ui.UpdateMeta(Profile);
             if (next == UiScreen.Lobby) ShowUnlocks();   // 15차: 새로 열린 세트 알림
@@ -86,6 +88,7 @@ namespace TOD
         {
             if (runInventory) { CloseRunInventory(); return; }
             if (picking != null) { EndPick(); return; }   // 19차: 모이라의 줄 고르기 → 모이라 창으로
+            if (screen == UiScreen.Attic && Run == null && hub != null && hub.InAttic && summary == null) { LeaveMoira(); return; }   // 19차: 카드가 손으로 돌아간 뒤
             ShowScreen(summary != null ? roomReturn : UiScreen.Lobby);
         }
 
@@ -106,6 +109,7 @@ namespace TOD
             paused = false;
             Run = Combat.CreateRun(Profile, () => Random.value);
             HubShop.ConsumePacked(Profile);   // 19차: 챙긴 시작 조각은 이번 등반 가방으로 넘어가고 영구 프로필에서는 사라진다
+            Moira.ConsumeFate(Profile);       // 19차: 모이라가 읽어 둔 1층 속성은 이번 등반(RunState.fate)에 쓰였다
             Gear.Save(db, Profile);
             offered = null;
             augmentRerolled = false;
@@ -502,27 +506,80 @@ namespace TOD
         }
 
         // ---------------------------------------------------------------- 예견의 다락: 모이라 (19차)
-        // 모이라 창(UiScreen.Attic) = 강화 4종 카드. 확장, 가로 줄, 세로 줄은 누르면 재봉 상자 판이 열리고(picking)
-        // 판 위에서 반투명하게 고른 자리(가장자리 또는 줄)를 확인하면 강화한다. 욕망 최대치는 바로 확인 창.
+        // 모이라에게 말을 걸면 모이라(MoiraRig)가 카드 넷을 쥔 손을 들고, 카드가 손에서 날아와 펼쳐진다(GameUI.Moira.cs):
+        //   인벤토리 확장, 인벤토리 칸 강화 = 누르면 재봉 상자 판이 열리고(picking) 판 위에서 반투명하게 고른 자리(가장자리, 가로/세로 줄)를 확인하면 강화.
+        //   욕망 최대치 = 바로 확인 창. 운명 읽기 = 파편을 내고 다음 등반 1층 속성의 암시를 듣는다(이미 읽었으면 다시 듣기).
         // 상인 단추의 '들고 갈 수 늘리기'(starter)도 같은 확인 창(ConfirmUpgrade)을 쓴다.
 
+        public const string FateKey = "fate";
         string picking;          // 판에서 고르는 중인 강화 key (null = 아님)
         int pendingPick = -1;    // 확인 창에 올린 자리
-        string moiraLine;        // 말을 걸 때 고른 모이라의 한 줄
+        string moiraLine;        // 모이라의 지금 한 줄 (말을 걸 때, 운명 읽기 뒤)
+        bool dealCards;          // 다음 RenderAttic 에서 카드를 손에서 새로 날린다
 
         int Level(UpgradeDef u) => Moira.Level(Profile, u.key);
         int Cost(UpgradeDef u) => Moira.Cost(Profile, u);
         bool Maxed(UpgradeDef u) => Moira.Maxed(db, Profile, u);
         UpgradeDef Upgrade(string key) => db.upgrades.FirstOrDefault(x => x.key == key);
 
-        void RenderAttic() => ui.RenderAttic(Profile, Cost, Maxed, Level, PickUpgrade, moiraLine);
+        void InitMoira()
+        {
+            ui.DialogClosed += id =>   // 확인 창이 닫히면(확인, 취소, Esc) 카드 내용만 갱신
+            {
+                if (id == "upgrade" && screen == UiScreen.Attic && picking == null) RenderAttic();
+            };
+        }
 
-        // 모이라에게 말을 걸 때: 한 줄을 새로 고른다
+        void RenderAttic()
+        {
+            HubConfig h = db.hub;
+            var cards = new List<MoiraCardInfo>();
+            foreach (UpgradeDef u in Moira.Upgrades(db))
+            {
+                if (u.key is Moira.Rows or Moira.Cols) continue;   // 칸 강화(lines)로 합쳤다
+                bool max = Maxed(u);
+                string key = u.key;
+                cards.Add(new MoiraCardInfo
+                {
+                    key = key, icon = u.icon, name = u.name, text = u.text,
+                    foot = max ? db.ui.upgradeMax : string.Format(h.cardPrice ?? "{0}", Cost(u)),   // 아래 = 드는 파편만
+                    level = string.Format(h.cardLevel ?? "{0}", Level(u)),                          // 위 = 지금 단계
+                    enabled = !max && Profile.shards >= Cost(u), opensBoard = Moira.NeedsPick(key),
+                    pick = () => PickUpgrade(key),
+                    locked = () => ui.Say(max ? db.ui.upgradeMax : h.noShards),
+                });
+            }
+            bool read = Moira.FateRead(Profile);
+            cards.Add(new MoiraCardInfo
+            {
+                key = FateKey, icon = h.fateIcon, name = h.fateName, text = h.fateText,
+                foot = read ? h.fateReadFoot : string.Format(h.cardPrice ?? h.fateFoot ?? "{0}", h.fatePrice),
+                enabled = read || Profile.shards >= h.fatePrice,
+                pick = ReadFateCard, locked = () => ui.Say(h.noShards),
+            });
+            bool deal = dealCards;
+            dealCards = false;
+            ui.ShowMoiraCards(cards, deal ? moiraLine : null, Profile.shards, MoiraHand, deal);
+        }
+
+        // 카드가 날아 나가는 자리 = 모이라가 든 카드 부채 (패널 px)
+        Vector2 MoiraHand() => hub != null && hub.moira != null ? ui.WorldToPanel(hub.moira.CardPoint) : new Vector2(960, 300);
+
+        // 모이라에게 말을 걸 때: 한 줄을 새로 고르고 카드를 나눈다
         void TalkToMoira()
         {
             string[] lines = db.hub.moiraLines;
             moiraLine = lines != null && lines.Length > 0 ? lines[Random.Range(0, lines.Length)] : null;
+            if (Moira.FateRead(Profile)) moiraLine = FateSpeech() ?? moiraLine;   // 읽어 둔 운명이 있으면 그 암시를 다시
+            dealCards = true;
             ShowScreen(UiScreen.Attic);
+        }
+
+        // 돌아가기, Esc: 카드가 모두 모이라 손으로 돌아간 뒤 방으로
+        void LeaveMoira()
+        {
+            if (hub != null && hub.moira != null) hub.moira.Talking = false;
+            ui.LeaveMoira(() => { if (screen == UiScreen.Attic) ShowScreen(UiScreen.Lobby); });
         }
 
         // 모이라 창의 카드
@@ -533,6 +590,27 @@ namespace TOD
             if (Profile.shards < Cost(u)) { ui.Say(db.hub.noShards); return; }
             if (Moira.NeedsPick(key)) { BeginPick(key); return; }
             AskUpgrade(u, -1, string.Format(db.hub.confirmPlain ?? db.ui.upgradeBody, Cost(u), u.name));
+        }
+
+        string FateSpeech()
+        {
+            ElementDef def = db.elements?.Def(Moira.FateElement(Profile));
+            if (def == null || string.IsNullOrEmpty(def.fateLine)) return null;
+            return string.IsNullOrEmpty(db.hub.fateIntro) ? def.fateLine : db.hub.fateIntro + " " + def.fateLine;
+        }
+
+        void ReadFateCard()
+        {
+            if (Moira.FateRead(Profile))   // 다시 듣기 (파편 없음)
+            {
+                ui.SayMoira(moiraLine = FateSpeech());
+                RenderAttic();
+                return;
+            }
+            if (Profile.shards < db.hub.fatePrice) { ui.Say(db.hub.noShards); RenderAttic(); return; }
+            pendingUpgrade = FateKey;
+            pendingPick = -1;
+            ui.ShowUpgradeConfirm(db.hub.moiraEyebrowConfirm, db.hub.moiraTitleConfirm, string.Format(db.hub.fateConfirm ?? "{0}", db.hub.fatePrice), db.hub.moiraConfirmButton);
         }
 
         void AskUpgrade(UpgradeDef u, int pick, string body)
@@ -556,10 +634,12 @@ namespace TOD
         {
             picking = null;
             pendingPick = -1;
+            dealCards = true;
+            ui.ClearMoiraCards();
             ShowScreen(UiScreen.Attic);
         }
 
-        // 판 위 고르기: 가로 줄 = 그 칸의 줄, 세로 줄 = 그 칸의 열. 확장은 가장자리 띠(PickSide)로 고른다.
+        // 판 위 고르기: 칸 강화와 확장은 판 가장자리 손잡이(PickHandle, PickSide)로 고른다. (옛 rows/cols 는 칸을 눌러 줄)
         void PickAt(Vector2Int cell)
         {
             if (picking == Moira.Rows) PickLine(cell.y);
@@ -568,6 +648,9 @@ namespace TOD
 
         public void PickSide(int side) { if (picking == Moira.Expansion) PickLine(side); }
 
+        // 칸 강화 손잡이: 가로 줄 = 줄 번호, 세로 줄 = Moira.ColBase + 열 번호
+        public void PickHandle(int pick) { if (picking == Moira.Lines) PickLine(pick); }
+
         void PickLine(int pick)
         {
             UpgradeDef u = Upgrade(picking);
@@ -575,29 +658,43 @@ namespace TOD
             if (Maxed(u)) { ui.Say(db.ui.upgradeMax); return; }
             if (!Moira.CanPick(db, Profile, picking, pick)) { ui.Say(db.hub.lineTaken); return; }
             if (Profile.shards < Cost(u)) { ui.Say(db.hub.noShards); return; }
+            HubConfig h = db.hub;
             string body = picking switch
             {
-                Moira.Rows => string.Format(db.hub.confirmRow, pick + 1, Cost(u), u.name),
-                Moira.Cols => string.Format(db.hub.confirmCol, pick + 1, Cost(u), u.name),
-                _ => string.Format(db.hub.confirmExpand, db.hub.sideNames != null && pick < db.hub.sideNames.Length ? db.hub.sideNames[pick] : pick.ToString(), Cost(u), u.name),
+                Moira.Lines => string.Format(h.confirmLine, pick >= Moira.ColBase ? string.Format(h.colName, pick - Moira.ColBase + 1) : string.Format(h.rowName, pick + 1), Cost(u), u.name),
+                Moira.Rows => string.Format(h.confirmRow, pick + 1, Cost(u), u.name),
+                Moira.Cols => string.Format(h.confirmCol, pick + 1, Cost(u), u.name),
+                _ => string.Format(h.confirmExpand, h.sideNames != null && pick < h.sideNames.Length ? h.sideNames[pick] : pick.ToString(), Cost(u), u.name),
             };
             AskUpgrade(u, pick, body);
         }
 
         public void ConfirmUpgrade()
         {
+            if (pendingUpgrade == FateKey)
+            {
+                ElementDef read = Moira.ReadFate(db, Profile, () => Random.value);
+                if (read == null) return;
+                Gear.Save(db, Profile);
+                moiraLine = FateSpeech();
+                ui.CloseDialog();   // → RenderAttic (카드 갱신)
+                ui.UpdateMeta(Profile);
+                sound.Play("upgrade");
+                ui.RoomFlash();
+                ui.SayMoira(moiraLine);
+                return;
+            }
             UpgradeDef u = Upgrade(pendingUpgrade);
             if (u == null || !Moira.Apply(db, Profile, u, pendingPick)) return;
             Gear.Save(db, Profile);
-            ui.CloseDialog();
+            pendingPick = -1;
+            ui.CloseDialog();   // 모이라 창이면 DialogClosed → RenderAttic
             ui.UpdateMeta(Profile);
             sound.Play("upgrade");
             ui.RoomFlash();
             ui.Say(string.Format(db.ui.upgradeDone, u.name, Level(u)));
-            pendingPick = -1;
             if (u.key == Unlocks.StarterKey) { ShowHubShop(); return; }   // 단추 메뉴로
-            if (picking != null) { selected = null; RenderInventory(); return; }   // 판에 남아 바뀐 줄을 보여 준다 (이어서 더 고를 수 있음)
-            RenderAttic();
+            if (picking != null) { selected = null; RenderInventory(); }   // 판에 남아 바뀐 줄을 보여 준다 (이어서 더 고를 수 있음)
         }
 
         // ---------------------------------------------------------------- frame

@@ -148,6 +148,7 @@ namespace TOD
                 foreach (string knob in new[] { "knob-top", "knob-right" }) card.Q(knob).style.backgroundColor = edge;
             }
             TickInventory();
+            TickMoira();   // 19차 모이라 카드 (GameUI.Moira.cs)
             if (Now >= noticeUntil) Show(notice, false);
             if (Now >= bannerUntil) Show(banner, false);
             if (Now >= flashUntil) Show(roomFlash, false);
@@ -518,27 +519,7 @@ namespace TOD
             vfx.style.backgroundImage = image != null ? new StyleBackground(image) : StyleKeyword.None;
         }
 
-        // 19차 모이라: 왼쪽 그림, 오늘의 한 줄, 강화 4종 카드(확장, 가로 줄, 세로 줄, 욕망 최대치) + 종이 오른쪽 위 파편 수.
-        public void RenderAttic(Profile profile, Func<UpgradeDef, int> cost, Func<UpgradeDef, bool> maxed, Func<UpgradeDef, int> level, Action<string> pick, string line)
-        {
-            HubConfig h = db.hub;
-            Text(attic, "attic-shards", profile.shards.ToString());
-            if (!string.IsNullOrEmpty(h.moiraEyebrow)) Text(attic, "attic-eyebrow", h.moiraEyebrow);
-            if (!string.IsNullOrEmpty(h.moiraTitle)) Text(attic, "attic-title", h.moiraTitle);
-            VisualElement portrait = attic.Q("attic-portrait");
-            if (portrait != null) { Icon(portrait, h.moiraPortrait); Show(portrait, h.moiraPortrait != null); }
-            VisualElement container = attic.Q("upgrades");
-            container.Clear();
-            bool any = false;
-            foreach (UpgradeDef u in Moira.Upgrades(db))
-            {
-                bool max = maxed(u);
-                any |= !max;
-                string foot = max ? T.upgradeMax : string.Format(T.upgradeCost, cost(u), level(u));
-                Card(container, u.icon, null, u.name, u.text, foot, () => pick(u.key), !max && profile.shards >= cost(u));
-            }
-            if (!string.IsNullOrEmpty(any ? line : h.moiraEmpty)) Text(attic, "attic-text", any ? line : h.moiraEmpty);
-        }
+        // 19차 모이라 카드 창: GameUI.Moira.cs
 
         // ---------------------------------------------------------------- 재봉 상자
         // 판 = 칸 버튼(누르기·호버) 위에 조각 그림 층(board-pieces)과 반투명 미리보기 층(board-ghost)을 겹친다.

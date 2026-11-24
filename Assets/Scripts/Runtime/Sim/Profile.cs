@@ -34,6 +34,8 @@ namespace TOD
         public List<int> floorChoices = new();
         public List<int> diaryRead = new();
         public int diaryNoticed;
+        // 19차 모이라의 '운명 읽기': 다음 등반 1층 속성 (0 = 아직 안 읽음, 아니면 Element + 1). 등반을 시작하면 쓰고 비운다
+        public int fate;
         // 15차 재봉실 허브: 상인 단추 진열 (조각 종류, HubShop.cs). 19차: 다음 등반에 챙길 수 있는 조각
         public List<int> hubStock = new();
     }

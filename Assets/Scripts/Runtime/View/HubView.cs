@@ -19,6 +19,7 @@ namespace TOD
 
         HeroView hero;
         public MerchantTalk merchant { get; set; }   // 16차: 상인 단추 자세와 트윈 (GameController 가 넣음)
+        public MoiraRig moira;                // 19차: 다락의 모이라 뼈대 리그 (씬 Hub/Moira). 있으면 Moira 시설 그림 대신 그린다
         readonly Player player = new();
         readonly Dictionary<HubStation, SpriteRenderer> renderers = new();
         MaterialPropertyBlock block;
@@ -75,7 +76,18 @@ namespace TOD
             }
             var here = new HashSet<HubStation>();
             foreach (HubFacility f in room.facilities ?? new HubFacility[0]) here.Add(f.station);
-            foreach (var pair in renderers) pair.Value.gameObject.SetActive(here.Contains(pair.Key));
+            foreach (var pair in renderers) pair.Value.gameObject.SetActive(here.Contains(pair.Key) && !(pair.Key == HubStation.Moira && moira != null));
+            if (moira != null)
+            {
+                moira.gameObject.SetActive(here.Contains(HubStation.Moira));
+                HubFacility f = Facility(HubStation.Moira);
+                if (f != null)   // 시설 자리(바닥 좌표)에 발밑, 시설 높이에 맞춘 배율
+                {
+                    moira.transform.localPosition = Space.Ground(f.position.x, f.position.y);
+                    float s = moira.height > 0 ? f.height / moira.height : 1;
+                    moira.transform.localScale = new Vector3(s * (f.flip ? -1 : 1), s, 1);
+                }
+            }
             Near = null;
         }
 
@@ -163,6 +175,13 @@ namespace TOD
             AnimateMerchant(clock);
             float zoom = Room.cameraZoom > 0 ? Room.cameraZoom : 1;
             cameraRig.Apply(Space.ToCanvas(player.x, player.y), Room.backdropRect, zoom, 0, null, clock);
+        }
+
+        // 19차 모이라: 방이 보이는 동안 매 프레임 (모이라 카드 창이 열려 걷기가 멈춰도 움직인다)
+        public void AnimateMoira(float dt)
+        {
+            if (moira == null || !moira.gameObject.activeInHierarchy) return;
+            moira.Animate(dt, Near != null && Near.station == HubStation.Moira ? H.highlight : 1);
         }
 
         // 시설 바닥 타원 안으로 들어가면 타원 가장자리로 밀어낸다.
