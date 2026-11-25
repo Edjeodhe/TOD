@@ -93,12 +93,14 @@ namespace TOD
             if (videoTarget != null) ClearVideo();
         }
 
-        // 영상을 duration 초에 맞춰 처음부터 튼다 (짧은 영상은 늦춰, 긴 영상은 당겨서)
-        public void PlayVideo(float duration)
+        // 영상 길이(초). 영상이 없으면 0
+        public float ClipLength => player != null && player.clip != null ? (float)player.clip.length : 0;
+
+        // 영상을 제 길이 그대로(1배속) 처음부터 튼다
+        public void PlayVideo()
         {
             if (player == null || player.clip == null) return;
-            double length = player.clip.length;
-            player.playbackSpeed = duration > .1f && length > .1 ? Mathf.Clamp((float)(length / duration), .3f, 3f) : 1;
+            player.playbackSpeed = 1;
             player.time = 0;
             player.Play();
         }

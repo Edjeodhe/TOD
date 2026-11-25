@@ -4,8 +4,8 @@
 //   3. "자세히 살펴보기" 안내(E)가 점성구 위에 뜬다. E 나 누름으로 다음.
 //   4. 모이라가 앉은 채 두 앞다리로 구슬을 감싸 쥐고(touchLead), 카메라가 정면으로 점점 빨라지며(zoomPower 이즈인) 구슬로 빨려 든다(zoomTime).
 //      회전은 없고, 구슬 바깥이 속도만큼 구슬 쪽으로 당겨지며 방사형으로 번진다(swirlStrength, rushBlur, 멈춘 뒤 rushFade 에 걷힘). 모이라는 freezeTime 동안 서서히 멈춘다.
-//   5. 구슬 유리 안에 그 죄종의 영상이 번져 나와 videoTime 동안 돈다. 주변은 미동도 없이 죄종 색으로 살짝 덮인다(tintAmount). 자막(ElementDef.fateWhispers)이 차례로 죄종 색 글자로 나온다.
-//   6. 영상이 끝나면 endHold 초 뒤(또는 E, 누름) 줌이 회전 없이 부드럽게 풀리며 원래 화면으로 돌아오고, 모이라가 한 줄을 남긴다(done).
+//   5. 구슬 유리 안에 그 죄종의 영상이 번져 나와 제 길이 그대로(1배속) 돈다. 주변은 미동도 없이 죄종 색으로 살짝 덮인다(tintAmount). 자막(ElementDef.fateWhispers)이 차례로 죄종 색 글자로 나온다.
+//   6. 영상이 끝나면 endHold 초 뒤(0 이면 끝나자마자, 또는 E, 누름) 줌이 회전 없이 부드럽게 풀리며 원래 화면으로 돌아오고, 모이라가 한 줄을 남긴다(done).
 //   Esc 는 언제든 건너뛰기(바로 돌아옴).
 using System;
 using UnityEngine;
@@ -23,6 +23,7 @@ namespace TOD
         string[] fateLines = new string[0];
         Color fateTint;
         float fateAt = -1, fateArrive, fatePromptAt, fateTouchAt = -1, fateCloseAt = -1, fateVideoAt = -1;
+        float fateVideoLen;   // 이번에 트는 영상 길이 (영상이 없으면 videoTime)
         bool fatePaid, fateVideoStarted;
         Action fateDone;
         Action<string> fateSound;
@@ -66,6 +67,7 @@ namespace TOD
             fateArrive = paid ? sparkStart + s.sparkTime + s.sparkStagger * Mathf.Max(0, fateSparks.Length - 1) : fateAt + s.riseTime;
             fatePromptAt = Mathf.Max(fateArrive, fateAt + s.riseTime) + s.promptDelay;
             world.Begin(tint, clip, s.zoomFill, s.zoomOffset);
+            fateVideoLen = clip != null && clip.length > .1 ? (float)clip.length : Mathf.Max(.5f, s.videoTime);
             fateText.text = "";
             fateShownText = null;
             fateText.style.color = Color.Lerp(tint, Color.white, .42f);   // 죄종 색을 밝힌 글자 (어두운 띠 위에서 읽히게)
@@ -109,11 +111,11 @@ namespace TOD
         }
 
         // 자막 한 줄 자리: 영상 시간을 줄 수로 나눈 것과 lineTime(가장 짧은 자리) 중 긴 쪽. 1~2줄이면 영상 안에 고르게 퍼지고, 줄이 많으면 마지막 장면에 멈춘 채 이어진다
-        float FateSlot(FateShow s) => Mathf.Max(Mathf.Max(.5f, s.lineTime), (s.videoTime - FateSubStart(s)) / Mathf.Max(1, fateLines.Length));
+        float FateSlot(FateShow s) => Mathf.Max(Mathf.Max(.5f, s.lineTime), (fateVideoLen - FateSubStart(s)) / Mathf.Max(1, fateLines.Length));
         // 첫 자막이 나오는 때 (영상 시작부터): 한 줄이면 영상 처음부터 끝까지 (번져 나오는 동안 같이 나타남), 여러 줄이면 영상이 반쯤 번진 뒤
         float FateSubStart(FateShow s) => fateLines.Length <= 1 ? 0 : s.videoFade * .5f;
         // 영상과 자막이 다 끝나는 때 (영상 시작부터)
-        float FateLength(FateShow s) => Mathf.Max(s.videoTime, FateSubStart(s) + FateSlot(s) * fateLines.Length);
+        float FateLength(FateShow s) => Mathf.Max(fateVideoLen, FateSubStart(s) + FateSlot(s) * fateLines.Length);
 
         static float EaseInOut(float u) => u * u * (3 - 2 * u);
 
@@ -190,7 +192,7 @@ namespace TOD
             float subA = 0;
             if (fateVideoAt > 0)
             {
-                if (!fateVideoStarted) { fateVideoStarted = true; w.PlayVideo(s.videoTime); if (!string.IsNullOrEmpty(s.lightSound)) fateSound?.Invoke(s.lightSound); }
+                if (!fateVideoStarted) { fateVideoStarted = true; w.PlayVideo(); if (!string.IsNullOrEmpty(s.lightSound)) fateSound?.Invoke(s.lightSound); }
                 float vt = now - fateVideoAt;
                 mix = EaseInOut(Mathf.Clamp01(vt / Mathf.Max(.05f, s.videoFade)));
                 int n = fateLines.Length;
@@ -206,7 +208,7 @@ namespace TOD
                         subA = Mathf.Clamp01(t / fade) * Mathf.Clamp01((i == n - 1 ? FateLength(s) - vt : slot - t) / fade);   // 마지막 줄은 영상(자막)이 끝날 때 사라진다
                     }
                 }
-                if (s.endHold > 0 && vt > FateLength(s) + s.endHold && fateCloseAt < 0) BeginFateClose();
+                if (vt >= FateLength(s) + Mathf.Max(0, s.endHold) && fateCloseAt < 0) BeginFateClose();
             }
             bool ended = fateVideoAt > 0 && now >= fateVideoAt + FateLength(s);
 

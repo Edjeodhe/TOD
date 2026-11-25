@@ -54,11 +54,11 @@ namespace TOD
         public float swirlRest;                 // 줌이 끝난 뒤 남는 일그러짐
         [Range(0, 1)] public float tintAmount;  // 구슬 바깥 주변을 죄종 색으로 물들이는 양
         public float videoFade;                 // 영상이 구슬 안에 번져 나오는 시간
-        public float videoTime;                 // 영상 재생 시간 (영상 길이가 달라도 이 시간에 맞춰 빠르게, 느리게 튼다)
+        public float videoTime;                 // 영상이 없을 때만 쓰는 영상 자리 시간 (영상은 제 길이 그대로 1배속으로 튼다)
         public float lineFade;                  // 자막 한 줄이 나오고 사라지는 시간
         public float lineTime;                  // 자막 한 줄이 머무는 시간 (줄이 많으면 영상이 끝난 뒤 마지막 장면에 멈춘 채 이어진다)
         public float subtitleY;                 // 자막 높이 (화면 높이 비율)
-        public float endHold;                   // 영상이 끝난 뒤 저절로 돌아가기까지 (0 = 누를 때까지)
+        public float endHold;                   // 영상이 끝난 뒤 저절로 돌아가기까지 (0 = 끝나자마자)
         public float zoomOutTime;               // 돌아갈 때 줌이 풀리는 시간
         public string riseSound, zoomSound;     // 효과음 id (점성구가 떠오를 때, 빨려 들 때)
 

@@ -33750,7 +33750,7 @@ MonoBehaviour:
       lineFade: 0.35
       lineTime: 1.6
       subtitleY: 0.89
-      endHold: 2.2
+      endHold: 0
       zoomOutTime: 1.3
       riseSound: whisper
       zoomSound: desire
