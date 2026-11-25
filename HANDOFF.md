@@ -169,6 +169,13 @@
 - 죄종 버튼 줄은 `DevTools.SinButtons`로 만듦(옛 층 속성 줄도 이것으로 바꿈).
 - 확인: EditMode 67개 통과. 캡처 `Temp/Shots/dev23_sin_floor_greed.png`(탐욕 층 1라운드, 패널 새 줄), `dev23_fate_pride_sheet.png`(안내 → 줌 → 교만 영상과 자막 → 모이라로 돌아옴). 색욕 미래 보기도 영상이 나오는 것을 봄. 파편 573, 운명 0 그대로.
 
+### 23차-upgrade-icons (모이라 카드 '인벤토리 확장', '인벤토리 칸 강화' 그림) — 완료(커밋 전)
+
+- 둘 다 재봉 상자(`hub_sewing_box.png` 참고)로 짝을 맞춤: 확장 = 옆으로 새 칸 줄이 펼쳐지는 상자 + 큰 금빛 '+', 칸 강화 = 같은 상자에 한 줄이 금실로 꿰매지고 "+1" 꼬리표, 금바늘. 옛 그림은 파편(`icon_shard`), 털실(`icon_yarn`)을 빌려 쓰던 것.
+- 그림: `tools/codex_prompts/upgrade_box23.txt`(참고 `hub_sewing_box.png`) → `art_src/raw/upgrade_box23.png` → `python tools/bake_upgrade_box23.py` → `Assets/sprites/icon_upgrade_expansion.png`, `icon_upgrade_lines.png`(긴 변 360). `db.upgrades` expansion, lines 의 `icon`을 바꾸고 씬 저장.
+- 캡처 `Temp/Shots/upgrade23_moira_cards.png`, `_zoom.png`.
+- **주의:** `TOD/Setup/1. Texture Imports`를 돌리면 몬스터 파츠 60장의 사용자 피벗(alignment 9)이 아래 가운데(7)로 바뀌고 포션 아이콘 설정도 바뀜. 이번에는 `git checkout -- 'Assets/sprites/enemy_*.meta' 'Assets/sprites/potion_*.meta'`로 되돌림. 새 그림만 넣을 때는 이 메뉴 뒤에 꼭 `.meta` 변경을 확인하거나, 메뉴 대신 그 파일만 스프라이트로 임포트할 것.
+
 ## 22차 (2026-11-24 시작) — 8속성 → 칠죄종, 신화 등급 아버지의 도안, 7층, 미래 보기 구슬 연출(Flow 영상), 인게임 그림 전면 교체 — 진행 중
 
 > 작업이 끊기면 여기서 이어 갑니다. 단계를 마칠 때마다 체크합니다. 사용자가 질문에 답한 결정입니다(2026-11-24 저녁).
