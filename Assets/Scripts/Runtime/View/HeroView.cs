@@ -80,6 +80,13 @@ namespace TOD
 
         bool InDash(Player p) => p.action != HeroAction.Die && (p.dash > 0 || p.dashGrace > 0);
 
+        // 대쉬 떠오름 0~1: 가운데서 가장 높고, 양 끝은 기울기 0 (sin^1.5)
+        float Hop(float t)
+        {
+            float u = Mathf.Clamp01((t - .02f) / Mathf.Max(.05f, rig.dash.length - .04f));
+            return Mathf.Pow(Mathf.Max(0, Mathf.Sin(Mathf.PI * u)), 1.5f);   // sin(π) 는 아주 작은 음수 → Pow 가 NaN 이 되지 않게
+        }
+
         public HeroFrame Pose(Player p, float actionTime)
         {
             FeelConfig f = db.feel;
@@ -108,7 +115,9 @@ namespace TOD
                 ry = p.recoil.y * f.recoilHero * k * Space.Proj;
             }
             // 대쉬는 짧게 떠오른다 (예전 회피 통그림의 도약 대신).
-            if (inDash) ry -= Mathf.Sin(Mathf.PI * Mathf.Clamp01((t - .02f) / .22f)) * db.visual.dodgeHop;
+            // 23차: 대쉬 자세가 풀리는 동안(rig.dash.length) 이어지고 끝에서 사뿐히 내려앉는다.
+            // 예전에는 InDash 동안만 떠서 dashGrace 가 없는 재봉실에선 끝 프레임에 툭 떨어졌고, 착지가 가팔라 웅크림이 풀리며 다시 솟았다.
+            if (action == HeroAction.Dash) ry -= Hop(t) * db.visual.dodgeHop;
             return new HeroFrame { pose = pose, root = Space.Canvas(p.x + rx, Space.ProjectY(p.y) + ry), scale = Scale(p.y), facing = facing };
         }
 
@@ -135,7 +144,7 @@ namespace TOD
         {
             Vector3 root = Space.Ground(p.x, p.y);
             float scale = Scale(p.y);
-            float hop = InDash(p) ? Mathf.Clamp01(1 - (rig.transform.position.y - root.y) * Space.Ppu / 40) : 1;
+            float hop = InDash(p) || p.action == HeroAction.Dash ? Mathf.Clamp01(1 - (rig.transform.position.y - root.y) * Space.Ppu / 40) : 1;
             float size = 25 * scale / db.visual.heroScaleBase * hop;
             Place(shadow.transform, root, new Vector2(p.x, Space.ProjectY(p.y) + 3), 0, new Vector2(size * 2 / shadow.sprite.rect.width, size * .68f / shadow.sprite.rect.height));
             shadow.color = alpha < 1 ? Painter.Alpha(shadowColor, 0) : shadowColor;
