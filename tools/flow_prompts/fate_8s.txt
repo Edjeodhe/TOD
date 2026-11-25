@@ -1,0 +1,27 @@
+# 미래 보기 구슬 영상 8초판 (2026-11-25). Flow, 16:9, 8초, 가능한 가장 높은 화질.
+# 공통 머리말 + 죄종별 장면 (세 박자: 처음 0~3초 / 가운데 3~6초 / 끝 6~8초).
+# 결과 파일: Assets/Video/fate_<죄종>.mp4 (옛 3~5초판은 art_src/video_v1/ 로 옮김)
+
+[COMMON]
+Ancient Egyptian tomb wall painting coming to life, flat painted figures in strict side profile, sandstone wall texture with cracks, hieroglyph band frame around the scene, static camera, slow solemn movement as if an old legend is being told, one continuous 8-second story in three beats, main action centered, no text, no subtitles.
+
+[pride] dominant color royal purple #7B4FC9 with gold
+Beat 1: a crowned pharaoh in a purple robe stands tall and points up at a gold sun-star in a starry purple sky while two kneeling workers lift stone blocks onto an unfinished tower. Beat 2: the pharaoh raises his chin higher, the workers stack the blocks faster, the tower grows toward the sun-star and his crown grows taller and heavier with gold. Beat 3: the sun-star blazes violet-gold, the top stones crack under the weight, and the pharaoh's shadow stretches huge across the wall while the workers bow to the ground.
+
+[greed] dominant color gold #D9A520
+Beat 1: servants in white kilts carry baskets heaped with gold coins up the steps of a golden stepped pyramid. Beat 2: they pour the coins on top and the pile rises in a glittering fountain, more servants arrive with more baskets. Beat 3: the overflowing gold spills down the steps and buries the servants up to their shoulders while one figure at the top keeps reaching for the falling coins.
+
+[lust] dominant color deep pink #D9418C
+Beat 1: a man and a woman in magenta robes stand facing each other beside a small tower, slowly reaching their hands toward each other. Beat 2: glowing pink ribbons of light spiral out of their fingertips and wrap around their arms and bodies as their hands almost touch. Beat 3: the ribbons tighten into a heart-shaped knot binding both figures together, they can no longer move, petals drift down as the light pulses.
+
+[envy] dominant color poison green #4FA34A
+Beat 1: inside a tall shrine doorway two figures hold green flames and watch a joyful feast at a long white table on the right. Beat 2: their eyes glow green, a thin green mist creeps out of the shrine along the floor toward the feasting people. Beat 3: the mist curls up like a thorny vine around the table, the cups turn green and the feasting figures freeze, while the watchers lean forward smiling.
+
+[gluttony] dominant color orange #E07A2A
+Beat 1: a crowned king and his queen sit at a table piled with bread, fruit and roast meat, eating, next to a tall brick tower. Beat 2: servants keep bringing more plates and the king eats faster, his belly swelling, the food never ends. Beat 3: the tower behind them cracks and its bricks crumble one by one into the feast while the king keeps eating without looking up.
+
+[wrath] dominant color crimson #C62E2E
+Beat 1: two rows of red-skinned warriors with spears face each other in front of a stone tower. Beat 2: they stamp and shout, sparks fly from clashing spears and a red fire bursts up from the ground between them. Beat 3: the fire roars into a huge blaze with black smoke rising over the tower, the warriors keep fighting inside the flames.
+
+[sloth] dominant color grey blue #6F8FA8
+Beat 1: a guard with a spear sits on a stone seat in front of a blue-grey temple and tower, his head nodding with sleep. Beat 2: his spear slowly tips down, his eyes close, and fine sand begins to blow in from the right side of the wall. Beat 3: the sand piles up in soft dunes and slowly buries his feet, the seat and the temple door while he sleeps, a crescent moon rises.
