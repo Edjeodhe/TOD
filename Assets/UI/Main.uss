@@ -652,3 +652,16 @@ Button:disabled { opacity: 0.5; }
 /* 23차-boss7: 2페이즈 보스 체력바 (더 붉게), 전환 중 체력바가 다시 차오를 때 밝게 */
 .boss-hud.phase2 .meter-fill.boss { -unity-background-image-tint-color: #d8341e; }
 .boss-hud.refill .meter-fill.boss { -unity-background-image-tint-color: #ff8a4a; }
+
+/* ---------- 24차 예언 카드 (재봉실 캐릭터 옆) ---------- */
+.fate-badge {
+    position: absolute; width: 132px; padding: 10px 8px 12px 8px; align-items: center;
+    background-image: url("project://database/Assets/UI/Paper/card.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    border-width: 3px; border-radius: 6px; border-color: #160e11;
+    transform-origin: 0% 100%;
+}
+.fate-badge-tag { font-size: 14px; color: #f6e8d2; -unity-text-outline-width: 1.2px; -unity-text-outline-color: #160e11; }
+.fate-badge-icon { width: 54px; height: 54px; margin: 4px 0 2px 0; -unity-background-scale-mode: scale-to-fit; }
+.fate-badge-set { font-size: 20px; -unity-text-outline-width: 1.6px; -unity-text-outline-color: #160e11; -unity-text-align: middle-center; }
+.fate-badge-text { font-size: 14px; color: #f6e8d2; white-space: normal; -unity-text-align: middle-center; -unity-text-outline-width: 1.2px; -unity-text-outline-color: #160e11; }

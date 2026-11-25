@@ -85,6 +85,33 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 24차 (2026-11-25 시작) — 상성 제거, 층 날씨 디버프, 예언 = 세트 가중치(2단 룰렛), 미래 보기 셀 애니메이션 — 진행 중
+
+### 결정 (사용자)
+- **상성 시스템을 없앱니다** (고리, 약점·저항 배율, 피해 숫자 옆 글자). 층의 죄종은 그대로 두고(몬스터 그림, 보스, 색조), 대신 **층 날씨 = 캐릭터 디버프**를 겁니다. 층이 높을수록 세짐: **7층에서 1층 값의 2배**(효과마다 기본값·층당 증가를 데이터로 따로).
+  - 탐욕: 얻는 경험치·골드 −30% / 교만: 회복량 −50% / 색욕: 시야 축소(분홍 안개) / 시기: 치명타 확률 절반 / 식탐: 허기(초당 최대 체력 0.5%씩 줄고 처치하면 조금 채움, 1 아래로는 안 내려감) / 분노: 받는 피해 +25% / 나태: 이동 속도 −20%
+- **예언(미래 보기) = 예언한 죄종 세트 조각 가중치 +200%(×3).** 1층 죄종은 더 이상 정하지 않음(무작위). **다음 등반 한 번** 유지.
+- **뽑기 = 2단 룰렛(세피리아식):** 1번 룰렛 등급(`gear.rankWeights`) → 2번 룰렛 그 등급 조각들 중 세트 가중치(세트별 기본 가중치 × 예언 보너스). 등급 가중치와 세트 가중치는 따로 관리.
+- 예언이 끝나고 카드 UI를 닫으면 **캐릭터 옆에 '확률 오른 세트' 카드**가 뜸.
+- 미래 보기 영상 → **구아슈풍 반복 셀 애니메이션**(ChatGPT in Chrome로 프레임 다량 생성), 자동 복귀 없이 **E로 넘어감**. 연출 세부는 세션 `fate-cel-anim`이 사용자에게 물어가며 진행.
+
+### 진행 (메인 세션, 2026-11-25 기록 — 아직 커밋 전)
+- [x] **상성 제거:** `ElementData.AffinityConfig`/`Relation`/`Multiplier`, `ElementConfig.affinity`, `Combat.Affinity/Relation`(CombatElements), `Fx.affinity`(RunState), `DrawAffinityTag`(ArenaRenderer.Elements, ArenaRenderer 숫자), `CombatTests.AffinityRingMultipliers` 지움. 당기기 피해·`DamageEnemy`에서 상성 배율 뺌. `PickFloorElement`의 '예언 = 1층' 줄 지움.
+- [x] **층 날씨 코드:** `ElementData.cs`에 `WeatherKind`(None, GainDown, HealDown, Vision, CritDown, Drain, DamageTakenUp, MoveDown) + `FloorWeather`(kind, name, text `{0}`=백분율, baseValue, perFloor, cap, extra, tint), `ElementDef.weather`. 새 파일 `Sim/CombatWeather.cs`(partial Combat): `Weather/WeatherValue/WeatherText`, 세기 = min(cap, base + perFloor×(층−1)).
+  - 연결: 탐욕 = 드롭·NPC 경험치/골드(`WeatherGain`, 소수는 `RunState.xpCarry/goldCarry`에 모음) / 교만 = 모든 회복이 `HealPlayer()`를 거침(하트, 포션, NPC, 식탐 흡혈, 처치 회복) / 색욕 = `ArenaRenderer.Elements`의 분홍 안개(`VisionCover`, 시야 반지름 = 화면 반 × (1−세기)) / 시기 = 당기기 치명타 확률 × (1−세기) / 식탐 = `UpdateWeather` 허기(전투 중·쉬어가기 제외, 1초마다 모아 숫자, 1 아래로 안 내려감) + `WeatherOnKill` / 분노 = `DamagePlayer` × (1+세기) / 나태 = 이동 속도 × (1−세기).
+  - 표시: `ElementHud.uxml/uss/cs` — 층 암시 아래 날씨 한 줄(`floor-hint-weather`) + 전투 중 화면 위 가운데 상시 표시(`floor-weather`, 이름은 죄종 색).
+- [x] **층 날씨 데이터(MCP execute_code, 씬 저장):** perFloor = base/6 (7층 2배). 탐욕 "황금빛 탐닉" GainDown .3 / 교만 "오만한 고독" HealDown .5 cap .9 / 색욕 "분홍빛 안개" Vision .3 tint (.52,.18,.33,.88) / 시기 "질투의 눈길" CritDown .5 cap .9 / 식탐 "끝없는 허기" Drain .005 extra .01 / 분노 "끓는 분노" DamageTakenUp .25 / 나태 "늘어지는 잠기운" MoveDown .2. (교만·시기는 7층 2배면 100%가 돼서 cap .9로 막음 — 사용자 확인 필요)
+- [x] **예언 2단 룰렛:** `Profile.cs`의 `Gear.RankWeight`(rankWeights) → `Gear.SetWeight`(`SetDef.weight` × 예언 세트면 (1+`gear.fateSetBonus`)) → `PickWeighted(…, Element fate)`: 1번 룰렛 = 후보가 남은 등급마다 등급 가중치 한 칸, 2번 룰렛 = 그 등급 안 세트 가중치. 등반 중 뽑기만 예언을 씀(`Combat.FateSet(r)`: 쉬어가기 탑, 탑 다시 굴리기, 정예 조각 드롭, 쉬어가기 NPC 조각). 재봉실 상점·재봉실 NPC는 예언 없음. 데이터: 세트 7개 weight 1, `gear.fateSetBonus` 2.
+- [x] **예언 문구(MCP):** `hub.fateText` "…죄종 하나를 예언합니다. 다음 등반 동안 그 세트 조각이 더 잘 나옵니다", 죄종 `fateLine` 끝 "첫 층은 X란다" → "X의 조각이 네 손에 감겨 올 거란다."
+- [x] **예언 카드 코드:** `Main.uxml` `fate-world/fate-badge` + `Main.uss` `.fate-badge*`, 새 파일 `UI/GameUI.FateBadge.cs`(`UpdateFateBadge`: 세트 색 종이·테두리, 가장 높은 등급 조각 아이콘, 톡 튀어나옴, 둥실), `GameController.TickFateBadge`(재봉실 Lobby 화면·예언 읽음·창 없음일 때 캐릭터 발밑 기준). 데이터 `hub.fateBadgeTag` "예언", `fateBadgeText` "세트 조각 확률 +{1}%", `fateBadgeOffset` (34,−36), `fateBadgePop` .45.
+- [x] 컴파일 통과(2026-11-25).
+- [x] **테스트(2026-11-25 15시대, 이어받은 메인 세션):** `PiecePicksFollowRankWeights`(2단 룰렛 등급 비율), `FateBoostsProphesiedSet`(예언 세트 ×3), `FateCarriesIntoRun`(1층 무작위, 등반이 예언을 들고 감), `NoAffinityMultiplier`, `FloorWeatherScalesWithFloor`, `GluttonyHungerDrainsButNeverKills`(BeginFloor 뒤 매 틱 적을 치우고 허기만 봄). **EditMode 76개 통과.**
+- [x] **플레이 확인:** 예언 카드(재봉실 캐릭터 오른쪽 위, '예언 / 색욕 / 세트 조각 확률 +200%') `Temp/Shots/w24_fate_badge(_zoom).png`, 색욕 4층 분홍 안개 + 암시 아래 '분홍빛 안개 — 시야 -45%' `w24_lust_a.png`, 탐욕 3층 상시 표시 `w24_greed_bar.png`, 보스 라운드 `w24_boss_bar.png`. 콘솔 오류 없음. 프로필은 `Temp/profile_backup_24main.json`에서 되돌림.
+  - 고친 것: 상시 날씨 표시(`floor-weather`)가 타이머 판 뒤에 깔려 가려짐 → `top: 112px`(타이머 아래), 보스 라운드는 `.boss` 클래스로 `148px`(보스 체력 막대 아래). `ElementHud.cs`가 `roundKind == Boss`일 때 클래스를 붙임.
+- [x] 커밋 (fate-cel-anim 의 프레임 루프 코드 `FateOrbView`·`GameUI.FateShow`·`tools/fate_loop_prompts/` 도 같이 들어감 — 프레임이 없으면 옛 영상으로 돌아가므로 안전).
+- [ ] 사용자 확인 필요: 교만·시기 cap .9, 사람이 직접 한 플레이 느낌(식탐 허기 속도, 색욕 시야 7층 60%).
+- **다른 세션 (2026-11-25 15:45 확인, 두 세션 모두 앱 목록에서 사라짐):** `fate-cel-anim` — 프레임 루프 코드 끝, Claude in Chrome 연결 대기로 그림 생성 멈춤(사용자가 15:30 연결함). `data-tables` — 사용자 답(범위 **밸런스만**, 하나뿐인 설정 묶음은 **세로 키·값**(group | key | type | value), **내보내기만**(가져오기 도구 없음))을 받고 데이터 구조를 훑다가 5시간 한도로 멈춤. **만든 파일 없음** — 처음부터 다시(`기획서/데이터테이블.xlsx`, 스크립트 `tools/`, 자료형 int/string/float/enum, 효과는 effect + value + value_type, `enums` 시트).
+
 ## 23차 (2026-11-25 시작) — 문구, 소리 정리, 포션 칸, 우클릭 해제, 층 표시, 보스 파편, 개발자 모드, 라틴어 특수공격, 피해 숫자, 쉬어가기 NPC — 진행 중
 
 > 사용자 요청(스크린샷 4장)과 질문 답입니다. 세션마다 아래에 자기 절(`23차-<세션>`)을 만들어 진행을 적습니다. 커밋, 브랜치 전환 금지. Unity 잠금(`Temp/claude_unity.lock`) 규칙은 22차와 같습니다.

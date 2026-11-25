@@ -1112,7 +1112,6 @@ namespace TOD
                             Text?.Label(fx.text, spot, 24, Painter.Alpha(color, fade), Painter.Alpha(Pal.textStroke, fade), 4, scale, 0, false);
                             textWidth = (fx.text?.Length ?? 0) * 13 * scale;
                         }
-                        if (fx.affinity != 0) DrawAffinityTag(fx.affinity, spot, textWidth, scale, fade);   // 16차: "약점" / "저항"
                         break;
                     }
                     case FxKind.Combo:

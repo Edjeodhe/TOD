@@ -3,7 +3,7 @@
 //   확장 = 판 가장자리 하나(0 위, 1 오른쪽, 2 아래, 3 왼쪽)에 줄 하나를 붙인다. 위나 왼쪽이면 놓인 조각과 강화한 줄 번호가 한 칸씩 밀린다.
 //   칸 강화(lines) = 가로 줄 하나(pick = 줄 번호, 위에서 0) 또는 세로 줄 하나(pick = ColBase + 열 번호, 왼쪽에서 0). 단계와 가격은 둘이 같이 센다.
 //   (rows, cols 는 칸 강화 전에 쓰던 key. 데이터에서는 뺐고 계산만 남겼다)
-// 운명 읽기 = 파편을 내고 다음 등반 1층 속성을 미리 정해 둔다(Profile.fate). 모이라는 그 속성의 암시(ElementDef.fateLine)를 말한다.
+// 운명 읽기 = 파편을 내고 죄종 하나를 예언해 둔다(Profile.fate). 24차: 다음 등반 동안 그 세트 조각이 잘 나온다. 모이라는 그 속성의 암시(ElementDef.fateLine)를 말한다.
 // 시작 조각 들고 갈 수(starter)는 상인 단추로 옮겼지만 값 계산은 여기서 같이 한다.
 using System;
 using System.Collections.Generic;
@@ -109,7 +109,7 @@ namespace TOD
         public static bool FateRead(Profile p) => p.fate > 0;
         public static Element FateElement(Profile p) => p.fate > 0 ? (Element)(p.fate - 1) : Element.Plain;
 
-        // 파편을 내고 다음 등반 1층 속성을 정한다. 이미 읽었으면 값을 내지 않고 그대로 돌려준다. 못 하면 null.
+        // 파편을 내고 예언할 죄종을 정한다 (24차: 다음 등반 동안 그 세트 조각 가중치 +gear.fateSetBonus, 1층은 정하지 않음). 이미 읽었으면 값을 내지 않고 그대로 돌려준다. 못 하면 null.
         public static ElementDef ReadFate(GameDatabase db, Profile p, Func<float> random)
         {
             ElementDef[] defs = db.elements?.defs;
@@ -123,7 +123,7 @@ namespace TOD
             return pick;
         }
 
-        // 등반 시작: 읽어 둔 운명은 이번 등반 1층에 쓰였다(RunState.fate) → 비운다
+        // 등반 시작: 읽어 둔 예언은 이번 등반(RunState.fate)으로 넘어갔다 → 비운다
         public static void ConsumeFate(Profile p) => p.fate = 0;
 
         // 데이터에서 모이라 강화만 (순서 유지)

@@ -310,6 +310,7 @@ namespace TOD
         public float effectCap;               // 얼음 둔화 상한 · 번개 튀는 마리 수 · 독 최대 겹
         public string effectText;             // 부가 효과 문구. {0} = 이 단계의 값, {1} = extra × 단계 (예: "화상 초당 {0}")
         public string brief;                  // 22차 세트 패널 목록의 짧은 효과 (effectText 와 같은 {0}, {1}). 긴 문구는 마우스 올림 창에서
+        public float weight = 1;              // 24차 세트 가중치 (2단 룰렛의 2번: 같은 등급 안에서 이 세트 조각이 뽑힐 비중). 0 이면 무작위로는 안 나옴
         [TextArea] public string description; // 22차 세트 마우스 올림 창의 설명 한두 줄
         [Header("22차: 죄종 두 번째 효과 (위 설명 참고)")]
         public float extra;
@@ -358,6 +359,7 @@ namespace TOD
         public int[] startingKinds;
         public Color[] rankColors;            // 코스트 1~4 → 일반 회색·레어 하늘색·유니크 노란색·레전더리 붉은색 (0번 미사용)
         public float[] rankShine;             // 등급별 번쩍임 세기 (0 = 없음)
+        public float fateSetBonus;            // 24차 예언한 죄종 세트의 가중치 보너스 (2 = +200% → ×3), 다음 등반 한 번
         public float[] rankWeights;           // 23차 레어도 가중치: 코스트(등급)별 뽑힐 비중 (rankColors 처럼 코스트가 번호, 0번 미사용). 칸이 없으면 1, 0 이하면 무작위로는 안 나옴
         public CardEntrance cardEntrance;     // 22차-ui-fixes: 레전더리, 신화 카드가 고르기 창에 나타날 때 번쩍임
         public string saveKey;

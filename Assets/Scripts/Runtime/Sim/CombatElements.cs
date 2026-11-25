@@ -1,4 +1,4 @@
-// 16차: 메인/부가 세트, 층 속성과 상성, 보스 속성 공격. 수치는 GameDatabase(gear.sets · elements)에서 읽는다.
+// 16차: 메인/부가 세트, 층 속성, 보스 속성 공격 (24차: 상성 제거). 수치는 GameDatabase(gear.sets · elements)에서 읽는다.
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -75,10 +75,7 @@ namespace TOD
             }
         }
 
-        // ---------------------------------------------------------------- 층 속성 · 상성
-
-        public float Affinity(Element attack, Element target) => EC == null ? 1 : EC.Multiplier(attack, target);
-        public int Relation(Element attack, Element target) => EC == null ? 0 : EC.Relation(attack, target);
+        // ---------------------------------------------------------------- 층 속성 (24차: 상성 없음, 층 날씨는 CombatWeather.cs)
 
         // 층마다 8속성 중 하나 (한 등반 안에서 겹치지 않게, 다 쓰면 처음부터)
         void PickFloorElement(RunState r)
@@ -88,7 +85,6 @@ namespace TOD
             List<Element> pool = defs.Select(d => d.element).Where(e => !r.floorElements.Contains(e)).ToList();
             if (pool.Count == 0) { r.floorElements.Clear(); pool = defs.Select(d => d.element).ToList(); }
             Element pick = pool[Mathf.Min(pool.Count - 1, Mathf.FloorToInt(r.random() * pool.Count))];
-            if (r.floor <= 1 && r.fate > 0 && pool.Contains((Element)(r.fate - 1))) pick = (Element)(r.fate - 1);   // 19차: 모이라가 읽어 둔 1층
             if (devFloorElement is Element dev) pick = dev;   // 23차 개발자 모드: 죄종 층으로 바로 가기 (이미 나온 죄종이어도)
             r.floorElements.Add(pick);
             r.floorElement = pick;

@@ -121,7 +121,6 @@ namespace TOD
         public bool squash, mirror, burst, rage, elite, useElement, followHero;
         public bool bound;                    // 결박 당기기의 실 (속성 모습으로 그린다)
         public bool crit;                     // 치명타 피해 숫자 (치명타 글꼴 + 아이콘)
-        public int affinity;                  // 16차 상성: +1 약점 · -1 저항 (피해 숫자 옆 작은 글자)
         public Point follow;                  // 이 점을 따라 그린다 (결박 폭발 → 끌려가는 적)
         public string text;
         public int pop;
@@ -192,7 +191,9 @@ namespace TOD
         // 16차 층 속성 · 부가 세트 충전
         public Element floorElement;
         public readonly List<Element> floorElements = new();   // 이번 등반에서 이미 나온 층 속성 (겹치지 않게)
-        public int fate;                                        // 19차 모이라가 읽어 둔 1층 속성 (Profile.fate 와 같은 값, 0 = 없음)
+        public int fate;                                        // 24차 예언한 죄종 (Element + 1, 0 = 없음): 이번 등반 동안 그 세트 조각 가중치가 오른다
+        // 24차 층 날씨: 탐욕의 소수 몫, 식탐 허기 모음
+        public float xpCarry, goldCarry, hungerPending, hungerTick;
         public int hintSerial;               // 층 암시 문구를 다시 띄울 때마다 +1 (라운드 시작 · 개발자 모드)
         public readonly Dictionary<SetDef, int> procCharges = new();   // 부가 세트 → 충전 수 (procCharge 이상 = 준비)
         public readonly List<GameEvent> events = new();

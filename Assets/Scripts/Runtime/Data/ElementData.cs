@@ -1,4 +1,4 @@
-// 16차: 층 속성 · 상성 · 속성 몬스터 · 부가 발동 · 보스 속성 공격 데이터. 값은 씬 GameDatabase 의 elements 에 MCP 로 넣는다.
+// 16차: 층 속성 · (24차 상성 제거, 층 날씨) · 속성 몬스터 · 부가 발동 · 보스 속성 공격 데이터. 값은 씬 GameDatabase 의 elements 에 MCP 로 넣는다.
 using System;
 using UnityEngine;
 
@@ -53,7 +53,7 @@ namespace TOD
     {
         public Element element;
         [TextArea] public string hint;        // 라운드 시작 때 화면 가운데 층 암시 (예: "화염의 기운이 가득한 것 같다...")
-        [TextArea] public string fateLine;    // 19차 모이라의 '운명 읽기': 다음 등반 1층이 이 속성일 때 모이라가 하는 암시
+        [TextArea] public string fateLine;    // 모이라의 미래 보기 뒤 한 줄 (24차: 이 죄종 세트 조각이 잘 나온다는 암시)
         [Header("22차 칠죄종: 이름과 보스 욕망 창")]
         public string sinName;                // 죄종 이름 (예: "탐욕")
         [TextArea] public string desireWhisper;   // 보스 욕망 창의 속삭임 (예: "다 가져도 돼. 원래 네 것이었어.")
@@ -79,21 +79,28 @@ namespace TOD
         public BossElementAttack boss;
         [Header("23차 일반 몬스터 공격 (스토커, 차저, 슈터)")]
         public MobAttackFx mob;
+        [Header("24차 층 날씨 (주인공 디버프)")]
+        public FloorWeather weather;
     }
 
-    [Serializable] public class AffinityConfig
+    // 24차 층 날씨: 그 죄종 층에 들어서면 층을 떠날 때까지 주인공에게 걸리는 디버프 (상성 대신).
+    // 세기 = min(cap, baseValue + perFloor × (층 − 1)). cap 이 0 이면 한도 없음. 뜻은 kind 마다:
+    //   GainDown 경험치·골드 비율 감소 · HealDown 회복 비율 감소 · Vision 시야 반지름 비율 감소 · CritDown 치명타 확률 비율 감소
+    //   Drain 초당 최대 체력 비율로 줄어듦(extra = 처치 하나당 최대 체력 비율 회복) · DamageTakenUp 받는 피해 비율 증가 · MoveDown 이동 속도 비율 감소
+    public enum WeatherKind { None, GainDown, HealDown, Vision, CritDown, Drain, DamageTakenUp, MoveDown }
+
+    [Serializable] public class FloorWeather
     {
-        public Element[] ring;                // 상성 고리: ring[i] 가 ring[i+1] 에 강하다 (마지막은 처음에)
-        public float strong, weak;            // 약점 배율(1.5), 저항 배율(.5)
-        public string strongTag, weakTag;     // 피해 숫자 옆 작은 글자 ("약점", "저항")
-        public Color strongColor, weakColor;
-        public float tagPx;                   // 글자 크기 (캔버스 px)
-        public Vector2 tagOffset;             // 숫자 오른쪽 끝 기준 (+x 오른쪽, +y 아래, 캔버스 px)
+        public WeatherKind kind;
+        public string name;                   // 날씨 이름 (예: "황금빛 탐닉")
+        [TextArea] public string text;        // 설명. {0} = 세기 백분율 (예: "얻는 경험치·골드 -{0}%")
+        public float baseValue, perFloor, cap;
+        public float extra;                   // Drain: 처치 하나당 최대 체력 비율 회복
+        public Color tint;                    // Vision 안개 색 등 (a = 세기)
     }
 
     [Serializable] public class ElementConfig
     {
-        public AffinityConfig affinity;
         public ElementDef[] defs;             // 층 속성 후보 (8속성)
         [Header("층 암시 문구")]
         public float hintDelay, hintFadeIn, hintHold, hintFadeOut;
@@ -120,24 +127,6 @@ namespace TOD
         public float mobShotLift;             // 탄 그림을 바닥점에서 띄우는 높이 (캔버스 px)
 
         public ElementDef Def(Element e) => defs == null ? null : Array.Find(defs, d => d.element == e);
-
-        // +1 = attack 이 target 에 강함(약점), -1 = target 이 attack 에 강함(저항), 0 = 보통 (무속성 포함)
-        public int Relation(Element attack, Element target)
-        {
-            Element[] ring = affinity?.ring;
-            if (ring == null || ring.Length < 2) return 0;
-            int a = Array.IndexOf(ring, attack), t = Array.IndexOf(ring, target);
-            if (a < 0 || t < 0 || a == t) return 0;
-            if ((a + 1) % ring.Length == t) return 1;
-            if ((t + 1) % ring.Length == a) return -1;
-            return 0;
-        }
-
-        public float Multiplier(Element attack, Element target)
-        {
-            int rel = Relation(attack, target);
-            return rel > 0 ? affinity.strong : rel < 0 ? affinity.weak : 1;
-        }
     }
 
     // 뷰가 쓰는 층 속성 색조 (라운드 컨셉보다 우선)

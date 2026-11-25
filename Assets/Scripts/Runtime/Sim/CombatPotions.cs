@@ -70,9 +70,8 @@ namespace TOD
             {
                 case PotionEffect.Heal:
                     {
-                        float healed = Mathf.Min(r.maxHp, r.hp + amount) - r.hp;
-                        if (healed <= 0) { Event(r, "empty", db.potions.noNeed); return false; }
-                        r.hp += healed;
+                        if (r.hp >= r.maxHp) { Event(r, "empty", db.potions.noNeed); return false; }
+                        float healed = HealPlayer(r, amount);   // 24차 교만 날씨가 깎는다
                         r.player.heal = db.rewards.healTime;   // 몸에 피가 차오르는 연출 (하트와 같음)
                         number = "+" + Round(healed).ToString("0");
                         break;

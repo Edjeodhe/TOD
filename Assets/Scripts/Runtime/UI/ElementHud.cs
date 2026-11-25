@@ -1,4 +1,4 @@
-// 16차: 층 암시 문구(라운드 시작마다 화면 가운데)와 부가 세트 충전 게이지. Main.uxml 과 따로 두는 UIDocument(ElementHud) 위에 그린다.
+// 16차: 층 암시 문구(라운드 시작마다 화면 가운데, 24차 층 날씨 한 줄)와 부가 세트 충전 게이지, 24차 층 날씨 상시 표시. Main.uxml 과 따로 두는 UIDocument(ElementHud) 위에 그린다.
 // 게이지 한 줄은 ProcGauge.uxml 템플릿을 복제한다. 문구·시간은 db.elements.
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +14,8 @@ namespace TOD
         public UIDocument mainDocument;       // Main.uxml (hud 가 보일 때만 게이지를 띄운다)
         public VisualTreeAsset gaugeTemplate; // ProcGauge.uxml
 
-        VisualElement hint, gauges, hud;
-        Label hintText;
+        VisualElement hint, gauges, hud, weather;
+        Label hintText, hintWeather, weatherName, weatherText;
         int seenSerial = -1;
         RunState seenRun;
         float hintStart = -99;
@@ -28,6 +28,10 @@ namespace TOD
             VisualElement root = document.rootVisualElement;
             hint = root.Q("floor-hint");
             hintText = root.Q<Label>("floor-hint-text");
+            hintWeather = root.Q<Label>("floor-hint-weather");
+            weather = root.Q("floor-weather");
+            weatherName = root.Q<Label>("floor-weather-name");
+            weatherText = root.Q<Label>("floor-weather-text");
             gauges = root.Q("proc-gauges");
             hud = mainDocument != null ? mainDocument.rootVisualElement.Q("hud") : null;
         }
@@ -38,6 +42,7 @@ namespace TOD
             RunState r = game.Run;
             bool inCombat = r != null && (hud == null || !hud.ClassListContains("hidden"));
             UpdateHint(r, inCombat);
+            UpdateWeather(r, inCombat);
             UpdateGauges(r, inCombat);
         }
 
@@ -52,6 +57,9 @@ namespace TOD
                 {
                     hintText.text = def.hint;
                     hintText.style.color = def.hintColor.a > 0 ? def.hintColor : new StyleColor(StyleKeyword.Null);
+                    // 24차: 암시 아래에 층 날씨 한 줄 ("황금빛 탐닉 — 얻는 경험치·골드 -30%")
+                    string w = WeatherLine(r);
+                    if (hintWeather != null) { hintWeather.text = w ?? ""; hintWeather.style.display = w != null ? DisplayStyle.Flex : DisplayStyle.None; }
                     hintStart = Time.unscaledTime + EC.hintDelay;
                     // 23차: 보스 욕망 한 줄(GameUI.DesireEcho)이 떠 있으면 다 사라진 뒤에 암시를 띄운다 (화면 가운데에서 겹치지 않게)
                     if (game.ui != null && game.ui.DesireEchoEnd > Time.unscaledTime) hintStart = Mathf.Max(hintStart, game.ui.DesireEchoEnd + .25f);
@@ -69,6 +77,31 @@ namespace TOD
                 : t < EC.hintFadeIn + EC.hintHold ? 1 : 1 - (t - EC.hintFadeIn - EC.hintHold) / Mathf.Max(.01f, EC.hintFadeOut);
             hint.style.opacity = Mathf.Clamp01(a);
             hint.style.translate = new Translate(0, (1 - Mathf.Clamp01(a)) * 10);
+        }
+
+        string WeatherLine(RunState r)
+        {
+            FloorWeather w = game.Combat?.Weather(r);
+            string text = game.Combat?.WeatherText(r);
+            if (w == null || text == null) return null;
+            return string.IsNullOrEmpty(w.name) ? text : $"{w.name} — {text}";
+        }
+
+        // 24차 층 날씨 상시 표시 (전투 화면에서만, 날씨가 있는 층)
+        void UpdateWeather(RunState r, bool inCombat)
+        {
+            if (weather == null) return;
+            FloorWeather w = r != null && inCombat ? game.Combat?.Weather(r) : null;
+            string text = w != null ? game.Combat.WeatherText(r) : null;
+            weather.EnableInClassList("hidden", text == null);
+            if (text == null) return;
+            weather.EnableInClassList("boss", r.roundKind == RoundKind.Boss);   // 타이머(위 ~100px)·보스 막대(~140px) 밑으로
+            ElementDef def = EC.Def(r.floorElement);
+            Color c = def != null && def.hintColor.a > 0 ? def.hintColor : game.db.Tone(r.floorElement).color;
+            weatherName.text = string.IsNullOrEmpty(w.name) ? def?.sinName ?? "" : w.name;
+            weatherName.style.color = c;
+            weatherName.style.borderLeftColor = c;
+            weatherText.text = text;
         }
 
         void UpdateGauges(RunState r, bool inCombat)

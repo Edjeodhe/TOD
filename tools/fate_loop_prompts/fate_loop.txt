@@ -1,0 +1,44 @@
+# 24차 미래 보기 구슬 속 반복 그림 (구아슈 셀 애니 루프). ChatGPT 이미지 생성 (사용자 Chrome).
+# 사용자 결정 (2026-11-25): 이야기의 절정 한 순간이 끝없이 돎, 8fps · 2초 · 16장, 정사각 1:1 (구슬 원에 꼭 맞게),
+# 자막은 한 번 차례로 나오고 마지막 줄이 남음, E 로 넘어감.
+# 결과: Assets/Art/Fate/<죄종>/frame_001.png ~ frame_016.png, 원본은 art_src/fate_loop/<죄종>/.
+#
+# 만드는 법
+#  1) 키프레임: [COMMON] + 그 죄종 [KEY] 로 frame_001 을 뽑는다.
+#  2) 나머지: frame_001 을 붙여 [FRAME] 틀에 그 죄종 [CYCLE] 의 k 번째 박자를 넣어 하나씩 뽑는다
+#     (매번 frame_001 을 기준으로 해서 그림이 조금씩 흘러가지 않게. 장끼리 붓 자국이 조금 다른 건 셀 애니의 '떨림'으로 둔다).
+#  3) 16장째가 1장째로 자연스럽게 이어지는지 보고 어긋나면 그 장만 다시.
+
+[COMMON]
+Square 1:1 gouache painting, opaque matte gouache on textured watercolor paper, visible flat brush strokes, chalky layered pigment, soft hand-painted edges, limited palette, storybook illustration of a dark fairy-tale legend, moody candle-lit atmosphere, the scene composed to sit inside a round crystal ball (important action in the center circle, corners can fade into dark), no text, no border, no frame, no letters.
+
+[FRAME]
+This is frame {k} of a 16-frame seamless looping cel animation made from the attached painting (frame 1). Repaint the SAME painting: identical composition, camera, characters, colors, lighting and gouache brushwork. Change only this: {beat}. Everything else stays exactly where it is. Square 1:1, no text.
+
+[wrath] crimson #C62E2E with black smoke
+KEY: Two red-skinned warriors with spears clash in the center in front of a dark stone tower, a roaring crimson fire between and around them, black smoke curling up the tower, embers flying, faces lit red from below.
+CYCLE (16 beats, 1 → 16 → back to 1): the flames flicker and rise in a wave (tongues taller on beats 3-6, lower on 10-13), the two spears press together and tremble, embers drift upward and new ones spawn at the bottom, smoke slowly curls and rolls.
+
+[pride] royal purple #7B4FC9 with gold
+KEY: A crowned king in a purple robe stands on top of a tall unfinished tower under a starry purple sky, chin raised, pointing at a blazing gold star; his oversized golden crown is heavy, cracks run down the top stones beneath his feet.
+CYCLE: the gold star pulses brighter and dimmer, the king's robe sways in the wind, the tower top trembles and tiny stone chips fall away and drop out of frame, cracks glow faintly with each pulse.
+
+[greed] gold #D9A520
+KEY: An endless fountain of gold coins pours from the top of a golden stepped pyramid, coins cascading down the steps and burying servants in white kilts up to their shoulders, one greedy figure at the top reaching for the falling coins.
+CYCLE: coins continuously fall and tumble down the steps (each coin moves down a little every frame, new coins appear at the top), glints sparkle on the gold, the buried servants' raised hands tremble, the figure at the top keeps grabbing.
+
+[lust] deep pink #D9418C
+KEY: A man and a woman in magenta robes, hands almost touching, bound together by glowing pink ribbons that spiral around their arms and tighten into a heart-shaped knot between them, pink petals drifting down.
+CYCLE: the ribbons slowly slide and spiral around them, the heart knot pulses with light (bright on beats 1-4, dim on 9-12), petals drift down and new ones appear at the top, their fingers tremble just short of touching.
+
+[envy] poison green #4FA34A
+KEY: Two hooded figures in a shrine doorway on the left, eyes glowing green, holding green flames and watching a joyful feast at a long white table; a creeping poison-green mist curls like thorny vines around the table and the frozen feasting people.
+CYCLE: the green mist and thorn vines slowly creep and curl around the table legs and cups, the watchers' green eyes glow brighter and dimmer, their green flames flicker, the mist flows from left to right.
+
+[gluttony] orange #E07A2A
+KEY: A fat crowned king sits at a table heaped with bread, fruit and roast meat, stuffing food into his mouth with both hands, while the brick tower behind him crumbles, bricks falling into the feast.
+CYCLE: the king chews and lifts food to his mouth in a steady rhythm, bricks fall from the tower top down onto the table (each brick lower every frame, new ones loosening at the top), dust puffs where they land, candle flames on the table flicker.
+
+[sloth] grey blue #6F8FA8
+KEY: A guard with a spear sleeps slumped on a stone seat before a blue-grey temple door, fine sand blowing in from the right and piling in soft dunes over his feet and the door, a crescent moon in a misty night sky.
+CYCLE: sand streams blow from right to left in soft ribbons, the guard's chest rises and falls with slow breathing, his head nods, the spear tip sways slightly, sand grains drift and settle, the moon's glow breathes softly.

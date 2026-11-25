@@ -576,11 +576,28 @@ namespace TOD
             string[] lines = def.fateWhispers != null && def.fateWhispers.Length > 0 ? def.fateWhispers : new[] { def.fateLine };
             MoiraRig rig = hub != null ? hub.moira : null;
             if (rig != null) rig.Talking = false;   // 카드를 내려놓고 구슬을 본다
-            ui.ShowFate(lines, tint, hub != null ? hub.fateOrb : null, def.fateVideo, id => sound.Play(id), () =>
+            ui.ShowFate(lines, tint, hub != null ? hub.fateOrb : null, def.element, def.fateVideo, id => sound.Play(id), () =>
             {
                 if (rig != null && screen == UiScreen.Attic) rig.Talking = true;
                 ui.SayMoira(moiraLine);
             }, paid);
+        }
+
+        // 24차 예언 카드: 미래 보기를 읽어 둔 채 재봉실을 걸을 때(모이라 창, 연출, 대화 상자 밖) 캐릭터 옆에 그 세트를 띄운다
+        void TickFateBadge()
+        {
+            SetDef set = null;
+            Sprite icon = null;
+            Vector2? foot = null;
+            if (Run == null && screen == UiScreen.Lobby && hub != null && hub.Player != null && Moira.FateRead(Profile))
+            {
+                Element sin = Moira.FateElement(Profile);
+                set = db.gear.sets.FirstOrDefault(x => x.element == sin);
+                // 그림 = 그 세트에서 가장 높은 등급 조각 아이콘
+                icon = set == null ? null : db.gear.pieces.Where(x => x.set == set.id && x.icon != null).OrderByDescending(x => x.cost).Select(x => x.icon).FirstOrDefault();
+                foot = new Vector2(hub.Player.x, Space.ProjectY(hub.Player.y));
+            }
+            ui.UpdateFateBadge(set, icon, db.gear.fateSetBonus, foot);
         }
 
         void ReadFateCard()
@@ -817,6 +834,7 @@ namespace TOD
             TickHub(dt);   // 15차: 허브 걷기 (로비일 때만)
             TickMerchant();   // 16차: 상인 단추 자세와 말풍선 (GameController.Merchant.cs)
             TickNpcs(dt);     // 23차: NPC 말하기 자세와 말풍선 (GameController.Npc.cs)
+            TickFateBadge();  // 24차: 예언 카드 (재봉실 캐릭터 옆)
             ui.BeginLabels();
             TickFloorFade();   // 23차: 욕망을 고른 뒤 어두워지며 다음 층으로 (GameController.FloorFade.cs)
             if (IsCombat)

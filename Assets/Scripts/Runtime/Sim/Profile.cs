@@ -196,40 +196,60 @@ namespace TOD
             return profile;
         }
 
-        // 23차 레어도 가중치: 그 조각 등급(cost)의 gear.rankWeights. 표가 없거나 칸이 모자라면 1.
-        public static float Weight(GameDatabase db, int kind)
+        // 24차 뽑기 = 2단 룰렛(세피리아식) 곱연산: 1번 룰렛 등급(gear.rankWeights) → 2번 룰렛 그 등급 조각들 중 세트 가중치.
+        // 조각 하나가 뽑힐 확률 = P(등급) × P(세트 | 등급). 등급 가중치와 세트 가중치는 따로 관리한다.
+
+        // 등급 가중치: 코스트 칸의 gear.rankWeights. 표가 없거나 칸이 모자라면 1, 0 이하면 무작위로는 안 나옴.
+        public static float RankWeight(GameDatabase db, int cost)
         {
             float[] w = db.gear.rankWeights;
-            int cost = db.gear.pieces[kind].cost;
             return w != null && cost >= 0 && cost < w.Length ? Mathf.Max(0, w[cost]) : 1;
         }
 
-        // 후보 중 하나를 레어도 가중치로 뽑는다. 가중치 0 인 조각은 빠진다. 뽑을 것이 없으면 -1.
-        public static int PickWeighted(GameDatabase db, IList<int> kinds, Func<float> random)
+        // 세트 가중치: SetDef.weight (세트가 없는 신화 조각은 1). 예언한 죄종(fate) 세트면 × (1 + gear.fateSetBonus) — +200% 면 ×3.
+        public static float SetWeight(GameDatabase db, int kind, Element fate = Element.Plain)
+        {
+            SetDef set = db.Set(db.gear.pieces[kind].set);
+            if (set == null) return 1;
+            float w = Mathf.Max(0, set.weight);
+            if (fate != Element.Plain && set.element == fate) w *= 1 + Mathf.Max(0, db.gear.fateSetBonus);
+            return w;
+        }
+
+        // 조각 하나의 가중치 (등급 칸 안에서 비교용, 테스트·표시용): 등급 × 세트
+        public static float Weight(GameDatabase db, int kind, Element fate = Element.Plain) =>
+            RankWeight(db, db.gear.pieces[kind].cost) * SetWeight(db, kind, fate);
+
+        // 후보 중 하나를 2단 룰렛으로 뽑는다. 가중치 0 인 조각은 빠진다. 뽑을 것이 없으면 -1.
+        public static int PickWeighted(GameDatabase db, IList<int> kinds, Func<float> random, Element fate = Element.Plain)
         {
             if (kinds == null) return -1;
-            float total = kinds.Sum(k => Weight(db, k));
-            if (total <= 0) return -1;
+            var live = kinds.Where(k => RankWeight(db, db.gear.pieces[k].cost) > 0 && SetWeight(db, k, fate) > 0).ToList();
+            if (live.Count == 0) return -1;
+            // 1번 룰렛: 후보가 남은 등급마다 그 등급 가중치 한 칸
+            List<int> ranks = live.Select(k => db.gear.pieces[k].cost).Distinct().OrderBy(c => c).ToList();
+            int rank = Roll(ranks, c => RankWeight(db, c), random);
+            // 2번 룰렛: 그 등급 조각들 중 세트 가중치
+            return Roll(live.Where(k => db.gear.pieces[k].cost == rank).ToList(), k => SetWeight(db, k, fate), random);
+        }
+
+        static int Roll(List<int> items, Func<int, float> weight, Func<float> random)
+        {
+            float total = items.Sum(weight);
             float roll = random() * total;
-            int last = -1;
-            foreach (int k in kinds)
-            {
-                float w = Weight(db, k);
-                if (w <= 0) continue;
-                last = k;
-                if ((roll -= w) < 0) return k;
-            }
-            return last;   // 부동소수 오차로 끝까지 왔을 때
+            foreach (int i in items)
+                if ((roll -= weight(i)) < 0) return i;
+            return items[items.Count - 1];   // 부동소수 오차로 끝까지 왔을 때
         }
 
         // 중복 없이 count 개 (탑 진열, 상인 단추 진열)
-        public static List<int> PickWeighted(GameDatabase db, IEnumerable<int> kinds, int count, Func<float> random)
+        public static List<int> PickWeighted(GameDatabase db, IEnumerable<int> kinds, int count, Func<float> random, Element fate = Element.Plain)
         {
             var pool = new List<int>(kinds);
             var picked = new List<int>();
             while (picked.Count < count)
             {
-                int k = PickWeighted(db, pool, random);
+                int k = PickWeighted(db, pool, random, fate);
                 if (k < 0) break;
                 picked.Add(k);
                 pool.Remove(k);
@@ -239,11 +259,11 @@ namespace TOD
 
         // 종류를 주면 그 종류(이미 가졌으면 그대로 그 정의만 돌려줌), 안 주면 아직 없는 종류 중 하나를 레어도 가중치로. 모두 가졌으면 null.
         // random 을 안 주면 UnityEngine.Random (등반 중에는 r.random 을 넘겨 시드대로 굴린다).
-        public static PieceDef AddItem(GameDatabase db, Profile profile, int kind = -1, Func<float> random = null)
+        public static PieceDef AddItem(GameDatabase db, Profile profile, int kind = -1, Func<float> random = null, Element fate = Element.Plain)
         {
             if (kind < 0)
             {
-                kind = PickWeighted(db, Unowned(db, profile), random ?? (() => UnityEngine.Random.value));
+                kind = PickWeighted(db, Unowned(db, profile), random ?? (() => UnityEngine.Random.value), fate);
                 if (kind < 0) return null;
             }
             if (Owns(profile, kind)) return db.gear.pieces[kind];

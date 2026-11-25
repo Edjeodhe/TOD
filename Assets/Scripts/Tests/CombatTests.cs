@@ -522,25 +522,10 @@ namespace TOD.Tests
             Assert.AreEqual(before - Combat.Round(pullOnly) - Combat.Round(procDamage), e.hp, 1e-3f, "당기기 + 발동 피해");
         }
 
-        // 16차 상성 고리: 화염 → 얼음 → 바람 → 번개 → 독 → 피 → 빛 → 어둠 → 화염 (앞이 뒤에 강함). 무기 → 몬스터만.
+        // 24차 상성 제거: 분노 메인으로 나태 몬스터를 당겨도 배율 없음 (예전 약점 ×1.5)
         [Test]
-        public void AffinityRingMultipliers()
+        public void NoAffinityMultiplier()
         {
-            ElementConfig ec = db.elements;
-            Element[] ring = ec.affinity.ring;
-            Assert.AreEqual(7, ring.Length);
-            CollectionAssert.AreEqual(new[] { Element.Pride, Element.Envy, Element.Wrath, Element.Sloth, Element.Greed, Element.Gluttony, Element.Lust }, ring);
-            for (int i = 0; i < ring.Length; i++)
-            {
-                Element strong = ring[i], weak = ring[(i + 1) % ring.Length];
-                Assert.AreEqual(1.5f, ec.Multiplier(strong, weak), 1e-4f, $"{strong} → {weak} 약점");
-                Assert.AreEqual(.5f, ec.Multiplier(weak, strong), 1e-4f, $"{weak} → {strong} 저항");
-            }
-            Assert.AreEqual(1f, ec.Multiplier(Element.Wrath, Element.Lust), "고리에서 이웃이 아니면 보통");
-            Assert.AreEqual(1f, ec.Multiplier(Element.Plain, Element.Wrath), "무속성 공격");
-            Assert.AreEqual(1f, ec.Multiplier(Element.Wrath, Element.Wrath), "같은 속성");
-
-            // 화염 메인으로 얼음 몬스터를 당기면 ×1.5, "약점" 표시
             int f1 = Kind("wrath", 1), f2 = Kind("wrath", 2);
             RunState r = combat.CreateRun(WithPieces((f1, 0, 0), (f2, 1, 0)), () => .5f);
             r.player.x = 500; r.player.y = 350;
@@ -549,8 +534,50 @@ namespace TOD.Tests
             r.strands.Add(new Strand { x = e.x, y = e.y, target = e, state = StrandState.Stuck, element = Element.Wrath });
             float hit = r.damage * (1 + combat.StrandBonus(1)) + db.gear.sets.First(s => s.id == "wrath").damagePerTier;
             combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
-            Assert.AreEqual(e.maxHp - Combat.Round(hit * ec.affinity.strong), e.hp, "약점 ×1.5");
-            Assert.IsTrue(r.effects.Any(f => f.kind == FxKind.Number && f.affinity == 1), "약점 글자");
+            Assert.AreEqual(e.maxHp - Combat.Round(hit * combat.SinPullMultiplier(r, combat.MainSet(r), e)), e.hp, 1e-3f, "상성 배율이 남아 있음");
+        }
+
+        // 24차 층 날씨: 죄종 7개 모두 날씨가 있고, 7층에서 1층의 2배(한도 cap 안에서), 문구는 백분율
+        [Test]
+        public void FloorWeatherScalesWithFloor()
+        {
+            foreach (ElementDef d in db.elements.defs)
+            {
+                FloorWeather w = d.weather;
+                Assert.IsNotNull(w, $"{d.element} 날씨 없음");
+                Assert.AreNotEqual(WeatherKind.None, w.kind, $"{d.element} 날씨 종류 없음");
+                Assert.IsFalse(string.IsNullOrEmpty(w.text), $"{d.element} 날씨 문구 없음");
+                float one = Combat.WeatherValue(w, 1), seven = Combat.WeatherValue(w, 7);
+                Assert.Greater(one, 0, $"{d.element} 1층 세기");
+                float expected = w.cap > 0 ? Mathf.Min(w.cap, one * 2) : one * 2;
+                Assert.AreEqual(expected, seven, 1e-4f, $"{d.element} 7층 = 1층 × 2");
+            }
+            RunState r = NewRun();
+            r.floor = 1;
+            combat.DevSetFloorElement(r, Element.Greed);
+            Assert.AreEqual(WeatherKind.GainDown, combat.Weather(r).kind);
+            StringAssert.Contains("30", combat.WeatherText(r), "탐욕 1층 -30%");
+            Assert.AreEqual(0, combat.WeatherValue(r, WeatherKind.MoveDown), "다른 날씨 값이 새어 나옴");
+        }
+
+        // 24차 식탐 허기: 전투 중 체력이 서서히 줄되 1 아래로는 안 내려가고, 쉬어가기에선 안 줄어든다
+        [Test]
+        public void GluttonyHungerDrainsButNeverKills()
+        {
+            RunState r = NewRun();
+            combat.BeginFloor(r);   // 생존 라운드 (BeginFloor 없이 돌리면 첫 프레임에 라운드가 끝남)
+            r.floor = 7;
+            r.roundLength = 999;
+            combat.DevSetFloorElement(r, Element.Gluttony);
+            r.hp = r.maxHp;
+            void Tick() { r.enemies.Clear(); r.bullets.Clear(); combat.Update(r, .1f, new CombatInput()); }   // 허기만 남긴다 (몬스터는 계속 나옴)
+            for (int i = 0; i < 20; i++) Tick();
+            Assert.Less(r.hp, r.maxHp, "허기로 체력이 줄지 않음");
+            r.hp = 2;
+            for (int i = 0; i < 100; i++) Tick();
+            Assert.AreEqual(1f, r.hp, 1e-3f, "허기가 체력 1 아래로 내려감");
+            Assert.AreEqual(Outcome.None, r.outcome);
+            Assert.AreEqual(Phase.Combat, r.phase, "라운드가 끝나 버려 허기를 확인 못 함");
         }
 
         // 16차: 층마다 속성을 뽑되 한 등반 안에서 겹치지 않는다. 그 층 몬스터는 모두 그 속성.

@@ -4,13 +4,22 @@
 //   Zoom         : 0 = 원래 카메라, 1 = 구슬이 코앞 (zoomFill 만큼 화면을 채움). 크기는 배율이 고르게 줄도록 지수로 섞는다
 //   Swirl, Blur, TintAmount : PostFX 의 정면으로 빨려 드는 당김(회전 없음), 방사형 번짐, 구슬 바깥 물들임 (_TOD_FateSwirl.w, _TOD_FateBlur, _TOD_FateTint)
 //   Still        : 0 = 모이라가 평소처럼 움직임, 1 = 지금 자세 그대로 완전히 멈춤 (MoiraRig.Motion = 1 - Still, PostFX 촛불 깜빡임 _TOD_FateStill)
-//   VideoMix     : 구슬 유리 안의 영상 (VideoPlayer → RenderTexture → FateOrb 셰이더 _VideoTex)
+//   VideoMix     : 구슬 유리 안의 그림 (24차: 죄종별 구아슈 셀 애니 프레임 loops 를 fps 로 끝없이 돌림. 프레임이 없는 죄종만 옛 영상 VideoPlayer → RenderTexture) → FateOrb 셰이더 _VideoTex
 // LateUpdate 에서 넣으므로 같은 프레임의 모이라 자세(점성구 자리)를 따른다. End 가 카메라와 리그를 원래대로 돌린다.
 using UnityEngine;
 using UnityEngine.Video;
 
 namespace TOD
 {
+    // 24차 미래 보기 구슬 속 반복 그림 (죄종 하나): 셀 애니 프레임을 fps 로 처음부터 끝까지 돌고 다시 처음으로 (끝 프레임이 첫 프레임으로 이어지게 그림)
+    [System.Serializable]
+    public class FateLoop
+    {
+        public Element sin;
+        public Texture2D[] frames;   // Assets/Art/Fate/<죄종>/frame_###.png 차례대로
+        public float fps = 8;
+    }
+
     public class FateOrbView : MonoBehaviour
     {
         public MoiraRig rig;
@@ -21,6 +30,8 @@ namespace TOD
         public Vector4 glassRect = new(.5f, .548f, .491f, .444f);
         [Tooltip("영상이 보이는 동안 구슬 그리기 순서 (0 = 리그 순서 그대로)")]
         public int aboveHands = 500;
+        [Tooltip("24차: 죄종별 구슬 속 반복 그림 (있으면 영상 대신 이것을 끝없이 돈다)")]
+        public FateLoop[] loops;
 
         public float Lift { get; set; }
         public float Glow { get; set; }
@@ -39,6 +50,8 @@ namespace TOD
         Vector3 camFrom;
         float sizeFrom;
         MaterialPropertyBlock block;
+        FateLoop loop;            // 이번에 도는 반복 그림 (없으면 영상)
+        float loopStart = -1;     // 반복을 시작한 때 (unscaled), -1 = 아직 (첫 프레임에 멈춤)
 
         static readonly int TintId = Shader.PropertyToID("_Tint"), GlowId = Shader.PropertyToID("_Glow"), MixId = Shader.PropertyToID("_Mix"),
             VideoId = Shader.PropertyToID("_VideoTex"), RectId = Shader.PropertyToID("_GlassRect"), AspectId = Shader.PropertyToID("_VideoAspect"),
@@ -68,8 +81,11 @@ namespace TOD
             }
         }
 
-        public void Begin(Color sinColor, VideoClip clip, float zoomFill, Vector2 zoomOffset)
+        public void Begin(Color sinColor, Element sin, VideoClip clip, float zoomFill, Vector2 zoomOffset)
         {
+            loop = FindLoop(sin);
+            loopStart = -1;
+            if (loop != null) clip = null;
             if (view == null) view = Camera.main;
             if (!Active)
             {
@@ -93,16 +109,37 @@ namespace TOD
             if (videoTarget != null) ClearVideo();
         }
 
+        FateLoop FindLoop(Element sin)
+        {
+            if (loops == null) return null;
+            foreach (FateLoop l in loops)
+                if (l != null && l.sin == sin && l.frames != null && l.frames.Length > 0) return l;
+            return null;
+        }
+
+        // 반복 그림이 있으면 true (영상 대신 끝없이 돈다)
+        public bool Looping => loop != null;
+
         // 영상 길이(초). 영상이 없으면 0
         public float ClipLength => player != null && player.clip != null ? (float)player.clip.length : 0;
 
-        // 영상을 제 길이 그대로(1배속) 처음부터 튼다
+        // 반복 그림이면 첫 프레임부터 돌리고, 영상이면 제 길이 그대로(1배속) 처음부터 끝없이 반복해 튼다
         public void PlayVideo()
         {
+            if (loop != null) { loopStart = Time.unscaledTime; return; }
             if (player == null || player.clip == null) return;
+            player.isLooping = true;
             player.playbackSpeed = 1;
             player.time = 0;
             player.Play();
+        }
+
+        Texture2D LoopFrame()
+        {
+            int n = loop.frames.Length;
+            float t = loopStart < 0 ? 0 : Time.unscaledTime - loopStart;
+            int i = Mathf.FloorToInt(t * Mathf.Max(.1f, loop.fps)) % n;
+            return loop.frames[i] != null ? loop.frames[i] : loop.frames[0];
         }
 
         // 지금까지 튼 비율 (영상이 없으면 시간표를 따르도록 -1)
@@ -112,6 +149,8 @@ namespace TOD
         {
             if (!Active) return;
             Active = false;
+            loop = null;
+            loopStart = -1;
             if (player != null) player.Stop();
             if (view != null)
             {
@@ -159,9 +198,18 @@ namespace TOD
                 block.SetFloat(GlowId, Glow);
                 block.SetFloat(MixId, VideoMix);
                 block.SetVector(RectId, glassRect);
-                if (videoTarget != null) block.SetTexture(VideoId, videoTarget);
-                VideoClip clip = player != null ? player.clip : null;
-                block.SetFloat(AspectId, clip != null && clip.height > 0 ? (float)clip.width / clip.height : 16f / 9f);
+                if (loop != null)
+                {
+                    Texture2D f = LoopFrame();
+                    if (f != null) block.SetTexture(VideoId, f);
+                    block.SetFloat(AspectId, f != null && f.height > 0 ? (float)f.width / f.height : 1);
+                }
+                else
+                {
+                    if (videoTarget != null) block.SetTexture(VideoId, videoTarget);
+                    VideoClip clip = player != null ? player.clip : null;
+                    block.SetFloat(AspectId, clip != null && clip.height > 0 ? (float)clip.width / clip.height : 16f / 9f);
+                }
                 block.SetFloat(BrightId, rig != null ? rig.brightness : 1);
                 block.SetFloat(SatId, rig != null ? rig.saturation : 1);
                 o.SetPropertyBlock(block);

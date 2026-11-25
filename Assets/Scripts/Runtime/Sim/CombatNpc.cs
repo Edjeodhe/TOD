@@ -116,22 +116,22 @@ namespace TOD
                     ApplyEffects(r, w.effects);
                     return Note(w.name, EffectText(w.effects));
                 case NpcRewardKind.Piece:
-                    PieceDef def = Gear.AddItem(db, r.bag, -1, r.random);
-                    if (def == null) { r.gold += Mathf.RoundToInt(w.amount); return Note(null, w.amount); }
+                    PieceDef def = Gear.AddItem(db, r.bag, -1, r.random, FateSet(r));   // 24차 예언 세트 가중치
+                    if (def == null) { r.gold += WeatherGain(r, Mathf.RoundToInt(w.amount), ref r.goldCarry); return Note(null, w.amount); }
                     return Note(def.name);
                 case NpcRewardKind.Xp:
-                    int xp = Mathf.Max(1, Mathf.RoundToInt(XpNeeded(r) * w.amount));
+                    int xp = WeatherGain(r, Mathf.Max(1, Mathf.RoundToInt(XpNeeded(r) * w.amount)), ref r.xpCarry);   // 24차 탐욕 날씨
                     GainXp(r, xp);
                     return Note(w.name, xp);
                 case NpcRewardKind.Gold:
-                    r.gold += Mathf.RoundToInt(w.amount);
-                    return Note(w.name, Mathf.RoundToInt(w.amount));
+                    int gold = WeatherGain(r, Mathf.RoundToInt(w.amount), ref r.goldCarry);   // 24차 탐욕 날씨
+                    r.gold += gold;
+                    return Note(w.name, gold);
                 case NpcRewardKind.Shards:
                     r.profile.shards += Mathf.RoundToInt(w.amount);
                     return Note(w.name, Mathf.RoundToInt(w.amount));
                 case NpcRewardKind.Heal:
-                    float healed = Mathf.Min(r.maxHp, r.hp + Round(r.maxHp * w.amount)) - r.hp;
-                    r.hp += healed;
+                    float healed = HealPlayer(r, r.maxHp * w.amount);   // 24차 교만 날씨
                     r.player.heal = db.rewards.healTime;
                     return Note(w.name, Mathf.Max(0, healed).ToString("0"));
                 case NpcRewardKind.Hurt:
@@ -212,7 +212,7 @@ namespace TOD
             switch (w.kind)
             {
                 case NpcRewardKind.Piece:
-                    int pieceKind = Gear.PickWeighted(db, Gear.Unowned(db, p), random);   // 23차: 레어도 가중치
+                    int pieceKind = Gear.PickWeighted(db, Gear.Unowned(db, p), random);   // 23차: 레어도 가중치 (재봉실 NPC: 예언은 등반 중에만)
                     if (pieceKind < 0) goto case NpcRewardKind.Shards;
                     PieceDef piece = Gear.AddItem(db, p, pieceKind);
                     result.notice = Note(piece.name);

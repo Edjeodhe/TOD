@@ -67,7 +67,8 @@ namespace TOD.Tests
             CollectionAssert.AreEqual(items.Where(i => !Placed(i)).ToList(), got.Skip(1).ToList(), "획득순: 얻은 순서 그대로");
         }
 
-        // 23차 레어도 가중치: 등급(cost)별 rankWeights 비율대로 뽑히고, 높은 등급일수록 덜 나오며, 0 이면 무작위로는 안 나온다
+        // 24차 2단 룰렛: 1번 = 등급(rankWeights, 후보가 남은 등급마다 한 칸), 2번 = 그 등급 안 세트 가중치.
+        // 등급 비율은 조각 수와 상관없이 rankWeights 비율, 0 이면 무작위로는 안 나온다
         [Test]
         public void PiecePicksFollowRankWeights()
         {
@@ -78,14 +79,11 @@ namespace TOD.Tests
             var hits = new int[8];
             const int draws = 20000;
             for (int i = 0; i < draws; i++) hits[db.gear.pieces[Gear.PickWeighted(db, pool, Roll)].cost]++;
-            float total = pool.Sum(k => Gear.Weight(db, k));
-            foreach (int cost in pool.Select(k => db.gear.pieces[k].cost).Distinct())
-            {
-                float expected = pool.Where(k => db.gear.pieces[k].cost == cost).Sum(k => Gear.Weight(db, k)) / total;
-                Assert.AreEqual(expected, hits[cost] / (float)draws, .02f, $"코스트 {cost} 등급의 뽑힌 비율");
-            }
-            float RankWeight(int cost) => Gear.Weight(db, pool.First(k => db.gear.pieces[k].cost == cost));
-            for (int c = 2; c <= 4; c++) Assert.Less(RankWeight(c), RankWeight(c - 1), $"코스트 {c} 가 {c - 1} 보다 덜 나와야 합니다");
+            List<int> ranks = pool.Select(k => db.gear.pieces[k].cost).Distinct().Where(c => Gear.RankWeight(db, c) > 0).ToList();
+            float total = ranks.Sum(c => Gear.RankWeight(db, c));
+            foreach (int cost in ranks)
+                Assert.AreEqual(Gear.RankWeight(db, cost) / total, hits[cost] / (float)draws, .02f, $"코스트 {cost} 등급의 뽑힌 비율");
+            for (int c = 2; c <= 4; c++) Assert.Less(Gear.RankWeight(db, c), Gear.RankWeight(db, c - 1), $"코스트 {c} 가 {c - 1} 보다 덜 나와야 합니다");
 
             float[] saved = db.gear.rankWeights;
             try
@@ -97,6 +95,28 @@ namespace TOD.Tests
                 Assert.AreEqual(picked.Count, picked.Distinct().Count(), "같은 조각이 두 번 뽑힘");
             }
             finally { db.gear.rankWeights = saved; }
+        }
+
+        // 24차 예언: 그 죄종 세트 가중치 × (1 + fateSetBonus). 같은 등급 안에서 그 세트가 뽑히는 비율 = 3w / (3w + 나머지)
+        [Test]
+        public void FateBoostsProphesiedSet()
+        {
+            Assert.AreEqual(2f, db.gear.fateSetBonus, 1e-4f, "예언 보너스 +200%");
+            Assert.IsTrue(db.gear.sets.All(s => s.weight > 0), "세트 가중치가 비어 있음");
+            List<int> pool = Gear.Unowned(db, EmptyProfile(99));
+            int cost = pool.Select(k => db.gear.pieces[k].cost).GroupBy(c => c).OrderByDescending(g => g.Count()).First().Key;
+            List<int> same = pool.Where(k => db.gear.pieces[k].cost == cost).ToList();
+            SetDef target = db.Set(db.gear.pieces[same.First(k => db.Set(db.gear.pieces[k].set) != null)].set);
+            var rng = new System.Random(7);
+            float Roll() => (float)rng.NextDouble();
+            const int draws = 20000;
+            int hit = 0;
+            for (int i = 0; i < draws; i++) if (db.gear.pieces[Gear.PickWeighted(db, same, Roll, target.element)].set == target.id) hit++;
+            float boosted = same.Where(k => db.gear.pieces[k].set == target.id).Sum(k => Gear.SetWeight(db, k, target.element));
+            float all = same.Sum(k => Gear.SetWeight(db, k, target.element));
+            Assert.AreEqual(boosted / all, hit / (float)draws, .02f, "예언 세트가 뽑힌 비율");
+            Assert.AreEqual(3f * Gear.SetWeight(db, same.First(k => db.gear.pieces[k].set == target.id)),
+                Gear.SetWeight(db, same.First(k => db.gear.pieces[k].set == target.id), target.element), 1e-4f, "+200% = ×3");
         }
 
         [Test]
@@ -356,9 +376,10 @@ namespace TOD.Tests
             Assert.AreEqual(3, Moira.Level(p, Moira.Expansion));
         }
 
-        // 19차 운명 읽기: 파편을 내고 다음 등반 1층 속성을 정한다. 다시 읽으면 값을 안 내고 같은 속성, 등반 1층이 그 속성이 되고 쓰고 나면 비운다.
+        // 운명 읽기(예언): 파편을 내고 죄종 하나를 정한다. 다시 읽으면 값을 안 내고 같은 죄종. 등반이 그 예언을 들고 가고(RunState.fate),
+        // 24차부터 1층 죄종은 정하지 않는다(무작위). 쓰고 나면 비운다.
         [Test]
-        public void FateSetsFirstFloorElement()
+        public void FateCarriesIntoRun()
         {
             Assert.Greater(db.hub.fatePrice, 0);
             Assert.IsTrue(db.elements.defs.All(d => !string.IsNullOrEmpty(d.fateLine)), "속성마다 모이라의 암시(fateLine)가 있어야 합니다");
@@ -371,12 +392,15 @@ namespace TOD.Tests
             Assert.AreEqual(4, p.shards);
             Assert.AreSame(read, Moira.ReadFate(db, p, () => .1f), "다시 읽었는데 속성이 바뀜");
             Assert.AreEqual(4, p.shards, "다시 읽을 때 파편을 냄");
-            for (int i = 0; i < 6; i++)
+            var floors = new HashSet<Element>();
+            for (int i = 0; i < 40; i++)
             {
                 RunState r = combat.CreateRun(p, () => Random.value);
+                Assert.AreEqual(read.element, Combat.FateSet(r), "등반이 예언을 들고 가지 않음");
                 combat.BeginFloor(r);
-                Assert.AreEqual(read.element, r.floorElement, "1층 속성이 읽은 운명과 다릅니다");
+                floors.Add(r.floorElement);
             }
+            Assert.Greater(floors.Count, 1, "1층 죄종이 예언에 묶여 있음");
             Moira.ConsumeFate(p);
             Assert.IsFalse(Moira.FateRead(p));
         }

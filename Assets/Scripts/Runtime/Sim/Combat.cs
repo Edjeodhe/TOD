@@ -229,7 +229,7 @@ namespace TOD
             r.altarAge = 0;
             r.artifactOffer.Clear(); r.artifactTaken = false; r.artifactRerolled = false;
             // 아이템은 고유: 이미 가진 종류는 탑에 나오지 않는다. 23차: 레어도 가중치로 뽑는다
-            r.artifactOffer.AddRange(Gear.PickWeighted(db, Gear.Unowned(db, r.bag), R.artifactChoices, r.random));
+            r.artifactOffer.AddRange(Gear.PickWeighted(db, Gear.Unowned(db, r.bag), R.artifactChoices, r.random, FateSet(r)));
         }
 
         Point Near(RunState r, Vector2 offset) => new(
@@ -281,7 +281,7 @@ namespace TOD
             var kinds = Gear.Unowned(db, r.bag).Where(k => !shown.Contains(k)).ToList();
             if (kinds.Count < R.artifactChoices) kinds = Gear.Unowned(db, r.bag);
             r.artifactOffer.Clear();
-            r.artifactOffer.AddRange(Gear.PickWeighted(db, kinds, R.artifactChoices, r.random));
+            r.artifactOffer.AddRange(Gear.PickWeighted(db, kinds, R.artifactChoices, r.random, FateSet(r)));
             return true;
         }
 
@@ -641,19 +641,17 @@ namespace TOD
             if (drop.heal > 0)
             {
                 // 하트: 최대 체력 비율만큼 회복하고, 몸에 피가 차오르는 연출을 켠다.
-                float amount = Round(r.maxHp * drop.heal);
-                float healed = Mathf.Min(r.maxHp, r.hp + amount) - r.hp;
-                r.hp += healed;
+                float healed = HealPlayer(r, r.maxHp * drop.heal);   // 24차 교만 날씨가 깎는다
                 r.player.heal = rw.healTime;
                 Fx number = Spawn(r, FxKind.Number, r.player.x, r.player.y, X.damageNumber);
                 number.text = "+" + Mathf.Max(0, healed).ToString("0"); number.color = rw.healColor; number.lift = 44;
                 Event(r, "heal");
             }
             if (drop.potion != null && Potions.Add(db, r.potions, drop.potion) >= 0) Event(r, string.IsNullOrEmpty(db.potions?.pickupSound) ? "loot" : db.potions.pickupSound);   // 23차 포션 칸으로
-            GainXp(r, drop.xp);
-            r.gold += drop.gold;
+            GainXp(r, WeatherGain(r, drop.xp, ref r.xpCarry));       // 24차 탐욕 날씨
+            r.gold += WeatherGain(r, drop.gold, ref r.goldCarry);
             if (drop.shard > 0) r.profile.shards += drop.shard;
-            if (drop.item) Event(r, "loot", string.Format(M.loot, Gear.AddItem(db, r.bag, -1, r.random).name));
+            if (drop.item) Event(r, "loot", string.Format(M.loot, Gear.AddItem(db, r.bag, -1, r.random, FateSet(r)).name));
             if (drop.shard > 0 || drop.item) Gear.Save(db, r.profile);
         }
 
@@ -682,8 +680,9 @@ namespace TOD
             SinOnKill(r, e);   // 22차: 시기 독 옮기기 · 식탐 털실 · 탐욕 저당 금화
             GearStats kg = r.gearStats;
             if (kg != null && kg.Has(ItemEffect.Feast)) { r.feastStacks = Mathf.Min(5, r.feastStacks + 1); r.feastTime = kg.Param(ItemEffect.Feast); }
-            if (kg != null && kg.Has(ItemEffect.Devour)) r.hp = Mathf.Min(r.maxHp, r.hp + kg.Effect(ItemEffect.Devour));
-            if (r.desires.Contains("hunger")) r.hp = Mathf.Min(r.maxHp, r.hp + db.desire.hungerHeal);
+            if (kg != null && kg.Has(ItemEffect.Devour)) HealPlayer(r, kg.Effect(ItemEffect.Devour));
+            if (r.desires.Contains("hunger")) HealPlayer(r, db.desire.hungerHeal);
+            WeatherOnKill(r);   // 24차 식탐 허기: 처치하면 조금 채움
             if (stuck.Count > 0 && r.desires.Contains("obsession"))
             {
                 Enemy nearby = r.enemies.Where(o => o.hp > 0 && o != e).OrderBy(o => Distance(o, e)).FirstOrDefault();
@@ -716,7 +715,7 @@ namespace TOD
                 return false;
             }
             if (p.hurt > 0) return false;
-            float dealt = Round(amount * (r.desires.Contains("rage") ? db.desire.rageTaken : 1));
+            float dealt = Round(amount * (r.desires.Contains("rage") ? db.desire.rageTaken : 1) * WeatherTakenScale(r));   // 24차 분노 날씨
             r.hp = Mathf.Max(0, r.hp - dealt);
             p.hurt = H.hurtTime;
             Act(p, HeroAction.Hurt);
@@ -944,16 +943,15 @@ namespace TOD
                 float giant = e.IsBoss || e.elite ? r.gearStats.Effect(ItemEffect.Giant) : 0;   // 고유 효과 '거인 사냥'
                 float taken = 1 + (e.curseTime > 0 ? e.curse : 0);                                // 어둠 저주: 받는 피해 증가
                 float critChance = H.critChance + (r.gearStats?.Effect(ItemEffect.Pedestal) ?? 0);   // 22차 왕좌의 바늘
+                critChance *= WeatherCritScale(r);                                                   // 24차 시기 층 날씨
                 bool crit = critChance > 0 && r.random() < critChance;   // 치명타: 이 타격 피해 전체
                 // 16차: 실 피해 + 메인 세트 속성 피해(damagePerTier × 단계, 빛은 결박·정예·보스에게 더 세게)를 한 숫자로 합친다.
-                // 메인 세트가 있으면 피해 전체가 메인 속성이라 층 속성과의 상성(약점 ×1.5, 저항 ×.5)이 걸린다.
                 float mainAdd = 0;
                 if (main != null) mainAdd = main.def.damagePerTier * main.tier * count;
                 float sin = SinPullMultiplier(r, main, e);   // 22차: 교만(정예·보스·체력 가득) · 분노(내 체력이 낮을수록)
-                int relation = main != null ? Relation(mainElement, e.element) : 0;
                 float embrace = binding ? r.gearStats?.Effect(ItemEffect.Embrace) ?? 0 : 0;   // 22차 얽힌 연인의 실
                 float dealt = Round((damage * count * (binding ? 1 + db.bind.damageBonus + embrace : 1) + mainAdd) * (1 + giant) * taken * sin
-                    * (main != null ? Affinity(mainElement, e.element) : 1) * (crit ? Mathf.Max(1, H.critMultiplier) : 1));
+                    * (crit ? Mathf.Max(1, H.critMultiplier) : 1));
                 e.hp = Mathf.Max(0, e.hp - dealt);
                 totalDealt += dealt;
                 e.flash = F.pullEnemyFlash;
@@ -977,7 +975,6 @@ namespace TOD
                 number.text = dealt.ToString("0"); number.color = transferred > 0 ? X.transferColor : X.damageColor; number.pop = Mathf.Min(count, F.maxPopCount);
                 number.crit = crit;   // 치명타: 노란 글꼴 + 뾰족 아이콘
                 number.element = mainElement;   // 21차: 실 피해는 속성 글꼴 대신 흐린 외곽 주아 숫자(visual.damageFont). 속성 피해는 따로 속성 글꼴
-                number.affinity = relation;
                 if (crit) Event(r, "crit");
                 if (binding)
                 {
@@ -1270,9 +1267,9 @@ namespace TOD
         void Leech(RunState r, float rate, float dealt)
         {
             if (rate <= 0 || dealt <= 0) return;
-            float heal = Mathf.Min(r.maxHp - r.hp, Round(dealt * rate));
+            if (Round(dealt * rate * WeatherHealScale(r)) < 1) return;
+            float heal = HealPlayer(r, dealt * rate);
             if (heal < 1) return;
-            r.hp += heal;
             Fx number = Spawn(r, FxKind.Number, r.player.x, r.player.y, X.damageNumber);
             number.text = "+" + heal.ToString("0"); number.color = db.Tone(Element.Gluttony).color;
             number.useElement = true; number.element = Element.Gluttony;
@@ -1315,18 +1312,17 @@ namespace TOD
             }
         }
 
-        // 속성·지속 피해 (숫자 한 개). 저주가 걸려 있으면 더 들어가고, 층 속성과의 상성이 걸린다. kill 이면 죽을 때 처치까지.
+        // 속성·지속 피해 (숫자 한 개). 저주가 걸려 있으면 더 들어간다. kill 이면 죽을 때 처치까지.
         float DamageEnemy(RunState r, Enemy e, float amount, Element element, bool kill = true, float lift = float.NaN)
         {
             if (e.hp <= 0 || amount <= 0) return 0;
             if (e.brain != null && e.brain.Shielded) return 0;   // 23차-boss7: 2페이즈 전환 중 무적
-            float dealt = Round(amount * (1 + (e.curseTime > 0 ? e.curse : 0)) * Affinity(element, e.element));
+            float dealt = Round(amount * (1 + (e.curseTime > 0 ? e.curse : 0)));
             e.hp = Mathf.Max(0, e.hp - dealt);
             e.flash = Mathf.Max(e.flash, F.pullEnemyFlash * .5f);
             Fx number = Spawn(r, FxKind.Number, e.x, e.y, X.damageNumber);
             number.text = dealt.ToString("0"); number.color = db.Tone(element).color;
             number.useElement = true; number.element = element;   // 그 속성의 그림 글꼴
-            number.affinity = Relation(element, e.element);
             if (!float.IsNaN(lift)) number.lift = lift;
             if (!kill) return dealt;
             if (e.hp <= 0) Kill(r, e, new List<Strand>());
@@ -1494,6 +1490,7 @@ namespace TOD
             p.shotCooldown = Mathf.Max(0, p.shotCooldown - dt);
             r.dry = Mathf.Max(0, r.dry - dt);
             if ((r.feastTime = Mathf.Max(0, r.feastTime - dt)) <= 0) r.feastStacks = 0;   // 22차 만찬
+            UpdateWeather(r, dt);        // 24차 식탐 허기
             UpdatePlayerStatus(r, dt);   // 16차: 보스 속성 공격이 건 화상, 중독, 감전, 둔화, 눈부심, 어둠, 밀쳐짐
             if (r.outcome != Outcome.None) return;
             if (r.echo != null && r.echo.until <= r.time) r.echo = null;
@@ -1535,7 +1532,7 @@ namespace TOD
             {
                 p.motion += ((moving ? 1 : 0) - p.motion) * Mathf.Min(1, dt * H.motionLerp);
                 float factor = Mathf.Max(H.minSpeedFactor, 1 - r.knots.Count * r.encumbrance);
-                float speed = H.moveSpeed * (1 + r.Gear(StatKind.Speed)) * r.moveScale * factor * (r.mood == Mood.Frenzy ? H.frenzySpeed : 1)
+                float speed = H.moveSpeed * (1 + r.Gear(StatKind.Speed)) * r.moveScale * WeatherMoveScale(r) * factor * (r.mood == Mood.Frenzy ? H.frenzySpeed : 1)
                     * (1 - Mathf.Clamp01(p.slow));   // 얼음 보스: 둔화
                 p.vx = move.x * speed;
                 p.vy = move.y * speed * WorldVertical;

@@ -1,4 +1,4 @@
-// 16차 속성 그리기: 상성 글자, 부가 세트 발동, 보스 속성 공격, 주인공 상태, 층 속성 장식.
+// 16차 속성 그리기: 부가 세트 발동, 보스 속성 공격, 주인공 상태, 층 속성 장식.
 // 값은 db.elements(ElementConfig). Blender 그림(FlipClip)이 아직 없으면 ElementTone.hit 으로 대신 그린다.
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,17 +9,17 @@ namespace TOD
     {
         ElementConfig EC => db.elements;
 
-        // 피해 숫자 오른쪽에 "약점" / "저항" 작은 글자
-        void DrawAffinityTag(int relation, Vector2 spot, float textWidth, float scale, float fade)
+        // 가운데가 뚫린 시야 그림(EC.visionMask) + 그 바깥 화면 덮개. 그림이 없으면 화면 전체를 옅게 덮는다.
+        void VisionCover(Vector2 c, float radius, Color color, Rect view)
         {
-            AffinityConfig a = EC?.affinity;
-            if (a == null || Text == null) return;
-            string text = relation > 0 ? a.strongTag : a.weakTag;
-            if (string.IsNullOrEmpty(text)) return;
-            Color color = relation > 0 ? a.strongColor : a.weakColor;
-            float px = a.tagPx > 0 ? a.tagPx : 14;
-            Vector2 at = new(spot.x + textWidth / 2 + a.tagOffset.x + px * text.Length * .5f, spot.y + a.tagOffset.y);
-            Text.Label(text, at, px, Painter.Alpha(color, fade), Painter.Alpha(Pal.textStroke, fade), 3, Mathf.Max(.8f, scale * .9f), 0, false);
+            if (EC.visionMask == null) { painter.Rect(Layer.Overlay, view.xMin, view.yMin, view.width, view.height, Painter.Alpha(color, color.a * .5f)); return; }
+            float d = radius * 2;
+            painter.Sprite(Layer.Overlay, EC.visionMask, c, 0, d, d, color);
+            void Cover(float x, float y, float w, float h) { if (w > 0 && h > 0) painter.Rect(Layer.Overlay, x, y, w, h, color); }
+            Cover(view.xMin - 10, view.yMin - 10, view.width + 20, c.y - radius - view.yMin + 10);
+            Cover(view.xMin - 10, c.y + radius, view.width + 20, view.yMax - c.y - radius + 10);
+            Cover(view.xMin - 10, c.y - radius, c.x - radius - view.xMin + 10, d);
+            Cover(c.x + radius, c.y - radius, view.xMax - c.x - radius + 10, d);
         }
 
         static int ClipIndex(FlipClip clip, float elapsed, float progress, bool loop)
@@ -157,24 +157,22 @@ namespace TOD
                 DrawClip(pool, foot, pool.size > 0 ? pool.size : 140, renderClock, 0, true, Mathf.Clamp01(left / .4f), 0, Layer.Ground);
             }
 
+            // 24차 색욕 층 날씨: 화면 가장자리부터 분홍 안개가 덮어 시야가 좁아진다 (세기 = 보이는 반지름이 줄어드는 비율)
+            float fog = combat != null ? combat.WeatherVision(r) : 0;
+            if (fog > 0 && combat.Weather(r) is { } weather)
+            {
+                float full = Mathf.Max(view.width, view.height) * .5f;
+                Color tint = weather.tint.a > 0 ? weather.tint : new Color(.55f, .2f, .35f, .85f);
+                VisionCover(foot - new Vector2(0, 30), Mathf.Max(80, full * (1 - fog)), tint, view);
+            }
+
             // 어둠: 주인공 둘레 darkRadius 만 보이고 바깥은 어둡다 (가운데 뚫린 그림 + 화면 나머지 덮개). 들어올 때·끝날 때 부드럽게.
             if (p.dark > 0 && p.darkMax > 0)
             {
                 float k = Mathf.Clamp01(Mathf.Min(p.dark, p.darkMax - p.dark) / .35f);
                 float radius = Mathf.Lerp(Mathf.Max(view.width, view.height), Mathf.Max(60, p.darkRadius), k);
                 Color dark = EC.darkColor;
-                Vector2 c = foot - new Vector2(0, 30);
-                if (EC.visionMask != null)
-                {
-                    float d = radius * 2;
-                    painter.Sprite(Layer.Overlay, EC.visionMask, c, 0, d, d, dark);
-                    // 그림 바깥 화면
-                    void Cover(float x, float y, float w, float h) { if (w > 0 && h > 0) painter.Rect(Layer.Overlay, x, y, w, h, dark); }
-                    Cover(view.xMin - 10, view.yMin - 10, view.width + 20, c.y - radius - view.yMin + 10);
-                    Cover(view.xMin - 10, c.y + radius, view.width + 20, view.yMax - c.y - radius + 10);
-                    Cover(view.xMin - 10, c.y - radius, c.x - radius - view.xMin + 10, d);
-                    Cover(c.x + radius, c.y - radius, view.xMax - c.x - radius + 10, d);
-                }
+                if (EC.visionMask != null) VisionCover(foot - new Vector2(0, 30), radius, dark, view);
                 else painter.Rect(Layer.Overlay, view.xMin, view.yMin, view.width, view.height, Painter.Alpha(dark, dark.a * .6f * k));
             }
             // 눈부심: 맞은 순간 하얗게 번졌다가 천천히 걷힌다

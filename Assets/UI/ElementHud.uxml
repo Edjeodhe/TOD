@@ -1,9 +1,15 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/ElementHud.uss" />
-    <!-- 16차: 층 암시 문구(화면 가운데)와 부가 세트 충전 게이지(왼쪽 아래). ElementHud.cs 가 채운다. -->
+    <!-- 16차: 층 암시 문구(화면 가운데, 24차 아래에 층 날씨 한 줄)와 부가 세트 충전 게이지(왼쪽 아래). ElementHud.cs 가 채운다. -->
     <ui:VisualElement name="element-root" class="element-root" picking-mode="Ignore">
         <ui:VisualElement name="floor-hint" class="floor-hint hidden" picking-mode="Ignore">
             <ui:Label name="floor-hint-text" class="floor-hint-text" picking-mode="Ignore" />
+            <ui:Label name="floor-hint-weather" class="floor-hint-weather" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <!-- 24차 층 날씨: 전투 중 화면 위 가운데(층 이름 아래)에 늘 떠 있는 디버프 표시 -->
+        <ui:VisualElement name="floor-weather" class="floor-weather hidden" picking-mode="Ignore">
+            <ui:Label name="floor-weather-name" class="floor-weather-name" picking-mode="Ignore" />
+            <ui:Label name="floor-weather-text" class="floor-weather-text" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:VisualElement name="proc-gauges" class="proc-gauges" picking-mode="Ignore" />
     </ui:VisualElement>

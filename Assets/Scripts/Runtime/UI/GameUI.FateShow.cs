@@ -4,8 +4,10 @@
 //   3. "자세히 살펴보기" 안내(E)가 점성구 위에 뜬다. E 나 누름으로 다음.
 //   4. 모이라가 앉은 채 두 앞다리로 구슬을 감싸 쥐고(touchLead), 카메라가 정면으로 점점 빨라지며(zoomPower 이즈인) 구슬로 빨려 든다(zoomTime).
 //      회전은 없고, 구슬 바깥이 속도만큼 구슬 쪽으로 당겨지며 방사형으로 번진다(swirlStrength, rushBlur, 멈춘 뒤 rushFade 에 걷힘). 모이라는 freezeTime 동안 서서히 멈춘다.
-//   5. 구슬 유리 안에 그 죄종의 영상이 번져 나와 제 길이 그대로(1배속) 돈다. 주변은 미동도 없이 죄종 색으로 살짝 덮인다(tintAmount). 자막(ElementDef.fateWhispers)이 차례로 죄종 색 글자로 나온다.
-//   6. 영상이 끝나면 endHold 초 뒤(0 이면 끝나자마자, 또는 E, 누름) 줌이 회전 없이 부드럽게 풀리며 원래 화면으로 돌아오고, 모이라가 한 줄을 남긴다(done).
+//   5. 구슬 유리 안에 그 죄종의 구아슈 셀 애니 루프(FateOrbView.loops, 프레임이 없으면 옛 영상)가 번져 나와 끝없이 반복해 돈다.
+//      주변은 미동도 없이 죄종 색으로 살짝 덮인다(tintAmount). 자막(ElementDef.fateWhispers)이 videoTime 안에 한 번 차례로 죄종 색 글자로 나오고 마지막 줄은 남는다.
+//   6. 자막이 다 나오면 아래에 넘어가기 안내(skipHint, "E 넘어가기")가 뜨고, 루프는 계속 돈다. 저절로 돌아가지 않는다(24차, endHold 안 씀).
+//      E 나 누름에 줌이 회전 없이 부드럽게 풀리며 원래 화면으로 돌아오고, 모이라가 한 줄을 남긴다(done).
 //   Esc 는 언제든 건너뛰기(바로 돌아옴).
 using System;
 using UnityEngine;
@@ -23,7 +25,7 @@ namespace TOD
         string[] fateLines = new string[0];
         Color fateTint;
         float fateAt = -1, fateArrive, fatePromptAt, fateTouchAt = -1, fateCloseAt = -1, fateVideoAt = -1;
-        float fateVideoLen;   // 이번에 트는 영상 길이 (영상이 없으면 videoTime)
+        float fateVideoLen;   // 자막이 퍼지는 시간 (반복 그림이면 videoTime, 영상이면 영상 한 바퀴 길이)
         bool fatePaid, fateVideoStarted;
         Action fateDone;
         Action<string> fateSound;
@@ -47,9 +49,9 @@ namespace TOD
 
         FateShow FS => db.hub?.fateShow;
 
-        // lines = 자막 (차례로), tint = 죄종 색, world = 방 쪽 연출, clip = 구슬 속 영상, sound = 효과음 재생, done = 다 끝나 원래 화면
+        // lines = 자막 (차례로), tint = 죄종 색, world = 방 쪽 연출, sin = 구슬 속 반복 그림(world.loops)을 고를 죄종, clip = 반복 그림이 없을 때 트는 영상, sound = 효과음 재생, done = 다 끝나 원래 화면
         // paid = 파편을 냈을 때만 불티가 날아간다 (다시 보기는 점성구부터)
-        public void ShowFate(string[] lines, Color tint, FateOrbView world, VideoClip clip, Action<string> sound, Action done, bool paid)
+        public void ShowFate(string[] lines, Color tint, FateOrbView world, Element sin, VideoClip clip, Action<string> sound, Action done, bool paid)
         {
             if (fate == null) InitFate();
             FateShow s = FS;
@@ -66,8 +68,8 @@ namespace TOD
             float sparkStart = fateAt + s.sparkDelay;
             fateArrive = paid ? sparkStart + s.sparkTime + s.sparkStagger * Mathf.Max(0, fateSparks.Length - 1) : fateAt + s.riseTime;
             fatePromptAt = Mathf.Max(fateArrive, fateAt + s.riseTime) + s.promptDelay;
-            world.Begin(tint, clip, s.zoomFill, s.zoomOffset);
-            fateVideoLen = clip != null && clip.length > .1 ? (float)clip.length : Mathf.Max(.5f, s.videoTime);
+            world.Begin(tint, sin, clip, s.zoomFill, s.zoomOffset);
+            fateVideoLen = !world.Looping && clip != null && clip.length > .1 ? (float)clip.length : Mathf.Max(.5f, s.videoTime);
             fateText.text = "";
             fateShownText = null;
             fateText.style.color = Color.Lerp(tint, Color.white, .42f);   // 죄종 색을 밝힌 글자 (어두운 띠 위에서 읽히게)
@@ -80,7 +82,7 @@ namespace TOD
             TickFate();
         }
 
-        // E, 누름: 안내가 떴으면 구슬 속으로, 영상이 끝났으면 돌아가기
+        // E, 누름: 안내가 떴으면 구슬 속으로, 자막이 다 나왔으면(넘어가기 안내) 돌아가기. 루프는 저절로 끝나지 않는다
         public void AdvanceFate()
         {
             if (!FateShowing || fateCloseAt > 0) return;
@@ -205,10 +207,9 @@ namespace TOD
                     {
                         sub = fateLines[i] ?? "";
                         float fade = Mathf.Max(.05f, s.lineFade);
-                        subA = Mathf.Clamp01(t / fade) * Mathf.Clamp01((i == n - 1 ? FateLength(s) - vt : slot - t) / fade);   // 마지막 줄은 영상(자막)이 끝날 때 사라진다
+                        subA = Mathf.Clamp01(t / fade) * (i == n - 1 ? 1 : Mathf.Clamp01((slot - t) / fade));   // 마지막 줄은 루프가 도는 동안 남는다 (닫을 때 사라짐)
                     }
                 }
-                if (vt >= FateLength(s) + Mathf.Max(0, s.endHold) && fateCloseAt < 0) BeginFateClose();
             }
             bool ended = fateVideoAt > 0 && now >= fateVideoAt + FateLength(s);
 
