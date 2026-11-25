@@ -111,6 +111,14 @@
 - [x] 커밋 (fate-cel-anim 의 프레임 루프 코드 `FateOrbView`·`GameUI.FateShow`·`tools/fate_loop_prompts/` 도 같이 들어감 — 프레임이 없으면 옛 영상으로 돌아가므로 안전).
 - [ ] 사용자 확인 필요: 교만·시기 cap .9, 사람이 직접 한 플레이 느낌(식탐 허기 속도, 색욕 시야 7층 60%).
 - **다른 세션 (2026-11-25 15:45 확인, 두 세션 모두 앱 목록에서 사라짐):** `fate-cel-anim` — 프레임 루프 코드 끝, Claude in Chrome 연결 대기로 그림 생성 멈춤(사용자가 15:30 연결함). `data-tables` — 사용자 답(범위 **밸런스만**, 하나뿐인 설정 묶음은 **세로 키·값**(group | key | type | value), **내보내기만**(가져오기 도구 없음))을 받고 데이터 구조를 훑다가 5시간 한도로 멈춤. **만든 파일 없음** — 처음부터 다시(`기획서/데이터테이블.xlsx`, 스크립트 `tools/`, 자료형 int/string/float/enum, 효과는 effect + value + value_type, `enums` 시트).
+### 24차-fate-cel-anim (미래 보기 구슬 속 구아슈 셀 애니 루프) — 진행 중 (그림 생성 한도 대기)
+- **사용자 결정:** 이야기 절정 한 순간이 끝없이 돎, 8fps · 2초 · 16장, 정사각 1:1, 자막 한 번 차례로 + 마지막 줄 남김, E로만 넘어감, 시험판 분노 먼저. 화풍·움직임은 시험판 3장을 보고 "상관없음"(지금 그대로 진행). 다운로드 112장 허용. Flow 예약 작업 `tod-fate-8s-daily`는 이미 없음(목록에 없음).
+- **만드는 법:** 사용자 Chrome(Claude in Chrome)의 chatgpt.com. 키프레임 = `tools/fate_loop_prompts/fate_loop.txt` [COMMON] + 죄종 KEY, 나머지 = 같은 대화에서 "Edit the FIRST image again (frame 1). This is frame k ..." + 바꿀 것(분노는 같은 파일의 BEATS). 페이지 JS로 blob 을 `tod_<죄종>_frame_###.png` 로 내려받음(Chrome 사이트 설정에서 chatgpt.com 자동 다운로드 허용함) → `Downloads`에서 `art_src/fate_loop/<죄종>/frame_###.png`(1254²) → `python tools/bake_fate_loop.py <죄종>`(768², RGB) → `Assets/Art/Fate/<죄종>/` → MCP: 가져오기 설정(밉맵 없음, Clamp, 압축, NPOT 그대로) + `FateOrb`의 `FateOrbView.loops`에 폴더의 프레임을 이름 차례로(fps 8), 씬 저장.
+  - 주의: ChatGPT 페이지는 위로 지나간 그림을 DOM에서 지움(가상 스크롤) → 개수로 고르지 말고 아직 안 받은 blob 주소로 고름.
+- **진행 (2026-11-25 16:20):** 분노 5장(1·3·5·7·11) 받음. 구도는 잘 유지되고 불길·연기·불티만 바뀜(장마다 불꽃이 다시 그려져 꿈틀거림). **ChatGPT Free 한도(5장)** 에 걸림 — 사용자가 Plus 계정으로 바꾸고 알려 주기로 함. 바꾼 뒤 새 대화에 `art_src/fate_loop/wrath/frame_001.png`를 올려 남은 2·4·6·8·9·10·12~16을 이어 뽑기, 그다음 6죄종(키프레임부터).
+- **재생 확인 (5장으로 먼저):** `loops`에 분노 5장 연결, 씬 저장. 개발자 모드 '미래 보기 구슬' 분노(`GameController.DevShowFate`)로 플레이 → 2초에 E → 6~6.6초 0.125초 간격 캡처에서 구슬 속 그림이 바뀜, 자막 마지막 줄 남고 "E 또는 눌러서 돌아가기", 19초에도 닫히지 않음(FateShowing true), E 뒤 22.5초에 닫힘. 콘솔 오류 없음. `Temp/Shots/fate24_wrath_play_sheet.jpg`(낱장 `Temp/Shots/fatecel/`), 시험판 비교 `fate_wrath_trial_1_5_11.jpg`, 미리보기 GIF `fate_wrath_preview.gif`. 프로필은 `Temp/profile_backup_fatecel.json`에서 되돌림, 잠금 풀어 둠.
+- **남은 것:** 분노 나머지 11장 → 16장 루프 확인(16→1 이어짐) → 사용자 확인 → 6죄종 × 16장 → 연결·플레이 → EditMode → 커밋. 구슬 셰이더가 그림을 죄종 색으로 물들이고 대비를 낮춤(그림 자체가 붉어서 분노는 괜찮음, 다른 죄종에서 보고 판단).
+
 - **세션 다시 띄움 (2026-11-25 15:50, 사용자 "세션 분할해서 작업하고 하나 잡아서 다시 만들어"):** `data-tables` = local_38f88f4e-d6ec-4c7f-a70b-f47cd99930ad(엑셀 처음부터, 위 결정 그대로), `fate-cel-anim` = local_6f025ed8-edd9-471d-981e-35223e519437(Chrome으로 분노 시험판부터). 각 세션이 자기 절을 적고 자기 파일만 커밋.
 
 ### 24차-data-tables (밸런스 데이터 엑셀 내보내기) — 완료 (2026-11-25)

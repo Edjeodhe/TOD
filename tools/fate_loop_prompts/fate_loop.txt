@@ -19,6 +19,14 @@ This is frame {k} of a 16-frame seamless looping cel animation made from the att
 KEY: Two red-skinned warriors with spears clash in the center in front of a dark stone tower, a roaring crimson fire between and around them, black smoke curling up the tower, embers flying, faces lit red from below.
 CYCLE (16 beats, 1 → 16 → back to 1): the flames flicker and rise in a wave (tongues taller on beats 3-6, lower on 10-13), the two spears press together and tremble, embers drift upward and new ones spawn at the bottom, smoke slowly curls and rolls.
 
+BEATS (frame_001 기준으로 '바꿀 것'만. 만든 것 ✓):
+  1 ✓ 키프레임 / 2 flames a hair taller, embers barely up / 3 ✓ a little taller, lean right, smoke curls right
+  4 taller, lean right, spears pressed / 5 ✓ noticeably taller, lean right, spears bend / 6 still tall, upright, smoke rolled up
+  7 ✓ a little taller, upright, embers high, new at bottom / 8 same height as frame 1, sway slightly left
+  9 slightly lower, lean left, embers mid height / 10 low, lean left / 11 ✓ low, lean left, spears tremble apart
+  12 low, flicker, smoke left / 13 low, starting to rise / 14 frame-1 height, rising / 15 frame-1 height, lean right a hair
+  16 almost identical to frame 1 (tiny flame differences only)
+
 [pride] royal purple #7B4FC9 with gold
 KEY: A crowned king in a purple robe stands on top of a tall unfinished tower under a starry purple sky, chin raised, pointing at a blazing gold star; his oversized golden crown is heavy, cracks run down the top stones beneath his feet.
 CYCLE: the gold star pulses brighter and dimmer, the king's robe sways in the wind, the tower top trembles and tiny stone chips fall away and drop out of frame, cracks glow faintly with each pulse.

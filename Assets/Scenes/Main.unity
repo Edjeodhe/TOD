@@ -20506,7 +20506,15 @@ MonoBehaviour:
   videoTarget: {fileID: 8400000, guid: a84e1ebbb5c1f4f4a9cedce1e84eef56, type: 2}
   glassRect: {x: 0.5, y: 0.548, z: 0.491, w: 0.444}
   aboveHands: 500
-  loops: []
+  loops:
+  - sin: 1
+    frames:
+    - {fileID: 2800000, guid: e5adddaef41f70048a4137962177c7a8, type: 3}
+    - {fileID: 2800000, guid: e10da5dfe2f1584439de765256a6667f, type: 3}
+    - {fileID: 2800000, guid: d96f20ffa34346945aed1bfbe53926ff, type: 3}
+    - {fileID: 2800000, guid: cd9a1e01d51ccbf45942ccc934006c62, type: 3}
+    - {fileID: 2800000, guid: f1c4e996f2d0fda4ea2693a4e06931c0, type: 3}
+    fps: 8
 --- !u!328 &1102568613
 VideoPlayer:
   m_ObjectHideFlags: 0
