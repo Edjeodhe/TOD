@@ -200,6 +200,24 @@
   - **서서 대시 방향:** 예전엔 겨눈 쪽(전투)/보는 쪽(재봉실)의 **반대로 물러남** → 이제 **보는 쪽으로 나감**(`Combat.StartDash`, `HubView.StartDash` 둘 다 `(facing, 0)`). 움직이며 대시는 그대로 가는 쪽. 새 테스트 `CombatTests.StandingDashGoesTheWayTheHeroFaces`. EditMode 68개 통과.
   - 남은 것: 사람이 실제 속도로 본 느낌. 더 줄이려면 정리 자세 값을 더 낮추거나(`rig.dash.bones[].settle`) `peakTime`을 조절.
 
+### 23차-hero-restyle (주인공 그림을 NPC 화풍으로, 리깅은 그대로) — 완료
+
+- **사용자 요청:** "캐릭터가 다른 NPC들이랑 비교했을 때 그림체가 이질적, 선처리가 살짝 번짐. NPC 참고해서 풍 비슷하게. 리깅은 그대로, 이미지만 Codex 로 바꿔 끼우기."
+- **번짐 원인:** 가져오기 설정은 NPC 와 같음(trilinear + 밉맵, 바이어스 0 — 19차 4부의 지글거림 고침이라 그대로 둠). 문제는 그림 쪽:
+  - (1) **배율:** 주인공 파츠는 화면에 그림 px 당 약 .15 px(1080p, `heroScale` .078)로 그려지는데 NPC 는 약 .53 px(수녀 .4 배). 머리 638px 가 화면 약 95px. 같은 굵기로 그린 검은 선이 3.5배 가늘어져(1px 아래) 회색으로 번져 보였음.
+  - (2) **원본:** 옛 Codex 그림의 선 가장자리가 압축 얼룩처럼 뭉개져 있었음(눈썹, 머리칼).
+- **고침:** 파츠 17장(리그가 실제로 쓰는 것: head, torso, coat_body, coat_back, coat_hem_near/far, skirt, uarm, farm, hand, thigh, shin, foot, tail_base/mid/tip, needle)만 다시 그림. 캔버스 크기·관절 자리·GUID·씬·`HeroRig` 값·코드는 그대로.
+  - `python tools/hero_restyle.py backup` → 옛 파츠 `art_src/sprites/hero_v3_pre23/`.
+  - `python tools/hero_restyle.py layout` → `art_src/raw/hero_restyle_layout.png`(옛 파츠를 **캔버스의 .6 배**로 초록 바탕에 늘어놓음, 자리는 `art_src/rig/hero_restyle_layout.json`). .6 배로 작게 그려 늘리면 화면 밀도가 NPC 시트(.5 배로 구움 × .53)와 비슷해져 선 굵기가 같아짐.
+  - 화풍 참고 `art_src/raw/hero_restyle_styleref.png`(쥐·인형·수녀 머리, 쥐·인형 몸, 상인).
+  - Codex: `codex.exe exec -s workspace-write --skip-git-repo-check - -i art_src/raw/hero_restyle_layout.png art_src/raw/hero_restyle_styleref.png < tools/codex_prompts/hero_restyle_parts.txt` → `art_src/raw/hero_restyle_parts.png`(첫 시도에 받음). 같은 디자인(분홍 생쥐 소녀, 와인색 코트, 바늘)을 굵은 갈흑색 잉크선, 천·종이 결, 바늘땀, 탁한 색으로.
+  - `python tools/hero_restyle.py bake` → 자리마다 조각을 찾아 옛 그림 영역(알파 상자)에 맞춰 늘린 뒤, 황동 할핀(관절 점)이 있으면 옛 할핀 자리에 축마다 다시 맞춤 → `Assets/sprites/hero_v3_*.png` 같은 파일에 덮어씀. `check` = 할핀 비교와 나란히 그림(`Temp/Shots/hero23_restyle_parts.png`). 할핀 차이 0~2px(캔버스 px, 화면에선 .3px 아래). 머리·몸통·바늘은 할핀이 없어 알파 상자로 맞춤.
+  - 안 쓰는 옛 그림(`hero_v3_coat_shoulders`, `coat_front_*`, `hero_dodge_*`, `hero_quarter_needle`)은 그대로.
+- **확인 (에디터, Unity 객체는 안 바꿈):** 숨긴 리그 복제본(HideAndDontSave)에 `HeroRig.Loop/Shot`으로 대기 2·달리기 4·대시 3·쏘기 3 자세를 걸어 렌더 → `Temp/Shots/hero23_restyle_poses_before.png` / `_after.png` / `_compare.png` / `_zoom.png`. 관절 어긋남 없음. NPC 4종과 같은 배율(전투장 `def.height / rig.height`, 주인공 `heroScale` 중간값) 비교 `hero23_restyle_vs_npc_1080p.png`(1080p 밀도), `_zoom.png`(2배), `_1080p_crop.png`.
+  - 플레이 모드 캡처는 못 함: 지금 플레이에 들어가면 `GameUI` 초기화가 안 돼(`overlay` null, `GameUI.Tick`/`DiaryBoard`/`DevTools` NullReference 매 프레임) 등반을 시작할 수 없었음. 다른 세션 작업 중 변경으로 보이며 이 절에서는 건드리지 않음. 프로필 백업 `Temp/profile_backup_hero23.json`(바뀐 것 없음). 플레이 모드는 꺼 둠.
+  - 주의: 에디터에서 `execute_code`로 리그를 만질 땐 `Space.Configure(db.arena)`를 먼저(도메인 리로드 뒤 `Space.Ppu`가 1로 돌아가 리그가 화면 밖에 그려짐).
+- **남은 것:** 사람이 실제 게임 속도·전투 배경에서 볼 것(털 결이 조금 촘촘해 보일 수 있음 — 더 단순하게 하려면 프롬프트의 hatching/texture 를 줄여 다시 뽑고 `bake`). 옛 그림으로 되돌리려면 `art_src/sprites/hero_v3_pre23/*`를 `Assets/sprites/`로 복사.
+
 ### 23차-fate-8s (미래 보기 영상 7개를 8초로, 내용 늘리기) — 진행 중 (2026-11-25~, 하루 2개)
 
 - **사용자 요청:** "영상 만든 거 전부 5초에서 8초로 내용 늘려". 지금 영상은 교만만 720p 5초, 나머지 6개는 360p 3초(`ffprobe`로 확인).
