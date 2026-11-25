@@ -113,6 +113,15 @@
 - **다른 세션 (2026-11-25 15:45 확인, 두 세션 모두 앱 목록에서 사라짐):** `fate-cel-anim` — 프레임 루프 코드 끝, Claude in Chrome 연결 대기로 그림 생성 멈춤(사용자가 15:30 연결함). `data-tables` — 사용자 답(범위 **밸런스만**, 하나뿐인 설정 묶음은 **세로 키·값**(group | key | type | value), **내보내기만**(가져오기 도구 없음))을 받고 데이터 구조를 훑다가 5시간 한도로 멈춤. **만든 파일 없음** — 처음부터 다시(`기획서/데이터테이블.xlsx`, 스크립트 `tools/`, 자료형 int/string/float/enum, 효과는 effect + value + value_type, `enums` 시트).
 - **세션 다시 띄움 (2026-11-25 15:50, 사용자 "세션 분할해서 작업하고 하나 잡아서 다시 만들어"):** `data-tables` = local_38f88f4e-d6ec-4c7f-a70b-f47cd99930ad(엑셀 처음부터, 위 결정 그대로), `fate-cel-anim` = local_6f025ed8-edd9-471d-981e-35223e519437(Chrome으로 분노 시험판부터). 각 세션이 자기 절을 적고 자기 파일만 커밋.
 
+### 24차-data-tables (밸런스 데이터 엑셀 내보내기) — 완료 (2026-11-25)
+- **결과:** `기획서/데이터테이블.xlsx` 27시트. 1행 열 이름, 2행 자료형(int / string / float / enum만, 회색), 3행부터 데이터, 머리글 굵게, 틀 고정 A3.
+  - 시트: 설정(세로 group | key | type | value, 148행) · 라운드 · 컨셉 · 컨셉_적가중치 · 스폰 · 적 · 적_보스소환 · 죄종_날씨 · 보스 · 보스_패턴 · 보스_죄종공격 · 세트 · 세트_단계 · 세트_효과 · 등급 · 조각 · 조각_모양 · 증강 · 욕망 · 포션 · 포션_획득 · 상점 · 강화 · 강화_효과 · NPC · NPC_보상 · 일기_보상 · enums.
+  - 효과류(세트 효과, 조각 능력치·고유 효과, 증강, 욕망, 포션, 층 날씨, 보스 죄종 공격, NPC 보상, 강화 효과)는 `effect` + `value` + `value_type`(flat / percent / multiplier / per_second / seconds / count / distance). **value 는 게임 값 그대로**(percent 0.3 = 30%, 증강 Multiply 는 multiplier). 세트 효과는 `scaling`(fixed / per_tier)도.
+  - enum 은 값 이름으로 적고, 이름·번호·설명은 `enums` 시트(게임 enum 은 C# 소스에서 읽음 + 문서용 enum: DataType, ValueType, Scaling, SetEffect, BossSinAttack, DesireEffect, UpgradeEffect, RewardPlace, PotionSource).
+  - 뺀 것(밸런스 아님): 화면 문구, 색, 이펙트·연출 시간, 그림, 소리, 배치 좌표, 맵 장식, 카메라. 배열은 행으로 펼침(라운드, 세트 단계, 조각 모양, 컨셉 가중치), 설정의 배열은 `key[i]`. bool(`bossDropsItem`)은 int 0/1.
+- **다시 뽑기:** Unity MCP `execute_code` 로 `tools/dump_gamedb.cs` 본문 실행(읽기만, `Temp/gamedb_dump.json`) → `python tools/export_data_tables.py`. 스크립트가 자료형, enum 값, 열 수를 검사함. 새 필드·새 죄종·새 ItemEffect 가 생기면 스크립트의 표(SETTINGS, SET_EFFECT, ITEM_TYPE 등)에 줄을 더해야 함(모르는 값이면 KeyError로 멈춤).
+- 가져오기(엑셀 → 게임) 도구는 없음(사용자 결정).
+
 ## 23차 (2026-11-25 시작) — 문구, 소리 정리, 포션 칸, 우클릭 해제, 층 표시, 보스 파편, 개발자 모드, 라틴어 특수공격, 피해 숫자, 쉬어가기 NPC — 진행 중
 
 > 사용자 요청(스크린샷 4장)과 질문 답입니다. 세션마다 아래에 자기 절(`23차-<세션>`)을 만들어 진행을 적습니다. 커밋, 브랜치 전환 금지. Unity 잠금(`Temp/claude_unity.lock`) 규칙은 22차와 같습니다.
