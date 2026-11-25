@@ -663,6 +663,7 @@ namespace TOD
         public UiTextConfig ui;
         public SynthSound[] sounds;
         public PotionConfig potions;          // 23차: 포션 칸 (PotionData.cs)
+        public BossConfig bosses;             // 23차-boss7: 칠죄종 보스 7종, 패턴, 2페이즈 (BossData.cs)
         public NpcConfig npcs;                // 23차: 쉬어가기 NPC 4종, 재봉실 NPC (NpcData.cs)
 
         public EnemyType Enemy(string id) => Array.Find(enemies.types, t => t.id == id);

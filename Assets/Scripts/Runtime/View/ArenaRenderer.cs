@@ -121,6 +121,7 @@ namespace TOD
             // 공격 예고(돌진 길·근접/탄막 고리)는 Ground 층: 캐릭터·몬스터 뒤에 깔린다
             foreach (Enemy e in r.enemies)
             {
+                if (e.brain != null) continue;   // 23차-boss7: 칠죄종 보스는 패턴 예고를 따로 그린다 (ArenaRenderer.Boss.cs)
                 if (e.action == EnemyAction.WindupDash)
                 {
                     Vector2 end = C(e.x + e.aim.x * 340, e.y + e.aim.y * 340);
@@ -134,6 +135,8 @@ namespace TOD
                 }
                 if (e.action == EnemyAction.Charge) DrawMobDash(e, clock);   // 23차: 차저 돌진 꼬리 (죄종 그림)
             }
+            DrawBossTelegraphs(r, clock);   // 23차-boss7
+            DrawBossRoar(r);
             foreach (Knot k in r.knots)
             {
                 painter.Ellipse(Layer.Ground, C(k), 15, 15 * Space.Proj, Pal.knotRing, 1.4f);

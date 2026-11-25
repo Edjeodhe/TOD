@@ -95,6 +95,14 @@ namespace TOD
             });
             // 23차: 죄종 층으로 바로 가기 (새 맵 1라운드), 미래 보기 구슬을 죄종마다
             SinButtons("dev-sin-floors", (element, name) => { game.DevGoToSin(element); Say($"{name} 층 1라운드로"); });
+            // 23차-boss7: 죄종 보스 바로 싸우기, 2페이즈 전환 바로 보기
+            SinButtons("dev-sin-bosses", (element, name) =>
+            {
+                game.DevGoToSin(element);
+                if (Run != null) game.DevJump(r => game.Combat.DevGoToRound(r, RoundKind.Boss));
+                Say($"{name} 보스");
+            });
+            Bind("dev-boss-phase", () => Say(Run != null && game.Combat.DevBossPhase(Run) ? "보스 2페이즈 전환" : "1페이즈 칠죄종 보스가 없습니다"));
             SinButtons("dev-fate-sins", (element, name) => Say(game.DevShowFate(element) ?? $"미래 보기: {name}"));
 
             VisualElement floorRow = panel.Q("dev-floors");

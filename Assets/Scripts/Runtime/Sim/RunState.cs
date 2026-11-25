@@ -73,6 +73,7 @@ namespace TOD
         public bool pawned;
         public Element element;              // 16차: 층 속성 (그 층 몬스터는 모두 같은 속성)
         public bool IsBoss => type.id == "boss";
+        public BossBrain brain;              // 23차-boss7: 칠죄종 보스의 패턴, 2페이즈 (CombatBoss.cs). 공용 보스, 일반 몬스터는 null
         public bool killed;                  // 처치 처리를 이미 했는지 (풀에서 꺼낼 때 ClearStatus 가 지운다)
         public void ClearStatus() { burnDps = burnTime = slow = slowTime = curse = curseTime = poisonDps = poisonTime = dotTick = dotPending = sleepTime = charmTime = 0; poisonStacks = slothStacks = 0; pawned = false; killed = false; }
     }
@@ -172,6 +173,7 @@ namespace TOD
         public List<Enemy> enemies = new();
         public List<Strand> strands = new();
         public List<Bullet> bullets = new();
+        public List<BossTelegraph> telegraphs = new();   // 23차-boss7: 보스 패턴 바닥 예고
         public List<Drop> drops = new();
         public PotionSlot[] potions = new PotionSlot[0];   // 23차 포션 칸 (Potions.NewSlots)
         public float potionReady;            // 이 time 이 지나야 다음 포션을 마신다

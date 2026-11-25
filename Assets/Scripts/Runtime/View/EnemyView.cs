@@ -103,6 +103,19 @@ namespace TOD
             return own[id] = rig;
         }
 
+        bool HasRig(string id)
+        {
+            if (own.TryGetValue(id, out MonsterRig made)) return made != null;
+            if (rigs != null) foreach (MonsterRig r in rigs) if (r != null && r.type == id) return true;
+            return false;
+        }
+
+        // 23차-boss7: 제 그림을 가진 리그는 속성 그림 교체와 색 곱하기 없이
+        static void Plain(MonsterRig rig)
+        {
+            foreach (SpriteRenderer sr in rig.Arts) if (sr != null) sr.color = Color.white;
+        }
+
         void ShowRig(MonsterRig rig)
         {
             if (shown == rig) return;
@@ -195,7 +208,11 @@ namespace TOD
             float h = e.height;
             float w = h * (art.rect.width / art.rect.height);
             bool boss = e.IsBoss;
-            MonsterRig rig = RigFor(e.type.id);
+            // 23차-boss7: 칠죄종 보스는 죄종마다 따로 그린 리그 (BossDef.rig). 템플릿이 없으면 공용 보스 리그
+            string rigId = e.brain != null && !string.IsNullOrEmpty(e.brain.def.rig) && HasRig(e.brain.def.rig) ? e.brain.def.rig : e.type.id;
+            bool ownArt = rigId != e.type.id;
+            float lift = e.brain?.lift ?? 0;
+            MonsterRig rig = RigFor(rigId);
             // 리그가 있으면 걷기 출렁임은 리그 동작이 맡는다
             float bob = rig != null ? 0 : Mathf.Sin(Mathf.Floor(time * 12) / 12 * 8 + e.x) * (e.action == EnemyAction.Move ? 2 : .5f);
 
@@ -214,7 +231,7 @@ namespace TOD
             // 몸통: 흔들림 + 박힘 떨림 → 당김 방향 늘이기(몸 중심 기준) → 좌우·예고 웅크림
             Vector2 offset = new(0, bob);
             if (e.jolt != null) { float k = e.jolt.time / .12f; offset += new Vector2(e.jolt.x * 5 * k, e.jolt.y * Space.Proj * 5 * k); }
-            body.localPosition = Local(offset.x, offset.y);
+            body.localPosition = Local(offset.x, offset.y - lift);
             center.localPosition = Local(0, -h / 2);
             back.localPosition = Local(0, h / 2);
             float stretchAngle = 0, sx = 1, sy = 1;
@@ -253,14 +270,14 @@ namespace TOD
                 bodyB.gameObject.SetActive(false);
                 ShowRig(rig);
                 rig.Animate(e, time, dt, h / rig.height);
-                Skin(rig, e.element, db);   // 16차: 층 속성 파츠
+                if (ownArt) Plain(rig); else Skin(rig, e.element, db);   // 16차: 층 속성 파츠 (23차-boss7 칠죄종 보스는 제 그림 그대로)
                 Vector4 cutA = Vector4.zero, cutB = Vector4.zero;
                 if (e.cut != null)
                 {
                     // 두 동강도 리그 그대로: 원본 = 한쪽, 쌍둥이 = 반대쪽 (크기·발 위치·자세가 바뀌지 않는다)
-                    ShowTwin(rig, e.type.id);
+                    ShowTwin(rig, rigId);
                     CopyPose(rig, twinShown);
-                    Skin(twinShown, e.element, db);
+                    if (ownArt) Plain(twinShown); else Skin(twinShown, e.element, db);
                     float k = Mathf.Pow(e.cut.time / e.cut.max, 2);
                     float angle = e.facing > 0 ? e.cut.angle : Mathf.PI - e.cut.angle;
                     Vector3 rigBase = rig.transform.localPosition;

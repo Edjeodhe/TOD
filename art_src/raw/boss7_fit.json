@@ -1,0 +1,472 @@
+{
+ "items": [
+  {
+   "name": "boss7_envy_farm",
+   "base": "enemy_boss_farm",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    87,
+    245
+   ]
+  },
+  {
+   "name": "boss7_envy_head",
+   "base": "enemy_boss_head",
+   "pivot": [
+    0.49444,
+    0.0
+   ],
+   "size": [
+    270,
+    329
+   ]
+  },
+  {
+   "name": "boss7_envy_skirt",
+   "base": "enemy_boss_skirt",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    309,
+    351
+   ]
+  },
+  {
+   "name": "boss7_envy_torso",
+   "base": "enemy_boss_torso",
+   "pivot": [
+    0.50329,
+    0.0
+   ],
+   "size": [
+    152,
+    240
+   ]
+  },
+  {
+   "name": "boss7_envy_uarm",
+   "base": "enemy_boss_uarm",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    73,
+    194
+   ]
+  },
+  {
+   "name": "boss7_gluttony_farm",
+   "base": "enemy_stalker_farm",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    104,
+    201
+   ]
+  },
+  {
+   "name": "boss7_gluttony_head",
+   "base": "enemy_stalker_head",
+   "pivot": [
+    0.46816,
+    0.0
+   ],
+   "size": [
+    267,
+    272
+   ]
+  },
+  {
+   "name": "boss7_gluttony_shin",
+   "base": "enemy_stalker_shin",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    128,
+    148
+   ]
+  },
+  {
+   "name": "boss7_gluttony_thigh",
+   "base": "enemy_stalker_thigh",
+   "pivot": [
+    0.5283,
+    0.0
+   ],
+   "size": [
+    106,
+    147
+   ]
+  },
+  {
+   "name": "boss7_gluttony_torso",
+   "base": "enemy_stalker_torso",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    201,
+    188
+   ]
+  },
+  {
+   "name": "boss7_gluttony_uarm",
+   "base": "enemy_stalker_uarm",
+   "pivot": [
+    0.56322,
+    0.0
+   ],
+   "size": [
+    87,
+    158
+   ]
+  },
+  {
+   "name": "boss7_greed_farm",
+   "base": "enemy_stalker_farm",
+   "pivot": [
+    0.54783,
+    0.0
+   ],
+   "size": [
+    115,
+    201
+   ]
+  },
+  {
+   "name": "boss7_greed_head",
+   "base": "enemy_stalker_head",
+   "pivot": [
+    0.45126,
+    0.0
+   ],
+   "size": [
+    277,
+    261
+   ]
+  },
+  {
+   "name": "boss7_greed_shin",
+   "base": "enemy_stalker_shin",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    128,
+    148
+   ]
+  },
+  {
+   "name": "boss7_greed_thigh",
+   "base": "enemy_stalker_thigh",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    92,
+    147
+   ]
+  },
+  {
+   "name": "boss7_greed_torso",
+   "base": "enemy_stalker_torso",
+   "pivot": [
+    0.41358,
+    0.0
+   ],
+   "size": [
+    243,
+    188
+   ]
+  },
+  {
+   "name": "boss7_greed_uarm",
+   "base": "enemy_stalker_uarm",
+   "pivot": [
+    0.51111,
+    0.0
+   ],
+   "size": [
+    90,
+    158
+   ]
+  },
+  {
+   "name": "boss7_lust_farm",
+   "base": "enemy_boss_farm",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    87,
+    245
+   ]
+  },
+  {
+   "name": "boss7_lust_head",
+   "base": "enemy_boss_head",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    229,
+    329
+   ]
+  },
+  {
+   "name": "boss7_lust_skirt",
+   "base": "enemy_boss_skirt",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    309,
+    351
+   ]
+  },
+  {
+   "name": "boss7_lust_torso",
+   "base": "enemy_boss_torso",
+   "pivot": [
+    0.59827,
+    0.0
+   ],
+   "size": [
+    173,
+    240
+   ]
+  },
+  {
+   "name": "boss7_lust_uarm",
+   "base": "enemy_boss_uarm",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    101,
+    194
+   ]
+  },
+  {
+   "name": "boss7_pride_farm",
+   "base": "enemy_boss_farm",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    87,
+    245
+   ]
+  },
+  {
+   "name": "boss7_pride_head",
+   "base": "enemy_boss_head",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    229,
+    329
+   ]
+  },
+  {
+   "name": "boss7_pride_skirt",
+   "base": "enemy_boss_skirt",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    309,
+    351
+   ]
+  },
+  {
+   "name": "boss7_pride_torso",
+   "base": "enemy_boss_torso",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    135,
+    240
+   ]
+  },
+  {
+   "name": "boss7_pride_uarm",
+   "base": "enemy_boss_uarm",
+   "pivot": [
+    0.48734,
+    0.0
+   ],
+   "size": [
+    79,
+    194
+   ]
+  },
+  {
+   "name": "boss7_sloth_farm",
+   "base": "enemy_boss_farm",
+   "pivot": [
+    0.55078,
+    0.0
+   ],
+   "size": [
+    128,
+    245
+   ]
+  },
+  {
+   "name": "boss7_sloth_head",
+   "base": "enemy_boss_head",
+   "pivot": [
+    0.42045,
+    0.0
+   ],
+   "size": [
+    308,
+    329
+   ]
+  },
+  {
+   "name": "boss7_sloth_skirt",
+   "base": "enemy_boss_skirt",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    309,
+    351
+   ]
+  },
+  {
+   "name": "boss7_sloth_torso",
+   "base": "enemy_boss_torso",
+   "pivot": [
+    0.50974,
+    0.0
+   ],
+   "size": [
+    154,
+    240
+   ]
+  },
+  {
+   "name": "boss7_sloth_uarm",
+   "base": "enemy_boss_uarm",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    73,
+    194
+   ]
+  },
+  {
+   "name": "boss7_wrath_farm",
+   "base": "enemy_charger_farm",
+   "pivot": [
+    0.57391,
+    0.0
+   ],
+   "size": [
+    115,
+    213
+   ]
+  },
+  {
+   "name": "boss7_wrath_foot",
+   "base": "enemy_charger_foot",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    137,
+    95
+   ]
+  },
+  {
+   "name": "boss7_wrath_head",
+   "base": "enemy_charger_head",
+   "pivot": [
+    0.48085,
+    0.0
+   ],
+   "size": [
+    235,
+    234
+   ]
+  },
+  {
+   "name": "boss7_wrath_shin",
+   "base": "enemy_charger_shin",
+   "pivot": [
+    0.5625,
+    0.0
+   ],
+   "size": [
+    88,
+    180
+   ]
+  },
+  {
+   "name": "boss7_wrath_thigh",
+   "base": "enemy_charger_thigh",
+   "pivot": [
+    0.51695,
+    0.0
+   ],
+   "size": [
+    118,
+    162
+   ]
+  },
+  {
+   "name": "boss7_wrath_torso",
+   "base": "enemy_charger_torso",
+   "pivot": [
+    0.5,
+    0.0
+   ],
+   "size": [
+    261,
+    222
+   ]
+  },
+  {
+   "name": "boss7_wrath_uarm",
+   "base": "enemy_charger_uarm",
+   "pivot": [
+    0.52941,
+    0.0
+   ],
+   "size": [
+    85,
+    140
+   ]
+  }
+ ]
+}

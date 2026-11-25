@@ -390,6 +390,7 @@ namespace TOD.Tests
             while (steps++ < 400000 && r.outcome == Outcome.None && r.phase != Phase.Victory)
             {
                 r.hp = r.maxHp = 100000;                       // 생존을 보장해 진행 흐름만 본다
+                r.devGod = true;                               // 23차-boss7: 맞지 않게 (식탐 보스는 준 피해만큼 회복해서, 피하지 않는 자동 조작으로는 끝나지 않음)
                 if (r.desire > r.maxDesire * .4f) r.desire = 0;   // 동화 엔딩 대신 등반 흐름을 본다 (22차: 7층이라 층 욕망이 커서 일찍 비운다)
                 while (r.augmentQueue > 0) combat.ApplyAugment(r, combat.AugmentChoices(r)[0].id);
                 // 라운드가 끝나 계단이 다 나타나면 올라간다 (보스 뒤에는 욕망 제안을 거절).

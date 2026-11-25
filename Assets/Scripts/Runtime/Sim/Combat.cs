@@ -53,7 +53,7 @@ namespace TOD
         public int YarnMax(RunState r) => Mathf.Max(H.minYarn, (int)Round(H.baseYarn + r.Gear(StatKind.Yarn) + r.yarnBonus - (r.desires.Contains("obsession") ? db.desire.obsessionYarn : 0)));
         public float DesireFraction(RunState r) => r.desire / r.maxDesire;
         public int KnotInterval(RunState r) => r.rules.Contains("earlyKnot") ? H.earlyKnotInterval : H.knotInterval;
-        public float EnemyHeight(Enemy e) => e.type.height * (e.elite ? E.eliteHeight : 1);
+        public float EnemyHeight(Enemy e) => BossHeight(e) * (e.elite ? E.eliteHeight : 1);   // 23차-boss7: 칠죄종 보스는 BossDef.height
         public float TimeLeft(RunState r) => r.roundKind == RoundKind.Survival ? Mathf.Max(0, r.roundLength - r.elapsed) : 0;
 
         public static (Point start, Point end) Endpoints(Player player, Strand s) => (s.anchor ?? player, (Point)s.target ?? s);
@@ -180,7 +180,7 @@ namespace TOD
             foreach (Enemy e in r.enemies) r.enemyPool.Push(e);
             FlushShards(r);   // 23차: 아직 날아오던 기억의 파편은 잃지 않게 바로 넣는다
             r.enemies.Clear(); r.drops.Clear();
-            r.bullets.Clear(); r.strands.Clear(); r.knots.Clear(); r.trails.Clear(); r.effects.Clear();
+            r.bullets.Clear(); r.strands.Clear(); r.knots.Clear(); r.trails.Clear(); r.effects.Clear(); r.telegraphs.Clear();
             r.echo = null; r.shotCount = 0; r.winding = 0; r.dry = 0; r.nextKnot = 0;
             r.yarn = YarnMax(r);
             r.stairs = r.altar = r.merchant = null;
@@ -430,7 +430,9 @@ namespace TOD
             enemy.ClearStatus();
             enemy.element = r.floorElement;
             enemy.aim = Vector2.right; enemy.stretch = enemy.jolt = enemy.push = enemy.yank = null; enemy.cut = null;
+            enemy.brain = null;
             enemy.height = EnemyHeight(enemy);
+            SetupBoss(r, enemy);   // 23차-boss7: 층 죄종 보스 (CombatBoss.cs)
             r.enemies.Add(enemy);
             return enemy;
         }
@@ -657,6 +659,7 @@ namespace TOD
 
         void Kill(RunState r, Enemy e, List<Strand> stuck)
         {
+            if (BossPhaseGate(r, e)) return;   // 23차-boss7: 1페이즈 보스는 죽지 않고 2페이즈 전환
             if (e.killed) return;   // 16차: 부가 발동, 번개 튐이 같은 타격 안에서 먼저 처치했을 때 두 번 세지 않게
             e.killed = true;
             RewardConfig rw = db.rewards;
@@ -934,6 +937,7 @@ namespace TOD
                 int transferred = pinned.Contains(e) ? impacts - own : 0;
                 int count = own + transferred;
                 if (count == 0) continue;
+                if (e.brain != null && e.brain.Shielded) continue;   // 23차-boss7: 2페이즈 전환 중 무적
                 wounded.Add(e);
                 if (transferred > 0) transfers++;
                 bool binding = bound.Contains(e);
@@ -1095,7 +1099,7 @@ namespace TOD
 
         public void DevKillAll(RunState r)
         {
-            foreach (Enemy e in r.enemies.Where(e => e.hp > 0).ToList()) { e.hp = 0; Kill(r, e, new List<Strand>()); }
+            foreach (Enemy e in r.enemies.Where(e => e.hp > 0).ToList()) { if (e.brain != null) { e.brain.phase = 2; e.brain.transition = -1; } e.hp = 0; Kill(r, e, new List<Strand>()); }   // 23차-boss7: 보스도 2페이즈 없이 바로
         }
 
         // 생존: 남은 시간 0 · 보스: 보스 처치 · 그 밖: 그대로
@@ -1103,7 +1107,7 @@ namespace TOD
         {
             if (r.phase != Phase.Combat) return;
             if (r.roundKind == RoundKind.Survival) r.elapsed = r.roundLength;
-            else if (r.roundKind == RoundKind.Boss) foreach (Enemy e in r.enemies.Where(e => e.IsBoss && e.hp > 0).ToList()) { e.hp = 0; Kill(r, e, new List<Strand>()); }
+            else if (r.roundKind == RoundKind.Boss) foreach (Enemy e in r.enemies.Where(e => e.IsBoss && e.hp > 0).ToList()) { if (e.brain != null) { e.brain.phase = 2; e.brain.transition = -1; } e.hp = 0; Kill(r, e, new List<Strand>()); }
         }
 
         public void DevLevelUp(RunState r) => GainXp(r, Mathf.Max(1, XpNeeded(r) - r.xp));
@@ -1315,6 +1319,7 @@ namespace TOD
         float DamageEnemy(RunState r, Enemy e, float amount, Element element, bool kill = true, float lift = float.NaN)
         {
             if (e.hp <= 0 || amount <= 0) return 0;
+            if (e.brain != null && e.brain.Shielded) return 0;   // 23차-boss7: 2페이즈 전환 중 무적
             float dealt = Round(amount * (1 + (e.curseTime > 0 ? e.curse : 0)) * Affinity(element, e.element));
             e.hp = Mathf.Max(0, e.hp - dealt);
             e.flash = Mathf.Max(e.flash, F.pullEnemyFlash * .5f);
@@ -1411,9 +1416,11 @@ namespace TOD
             if (e.yank != null) { Ease(e, e.yank, e.yank.max > 0 ? e.yank.max : F.yankTime, dt); if (e.yank.time <= 0) e.yank = null; }
             UpdateStatus(r, e, dt);
             if (e.hp <= 0) return;
+            if (UpdateBossTransition(r, e, dt)) return;   // 23차-boss7: 경직 → 포효 → 체력 회복
             if (e.sleepTime > 0) return;   // 22차 나태: 잠든 동안 움직이지도 공격하지도 않는다
             float chill = 1 - e.slow;   // 나태 둔화: 이동·돌진·행동 대기가 함께 느려진다
             dt *= Mathf.Max(.1f, chill);
+            if (e.brain != null) { UpdateBoss(r, e, dt, gap, near); return; }   // 23차-boss7: 칠죄종 보스 패턴
             e.timer -= dt;
             if (e.charmTime > 0 && e.action == EnemyAction.Move) e.wait = Mathf.Max(e.wait, .1f);   // 22차 색욕 매혹: 공격을 시작하지 않는다
             if (e.action == EnemyAction.Move)
@@ -1575,6 +1582,7 @@ namespace TOD
                 }
             }
             r.trails.RemoveAll(t => (t.time -= dt) <= 0);
+            UpdateTelegraphs(r, worldDt);   // 23차-boss7: 보스 바닥 예고
             r.bullets.RemoveAll(b =>
             {
                 var from = new Point(b.x, b.y);

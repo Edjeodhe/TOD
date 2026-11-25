@@ -324,6 +324,7 @@ namespace TOD
 
             Show(hud.Q("boss-hud"), boss != null);
             if (boss != null) Meter(hud, "boss-bar", boss.hp / boss.maxHp);
+            if (boss != null) UpdateBossHud(boss);   // 23차-boss7: 죄종 보스 이름, 2페이즈 (GameUI.Boss7.cs)
         }
 
         // ---------------------------------------------------------------- dialogs
