@@ -228,13 +228,8 @@ namespace TOD
             r.altar = Near(r, offset);
             r.altarAge = 0;
             r.artifactOffer.Clear(); r.artifactTaken = false; r.artifactRerolled = false;
-            var kinds = Gear.Unowned(db, r.bag);   // 아이템은 고유: 이미 가진 종류는 탑에 나오지 않는다
-            while (r.artifactOffer.Count < R.artifactChoices && kinds.Count > 0)
-            {
-                int i = Mathf.Min(kinds.Count - 1, Mathf.FloorToInt(r.random() * kinds.Count));
-                r.artifactOffer.Add(kinds[i]);
-                kinds.RemoveAt(i);
-            }
+            // 아이템은 고유: 이미 가진 종류는 탑에 나오지 않는다. 23차: 레어도 가중치로 뽑는다
+            r.artifactOffer.AddRange(Gear.PickWeighted(db, Gear.Unowned(db, r.bag), R.artifactChoices, r.random));
         }
 
         Point Near(RunState r, Vector2 offset) => new(
@@ -286,12 +281,7 @@ namespace TOD
             var kinds = Gear.Unowned(db, r.bag).Where(k => !shown.Contains(k)).ToList();
             if (kinds.Count < R.artifactChoices) kinds = Gear.Unowned(db, r.bag);
             r.artifactOffer.Clear();
-            while (r.artifactOffer.Count < R.artifactChoices && kinds.Count > 0)
-            {
-                int i = Mathf.Min(kinds.Count - 1, Mathf.FloorToInt(r.random() * kinds.Count));
-                r.artifactOffer.Add(kinds[i]);
-                kinds.RemoveAt(i);
-            }
+            r.artifactOffer.AddRange(Gear.PickWeighted(db, kinds, R.artifactChoices, r.random));
             return true;
         }
 
@@ -661,7 +651,7 @@ namespace TOD
             GainXp(r, drop.xp);
             r.gold += drop.gold;
             if (drop.shard > 0) r.profile.shards += drop.shard;
-            if (drop.item) Event(r, "loot", string.Format(M.loot, Gear.AddItem(db, r.bag).name));
+            if (drop.item) Event(r, "loot", string.Format(M.loot, Gear.AddItem(db, r.bag, -1, r.random).name));
             if (drop.shard > 0 || drop.item) Gear.Save(db, r.profile);
         }
 

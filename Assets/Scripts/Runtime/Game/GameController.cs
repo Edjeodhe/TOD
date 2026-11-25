@@ -344,7 +344,7 @@ namespace TOD
             {
                 case "heal": Run.hp = Mathf.Min(Run.maxHp, Run.hp + ware.amount * potion); break;
                 case "pure": Combat.AdjustDesire(Run, -ware.amount * potion); break;
-                case "piece": ui.Say(string.Format(db.messages.loot, Gear.AddItem(db, Run.bag)?.name)); break;
+                case "piece": ui.Say(string.Format(db.messages.loot, Gear.AddItem(db, Run.bag, -1, Run.random)?.name)); break;
                 case "buff": Run.damage += ware.amount; break;
             }
             Gear.Save(db, Profile);

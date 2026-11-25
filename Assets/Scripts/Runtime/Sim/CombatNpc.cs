@@ -116,7 +116,7 @@ namespace TOD
                     ApplyEffects(r, w.effects);
                     return Note(w.name, EffectText(w.effects));
                 case NpcRewardKind.Piece:
-                    PieceDef def = Gear.AddItem(db, r.bag);
+                    PieceDef def = Gear.AddItem(db, r.bag, -1, r.random);
                     if (def == null) { r.gold += Mathf.RoundToInt(w.amount); return Note(null, w.amount); }
                     return Note(def.name);
                 case NpcRewardKind.Xp:
@@ -212,9 +212,9 @@ namespace TOD
             switch (w.kind)
             {
                 case NpcRewardKind.Piece:
-                    List<int> left = Gear.Unowned(db, p);
-                    if (left.Count == 0) goto case NpcRewardKind.Shards;
-                    PieceDef piece = Gear.AddItem(db, p, left[Mathf.Min(left.Count - 1, Mathf.FloorToInt(random() * left.Count))]);
+                    int pieceKind = Gear.PickWeighted(db, Gear.Unowned(db, p), random);   // 23차: 레어도 가중치
+                    if (pieceKind < 0) goto case NpcRewardKind.Shards;
+                    PieceDef piece = Gear.AddItem(db, p, pieceKind);
                     result.notice = Note(piece.name);
                     break;
                 case NpcRewardKind.Shards:

@@ -46,13 +46,7 @@ namespace TOD
             profile.hubTaken ??= new List<int>();
             profile.hubStock.Clear();
             profile.hubTaken.Clear();
-            int count = Math.Min(db.hub != null ? db.hub.shopStock : 0, pool.Count);
-            for (int i = 0; i < count; i++)
-            {
-                int pick = Math.Min(pool.Count - 1, (int)(random() * pool.Count));
-                profile.hubStock.Add(pool[pick]);
-                pool.RemoveAt(pick);
-            }
+            profile.hubStock.AddRange(Gear.PickWeighted(db, pool, db.hub != null ? db.hub.shopStock : 0, random));   // 23차: 레어도 가중치
             profile.hubStockTime = now;
         }
 

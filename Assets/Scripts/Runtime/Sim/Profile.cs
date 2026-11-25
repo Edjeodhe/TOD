@@ -196,14 +196,55 @@ namespace TOD
             return profile;
         }
 
-        // 종류를 주면 그 종류(이미 가졌으면 그대로 그 정의만 돌려줌), 안 주면 아직 없는 종류 중 하나. 모두 가졌으면 null.
-        public static PieceDef AddItem(GameDatabase db, Profile profile, int kind = -1)
+        // 23차 레어도 가중치: 그 조각 등급(cost)의 gear.rankWeights. 표가 없거나 칸이 모자라면 1.
+        public static float Weight(GameDatabase db, int kind)
+        {
+            float[] w = db.gear.rankWeights;
+            int cost = db.gear.pieces[kind].cost;
+            return w != null && cost >= 0 && cost < w.Length ? Mathf.Max(0, w[cost]) : 1;
+        }
+
+        // 후보 중 하나를 레어도 가중치로 뽑는다. 가중치 0 인 조각은 빠진다. 뽑을 것이 없으면 -1.
+        public static int PickWeighted(GameDatabase db, IList<int> kinds, Func<float> random)
+        {
+            if (kinds == null) return -1;
+            float total = kinds.Sum(k => Weight(db, k));
+            if (total <= 0) return -1;
+            float roll = random() * total;
+            int last = -1;
+            foreach (int k in kinds)
+            {
+                float w = Weight(db, k);
+                if (w <= 0) continue;
+                last = k;
+                if ((roll -= w) < 0) return k;
+            }
+            return last;   // 부동소수 오차로 끝까지 왔을 때
+        }
+
+        // 중복 없이 count 개 (탑 진열, 상인 단추 진열)
+        public static List<int> PickWeighted(GameDatabase db, IEnumerable<int> kinds, int count, Func<float> random)
+        {
+            var pool = new List<int>(kinds);
+            var picked = new List<int>();
+            while (picked.Count < count)
+            {
+                int k = PickWeighted(db, pool, random);
+                if (k < 0) break;
+                picked.Add(k);
+                pool.Remove(k);
+            }
+            return picked;
+        }
+
+        // 종류를 주면 그 종류(이미 가졌으면 그대로 그 정의만 돌려줌), 안 주면 아직 없는 종류 중 하나를 레어도 가중치로. 모두 가졌으면 null.
+        // random 을 안 주면 UnityEngine.Random (등반 중에는 r.random 을 넘겨 시드대로 굴린다).
+        public static PieceDef AddItem(GameDatabase db, Profile profile, int kind = -1, Func<float> random = null)
         {
             if (kind < 0)
             {
-                List<int> left = Unowned(db, profile);
-                if (left.Count == 0) return null;
-                kind = left[UnityEngine.Random.Range(0, left.Count)];
+                kind = PickWeighted(db, Unowned(db, profile), random ?? (() => UnityEngine.Random.value));
+                if (kind < 0) return null;
             }
             if (Owns(profile, kind)) return db.gear.pieces[kind];
             var item = new OwnedItem { id = profile.nextId++, kind = kind };

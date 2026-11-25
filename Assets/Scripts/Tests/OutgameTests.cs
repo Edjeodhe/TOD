@@ -67,6 +67,38 @@ namespace TOD.Tests
             CollectionAssert.AreEqual(items.Where(i => !Placed(i)).ToList(), got.Skip(1).ToList(), "획득순: 얻은 순서 그대로");
         }
 
+        // 23차 레어도 가중치: 등급(cost)별 rankWeights 비율대로 뽑히고, 높은 등급일수록 덜 나오며, 0 이면 무작위로는 안 나온다
+        [Test]
+        public void PiecePicksFollowRankWeights()
+        {
+            Assert.IsNotNull(db.gear.rankWeights, "gear.rankWeights 데이터가 없습니다");
+            List<int> pool = Gear.Unowned(db, EmptyProfile(99));
+            var rng = new System.Random(24);
+            float Roll() => (float)rng.NextDouble();
+            var hits = new int[8];
+            const int draws = 20000;
+            for (int i = 0; i < draws; i++) hits[db.gear.pieces[Gear.PickWeighted(db, pool, Roll)].cost]++;
+            float total = pool.Sum(k => Gear.Weight(db, k));
+            foreach (int cost in pool.Select(k => db.gear.pieces[k].cost).Distinct())
+            {
+                float expected = pool.Where(k => db.gear.pieces[k].cost == cost).Sum(k => Gear.Weight(db, k)) / total;
+                Assert.AreEqual(expected, hits[cost] / (float)draws, .02f, $"코스트 {cost} 등급의 뽑힌 비율");
+            }
+            float RankWeight(int cost) => Gear.Weight(db, pool.First(k => db.gear.pieces[k].cost == cost));
+            for (int c = 2; c <= 4; c++) Assert.Less(RankWeight(c), RankWeight(c - 1), $"코스트 {c} 가 {c - 1} 보다 덜 나와야 합니다");
+
+            float[] saved = db.gear.rankWeights;
+            try
+            {
+                db.gear.rankWeights = new float[] { 0, 1, 1, 1, 0 };
+                List<int> picked = Gear.PickWeighted(db, pool, pool.Count, Roll);
+                Assert.IsTrue(picked.All(k => db.gear.pieces[k].cost != 4), "가중치 0 등급이 뽑혔습니다");
+                Assert.AreEqual(pool.Count(k => db.gear.pieces[k].cost != 4), picked.Count);
+                Assert.AreEqual(picked.Count, picked.Distinct().Count(), "같은 조각이 두 번 뽑힘");
+            }
+            finally { db.gear.rankWeights = saved; }
+        }
+
         [Test]
         public void UnlockTableFollowsBestFloor()
         {

@@ -29710,6 +29710,13 @@ MonoBehaviour:
     - 0.55
     - 1
     - 1.2
+    rankWeights:
+    - 0
+    - 1
+    - 0.7
+    - 0.4
+    - 0.2
+    - 0.2
     cardEntrance:
       rankStrength:
       - 0
