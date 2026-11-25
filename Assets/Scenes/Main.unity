@@ -7412,6 +7412,7 @@ MonoBehaviour:
     settleTime: 0.13
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 5.8, y: 5.4}
     rootPeak: {x: 8, y: 33.2}
     rootSettle: {x: 40.4, y: 13.2}
@@ -7514,6 +7515,7 @@ MonoBehaviour:
     settleTime: 0.288
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 37.4, y: 11.8}
     rootPeak: {x: 20.4, y: -4.2}
     rootSettle: {x: 20.4, y: -4.2}
@@ -7612,100 +7614,102 @@ MonoBehaviour:
       settle: 2.9
   dash:
     length: 0.29
-    peakTime: 0.145
-    settleTime: 0.2175
+    peakTime: 0.1
+    settleTime: 0.17
     keepEnd: 0
     easeIn: 1
+    smooth: 1
     rootStart: {x: 1, y: 0}
     rootPeak: {x: 14, y: 12}
-    rootSettle: {x: 7, y: 5}
+    rootSettle: {x: 3.5, y: 2.5}
     bones:
     - bone: hips
       start: -5
       peak: -15
-      settle: -7
+      settle: -3.5
     - bone: torso
       start: -11
       peak: -21
-      settle: -13
+      settle: -6.5
     - bone: head
       start: 7
       peak: 16
-      settle: 9
+      settle: 4.5
     - bone: coat
       start: -13
       peak: -35
-      settle: -17
+      settle: -8.5
     - bone: near_arm
       start: -18
       peak: -51
-      settle: -29
+      settle: -14.5
     - bone: near_forearm
       start: -18
       peak: -34
-      settle: -22
+      settle: -11
     - bone: far_arm
       start: 10
       peak: 31
-      settle: 18
+      settle: 9
     - bone: far_forearm
       start: -17
       peak: -44
-      settle: -28
+      settle: -14
     - bone: near_thigh
       start: 15
       peak: 47
-      settle: 28
+      settle: 14
     - bone: near_shin
       start: 8
       peak: 11
-      settle: 7
+      settle: 3.5
     - bone: near_foot
       start: -4
       peak: -21
-      settle: -13
+      settle: -6.5
     - bone: far_thigh
       start: -13
       peak: -26
-      settle: -10
+      settle: -5
     - bone: far_shin
       start: 19
       peak: 39
-      settle: 19
+      settle: 9.5
     - bone: far_foot
       start: 2
       peak: -8
-      settle: -3
+      settle: -1.5
     - bone: tail_base
       start: -5
       peak: -25
-      settle: -15
+      settle: -7.5
     - bone: tail_mid
       start: 3
       peak: 20
-      settle: 14
+      settle: 7
     - bone: tail_tip
       start: 7
       peak: -4
-      settle: 11
+      settle: 5.5
     - bone: coat_front_near
       start: -5.9
       peak: -15.8
-      settle: -7.7
+      settle: -3.85
     - bone: coat_front_far
       start: -4.5
       peak: -12.2
-      settle: -5.9
+      settle: -2.95
     - bone: skirt
       start: 1.6
       peak: 4.2
-      settle: 2
+      settle: 1
   hurt:
     length: 0.29
     peakTime: 0
     settleTime: 0.145
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 20.4, y: -9.4}
     rootPeak: {x: 20.4, y: -9.4}
     rootSettle: {x: 10.2, y: -4.7}
@@ -7808,6 +7812,7 @@ MonoBehaviour:
     settleTime: 0.55
     keepEnd: 1
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 5}
     rootPeak: {x: -21, y: 61}
     rootSettle: {x: -51, y: 218}
@@ -9454,6 +9459,7 @@ MonoBehaviour:
     settleTime: 0.43
     keepEnd: 1
     easeIn: 1
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: -8, y: 14}
     rootSettle: {x: -10, y: 16}
@@ -9500,6 +9506,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -9510,6 +9517,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -9520,6 +9528,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -9530,6 +9539,7 @@ MonoBehaviour:
     settleTime: 0.2
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: -10, y: 16}
     rootPeak: {x: 22, y: 6}
     rootSettle: {x: 8, y: 0}
@@ -9576,6 +9586,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -9586,6 +9597,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -9596,6 +9608,7 @@ MonoBehaviour:
     settleTime: 0.16
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: -10, y: 2}
     rootSettle: {x: -3, y: 0}
@@ -15840,6 +15853,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -15850,6 +15864,7 @@ MonoBehaviour:
     settleTime: 0.43
     keepEnd: 1
     easeIn: 1
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 6}
     rootSettle: {x: 0, y: 7}
@@ -15880,6 +15895,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -15890,6 +15906,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -15900,6 +15917,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -15910,6 +15928,7 @@ MonoBehaviour:
     settleTime: 0.25
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 7}
     rootPeak: {x: -12, y: 0}
     rootSettle: {x: -2, y: 0}
@@ -15940,6 +15959,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -15950,6 +15970,7 @@ MonoBehaviour:
     settleTime: 0.16
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: -10, y: 2}
     rootSettle: {x: -3, y: 0}
@@ -27851,6 +27872,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -27861,6 +27883,7 @@ MonoBehaviour:
     settleTime: 0.43
     keepEnd: 1
     easeIn: 1
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -27891,6 +27914,7 @@ MonoBehaviour:
     settleTime: 0.68
     keepEnd: 1
     easeIn: 1
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: -6, y: 10}
     rootSettle: {x: -8, y: 12}
@@ -27921,6 +27945,7 @@ MonoBehaviour:
     settleTime: 0.53
     keepEnd: 1
     easeIn: 0
+    smooth: 0
     rootStart: {x: -8, y: 12}
     rootPeak: {x: 0, y: 4}
     rootSettle: {x: 0, y: 4}
@@ -27951,6 +27976,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -27961,6 +27987,7 @@ MonoBehaviour:
     settleTime: 0.25
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: -8, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -27991,6 +28018,7 @@ MonoBehaviour:
     settleTime: 0.5
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 4}
     rootPeak: {x: -6, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -28021,6 +28049,7 @@ MonoBehaviour:
     settleTime: 0.16
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: -10, y: 2}
     rootSettle: {x: -3, y: 0}
@@ -37111,6 +37140,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -37121,6 +37151,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -37131,6 +37162,7 @@ MonoBehaviour:
     settleTime: 0.68
     keepEnd: 1
     easeIn: 1
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: -18, y: 30}
     rootSettle: {x: -20, y: 32}
@@ -37189,6 +37221,7 @@ MonoBehaviour:
     settleTime: 0.53
     keepEnd: 1
     easeIn: 0
+    smooth: 0
     rootStart: {x: -20, y: 32}
     rootPeak: {x: 10, y: 10}
     rootSettle: {x: 10, y: 10}
@@ -37247,6 +37280,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -37257,6 +37291,7 @@ MonoBehaviour:
     settleTime: 0
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: 0, y: 0}
     rootSettle: {x: 0, y: 0}
@@ -37267,6 +37302,7 @@ MonoBehaviour:
     settleTime: 0.5
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 10, y: 10}
     rootPeak: {x: -10, y: 6}
     rootSettle: {x: 0, y: 0}
@@ -37325,6 +37361,7 @@ MonoBehaviour:
     settleTime: 0.16
     keepEnd: 0
     easeIn: 0
+    smooth: 0
     rootStart: {x: 0, y: 0}
     rootPeak: {x: -10, y: 2}
     rootSettle: {x: -3, y: 0}

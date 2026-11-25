@@ -1637,7 +1637,7 @@ namespace TOD
         void StartDash(RunState r, bool moving, Vector2 move)
         {
             Player p = r.player;
-            Vector2 dir = moving ? move : new Vector2(-Mathf.Cos(p.angle), -Mathf.Sin(p.angle));
+            Vector2 dir = moving ? move : new Vector2(p.facing, 0);   // 23차: 서 있으면 보는 쪽으로 나감 (예전엔 겨눈 쪽의 반대로 물러남)
             p.dx = dir.x; p.dy = dir.y;
             p.dash = F.dashDuration;
             p.dashDone = 0;
@@ -1652,7 +1652,7 @@ namespace TOD
             Fx burst = Spawn(r, FxKind.Sprite, p.x, p.y, X.dashBurst);
             burst.sprite = FxSprite.Dodge; burst.angle = away + Mathf.PI; burst.burst = true;
             Spawn(r, FxKind.Dust, p.x, p.y, X.dust).angle = away + Mathf.PI;
-            // 23차: 대시 때 몸을 뒤로 돌리지 않는다 (고개가 한 번 돌아갔다 오던 것). 움직이며 대시 = 가는 쪽을 봄, 서서 대시 = 뒤로 물러나며 보는 쪽 그대로
+            // 23차: 대시 때 몸을 뒤로 돌리지 않는다 (고개가 한 번 돌아갔다 오던 것). 움직이며 대시 = 가는 쪽을 봄, 서서 대시 = 보는 쪽으로 나감
             if (moving && p.dx != 0) p.facing = Mathf.Sign(p.dx);
             p.dashFacing = p.facing;
             Act(p, HeroAction.Dash);

@@ -331,12 +331,12 @@ namespace TOD
         {
             FeelConfig f = db.feel;
             if (f == null || f.dashDuration <= 0) return false;
-            Vector2 dir = moving ? move : new Vector2(-player.facing, 0);   // 서 있으면 전투처럼 보는 쪽의 반대로 물러남 (보는 쪽은 그대로)
+            Vector2 dir = moving ? move : new Vector2(player.facing, 0);   // 23차: 서 있으면 보는 쪽으로 나감 (예전엔 보는 쪽의 반대로 물러남)
             player.dx = dir.x; player.dy = dir.y;
             player.dash = f.dashDuration;
             player.dashDone = 0;
             player.dashCooldown = f.dashMinCooldown;
-            if (moving && player.dx != 0) player.facing = Mathf.Sign(player.dx);   // 전투와 같이: 몸을 뒤로 돌리지 않음 (움직이면 가는 쪽, 서 있으면 보는 쪽 그대로)
+            if (moving && player.dx != 0) player.facing = Mathf.Sign(player.dx);   // 전투와 같이: 움직이면 가는 쪽을 보고, 서 있으면 보는 쪽 그대로 그쪽으로 나감
             player.dashFacing = player.facing;
             Combat.Act(player, HeroAction.Dash);
             return true;

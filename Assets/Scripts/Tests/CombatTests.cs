@@ -280,6 +280,23 @@ namespace TOD.Tests
             Assert.AreEqual(max, r.player.dashCharges, "시간이 지나면 모두 다시 찬다");
         }
 
+        // 23차: 서서 대시하면 보는 쪽으로 나간다 (예전엔 반대로 물러났다). 보는 쪽도 그대로다.
+        [Test]
+        public void StandingDashGoesTheWayTheHeroFaces()
+        {
+            foreach (float face in new[] { -1f, 1f })
+            {
+                RunState r = NewRun();
+                r.player.facing = face;
+                r.player.angle = face > 0 ? 0 : Mathf.PI;
+                float x0 = r.player.x;
+                combat.Update(r, 1 / 60f, new CombatInput { dash = true });
+                for (int i = 0; i < 20; i++) combat.Update(r, 1 / 60f, new CombatInput());
+                Assert.Greater((r.player.x - x0) * face, 50, $"보는 쪽({face})으로 나간다");
+                Assert.AreEqual(face, r.player.facing, "보는 쪽은 그대로");
+            }
+        }
+
         // 처치하면 경험치 구·골드가 튀어나왔다가 몸으로 빨려 들어 회수된다.
         [Test]
         public void KillDropsFlyIntoHero()

@@ -30,8 +30,11 @@ namespace TOD
     {
         public float length, peakTime, settleTime;
         public bool keepEnd, easeIn;
+        public bool smooth;                   // 23차: 최고 → 정리 → 0 구간을 부드럽게 (구간 끝에서 꺾이지 않음)
         public Vector2 rootStart, rootPeak, rootSettle;
         public BonePose[] bones;
+
+        static float Soft(float u) => u * u * (3 - 2 * u);
 
         // 0~1: 시작 → 최고 → 정리 → 0 구간 보간 (값 세 개에 공통으로 쓴다)
         public float Value(float t, float start, float peak, float settle)
@@ -42,9 +45,14 @@ namespace TOD
                 if (easeIn) u = 1 - (1 - u) * (1 - u);
                 return Mathf.Lerp(start, peak, u);
             }
-            if (t < settleTime) return Mathf.Lerp(peak, settle, settleTime > peakTime ? (t - peakTime) / (settleTime - peakTime) : 1);
+            if (t < settleTime)
+            {
+                float u = settleTime > peakTime ? (t - peakTime) / (settleTime - peakTime) : 1;
+                return Mathf.Lerp(peak, settle, smooth ? Soft(u) : u);
+            }
             if (keepEnd || length <= settleTime) return settle;
-            return Mathf.Lerp(settle, 0, Mathf.Clamp01((t - settleTime) / (length - settleTime)));
+            float v = Mathf.Clamp01((t - settleTime) / (length - settleTime));
+            return Mathf.Lerp(settle, 0, smooth ? Soft(v) : v);
         }
     }
 
