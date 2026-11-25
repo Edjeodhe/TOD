@@ -20510,11 +20510,32 @@ MonoBehaviour:
   - sin: 1
     frames:
     - {fileID: 2800000, guid: e5adddaef41f70048a4137962177c7a8, type: 3}
+    - {fileID: 2800000, guid: a8cb6148112f9eb4a9b41649d537bd15, type: 3}
     - {fileID: 2800000, guid: e10da5dfe2f1584439de765256a6667f, type: 3}
+    - {fileID: 2800000, guid: a075b3651557cab42b21592696f4c05e, type: 3}
     - {fileID: 2800000, guid: d96f20ffa34346945aed1bfbe53926ff, type: 3}
+    - {fileID: 2800000, guid: 702db90b700faa149b69eafcd29cc53c, type: 3}
     - {fileID: 2800000, guid: cd9a1e01d51ccbf45942ccc934006c62, type: 3}
+    - {fileID: 2800000, guid: cf62bd0250f15354ab3412f781f8b81d, type: 3}
+    - {fileID: 2800000, guid: 0fcedf9ca9e40694396cf75d4a800823, type: 3}
+    - {fileID: 2800000, guid: b51dc7455fac1c2418535bebd587658a, type: 3}
     - {fileID: 2800000, guid: f1c4e996f2d0fda4ea2693a4e06931c0, type: 3}
-    fps: 8
+    - {fileID: 2800000, guid: 268ba6741b677a843a568ba387fe724a, type: 3}
+    - {fileID: 2800000, guid: fd49a5e952e73094a9e0f51afb30a365, type: 3}
+    - {fileID: 2800000, guid: cd8bf2efceedf38449d05aa7ae2cac4c, type: 3}
+    - {fileID: 2800000, guid: cd0078d2afbbde343b3598e0126714dc, type: 3}
+    - {fileID: 2800000, guid: b2cef302a2c186148a4ec67645cbe5ed, type: 3}
+    - {fileID: 2800000, guid: 78d051b3b7694024fb9b2cfbe29add9f, type: 3}
+    - {fileID: 2800000, guid: 4aa3e80534559bc439b0a33de2ddce4d, type: 3}
+    - {fileID: 2800000, guid: 19a04d382eda29f4da0640c6f99a0083, type: 3}
+    - {fileID: 2800000, guid: 706160d590d2c734ba353c61cf801262, type: 3}
+    - {fileID: 2800000, guid: 89f8ff50879387e4ea07546f7c3724cf, type: 3}
+    - {fileID: 2800000, guid: f142338be2fd65540b50386a517fc069, type: 3}
+    - {fileID: 2800000, guid: dce037c0613aedf4e98a98a9ea881777, type: 3}
+    - {fileID: 2800000, guid: a6c0db728601f4746a77216025685ac4, type: 3}
+    fps: 12
+    ticks: 2
+    ghost: 0.45
 --- !u!328 &1102568613
 VideoPlayer:
   m_ObjectHideFlags: 0

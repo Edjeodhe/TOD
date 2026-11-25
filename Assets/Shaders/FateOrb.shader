@@ -3,6 +3,7 @@
 //  _Tint      : 죄종 색. _Glow 만큼 유리를 그 색으로 물들인다 (떠오를 때)
 //  _VideoTex  : 영상 RenderTexture. _Mix 만큼 유리 안에 원형으로 그린다 (가운데를 덮고 좌우는 잘림, 살짝 볼록 렌즈)
 //  _GlassRect : 유리 원 (uv 중심 xy, uv 반지름 zw), _VideoAspect : 영상 가로/세로
+//  _PrevTex, _Ghost : 24차 셀 애니 스텝 프린팅 잔상. 앞 그림을 _Ghost 만큼 밝은 쪽으로 겹친다 (FateOrbView.FateLoop.ghost)
 //  _Bright, _Sat : MoiraRig 이 다른 파츠처럼 넣는 방 밝기와 채도 (받침과 유리 그림에만)
 Shader "TOD/FateOrb"
 {
@@ -11,6 +12,8 @@ Shader "TOD/FateOrb"
         [PerRendererData] _MainTex ("Sprite", 2D) = "white" {}
         _GlassTex ("Glass mask", 2D) = "black" {}
         _VideoTex ("Video", 2D) = "black" {}
+        _PrevTex ("Previous loop frame", 2D) = "black" {}
+        _Ghost ("Afterimage", Float) = 0
         _Tint ("Sin color", Color) = (1, 1, 1, 1)
         _Glow ("Glow", Float) = 0
         _Mix ("Video mix", Float) = 0
@@ -42,10 +45,11 @@ Shader "TOD/FateOrb"
             TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
             TEXTURE2D(_GlassTex); SAMPLER(sampler_GlassTex);
             TEXTURE2D(_VideoTex); SAMPLER(sampler_VideoTex);
+            TEXTURE2D(_PrevTex); SAMPLER(sampler_PrevTex);
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _Tint;
-                float _Glow, _Mix, _VideoAspect, _Bulge, _Bright, _Sat, _Shape;
+                float _Glow, _Mix, _VideoAspect, _Bulge, _Bright, _Sat, _Shape, _Ghost;
                 float4 _GlassRect;
             CBUFFER_END
 
@@ -79,6 +83,8 @@ Shader "TOD/FateOrb"
                 float2 q = p * (1 - _Bulge + _Bulge * r * r);
                 float2 vuv = 0.5 + 0.5 * float2(q.x / max(_VideoAspect, 0.01), q.y);
                 half3 v = SAMPLE_TEXTURE2D(_VideoTex, sampler_VideoTex, vuv).rgb;
+                half3 pv = SAMPLE_TEXTURE2D(_PrevTex, sampler_PrevTex, vuv).rgb;
+                v = lerp(v, max(v, pv), saturate(_Ghost));                    // 스텝 프린팅 잔상: 앞 장의 밝은 자국이 남았다 사라짐
                 float rim = smoothstep(0.62, 1.02, r);                       // 유리 가장자리: 어둡고 죄종 색
                 half3 vid = v * (1 - 0.75 * rim) + _Tint.rgb * rim * 0.35;
                 half spec = saturate((lumBase - 0.62) * 2.4) * (1 - rim * 0.5); // 원래 그림의 반짝임은 영상 위에 남긴다

@@ -4,7 +4,7 @@
 //   Zoom         : 0 = 원래 카메라, 1 = 구슬이 코앞 (zoomFill 만큼 화면을 채움). 크기는 배율이 고르게 줄도록 지수로 섞는다
 //   Swirl, Blur, TintAmount : PostFX 의 정면으로 빨려 드는 당김(회전 없음), 방사형 번짐, 구슬 바깥 물들임 (_TOD_FateSwirl.w, _TOD_FateBlur, _TOD_FateTint)
 //   Still        : 0 = 모이라가 평소처럼 움직임, 1 = 지금 자세 그대로 완전히 멈춤 (MoiraRig.Motion = 1 - Still, PostFX 촛불 깜빡임 _TOD_FateStill)
-//   VideoMix     : 구슬 유리 안의 그림 (24차: 죄종별 구아슈 셀 애니 프레임 loops 를 fps 로 끝없이 돌림. 프레임이 없는 죄종만 옛 영상 VideoPlayer → RenderTexture) → FateOrb 셰이더 _VideoTex
+//   VideoMix     : 구슬 유리 안의 그림 (24차: 죄종별 구아슈 셀 애니 프레임 loops 를 fps 틱으로 끝없이 돌림. 한 장을 ticks 틱 붙잡고 앞 장 잔상 ghost 를 겹치는 스텝 프린팅(_PrevTex, _Ghost). 프레임이 없는 죄종만 옛 영상 VideoPlayer → RenderTexture) → FateOrb 셰이더 _VideoTex
 // LateUpdate 에서 넣으므로 같은 프레임의 모이라 자세(점성구 자리)를 따른다. End 가 카메라와 리그를 원래대로 돌린다.
 using UnityEngine;
 using UnityEngine.Video;
@@ -17,7 +17,11 @@ namespace TOD
     {
         public Element sin;
         public Texture2D[] frames;   // Assets/Art/Fate/<죄종>/frame_###.png 차례대로
-        public float fps = 8;
+        public float fps = 8;        // 틱 빠르기 (초당 틱)
+        [Tooltip("스텝 프린팅: 그림 한 장을 몇 틱 붙잡는지 (1 = 틱마다 다음 장)")]
+        public int ticks = 1;
+        [Tooltip("잔상: 장이 바뀐 첫 틱에 앞 장이 밝게 겹치는 양 (0~1). 붙잡는 틱마다 줄어든다")]
+        public float ghost;
     }
 
     public class FateOrbView : MonoBehaviour
@@ -56,6 +60,7 @@ namespace TOD
         static readonly int TintId = Shader.PropertyToID("_Tint"), GlowId = Shader.PropertyToID("_Glow"), MixId = Shader.PropertyToID("_Mix"),
             VideoId = Shader.PropertyToID("_VideoTex"), RectId = Shader.PropertyToID("_GlassRect"), AspectId = Shader.PropertyToID("_VideoAspect"),
             BrightId = Shader.PropertyToID("_Bright"), SatId = Shader.PropertyToID("_Sat"),
+            PrevId = Shader.PropertyToID("_PrevTex"), GhostId = Shader.PropertyToID("_Ghost"),
             SwirlId = Shader.PropertyToID("_TOD_FateSwirl"), FateTintId = Shader.PropertyToID("_TOD_FateTint"), BlurId = Shader.PropertyToID("_TOD_FateBlur"), StillId = Shader.PropertyToID("_TOD_FateStill");
 
         SpriteRenderer Orb => rig != null ? rig.fateOrb : null;
@@ -134,12 +139,19 @@ namespace TOD
             player.Play();
         }
 
-        Texture2D LoopFrame()
+        // 지금 그림, 앞 그림, 잔상 양. 틱 = fps, 한 장을 ticks 틱 붙잡고(스텝 프린팅), 장이 바뀐 첫 틱에 앞 장 잔상이 ghost 만큼, 붙잡는 동안 줄어든다
+        Texture2D LoopFrame(out Texture2D prev, out float ghost)
         {
             int n = loop.frames.Length;
+            int hold = Mathf.Max(1, loop.ticks);
             float t = loopStart < 0 ? 0 : Time.unscaledTime - loopStart;
-            int i = Mathf.FloorToInt(t * Mathf.Max(.1f, loop.fps)) % n;
-            return loop.frames[i] != null ? loop.frames[i] : loop.frames[0];
+            int tick = Mathf.FloorToInt(t * Mathf.Max(.1f, loop.fps));
+            int i = tick / hold % n;
+            int h = tick % hold;
+            Texture2D Frame(int k) => loop.frames[k] != null ? loop.frames[k] : loop.frames[0];
+            prev = Frame((i - 1 + n) % n);
+            ghost = loopStart < 0 ? 0 : Mathf.Clamp01(loop.ghost) * (1 - (float)h / hold);
+            return Frame(i);
         }
 
         // 지금까지 튼 비율 (영상이 없으면 시간표를 따르도록 -1)
@@ -200,12 +212,15 @@ namespace TOD
                 block.SetVector(RectId, glassRect);
                 if (loop != null)
                 {
-                    Texture2D f = LoopFrame();
+                    Texture2D f = LoopFrame(out Texture2D prev, out float ghost);
                     if (f != null) block.SetTexture(VideoId, f);
+                    if (prev != null) block.SetTexture(PrevId, prev);
+                    block.SetFloat(GhostId, ghost);
                     block.SetFloat(AspectId, f != null && f.height > 0 ? (float)f.width / f.height : 1);
                 }
                 else
                 {
+                    block.SetFloat(GhostId, 0);
                     if (videoTarget != null) block.SetTexture(VideoId, videoTarget);
                     VideoClip clip = player != null ? player.clip : null;
                     block.SetFloat(AspectId, clip != null && clip.height > 0 ? (float)clip.width / clip.height : 16f / 9f);

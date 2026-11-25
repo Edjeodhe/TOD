@@ -9,7 +9,10 @@
 #     (매번 frame_001 을 기준으로 해서 그림이 조금씩 흘러가지 않게. 장끼리 붓 자국이 조금 다른 건 셀 애니의 '떨림'으로 둔다).
 #  3) 16장째가 1장째로 자연스럽게 이어지는지 보고 어긋나면 그 장만 다시.
 
-[COMMON]
+[COMMON] (2판, 2026-11-25 사용자 "강력한 붓터치와 실루엣에 집중하여 디테일을 줄이고 거칠게". 참고 art_src/fate_loop/style_ref/)
+Square 1:1 rough expressive painting in thick gouache and oil pastel, bold wide flat brush strokes and scribbled pastel marks, raw unfinished look, very little detail, figures reduced to strong simple silhouettes with heavy black brush contour lines and a glowing yellow rim outline, big high-contrast flat color fields with complementary colors, paper showing through in places, dark fairy-tale legend, the scene composed to sit inside a round crystal ball (main silhouettes large in the center circle, corners fade into dark), no text, no border, no frame, no letters.
+
+[COMMON 1판] (화풍 바꾸기 전, 분노 5장 frame_001~011 v1 이 이것)
 Square 1:1 gouache painting, opaque matte gouache on textured watercolor paper, visible flat brush strokes, chalky layered pigment, soft hand-painted edges, limited palette, storybook illustration of a dark fairy-tale legend, moody candle-lit atmosphere, the scene composed to sit inside a round crystal ball (important action in the center circle, corners can fade into dark), no text, no border, no frame, no letters.
 
 [FRAME]
@@ -26,6 +29,16 @@ BEATS (frame_001 기준으로 '바꿀 것'만. 만든 것 ✓):
   9 slightly lower, lean left, embers mid height / 10 low, lean left / 11 ✓ low, lean left, spears tremble apart
   12 low, flicker, smoke left / 13 low, starting to rise / 14 frame-1 height, rising / 15 frame-1 height, lean right a hair
   16 almost identical to frame 1 (tiny flame differences only)
+
+[wrath 3판 — 결투 액션, 2026-11-25 사용자 "셔터 스피드 낮춘 연출, 두 전사 대결, 스텝 프린팅, 더 긴 템포. 첫 컷과 마지막 컷 연결. 마지막은 피하고 돈 다음 다시 맞부딪히고 뒤 불꽃만 일렁이며 끝나는 느낌"]
+24장, 12fps 에 한 장을 2틱씩(초당 6장) = 4초. 게임에서 앞 장 잔상을 셰이더로 겹침.
+KEY 추가 문장: Scene: a fierce duel - two red-skinned spear warriors, full bodies visible, facing each other in the center in front of a dark stone tower, spears clashing crossed between them, a crimson fire behind them, black smoke. Shot like a slow shutter speed long exposure, step-printed film look: streaky motion-blur smears and ghostly afterimages trail behind the spears, arms and hair, conveying violent motion.
+FRAME 틀: Edit the FIRST image again (not the last one). Frame {k} of the same loop. Keep the SAME painting: same camera, tower, fire, colors, rough brush style, same two warriors in the same places. Change only the action: {beat} Square 1:1, no text.
+BEATS: 1 그대로 다시 칠하기 / 2 맞댄 창을 서로 밀며 떨림, 교차점 불티 / 3 둘이 떨어짐, 왼쪽이 창을 뒤로 / 4 왼쪽 창을 어깨 뒤로 들기, 오른쪽 웅크림
+  5 왼쪽 창을 머리 위로 크게 (a_windup) / 6 내려치기 시작, 큰 호 번짐, 오른쪽 창을 들어 막음 / 7 내려침 충돌 불꽃 (b_strike) / 8 충돌 뒤 불티 흩어짐, 오른쪽 한쪽 무릎
+  9 오른쪽이 밀쳐 내고 일어섬, 왼쪽 비틀 / 10 오른쪽 찌르기 준비 / 11 찌르기 (c_thrust) / 12 찌르기 끝까지, 왼쪽 몸을 젖혀 피함
+  13 왼쪽이 몸을 돌며 빠짐, 둥근 번짐 / 14 등이 보이게 회전 중, 창이 원을 그림 / 15 회전을 마치며 창이 돌아옴, 오른쪽 창을 듦 / 16 서로 달려들며 창끝이 가까워짐
+  17 다시 맞부딪침, 큰 불꽃 / 18 맞댄 자세(1과 같음), 불꽃 사그라듦 / 19~24 1과 같은 자세, 뒤 불길만 일렁임(오른쪽으로 높게 / 곧게 / 왼쪽으로 낮게 / 낮게 / 다시 오름 / 1과 거의 같음)
 
 [pride] royal purple #7B4FC9 with gold
 KEY: A crowned king in a purple robe stands on top of a tall unfinished tower under a starry purple sky, chin raised, pointing at a blazing gold star; his oversized golden crown is heavy, cracks run down the top stones beneath his feet.
