@@ -124,14 +124,15 @@ namespace TOD
                 if (e.action == EnemyAction.WindupDash)
                 {
                     Vector2 end = C(e.x + e.aim.x * 340, e.y + e.aim.y * 340);
-                    painter.Line(Layer.Ground, C(e), end, 20, Pal.windupLane);
-                    painter.Line(Layer.Ground, C(e), end, 2, Pal.windupDash, dashed: true);
+                    painter.Line(Layer.Ground, C(e), end, 20, MobWindup(e, Pal.windupLane));
+                    painter.Line(Layer.Ground, C(e), end, 2, MobWindup(e, Pal.windupDash), dashed: true);
                 }
                 if (e.action is EnemyAction.WindupMelee or EnemyAction.WindupShot)
                 {
                     float radius = e.action == EnemyAction.WindupMelee ? 66 : e.radius + 10;
-                    painter.Ellipse(Layer.Ground, C(e), radius, radius * Space.Proj, Pal.windupRing, 2);
+                    painter.Ellipse(Layer.Ground, C(e), radius, radius * Space.Proj, MobWindup(e, Pal.windupRing), 2);
                 }
+                if (e.action == EnemyAction.Charge) DrawMobDash(e, clock);   // 23차: 차저 돌진 꼬리 (죄종 그림)
             }
             foreach (Knot k in r.knots)
             {
@@ -171,6 +172,7 @@ namespace TOD
             foreach (Bullet b in r.bullets)
             {
                 if (DrawBossBullet(b)) continue;   // 16차: Blender 보스 탄 그림
+                if (DrawMobShot(b)) continue;      // 23차: 일반 몬스터 탄 죄종 그림
                 // 16차: 보스 탄은 층 속성 색 (bulletTint.a 만큼 섞음)
                 Color tint = b.boss != null ? (db.elements?.Def(b.element)?.boss?.bulletTint ?? default) : default;
                 painter.Ellipse(Layer.Ground, C(b), 12, 10, Painter.Alpha(Color.Lerp(Pal.bulletGlow, tint, tint.a), .35f), additive: true);
@@ -1140,6 +1142,7 @@ namespace TOD
                     case FxKind.Proc: DrawProc(fx, fade); break;
                     case FxKind.BossHit: DrawBossHit(fx, fade); break;
                     case FxKind.Growth: DrawGrowth(r, fx, fade); break;
+                    case FxKind.Slash when DrawMobSlash(fx, fade): break;   // 23차: 스토커 근접 죄종 휘두름
                     case FxKind.Transfer:
                     {
                         float t = 1 - fade;

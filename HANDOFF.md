@@ -147,6 +147,28 @@
 - **어디까지 / 다음 (02:50):** 요청 범위는 모두 끝났습니다. 다시 깨어나도 이어 할 일은 없고, 아래 '남은 것'은 사람 확인이나 다듬기입니다. Codex 한도에는 걸리지 않았습니다(그림 8장 모두 첫 시도에 받음).
 - **남은 것:** 사람이 실제 속도로 본 움직임(숨쉬기, 저글링). 리깅 값 다듬기는 페이지에서 저장하면 끝. 재봉실 NPC 가 주인공보다 꽤 큽니다(수녀 185). 문구와 수치는 임시. 알림(`ui.Say`)은 캡처 때 이미 사라져 그림에 없음.
 
+### 23차-mob-vfx (일반 몬스터 공격 이펙트를 칠죄종으로) — 완료(커밋 전, 사용자 검토 대기)
+- **찾은 것:** 스토커 근접은 공용 흰 고리(`FxKind.Slash`, `fx.meleeSlashColor` 분홍), 차저 돌진은 공용 분홍 예고 길만 있고 돌진 중 그림 없음, 슈터 탄은 코드 타원(`palette.bullet`). 죄종 시트를 쓰는 건 보스 탄뿐이었습니다. 예고 고리, 돌진 길도 옛 분홍 공용 색이었습니다.
+- **시트 (Blender, 그룹 `mob`, 21장 × 본체와 `_glow`):** 그림 함수 `tools/render_mob_attacks_sins.py`(`render_element_vfx.py`가 죄종 파일 다음에 exec). 다시 굽기 `blender -b -P tools/render_element_vfx.py -- C:/Project/TOD mob`(또는 시트 이름), 확인 `python tools/preview_element_vfx.py 22 mob` → `Temp/Shots/vfx22_mob.png`.
+  | 시트 (`Assets/Art/VFX/16/`) | 칸 | 칸 px | 재생 | 피벗 | 방향 |
+  |---|---|---|---|---|---|
+  | `mob_<죄종>_slash` (스토커 근접) | 12 | 256 | 한 번, 효과 길이에 맞춤(fps 0) | (.5, .5) 몸 가운데 | +x = 주인공 쪽, 위 → 아래로 휘두름 |
+  | `mob_<죄종>_shot` (슈터 탄) | 8 | 128 | 반복 16fps | (.5, .5) | +x = 진행, 꼬리 −x |
+  | `mob_<죄종>_dash` (차저 돌진 꼬리) | 8 | 256 | 반복 16fps | (.5, .5) 몸 가운데 | +x = 돌진, 꼬리 −x |
+  - 모양(근접 / 탄 / 돌진): 분노 불꽃 발톱 세 줄과 불씨 / 불꽃 창끝 / 불길 혀 자국 · 나태 축 처지는 무거운 안개 호와 졸린 구름, Z / 늘어진 안개 방울(졸린 눈, Z) / 가라앉는 안개 둑 · 시기 가시 덩굴 채찍과 곁눈질하는 눈, 독방울 / 갈고리 독 가시 / 끌리는 가시 덩굴 · 탐욕 금박 흩날리는 금빛 호와 튀는 금화 / 빙글 도는 금화와 금박 / 쏟아지는 금화 · 식탐 앞에서 콱 무는 아가리, 부스러기와 침 / 빙글 도는 닭다리 / 기름 자국과 부스러기 · 색욕 하트로 말리는 분홍 리본 채찍, 꽃잎 / 하트 화살 / 분홍 리본 자락과 하트 · 교만 금테 보랏빛 칼날, 햇살 부채, 왕관 / 금테 보석 / 금테 벨벳 망토와 반짝임. 색은 22차 죄종 색(`SIN_HEX`).
+- **코드 (빈 필드와 그리기만):** `ElementData.cs` `MobAttackFx { slash, shot, dash, windup }` → `ElementDef.mob`, `ElementConfig.mobBodyLift/mobShotLift`. `ArenaRenderer.Elements.cs` `DrawMobSlash/DrawMobShot/DrawMobDash/MobWindup`(위아래가 있는 휘두름, 꼬리는 왼쪽을 볼 때 좌우 뒤집기, 탄은 회전만). `ArenaRenderer.cs` 세 곳에 고리(예고 색, 돌진 중 꼬리, 탄, `FxKind.Slash`). `Combat.cs` 근접 Slash 에 `element`, `follow`, `angle`(조준 방향)만 더함. 클립이 없으면(무속성 등) 예전 공용 모양 그대로. `ElementArtSetup`(`TOD/Setup/16`)이 `mob_<죄종>_*`를 `def.mob`에 채움.
+- **데이터 (MCP, 씬 저장):** `mob.slash.size` 200(fps 0), `shot.size` 70, `dash.size` 200, `windup` = 죄종 색 a .85(예고 고리, 돌진 길에 섞음), `elements.mobBodyLift` .5(적 키 × .5 = 몸 가운데), `mobShotLift` 18, `fx.meleeSlash.time` .24 → .42(휘두름 12칸이 보이게. 판정 시점은 그대로).
+- **확인:** 시트 미리보기 `Temp/Shots/vfx22_mob.png`, 휘두름 확대 `mob23_slash_zoom.png`. 플레이 캡처 7죄종 `Temp/Shots/mob23_attacks_sheet.png`(원본 `mob23_raw/<죄종>.png`: 스토커 둘이 오른쪽, 왼쪽으로 휘두르는 중, 차저 둘이 좌우로 돌진 중, 슈터 예고 고리와 탄 셋). 캡처 방법은 22차 sin-art와 같고, 한 번의 `execute_code` 안에서 배치 → `GameController.Update` 두 번 → `Camera.Render`. 프로필은 `Temp/profile_backup_mobvfx.json`에서 되돌림. EditMode 67개 통과. Unity 잠금 풀어 둠.
+- **고친 것 (중간):** 휘두름 꼬리가 머리를 다 따라잡아 끝에 한 점으로 뭉치던 것 → 꼬리는 70%까지만. 빛 원이 칸 밖으로 넘쳐 게임에서 네모 테두리가 보이던 것 → 빛 반지름을 칸 안으로.
+- **남은 것:** 실제 속도로 본 느낌(정지 화면만 봄). 식탐 아가리는 비스듬히 조준하면 같이 기울어집니다. 플레이 모드 때문에 `Assets/Fonts/Jua/Jua_SDF.asset`, `Assets/Materials/FateVideo.renderTexture`가 바뀌어 있음(동적 글꼴 아틀라스, 렌더 텍스처. 이 작업 내용 아님).
+
+### 23차-dev-sin (개발자 모드: 죄종 층 바로 가기, 미래 보기 구슬 죄종별) — 완료(커밋 전)
+
+- **죄종 층으로 바로 가기** (패널 '진행' 아래 `dev-sin-floors`, 죄종 7개): 지금 층 번호 그대로 그 죄종의 새 맵 1라운드(`GameController.DevGoToSin` → `Combat.DevGoToFloor(r, floor, sin)`, `PickFloorElement`가 `devFloorElement`를 씀, 이미 나온 죄종이어도). 등반 전(재봉실)에서 누르면 등반을 시작한 뒤 옮김(평소 등반 시작과 같아서 챙긴 시작 조각, 읽어 둔 운명이 쓰임). 옛 '층 속성' 줄(지금 맵에서 속성만 바꿈)은 그대로.
+- **미래 보기 구슬** (`dev-fate-sins`, 죄종 7개): 재봉실에서 누르면 다락 방으로 옮기고(`GoToAttic`) 모이라 창을 연 뒤 그 죄종의 구슬 연출(영상, 자막, 색)을 틂(`GameController.DevShowFate` → `ShowFate(false, def)`). 파편을 내지 않고 `Profile.fate`도 안 바꿈. 등반 중에는 "재봉실에서만" 문구.
+- 죄종 버튼 줄은 `DevTools.SinButtons`로 만듦(옛 층 속성 줄도 이것으로 바꿈).
+- 확인: EditMode 67개 통과. 캡처 `Temp/Shots/dev23_sin_floor_greed.png`(탐욕 층 1라운드, 패널 새 줄), `dev23_fate_pride_sheet.png`(안내 → 줌 → 교만 영상과 자막 → 모이라로 돌아옴). 색욕 미래 보기도 영상이 나오는 것을 봄. 파편 573, 운명 0 그대로.
+
 ## 22차 (2026-11-24 시작) — 8속성 → 칠죄종, 신화 등급 아버지의 도안, 7층, 미래 보기 구슬 연출(Flow 영상), 인게임 그림 전면 교체 — 진행 중
 
 > 작업이 끊기면 여기서 이어 갑니다. 단계를 마칠 때마다 체크합니다. 사용자가 질문에 답한 결정입니다(2026-11-24 저녁).

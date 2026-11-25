@@ -40,6 +40,15 @@ namespace TOD
         public Color bulletTint;              // 보스 탄 색 (a = 섞는 양)
     }
 
+    // 23차 일반 몬스터 공격 (Blender mob_<죄종>_slash/shot/dash, tools/render_mob_attacks_sins.py). 클립이 비어 있으면 예전 공용 모양으로 그린다.
+    [Serializable] public class MobAttackFx
+    {
+        public FlipClip slash;                // 스토커 근접 휘두름 (몸 가운데, +x = 주인공 쪽). size = 칸 높이 (캔버스 px)
+        public FlipClip shot;                 // 슈터 탄 (+x = 날아가는 쪽, 꼬리 −x)
+        public FlipClip dash;                 // 차저 돌진 꼬리 (몸 가운데, +x = 돌진 방향)
+        public Color windup;                  // 공격 예고(근접·탄 고리, 돌진 길) 색 (a = 공용 색과 섞는 양)
+    }
+
     [Serializable] public class ElementDef
     {
         public Element element;
@@ -68,6 +77,8 @@ namespace TOD
         public string procText;               // 적 머리 위 작은 글자 (예: "화염 폭발") — 비우면 안 띄움
         [Header("보스 속성 공격")]
         public BossElementAttack boss;
+        [Header("23차 일반 몬스터 공격 (스토커, 차저, 슈터)")]
+        public MobAttackFx mob;
     }
 
     [Serializable] public class AffinityConfig
@@ -104,6 +115,9 @@ namespace TOD
         public Color darkColor;               // 시야 좁힘 바깥 색
         public Sprite visionMask;             // 가운데가 뚫린 둥근 그림 (가운데 투명, 바깥 불투명)
         public float playerDotInterval;       // 주인공 화상·중독 숫자를 모아 띄우는 간격
+        [Header("23차 일반 몬스터 공격 연출")]
+        public float mobBodyLift;             // 근접 휘두름·돌진 꼬리를 놓는 몸 가운데 높이 = 적 키 × 이 값
+        public float mobShotLift;             // 탄 그림을 바닥점에서 띄우는 높이 (캔버스 px)
 
         public ElementDef Def(Element e) => defs == null ? null : Array.Find(defs, d => d.element == e);
 

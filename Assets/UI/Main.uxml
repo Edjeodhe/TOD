@@ -489,6 +489,10 @@
                 </ui:VisualElement>
                 <ui:Label text="지정 층으로 (1라운드부터)" class="dev-sub" />
                 <ui:VisualElement name="dev-floors" class="dev-row" />
+                <ui:Label text="죄종 층으로 바로 가기 (지금 층 번호, 새 맵 1라운드. 등반 전이면 등반 시작)" class="dev-sub" />
+                <ui:VisualElement name="dev-sin-floors" class="dev-row" />
+                <ui:Label text="미래 보기 구슬 (재봉실, 파편과 읽어 둔 운명은 그대로)" class="dev-sub" />
+                <ui:VisualElement name="dev-fate-sins" class="dev-row" />
                 <ui:Label text="주인공" class="dev-head" />
                 <ui:VisualElement class="dev-row">
                     <ui:Button name="dev-god" text="무적" class="dev-btn" />

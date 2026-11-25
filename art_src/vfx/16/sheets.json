@@ -973,5 +973,278 @@
    0.5,
    0.2
   ]
+ },
+ "mob_wrath_slash": {
+  "group": "mob",
+  "element": "wrath",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_wrath_shot": {
+  "group": "mob",
+  "element": "wrath",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_wrath_dash": {
+  "group": "mob",
+  "element": "wrath",
+  "frames": 8,
+  "size": 256,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_sloth_slash": {
+  "group": "mob",
+  "element": "sloth",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_sloth_shot": {
+  "group": "mob",
+  "element": "sloth",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_sloth_dash": {
+  "group": "mob",
+  "element": "sloth",
+  "frames": 8,
+  "size": 256,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_pride_slash": {
+  "group": "mob",
+  "element": "pride",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_pride_shot": {
+  "group": "mob",
+  "element": "pride",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_pride_dash": {
+  "group": "mob",
+  "element": "pride",
+  "frames": 8,
+  "size": 256,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_greed_slash": {
+  "group": "mob",
+  "element": "greed",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_greed_shot": {
+  "group": "mob",
+  "element": "greed",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_greed_dash": {
+  "group": "mob",
+  "element": "greed",
+  "frames": 8,
+  "size": 256,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_gluttony_slash": {
+  "group": "mob",
+  "element": "gluttony",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_gluttony_shot": {
+  "group": "mob",
+  "element": "gluttony",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_gluttony_dash": {
+  "group": "mob",
+  "element": "gluttony",
+  "frames": 8,
+  "size": 256,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_lust_slash": {
+  "group": "mob",
+  "element": "lust",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_lust_shot": {
+  "group": "mob",
+  "element": "lust",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_lust_dash": {
+  "group": "mob",
+  "element": "lust",
+  "frames": 8,
+  "size": 256,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_envy_slash": {
+  "group": "mob",
+  "element": "envy",
+  "frames": 12,
+  "size": 256,
+  "fps": 24,
+  "duration": 0.5,
+  "loop": false,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_envy_shot": {
+  "group": "mob",
+  "element": "envy",
+  "frames": 8,
+  "size": 128,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "mob_envy_dash": {
+  "group": "mob",
+  "element": "envy",
+  "frames": 8,
+  "size": 256,
+  "fps": 16,
+  "duration": 0.5,
+  "loop": true,
+  "pivot": [
+   0.5,
+   0.5
+  ]
  }
 }

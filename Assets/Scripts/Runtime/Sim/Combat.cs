@@ -1139,11 +1139,16 @@ namespace TOD
             return true;
         }
 
-        public void DevGoToFloor(RunState r, int floor)
+        // sin = 그 층의 죄종을 정해 둔다 (개발자 모드 '죄종 층으로 바로 가기'). null 이면 평소처럼 무작위
+        public void DevGoToFloor(RunState r, int floor, Element? sin = null)
         {
             r.floor = Mathf.Clamp(floor, 1, A.finalFloor);
+            devFloorElement = sin;
             BeginFloor(r);
+            devFloorElement = null;
         }
+
+        Element? devFloorElement;
 
         // 욕망 최대: 게이지를 끝 바로 아래까지 채운다 (끝에 닿으면 폭주/각성, 폭주 중이면 엔딩이라 그것은 '욕망 +'로 넘긴다)
         public void DevMaxDesire(RunState r) => r.desire = Mathf.Max(r.desire, r.maxDesire - .5f);
@@ -1453,7 +1458,9 @@ namespace TOD
                     case EnemyAction.WindupDash: e.action = EnemyAction.Charge; e.timer = E.chargeTime; break;
                     case EnemyAction.WindupMelee:
                         if (gap < E.meleeRange) HitPlayer(r, e.damage, e);
-                        Spawn(r, FxKind.Slash, e.x, e.y, X.meleeSlash).color = X.meleeSlashColor;
+                        Fx slash = Spawn(r, FxKind.Slash, e.x, e.y, X.meleeSlash);
+                        slash.color = X.meleeSlashColor;
+                        slash.element = e.element; slash.follow = e; slash.angle = Mathf.Atan2(e.aim.y, e.aim.x);   // 23차: 죄종 휘두름 그림 (+x = 주인공 쪽)
                         e.action = EnemyAction.Rest; e.timer = E.restAfterMelee;
                         break;
                     case EnemyAction.WindupShot: EnemyShots(r, e, enraged); e.action = EnemyAction.Rest; e.timer = E.restAfterShot; break;

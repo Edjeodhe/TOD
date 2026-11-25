@@ -89,6 +89,7 @@ namespace TOD
             if (pool.Count == 0) { r.floorElements.Clear(); pool = defs.Select(d => d.element).ToList(); }
             Element pick = pool[Mathf.Min(pool.Count - 1, Mathf.FloorToInt(r.random() * pool.Count))];
             if (r.floor <= 1 && r.fate > 0 && pool.Contains((Element)(r.fate - 1))) pick = (Element)(r.fate - 1);   // 19차: 모이라가 읽어 둔 1층
+            if (devFloorElement is Element dev) pick = dev;   // 23차 개발자 모드: 죄종 층으로 바로 가기 (이미 나온 죄종이어도)
             r.floorElements.Add(pick);
             r.floorElement = pick;
         }

@@ -86,27 +86,16 @@ namespace TOD
             Bind("dev-unlock-notice", game.DevShowUnlocks);
 
             // 16차: 층 속성 바꾸기 (몬스터, 바닥 색조, 장식, 암시 문구가 함께 바뀐다)
-            VisualElement floors = panel.Q("dev-floor-elements");
-            if (floors != null && Db.elements?.defs != null)
+            SinButtons("dev-floor-elements", (element, name) =>
             {
-                floors.Clear();
-                foreach (ElementDef def in Db.elements.defs)
-                {
-                    SetDef owner = Db.gear.sets.FirstOrDefault(s => s.element == def.element);
-                    var button = (Button)setButton.Instantiate().Q("set");
-                    button.Q("dot").style.backgroundColor = owner != null ? owner.color : Db.Tone(def.element).color;
-                    button.Q<Label>("label").text = owner != null ? owner.name : def.element.ToString();
-                    Element element = def.element;
-                    button.clicked += () =>
-                    {
-                        if (Run == null) { Say("등반 중에만 바꿀 수 있습니다"); return; }
-                        game.Combat.DevSetFloorElement(Run, element);
-                        game.arena.BeginRound(Run);   // 바닥 색조, 속성 장식 다시 깔기
-                        Say($"층 속성: {button.Q<Label>("label").text}");
-                    };
-                    floors.Add(button);
-                }
-            }
+                if (Run == null) { Say("등반 중에만 바꿀 수 있습니다"); return; }
+                game.Combat.DevSetFloorElement(Run, element);
+                game.arena.BeginRound(Run);   // 바닥 색조, 속성 장식 다시 깔기
+                Say($"층 속성: {name}");
+            });
+            // 23차: 죄종 층으로 바로 가기 (새 맵 1라운드), 미래 보기 구슬을 죄종마다
+            SinButtons("dev-sin-floors", (element, name) => { game.DevGoToSin(element); Say($"{name} 층 1라운드로"); });
+            SinButtons("dev-fate-sins", (element, name) => Say(game.DevShowFate(element) ?? $"미래 보기: {name}"));
 
             VisualElement floorRow = panel.Q("dev-floors");
             if (floorRow != null)
@@ -143,6 +132,25 @@ namespace TOD
         }
 
         void Say(string text) { flash = text; statusUntil = Time.unscaledTime + 2.5f; }
+
+        // 죄종마다 버튼 하나 (색 점 + 세트 이름, DevSetButton.uxml 복제). click(죄종, 이름)
+        void SinButtons(string container, System.Action<Element, string> click)
+        {
+            VisualElement row = panel.Q(container);
+            if (row == null || Db.elements?.defs == null) return;
+            row.Clear();
+            foreach (ElementDef def in Db.elements.defs)
+            {
+                SetDef owner = Db.gear.sets.FirstOrDefault(s => s.element == def.element);
+                var button = (Button)setButton.Instantiate().Q("set");
+                button.Q("dot").style.backgroundColor = owner != null ? owner.color : Db.Tone(def.element).color;
+                string name = owner != null ? owner.name : def.element.ToString();
+                button.Q<Label>("label").text = name;
+                Element element = def.element;
+                button.clicked += () => click(element, name);
+                row.Add(button);
+            }
+        }
 
         void Update()
         {

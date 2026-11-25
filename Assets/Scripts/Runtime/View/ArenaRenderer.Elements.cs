@@ -203,6 +203,60 @@ namespace TOD
             return true;
         }
 
+        // ---------------------------------------------------------------- 23차 일반 몬스터 공격 (죄종 그림)
+
+        MobAttackFx Mob(Element e) => EC?.Def(e)?.mob;
+
+        // 공격 예고 색: 죄종 색을 windup.a 만큼 섞는다 (공용 색의 알파는 그대로)
+        Color MobWindup(Enemy e, Color basic)
+        {
+            Color tint = Mob(e.element)?.windup ?? default;
+            if (tint.a <= 0) return basic;
+            Color c = Color.Lerp(basic, tint, tint.a);
+            c.a = basic.a;
+            return c;
+        }
+
+        // 화면 방향을 그림 각도로: 위아래가 있는 그림(휘두름, 꼬리)은 왼쪽을 볼 때 좌우를 뒤집어 거꾸로 서지 않게 한다
+        static (float angle, bool flip) Facing(Vector2 dir, bool upright)
+        {
+            if (upright && dir.x < 0) return (Mathf.Atan2(-dir.y, -dir.x), true);
+            return (Mathf.Atan2(dir.y, dir.x), false);
+        }
+
+        static Vector2 ScreenDir(float x, float y) => new(x, y * Space.Proj);
+
+        float MobBodyLift(Enemy e) => combat != null && EC != null ? combat.EnemyHeight(e) * EC.mobBodyLift : 0;
+
+        bool DrawMobShot(Bullet b)
+        {
+            if (b.boss != null) return false;
+            FlipClip clip = Mob(b.element)?.shot;
+            if (clip == null || !clip.Has) return false;
+            var (angle, _) = Facing(ScreenDir(b.vx, b.vy), false);
+            DrawClip(clip, C(b) - new Vector2(0, EC.mobShotLift), clip.size > 0 ? clip.size : 56, b.age + b.x * .001f, 0, true, b.spent ? .4f : 1, angle, Layer.Ground);
+            return true;
+        }
+
+        bool DrawMobSlash(Fx fx, float fade)
+        {
+            FlipClip clip = Mob(fx.element)?.slash;
+            if (clip == null || !clip.Has || float.IsNaN(fx.angle)) return false;
+            float age = 1 - fade;
+            Vector2 body = FxAt(fx) - new Vector2(0, fx.follow is Enemy e ? MobBodyLift(e) : 0);
+            var (angle, flip) = Facing(ScreenDir(Mathf.Cos(fx.angle), Mathf.Sin(fx.angle)), true);
+            DrawClip(clip, body, clip.size > 0 ? clip.size : 190, age * fx.max, age, false, 1, angle, Layer.Effects, flip);
+            return true;
+        }
+
+        void DrawMobDash(Enemy e, float clock)
+        {
+            FlipClip clip = Mob(e.element)?.dash;
+            if (clip == null || !clip.Has) return;
+            var (angle, flip) = Facing(ScreenDir(e.aim.x, e.aim.y), true);
+            DrawClip(clip, C(e) - new Vector2(0, MobBodyLift(e)), clip.size > 0 ? clip.size : 220, clock + e.x * .001f, 0, true, 1, angle, Layer.Ground, flip);
+        }
+
         // 결박 폭발: 어둠, 피, 바람, 독은 Blender bind_<속성>_burst (발밑). 그렸으면 true (기본 빛살 모양 대신)
         bool DrawBindClip(Fx fx, float fade)
         {

@@ -549,18 +549,19 @@ namespace TOD
             AskUpgrade(u, -1, string.Format(db.hub.confirmPlain ?? db.ui.upgradeBody, Cost(u), u.name));
         }
 
-        string FateSpeech()
+        string FateSpeech(ElementDef def = null)
         {
-            ElementDef def = db.elements?.Def(Moira.FateElement(Profile));
+            def ??= db.elements?.Def(Moira.FateElement(Profile));
             if (def == null || string.IsNullOrEmpty(def.fateLine)) return null;
             return string.IsNullOrEmpty(db.hub.fateIntro) ? def.fateLine : db.hub.fateIntro + " " + def.fateLine;
         }
 
         // 22차 미래 보기: 점성구가 떠오름 → 파편 → 자세히 살펴보기(E) → 모이라가 구슬을 만지고 빨려 드는 줌 → 구슬 속 죄종 영상과 속삭임 자막 (GameUI.FateShow.cs, FateOrbView).
         // 끝나면(Esc 건너뛰기 포함) 원래 화면으로 돌아오고 모이라가 같은 미래를 한 줄로 남긴다.
-        void ShowFate(bool paid)
+        // def = 보여 줄 죄종 (개발자 모드 미리 보기). null 이면 읽어 둔 운명
+        void ShowFate(bool paid, ElementDef def = null)
         {
-            ElementDef def = db.elements?.Def(Moira.FateElement(Profile));
+            def ??= db.elements?.Def(Moira.FateElement(Profile));
             if (def == null) { ui.SayMoira(moiraLine); return; }
             Color tint = def.fateColor.a > 0 ? def.fateColor : def.hintColor.a > 0 ? def.hintColor : Color.white;   // 구슬, 자막, 구슬 바깥 색
             string[] lines = def.fateWhispers != null && def.fateWhispers.Length > 0 ? def.fateWhispers : new[] { def.fateLine };

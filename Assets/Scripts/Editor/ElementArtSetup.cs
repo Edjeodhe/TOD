@@ -1,7 +1,7 @@
 // 16차: 속성 그림을 데이터(GameDatabase.elements)에 연결하는 메뉴. 그림이 들어올 때마다 다시 실행하면 된다 (MCP execute_menu_item).
 //  · Assets/Art/VFX/16/*.png (Blender 시트, element-vfx 세션): 가로 스트립을 정사각 칸으로 자르고 피벗은 art_src/vfx/16/sheets.json.
 //      proc_<속성> → procFx · boss_<속성>_slam → boss.fx · boss_<속성>_bullet → boss.bullet · boss_<속성>_pool → boss.pool
-//      decor_<속성>_loop → animated · bind_<속성>_burst → bindBurst   (각 <이름>_glow.png 는 같은 클립의 빛)
+//      decor_<속성>_loop → animated · bind_<속성>_burst → bindBurst · mob_<죄종>_slash/shot/dash → mob (23차)   (각 <이름>_glow.png 는 같은 클립의 빛)
 //  · Assets/sprites/enemy_<종류>_<파츠>_<속성>.png → skins (원래 파츠 enemy_<종류>_<파츠>.png 와 가져오기 설정·피벗을 맞춘다)
 //  · Assets/sprites/decor_<속성>_<이름>.png → props
 // 크기·세기 같은 수치는 건드리지 않는다 (fps 만 시트 메타에서 넣는다). 씬은 저장하지 않는다 (Unity 잠금을 잡은 쪽이 저장).
@@ -55,6 +55,10 @@ namespace TOD.EditorTools
                 n += Fill(ref def.boss.bullet, $"boss_{id}_bullet", sheets);
                 n += Fill(ref def.boss.pool, $"boss_{id}_pool", sheets);
                 n += Fill(ref def.bindBurst, $"bind_{id}_burst", sheets);
+                def.mob ??= new MobAttackFx();   // 23차 일반 몬스터 공격
+                n += Fill(ref def.mob.slash, $"mob_{id}_slash", sheets);
+                n += Fill(ref def.mob.shot, $"mob_{id}_shot", sheets);
+                n += Fill(ref def.mob.dash, $"mob_{id}_dash", sheets);
                 FlipClip loop = null;
                 if (Fill(ref loop, $"decor_{id}_loop", sheets) > 0)
                 {

@@ -2,7 +2,7 @@
 
 실행:
   "C:/Program Files/Blender Foundation/Blender 5.3/blender.exe" -b -P tools/render_element_vfx.py -- C:/Project/TOD [그룹|시트 이름 ...]
-  그룹: boss(내려찍기·탄·장판) proc(부가 발동) decor(맵 장식) bind(결박 폭발). 아무것도 안 주면 전부.
+  그룹: boss(내려찍기·탄·장판) proc(부가 발동) decor(맵 장식) bind(결박 폭발) mob(23차 일반 몬스터 공격). 아무것도 안 주면 전부.
 
 출력 (Assets/Art/VFX/16, 시트마다 두 장):
   <name>.png       본체. 속성 색을 칠한 종이 컷아웃 + 거친 잉크 외곽. 보통 알파 합성(Blend SrcAlpha OneMinusSrcAlpha), 흰색 틴트로 그린다.
@@ -1484,6 +1484,14 @@ exec(compile(_sins_src.read_text(encoding="utf-8"), str(_sins_src), "exec"), glo
 sheet_set(SINS, ("wrath", "envy"), False)
 for el in SINS:
     sheet(f"bind_{el}_burst", "bind", globals()[f"bind_{el}"], el, 14, 30, 256, False, PIVOT_GROUND)
+
+# 23차 일반 몬스터 공격 (스토커 근접, 슈터 탄, 차저 돌진): 그림 함수는 render_mob_attacks_sins.py
+_mob_src = Path(__file__).with_name("render_mob_attacks_sins.py")
+exec(compile(_mob_src.read_text(encoding="utf-8"), str(_mob_src), "exec"), globals())
+for el in SINS:
+    sheet(f"mob_{el}_slash", "mob", globals()[f"mobslash_{el}"], el, 12, 24, 256, False, PIVOT_CENTER, ink=2.2)
+    sheet(f"mob_{el}_shot", "mob", globals()[f"mobshot_{el}"], el, 8, 16, 128, True, PIVOT_CENTER, ink=1.6, wob=.025)
+    sheet(f"mob_{el}_dash", "mob", globals()[f"mobdash_{el}"], el, 8, 16, 256, True, PIVOT_CENTER, ink=2.0)
 
 
 # ---------------------------------------------------------------- 렌더 + 잉크 후처리
