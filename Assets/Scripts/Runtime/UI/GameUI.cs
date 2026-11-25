@@ -394,13 +394,6 @@ namespace TOD
             return s > .3f && v < .85f ? Color.HSVToRGB(h, s, .97f) : c;
         }
 
-        // 카드 띠의 세트 이름: 같은 색조를 밝고 조금 연하게 (검은 테두리 위에서 또렷하게)
-        static Color TagColor(Color c)
-        {
-            Color.RGBToHSV(c, out float h, out float s, out float v);
-            return Color.HSVToRGB(h, Mathf.Min(s, .75f), Mathf.Max(v, 1f));
-        }
-
         static void SetBorder(VisualElement e, Color c)
         {
             e.style.borderTopColor = c; e.style.borderBottomColor = c; e.style.borderLeftColor = c; e.style.borderRightColor = c;
@@ -496,13 +489,15 @@ namespace TOD
             string unique = UniqueText(def);
             if (unique != null) effect += "\n" + unique;
             // 23차: 카드 아래 "N칸 조각, 세트: 보너스" 줄과 소개 글은 쓰지 않는다 (세트는 띠, 효과는 effect 에 이미 있음)
-            // 카드 색은 등급(코스트) 색: 일반 회색 · 레어 하늘색 · 유니크 노란색 · 레전더리 붉은색. 세트 색은 조각 모양에 남긴다.
+            // 24차: 카드 색(종이·돌기·아이콘 테두리·띠)은 세트 색. 등급 색은 띠의 등급 글씨(일반 회색 · 레어 하늘색 · 유니크 노란색 · 레전더리 붉은색)에만.
             Color[] ranks = db.gear.rankColors;
             Color rankColor = ranks != null && def.cost < ranks.Length ? ranks[def.cost] : set.color;
-            // 띠: 등급 + 세트 이름(밝힌 세트 색 글씨, 리치 텍스트). 글자 전체에 검은 테두리(.puzzle-tag)를 둘러 어떤 띠 색에서도 읽히게.
-            string setTag = $"<color=#{ColorUtility.ToHtmlStringRGB(TagColor(set.color))}>{set.name}</color>";
-            Button card = PuzzleCard(container, rankColor, def.icon, $"{db.gear.rankNames[def.cost]}  {setTag}", def.name, effect, null, onClick);
+            // 띠: 등급(등급 색 글씨) + 세트 이름(기본 크림색 글씨). 글자 전체에 검은 테두리(.puzzle-tag)를 둘러 어떤 띠 색에서도 읽히게.
+            string rankTag = $"<color=#{ColorUtility.ToHtmlStringRGB(NameColor(rankColor))}>{db.gear.rankNames[def.cost]}</color>";
+            Button card = PuzzleCard(container, set.color, def.icon, $"{rankTag}  {set.name}", def.name, effect, null, onClick);
             card.AddToClassList($"rank-{def.cost}");
+            // 띠 종이는 누런 양피지라 흰빛을 섞으면 푸른 세트(나태)가 올리브색이 된다 → 세트 색을 그대로 물들인다
+            card.Q("band").style.unityBackgroundImageTintColor = set.color;
             float shine = db.gear.rankShine != null && def.cost < db.gear.rankShine.Length ? db.gear.rankShine[def.cost] : 0;
             VisualElement band = card.Q("shine");
             band.style.display = shine > 0 ? DisplayStyle.Flex : DisplayStyle.None;

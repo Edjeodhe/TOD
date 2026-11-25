@@ -28207,7 +28207,7 @@ MonoBehaviour:
     merchantOffset: {x: 180, y: -80}
     restStairsOffset: {x: 0, y: -260}
     bossOffset: {x: 0, y: -300}
-    interactRadius: 80
+    interactRadius: 110
     stairsRadius: 150
     towerStitchTime: 0.45
     towerRiseTime: 1.5
@@ -30701,7 +30701,7 @@ MonoBehaviour:
     promptActive: {r: 1, g: 0.91, b: 0.72, a: 1}
     promptIdle: {r: 0.85, g: 0.8, b: 0.86, a: 0.75}
     propLabelPx: 15
-    altarHeight: 150
+    altarHeight: 300
     merchantHeight: 105
     stairScale: 0.28
     stairRise: 25
