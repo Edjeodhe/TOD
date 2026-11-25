@@ -176,7 +176,7 @@
 - 캡처 `Temp/Shots/upgrade23_moira_cards.png`, `_zoom.png`.
 - **주의:** `TOD/Setup/1. Texture Imports`를 돌리면 몬스터 파츠 60장의 사용자 피벗(alignment 9)이 아래 가운데(7)로 바뀌고 포션 아이콘 설정도 바뀜. 이번에는 `git checkout -- 'Assets/sprites/enemy_*.meta' 'Assets/sprites/potion_*.meta'`로 되돌림. 새 그림만 넣을 때는 이 메뉴 뒤에 꼭 `.meta` 변경을 확인하거나, 메뉴 대신 그 파일만 스프라이트로 임포트할 것.
 
-### 23차-hub-dash (재봉실에서도 Space 대시, 대시 때 몸이 뒤로 돌던 것) — 완료(커밋 전)
+### 23차-hub-dash (재봉실에서도 Space 대시, 대시 때 몸이 뒤로 돌던 것, 대시 끝 들썩임) — 완료 (커밋 01b6b47, b54799b, origin/main 에 푸시)
 
 - **재봉실 대시:** `HubView.Tick(..., dash)`가 전투 대시와 같은 거리·시간·자세(`feel.dashDuration/dashDistance/dashEase`, `hero.dashHold`)로 움직임. 대시 칸, 잔상, 먼지는 없고 연달아 누를 때 `dashMinCooldown`만. 서 있으면 보는 쪽의 반대로 물러남. 창이 열려 있거나 방을 옮기는 중엔 안 됨. 소리 `dash`는 `GameController.Hub`가 냄. 검증용 `GameController.hubAutoDash`.
 - **대시 방향 (전투와 재봉실 같이):** 예전엔 대시 때 `facing = -dx`로 몸을 뒤로 돌렸다가 돌아와서 고개가 한 번 돌아가 보였음 → 움직이며 대시하면 가는 쪽을 보고, 서서 대시하면 보는 쪽 그대로(`Combat.StartDash`).
@@ -184,6 +184,8 @@
 - **확인 (2026-11-25, 이어받은 세션):** 컴파일 오류 없음, EditMode 67개 통과. 판정: 서서 대시 = 보는 쪽 그대로 150 물러남, 연달아 누르면 막힘, 창이 열리면 안 됨. 캡처 `Temp/Shots/hubdash23_zoom.png`(대기 → 서서 대시 → 달리기 → 왼쪽 대시 → 왼쪽 달리기), `hubdash23_sheet.png`. 실제 속도로 본 느낌은 사람 확인 필요.
 - **대시 끝 들썩임 (사용자 "끝날 때 즈음 살짝 점프, 부자연스러움"):** 대시 떠오름(`visual.dodgeHop` 15px)이 `InDash`(dash + dashGrace) 동안만 이어져서, dashGrace 가 없는 재봉실에선 끝 프레임에 머리가 41.9 → 29.4 로 툭 떨어진 뒤 웅크림(`rig.dash` rootY)이 풀리며 다시 솟았음. 전투도 착지가 가팔라 0.6px 다시 솟음. → `HeroView.Hop(t)`: 대시 자세가 이어지는 동안(`action == Dash`, 길이 `rig.dash.length`) 떠 있고 모양은 sin^1.5(양 끝 기울기 0)라 사뿐히 내려앉음. 그림자 줄이기도 같은 조건. (sin(π)가 작은 음수라 Pow 가 NaN → `Max(0, …)`.)
   - 머리 높이(px, 1/60초마다): 재봉실 … 43.2 43.0 41.9 40.1 37.7 35.3 33.1 31.7 31.8 31.9, 전투 … 42.9 41.6 39.6 37.3 34.8 32.7 31.6 31.8 31.9. EditMode 67개 통과.
+  - 측정 방법: 플레이 모드에서 `execute_code`로 `HubView.Tick`(재봉실) 또는 새 `Player`에 전투 순서(dashGrace 감소 → dash 감소, 끝나면 grace 시작 → dashHold 뒤 Idle)를 흉내 내 `HeroView.Pose/Apply`를 부르고, `rig.head` 높이 − 발밑을 캔버스 px로 봄.
+- **어디까지 / 다음:** 이 절의 일은 모두 끝났습니다. 남은 것은 사람이 실제 속도로 본 대시 느낌(떠오름 15px와 착지 곡선은 `visual.dodgeHop`, `HeroView.Hop`에서 조절)뿐입니다. Unity 잠금 풀어 둠.
 
 ## 22차 (2026-11-24 시작) — 8속성 → 칠죄종, 신화 등급 아버지의 도안, 7층, 미래 보기 구슬 연출(Flow 영상), 인게임 그림 전면 교체 — 진행 중
 
