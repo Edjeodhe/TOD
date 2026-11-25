@@ -134,6 +134,7 @@ namespace TOD
             Run = null;
             paused = false;
             animatingDeath = false;
+            EndFloorFade();
             ui.CloseDialog();
             arena.Clear();
             Shader.SetGlobalFloat(EnabledId, 0);
@@ -171,7 +172,7 @@ namespace TOD
 
         public void TogglePause()
         {
-            if (Run == null || Run.phase == Phase.Victory || Run.outcome != Outcome.None || (Opened != "" && Opened != "pause")) return;
+            if (Run == null || Run.phase == Phase.Victory || Run.outcome != Outcome.None || (Opened != "" && Opened != "pause") || FloorFading) return;
             paused = !paused;
             if (paused) ui.ShowDialog("pause"); else ui.CloseDialog();
         }
@@ -284,18 +285,26 @@ namespace TOD
             Run.effects.Add(new Fx { kind = FxKind.Sprite, sprite = sprite, x = Run.player.x, y = Run.player.y, size = spec.size, time = spec.time, max = spec.time, lift = spec.lift, alpha = spec.alpha });
         }
 
-        // 보스 정화 뒤 계단에서: 욕망 흡수/거절 후 바로 다음 층으로 올라간다.
+        // 보스 정화 뒤 계단에서: 욕망 흡수/거절 → 23차: 그 층에서 문구가 뜨고 화면이 어두워진 뒤 다음 층으로 (GameController.FloorFade.cs)
         public void Absorb()
         {
+            if (FloorFading) return;
             Combat.ChooseDesire(Run, Run.offer.id);
             AddPlayerFx(FxSprite.Boss, db.fx.absorb);
             sound.Play("desire");
             ui.CloseDialog();
             ui.ShowDesireEcho(true);   // 23차: "달다. 그래서 더 무섭다." (데이터 desire.swallowLine)
-            if (Run.outcome == Outcome.None) Ascend();
+            if (Run.outcome == Outcome.None) BeginFloorFade(true);
         }
 
-        public void Refuse() { Combat.ChooseDesire(Run, null); ui.ShowDesireEcho(false); Ascend(); }
+        public void Refuse()
+        {
+            if (FloorFading) return;
+            Combat.ChooseDesire(Run, null);
+            ui.CloseDialog();
+            ui.ShowDesireEcho(false);
+            BeginFloorFade(false);
+        }
         // ---------------------------------------------------------------- shop (단추)
 
         int Price(WareDef ware)
@@ -725,7 +734,7 @@ namespace TOD
         void ReadKeys()
         {
             Keyboard k = Keyboard.current;
-            if (k == null) return;
+            if (k == null || FloorFading) return;   // 23차: 욕망을 고른 뒤 다음 층으로 넘어가는 동안은 키를 받지 않는다
             if (k.escapeKey.wasPressedThisFrame) Escape();
             if (k.enterKey.wasPressedThisFrame && screen == UiScreen.Lobby && Run == null && Opened == "") StartRun();
             if (k.rKey.wasPressedThisFrame && (screen == UiScreen.Inventory || runInventory)) Rotate();
@@ -809,10 +818,11 @@ namespace TOD
             TickMerchant();   // 16차: 상인 단추 자세와 말풍선 (GameController.Merchant.cs)
             TickNpcs(dt);     // 23차: NPC 말하기 자세와 말풍선 (GameController.Npc.cs)
             ui.BeginLabels();
+            TickFloorFade();   // 23차: 욕망을 고른 뒤 어두워지며 다음 층으로 (GameController.FloorFade.cs)
             if (IsCombat)
             {
                 bool canAct = Run.freeze <= 0;
-                Combat.Update(Run, dt, ReadCombatInput());
+                Combat.Update(Run, dt, FloorFading ? new CombatInput { aim = aim } : ReadCombatInput());   // 23차: 넘어가는 동안은 제자리
                 if (canAct) { fireRequested = false; pullRequested = false; dashRequested = false; }
                 if (Combat.DesireFraction(Run) >= db.desire.highFraction && Clock - lastWhisper > whisperInterval) { sound.Play("whisper"); lastWhisper = Clock; }
             }

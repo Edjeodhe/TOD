@@ -278,6 +278,14 @@ namespace TOD
         public float echoCharTime;            // 글자 하나가 번지는 시간 (초)
         public float echoHold;                // 다 쓰인 뒤 머무는 시간 (초)
         public float echoFade;                // 사라지는 시간 (초)
+        [Header("23차: 욕망을 고른 뒤 그 층에서 어두워지며 다음 층으로 (GameController.FloorFade.cs)")]
+        public Color swallowTint;             // 삼킴: 고르자마자 화면 전체에 번지는 붉은 기 (a = 섞는 양)
+        public float tintIn;                  // 붉은 기가 다 번지기까지 (초)
+        public Color swallowDark;             // 삼킴: 다 어두워졌을 때 색 (검붉은, a = 진하기)
+        public Color refuseDark;              // 고개를 돌린다: 다 어두워졌을 때 색 (검정, a = 진하기)
+        public float darkOutTime;             // 어두워지는 시간 (초). 문구가 사라지는 때에 맞춰 다 어두워진다
+        public float darkHold;                // 다 어두워진 채 머무는 시간 (초). 이때 다음 층이 열린다
+        public float darkInTime;              // 다음 층에서 밝아지는 시간 (초)
     }
 
     // 세트 = 속성. 같은 색 조각을 맞대 단계(thresholds)가 켜지면 실이 그 속성 모습이 되고, 당길 때 한 타마다 속성 피해가 더해지며 부가 효과가 붙는다.

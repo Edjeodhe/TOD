@@ -28761,8 +28761,15 @@ MonoBehaviour:
       \uAC04\uB2E4."
     echoDelay: 0.35
     echoCharTime: 0.075
-    echoHold: 1.9
+    echoHold: 1.4
     echoFade: 0.9
+    swallowTint: {r: 0.55, g: 0.04, b: 0.06, a: 0.22}
+    tintIn: 0.8
+    swallowDark: {r: 0.09, g: 0.01, b: 0.02, a: 1}
+    refuseDark: {r: 0.02, g: 0.02, b: 0.03, a: 1}
+    darkOutTime: 1.8
+    darkHold: 0.35
+    darkInTime: 0.9
   gear:
     sets:
     - id: wrath

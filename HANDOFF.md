@@ -99,6 +99,13 @@
 ### 조율 확인 (02:55) — 남은 것 → 모두 끝 (2026-11-25 09시, 23-fix 세션)
 - [x] **23-inventory:** E 안내와 포션 칸 겹침. 포션 줄(`.potion-bar`, Potion.uss)을 오른쪽 아래(right 26px, bottom 50px)로 옮긴 것(커밋 d00eabb에 들어 있었음)을 플레이로 확인. "E 증강 고르기"는 아래 가운데(bottom 100px), 포션 칸은 오른쪽 아래로 안 겹침: `Temp/Shots/inv23_prompt_combat.png`, `inv23_prompt_cleared2.png`.
 - [x] **23-ui:** 욕망 쪽지와 층 암시 겹침. 층 암시는 쪽지가 사라진 뒤에 뜨게 미룸(`ElementHud`가 `GameUI.DesireEchoEnd`를 봄, d00eabb). 그런데 쪽지를 `top: 14%`로 올린 탓에 층 이름 띠(`.banner` "2층  거울 무도회", top 146px)와 새로 겹쳐서, 쪽지를 `top: 226px`로 내림(Main.uss `.desire-echo`). 1920×1080 기준 띠 146~198, 쪽지 221~380, 층 암시 396~456(쪽지가 사라진 뒤에만). 삼킴/안 삼킴 모두 확인: `Temp/Shots/ui23_desire_fix_<swallow|refuse>_0~5.png`, 모음 `ui23_desire_fix_sheet.png`, 수치 `ui23_desire_fix_log.txt`.
+- [x] **23-floorfade (욕망을 고른 뒤 그 층에서 어두워지며 다음 층으로):** 예전엔 고르자마자 다음 층으로 넘어가 새 층에서 쪽지가 떴음. 이제 고른 층에 머문 채 쪽지가 뜨고, 화면 전체에 막(`Main.uxml` `floor-veil`, 쪽지 바로 아래 층이라 문구는 막 위에서 읽힘)이 덮이며 어두워진 뒤 다음 층을 엶 → 밝아짐. 코드 `Game/GameController.FloorFade.cs`, `UI/GameUI.FloorVeil.cs`.
+  - 삼킨다: 고르자마자 `swallowTint`(붉은 기, a = 섞는 양)가 `tintIn`초에 걸쳐 번지고 → 검붉은 `swallowDark`로 어두워짐. 고개를 돌린다: 붉은 기 없이 `refuseDark`(검정)로만.
+  - 시간: 쪽지가 다 사라지는 때(`GameUI.DesireEchoEnd`)에 맞춰 다 어두워지도록 그 `darkOutTime`초 전부터 어두워짐(쪽지가 없으면 바로) → 다 어두워진 순간 `Ascend()` → `darkHold`초 뒤 `darkInTime`초에 걸쳐 밝아짐. 값은 데이터 `desire`(아래 입력값).
+  - 넘어가는 동안 입력을 막음: 키(`ReadKeys`), 이동·사격·당기기·대시(`Combat.Update`에 빈 입력, 시뮬레이션은 돎), 일시정지. 새 층 암시 문구는 막이 다 걷힌 뒤(`ElementHud`가 `GameUI.FloorVeilEnd`를 봄).
+  - 입력값(씬 `GameDatabase.desire`, MCP): `swallowTint` (.55, .04, .06, a .22), `tintIn` .8, `swallowDark` (.09, .01, .02, 1), `refuseDark` (.02, .02, .03, 1), `darkOutTime` 1.8, `darkHold` .35, `darkInTime` .9. 전체가 늘어지지 않게 쪽지 `echoHold` 1.9 → 1.4. 고른 뒤 다 어두워지기까지 삼킴 약 4.1초, 안 삼킴 약 4.4초(문구가 더 김), 새 층이 다 밝아지기까지 +1.25초.
+  - 플레이 확인(개발자 보스 처치 → 정화 → 고르기, 시간별 캡처): `Temp/Shots/floorfade_<swallow|refuse>_0~8.png`, 모음 `floorfade_<swallow|refuse>_sheet.png`, 수치 `floorfade_<…>_log.txt`. 두 경우 모두 1층(보스)에서 문구 + 막 → 다 어두워진 뒤 2층 → 밝아짐, 2층에선 쪽지가 안 뜸. EditMode 68개 통과.
+  - 주의: 작업 중 `Main.uxml`에 띄어쓰기 하나가 빠져(`name="desire-echo"class=…`) UXML이 몇 분간 깨졌었음(GameUI.Init NRE). 바로 고침. 그 사이 다른 세션 플레이에서 UI가 안 떴다면 이 때문.
 - 참고: 시간 끝난 라운드에서 계단이 화면 위쪽에 있으면 계단 꼬리표 "E 위로 올라가기"가 타이머 옆 "1층 1라운드" 표시와 겹쳐 보임(`inv23_prompt_cleared2.png`). 이번 범위 밖이라 그대로 둠.
 - 캡처 요령: Unity 창이 뒤에 있으면 에디터가 거의 안 돎 → PowerShell로 Alt 키를 한 번 누른 뒤 `SetForegroundWindow`. 층 암시 글은 다른 UIDocument(`ElementHud`)에 있음.
 

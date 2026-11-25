@@ -55,6 +55,8 @@ namespace TOD
                     hintStart = Time.unscaledTime + EC.hintDelay;
                     // 23차: 보스 욕망 한 줄(GameUI.DesireEcho)이 떠 있으면 다 사라진 뒤에 암시를 띄운다 (화면 가운데에서 겹치지 않게)
                     if (game.ui != null && game.ui.DesireEchoEnd > Time.unscaledTime) hintStart = Mathf.Max(hintStart, game.ui.DesireEchoEnd + .25f);
+                    // 23차: 욕망을 고른 뒤 어두워졌다 밝아지는 막(GameUI.FloorVeil)이 다 걷힌 뒤에
+                    if (game.ui != null && game.ui.FloorVeilEnd > Time.unscaledTime) hintStart = Mathf.Max(hintStart, game.ui.FloorVeilEnd + .25f);
                 }
                 else hintStart = -99;
             }

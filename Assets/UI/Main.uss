@@ -595,6 +595,7 @@ Button:disabled { opacity: 0.5; }
 
 /* 23차: 보스 욕망을 고른 뒤 잠깐 뜨는 한 줄 (GameUI.DesireEcho.cs). 움직임과 글자 번짐은 코드, 여기는 모양만.
    찢어진 종이 띠(panel_light 9-slice) 위에 잉크 글씨가 한 자씩 번지고, 아래 바느질 실이 왼쪽에서 오른쪽으로 꿰매진다. */
+.floor-veil { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgba(0, 0, 0, 0); }   /* 23차: 욕망을 고른 뒤 물들고 어두워지는 막. 색은 코드가 매 프레임 (GameController.FloorFade.cs) */
 .desire-echo { position: absolute; left: 0; right: 0; top: 226px; align-items: center; }   /* 층 이름 띠(.banner, top 146px)의 아래, 층 암시 줄(.floor-hint, 36%) 위. 층 암시는 쪽지가 사라진 뒤에 뜬다(ElementHud) */
 .desire-echo-paper {
     min-width: 560px; height: 150px; padding: 0 70px 10px 70px; justify-content: center; align-items: center;

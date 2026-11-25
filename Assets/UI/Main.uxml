@@ -442,6 +442,8 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
+        <!-- 23차: 욕망을 고른 뒤 그 층에서 화면 전체가 물들고 어두워지는 막 (GameUI.FloorVeil.cs). 문구(desire-echo)는 이 위에 뜬다 -->
+        <ui:VisualElement name="floor-veil" class="floor-veil hidden" picking-mode="Ignore" />
         <!-- 23차: 보스 욕망을 고른 뒤 잠깐 뜨는 한 줄 (GameUI.DesireEcho.cs, Main.uss .desire-echo). 삼킴 = 붉은 잉크와 핏자국, 안 삼킴 = 식은 잿빛 잉크 -->
         <ui:VisualElement name="desire-echo" class="desire-echo hidden" picking-mode="Ignore">
             <ui:VisualElement name="desire-echo-paper" class="desire-echo-paper" picking-mode="Ignore">
