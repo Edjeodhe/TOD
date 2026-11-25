@@ -82,13 +82,16 @@ namespace TOD
             }
             if (hubAutoMove != Vector2.zero) move = hubAutoMove;
             bool free = Opened == "" && !roomMoving;
-            hub.Tick(dt, move, free, Clock);
+            bool dash = (k != null && k.spaceKey.wasPressedThisFrame) || hubAutoDash;   // 23차: 재봉실에서도 Space 대시
+            hubAutoDash = false;
+            if (hub.Tick(dt, move, free, Clock, dash)) sound.Play("dash");
             HubFacility near = free ? hub.Near : null;
             ui.ShowHubPrompt(near?.prompt, near != null ? hub.PromptAnchor(near) : Vector2.zero);
         }
 
         // 검증용: 0 이 아니면 키보드 대신 이 방향으로 걷는다 (플레이 캡처 때 execute_code 로 넣는다)
         public Vector2 hubAutoMove;
+        public bool hubAutoDash;   // 검증용: true 면 다음 프레임에 대시 한 번
 
         // 허브의 E: 가까운 시설
         void HubInteract()

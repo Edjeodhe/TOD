@@ -176,6 +176,13 @@
 - 캡처 `Temp/Shots/upgrade23_moira_cards.png`, `_zoom.png`.
 - **주의:** `TOD/Setup/1. Texture Imports`를 돌리면 몬스터 파츠 60장의 사용자 피벗(alignment 9)이 아래 가운데(7)로 바뀌고 포션 아이콘 설정도 바뀜. 이번에는 `git checkout -- 'Assets/sprites/enemy_*.meta' 'Assets/sprites/potion_*.meta'`로 되돌림. 새 그림만 넣을 때는 이 메뉴 뒤에 꼭 `.meta` 변경을 확인하거나, 메뉴 대신 그 파일만 스프라이트로 임포트할 것.
 
+### 23차-hub-dash (재봉실에서도 Space 대시, 대시 때 몸이 뒤로 돌던 것) — 완료(커밋 전)
+
+- **재봉실 대시:** `HubView.Tick(..., dash)`가 전투 대시와 같은 거리·시간·자세(`feel.dashDuration/dashDistance/dashEase`, `hero.dashHold`)로 움직임. 대시 칸, 잔상, 먼지는 없고 연달아 누를 때 `dashMinCooldown`만. 서 있으면 보는 쪽의 반대로 물러남. 창이 열려 있거나 방을 옮기는 중엔 안 됨. 소리 `dash`는 `GameController.Hub`가 냄. 검증용 `GameController.hubAutoDash`.
+- **대시 방향 (전투와 재봉실 같이):** 예전엔 대시 때 `facing = -dx`로 몸을 뒤로 돌렸다가 돌아와서 고개가 한 번 돌아가 보였음 → 움직이며 대시하면 가는 쪽을 보고, 서서 대시하면 보는 쪽 그대로(`Combat.StartDash`).
+- **문구 (씬):** 재봉실·다락 안내 줄에 "Space 대시" 추가.
+- **확인 (2026-11-25, 이어받은 세션):** 컴파일 오류 없음, EditMode 67개 통과. 판정: 서서 대시 = 보는 쪽 그대로 150 물러남, 연달아 누르면 막힘, 창이 열리면 안 됨. 캡처 `Temp/Shots/hubdash23_zoom.png`(대기 → 서서 대시 → 달리기 → 왼쪽 대시 → 왼쪽 달리기), `hubdash23_sheet.png`. 실제 속도로 본 느낌은 사람 확인 필요.
+
 ## 22차 (2026-11-24 시작) — 8속성 → 칠죄종, 신화 등급 아버지의 도안, 7층, 미래 보기 구슬 연출(Flow 영상), 인게임 그림 전면 교체 — 진행 중
 
 > 작업이 끊기면 여기서 이어 갑니다. 단계를 마칠 때마다 체크합니다. 사용자가 질문에 답한 결정입니다(2026-11-24 저녁).

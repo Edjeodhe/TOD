@@ -12303,6 +12303,7 @@ MonoBehaviour:
   hub: {fileID: 1661311885}
   hubRoot: {fileID: 1661311884}
   hubAutoMove: {x: 0, y: 0}
+  hubAutoDash: 0
   db: {fileID: 1597564431}
   arena: {fileID: 1676179034}
   ui: {fileID: 902190456}
@@ -33570,8 +33571,8 @@ MonoBehaviour:
         shadowSize: {x: 120, y: 34}
         shadowOffset: {x: 0, y: -4}
         brightness: 0
-      hint: "WASD \uAC77\uAE30     E \uB9D0 \uAC78\uAE30     I \uC7AC\uBD09 \uC0C1\uC790    
-        Esc \uCC3D \uB2EB\uAE30"
+      hint: "WASD \uAC77\uAE30     Space \uB300\uC2DC     E \uB9D0 \uAC78\uAE30    
+        I \uC7AC\uBD09 \uC0C1\uC790     Esc \uCC3D \uB2EB\uAE30"
     atticReturn: {x: 225, y: 275}
     roomFade: 0.22
     roomSound: stairstep
@@ -33805,8 +33806,8 @@ MonoBehaviour:
       hold: 1.9
       fade: 0.5
       sound: stamp
-    hint: "WASD \uAC77\uAE30     E \uC0B4\uD3B4\uBCF4\uAE30     I \uC7AC\uBD09 \uC0C1\uC790    
-      Enter \uBC14\uB85C \uB4F1\uBC18"
+    hint: "WASD \uAC77\uAE30     Space \uB300\uC2DC     E \uC0B4\uD3B4\uBCF4\uAE30    
+      I \uC7AC\uBD09 \uC0C1\uC790     Enter \uBC14\uB85C \uB4F1\uBC18"
   merchant:
     poses:
     - mood: 0

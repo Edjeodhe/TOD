@@ -1652,7 +1652,8 @@ namespace TOD
             Fx burst = Spawn(r, FxKind.Sprite, p.x, p.y, X.dashBurst);
             burst.sprite = FxSprite.Dodge; burst.angle = away + Mathf.PI; burst.burst = true;
             Spawn(r, FxKind.Dust, p.x, p.y, X.dust).angle = away + Mathf.PI;
-            if (p.dx != 0) p.facing = -Mathf.Sign(p.dx);
+            // 23차: 대시 때 몸을 뒤로 돌리지 않는다 (고개가 한 번 돌아갔다 오던 것). 움직이며 대시 = 가는 쪽을 봄, 서서 대시 = 뒤로 물러나며 보는 쪽 그대로
+            if (moving && p.dx != 0) p.facing = Mathf.Sign(p.dx);
             p.dashFacing = p.facing;
             Act(p, HeroAction.Dash);
             Event(r, "dash");

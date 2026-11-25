@@ -272,24 +272,34 @@ namespace TOD
         }
 
         // 한 프레임: move = 입력 방향(-1~1), canMove = 대화 상자 등이 없을 때
-        public void Tick(float dt, Vector2 move, bool canMove, float clock)
+        // dash = 이번 프레임에 대시를 눌렀는지. 돌려주는 값 = 대시를 시작했는지 (소리는 GameController 가 낸다)
+        public bool Tick(float dt, Vector2 move, bool canMove, float clock, bool dash = false)
         {
             HeroConfig hc = db.hero;
-            if (!canMove) move = Vector2.zero;
+            if (!canMove) { move = Vector2.zero; dash = false; }
             bool moving = move.sqrMagnitude > 0;
             if (moving) move.Normalize();
-            player.motion += ((moving ? 1 : 0) - player.motion) * Mathf.Min(1, dt * hc.motionLerp);
-            player.x += move.x * H.walkSpeed * dt;
-            player.y += move.y * H.walkSpeed * H.verticalFactor * dt;
+            player.dashCooldown = Mathf.Max(0, player.dashCooldown - dt);
+            bool dashed = dash && player.dash <= 0 && player.dashCooldown <= 0 && StartDash(moving, move);
+            if (player.dash > 0) UpdateDash(dt);
+            else
+            {
+                player.motion += ((moving ? 1 : 0) - player.motion) * Mathf.Min(1, dt * hc.motionLerp);
+                player.x += move.x * H.walkSpeed * dt;
+                player.y += move.y * H.walkSpeed * H.verticalFactor * dt;
+            }
             Block();
             Rect walk = Room.walk;
             player.x = Mathf.Clamp(player.x, walk.xMin, walk.xMax);
             player.y = Mathf.Clamp(player.y, walk.yMin, walk.yMax);
             if (moving) player.strideTime += dt * (hc.strideBase + hc.strideFactor);
             player.actionTime += dt;
-            HeroAction state = moving ? HeroAction.Run : HeroAction.Idle;
-            if (player.action != state) Combat.Act(player, state);
-            if (move.x != 0) player.facing = Mathf.Sign(move.x);
+            if (player.dash <= 0 && (player.action != HeroAction.Dash || player.actionTime >= hc.dashHold))
+            {
+                HeroAction state = moving ? HeroAction.Run : HeroAction.Idle;
+                if (player.action != state) Combat.Act(player, state);
+                if (move.x != 0) player.facing = Mathf.Sign(move.x);
+            }
 
             HeroFrame frame = hero.Pose(player, player.actionTime);
             hero.Apply(player, frame);
@@ -313,6 +323,37 @@ namespace TOD
             UpdateCasts();
             float zoom = Room.cameraZoom > 0 ? Room.cameraZoom : 1;
             cameraRig.Apply(Space.ToCanvas(player.x, player.y), Room.backdropRect, zoom, 0, null, clock);
+            return dashed;
+        }
+
+        // 재봉실 대시: 전투 대시(Combat.StartDash/UpdateDash)와 같은 거리, 시간, 자세. 대시 칸 제한과 잔상, 먼지 이펙트는 없고 연달아 쓸 때 최소 간격(dashMinCooldown)만 둔다.
+        bool StartDash(bool moving, Vector2 move)
+        {
+            FeelConfig f = db.feel;
+            if (f == null || f.dashDuration <= 0) return false;
+            Vector2 dir = moving ? move : new Vector2(-player.facing, 0);   // 서 있으면 전투처럼 보는 쪽의 반대로 물러남 (보는 쪽은 그대로)
+            player.dx = dir.x; player.dy = dir.y;
+            player.dash = f.dashDuration;
+            player.dashDone = 0;
+            player.dashCooldown = f.dashMinCooldown;
+            if (moving && player.dx != 0) player.facing = Mathf.Sign(player.dx);   // 전투와 같이: 몸을 뒤로 돌리지 않음 (움직이면 가는 쪽, 서 있으면 보는 쪽 그대로)
+            player.dashFacing = player.facing;
+            Combat.Act(player, HeroAction.Dash);
+            return true;
+        }
+
+        void UpdateDash(float dt)
+        {
+            FeelConfig f = db.feel;
+            float step = Mathf.Min(dt, player.dash);
+            float u = Mathf.Clamp01(1 - (player.dash - step) / f.dashDuration);
+            float travel = f.dashDistance * (1 - Mathf.Pow(1 - u, f.dashEase));
+            float moved = travel - player.dashDone;
+            player.dashDone = travel;
+            player.x += player.dx * moved;
+            player.y += player.dy * moved * H.verticalFactor;
+            player.dash = Mathf.Max(0, player.dash - dt);
+            player.motion = 1;
         }
 
         // 19차 모이라: 방이 보이는 동안 매 프레임 (모이라 카드 창이 열려 걷기가 멈춰도 움직인다)
