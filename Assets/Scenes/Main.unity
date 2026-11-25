@@ -20508,31 +20508,38 @@ MonoBehaviour:
   aboveHands: 500
   loops:
   - sin: 1
+    intro:
+    - {fileID: 2800000, guid: 27f61e4d9afcfd5408abb7f41c0c424b, type: 3}
+    - {fileID: 2800000, guid: 0ab2c35bf2007754c973da7cdcb651b8, type: 3}
+    - {fileID: 2800000, guid: 3c28ebdbc466a4641a4ca6b2da0360a8, type: 3}
+    - {fileID: 2800000, guid: 1e3bc9a47f9232449bb8f4f791f6e2f1, type: 3}
+    - {fileID: 2800000, guid: 449fc0f05adfb7048931b296281d1d67, type: 3}
+    - {fileID: 2800000, guid: f8b51bf1bcfec264994a77c6ff272fbf, type: 3}
+    - {fileID: 2800000, guid: a0405a6e63232de42999a4fbf782415a, type: 3}
+    - {fileID: 2800000, guid: c1d5a1287807a474994d4784cc789e2c, type: 3}
+    - {fileID: 2800000, guid: 8c2188ff911e91d458667bea69a198a2, type: 3}
+    - {fileID: 2800000, guid: 1a76299a129e8334db4ba271b7855e23, type: 3}
+    - {fileID: 2800000, guid: b524d848ddd59eb41b89ceb99d096898, type: 3}
+    - {fileID: 2800000, guid: 8b5e6b9005cb8f6428aa09891cbaa653, type: 3}
+    - {fileID: 2800000, guid: bbb632a1feb5c3a45b5afcfa21093aef, type: 3}
+    - {fileID: 2800000, guid: 0852afceea5597e4a855c06cb44cae7c, type: 3}
+    - {fileID: 2800000, guid: 649cd8473af1bd4459ed295ccdc6b1ca, type: 3}
+    - {fileID: 2800000, guid: a1e32540d35a3ec4fb06e8e80ff24499, type: 3}
+    - {fileID: 2800000, guid: b13de0b99dfdf9340a7c134b82f3a630, type: 3}
+    - {fileID: 2800000, guid: 728ecef120a481e43a150762f4c4e602, type: 3}
     frames:
-    - {fileID: 2800000, guid: e5adddaef41f70048a4137962177c7a8, type: 3}
-    - {fileID: 2800000, guid: a8cb6148112f9eb4a9b41649d537bd15, type: 3}
-    - {fileID: 2800000, guid: e10da5dfe2f1584439de765256a6667f, type: 3}
-    - {fileID: 2800000, guid: a075b3651557cab42b21592696f4c05e, type: 3}
-    - {fileID: 2800000, guid: d96f20ffa34346945aed1bfbe53926ff, type: 3}
-    - {fileID: 2800000, guid: 702db90b700faa149b69eafcd29cc53c, type: 3}
-    - {fileID: 2800000, guid: cd9a1e01d51ccbf45942ccc934006c62, type: 3}
-    - {fileID: 2800000, guid: cf62bd0250f15354ab3412f781f8b81d, type: 3}
-    - {fileID: 2800000, guid: 0fcedf9ca9e40694396cf75d4a800823, type: 3}
-    - {fileID: 2800000, guid: b51dc7455fac1c2418535bebd587658a, type: 3}
-    - {fileID: 2800000, guid: f1c4e996f2d0fda4ea2693a4e06931c0, type: 3}
-    - {fileID: 2800000, guid: 268ba6741b677a843a568ba387fe724a, type: 3}
-    - {fileID: 2800000, guid: fd49a5e952e73094a9e0f51afb30a365, type: 3}
-    - {fileID: 2800000, guid: cd8bf2efceedf38449d05aa7ae2cac4c, type: 3}
-    - {fileID: 2800000, guid: cd0078d2afbbde343b3598e0126714dc, type: 3}
-    - {fileID: 2800000, guid: b2cef302a2c186148a4ec67645cbe5ed, type: 3}
-    - {fileID: 2800000, guid: 78d051b3b7694024fb9b2cfbe29add9f, type: 3}
-    - {fileID: 2800000, guid: 4aa3e80534559bc439b0a33de2ddce4d, type: 3}
-    - {fileID: 2800000, guid: 19a04d382eda29f4da0640c6f99a0083, type: 3}
-    - {fileID: 2800000, guid: 706160d590d2c734ba353c61cf801262, type: 3}
-    - {fileID: 2800000, guid: 89f8ff50879387e4ea07546f7c3724cf, type: 3}
-    - {fileID: 2800000, guid: f142338be2fd65540b50386a517fc069, type: 3}
-    - {fileID: 2800000, guid: dce037c0613aedf4e98a98a9ea881777, type: 3}
-    - {fileID: 2800000, guid: a6c0db728601f4746a77216025685ac4, type: 3}
+    - {fileID: 2800000, guid: f15fb5f21b278504bbf1e3bb823f57f5, type: 3}
+    - {fileID: 2800000, guid: 3f3a493f030aa0046b855232d549729d, type: 3}
+    - {fileID: 2800000, guid: f5a3ca3377930ae4fb691903a3299274, type: 3}
+    - {fileID: 2800000, guid: 24f70cd686ea5ab45aef83fe1de86031, type: 3}
+    - {fileID: 2800000, guid: a6c3bdd23427d45449198f870efd586e, type: 3}
+    - {fileID: 2800000, guid: 881b46262132b4b4e99aac1a9e329766, type: 3}
+    - {fileID: 2800000, guid: bad0e33a71b3ced47a6fae70bb05aaea, type: 3}
+    - {fileID: 2800000, guid: 2c0876ee3d7962b41bad9e641722218f, type: 3}
+    - {fileID: 2800000, guid: da2677e2257f119428571cb20204942b, type: 3}
+    - {fileID: 2800000, guid: ec497884684c1534a9b3e65feb0c2abd, type: 3}
+    - {fileID: 2800000, guid: 383e33356b6db2148b4139472fbb051a, type: 3}
+    - {fileID: 2800000, guid: 092273534acc2f548957bd26e24ad18e, type: 3}
     fps: 12
     ticks: 2
     ghost: 0.45

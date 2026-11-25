@@ -11,12 +11,15 @@ using UnityEngine.Video;
 
 namespace TOD
 {
-    // 24차 미래 보기 구슬 속 반복 그림 (죄종 하나): 셀 애니 프레임을 fps 로 처음부터 끝까지 돌고 다시 처음으로 (끝 프레임이 첫 프레임으로 이어지게 그림)
+    // 24차 미래 보기 구슬 속 그림 (죄종 하나): 메인 액션(intro)을 한 번 돈 뒤, 반복(frames)을 E 를 누를 때까지 끝없이 돈다 (반복의 끝 장이 첫 장으로 이어지게 그림)
     [System.Serializable]
     public class FateLoop
     {
         public Element sin;
-        public Texture2D[] frames;   // Assets/Art/Fate/<죄종>/frame_###.png 차례대로
+        [Tooltip("메인 액션: 처음에 한 번만 돈다 (끝 장이 frames 첫 장으로 이어짐). 비면 바로 반복")]
+        public Texture2D[] intro;    // Assets/Art/Fate/<죄종>/action_###.png 차례대로
+        [Tooltip("반복: intro 뒤 E 를 누를 때까지 끝없이 돈다 (끝 장이 첫 장으로 이어짐)")]
+        public Texture2D[] frames;   // Assets/Art/Fate/<죄종>/loop_###.png 차례대로
         public float fps = 8;        // 틱 빠르기 (초당 틱)
         [Tooltip("스텝 프린팅: 그림 한 장을 몇 틱 붙잡는지 (1 = 틱마다 다음 장)")]
         public int ticks = 1;
@@ -139,19 +142,32 @@ namespace TOD
             player.Play();
         }
 
-        // 지금 그림, 앞 그림, 잔상 양. 틱 = fps, 한 장을 ticks 틱 붙잡고(스텝 프린팅), 장이 바뀐 첫 틱에 앞 장 잔상이 ghost 만큼, 붙잡는 동안 줄어든다
+        // 지금 그림, 앞 그림, 잔상 양. 틱 = fps, 한 장을 ticks 틱 붙잡고(스텝 프린팅), 장이 바뀐 첫 틱에 앞 장 잔상이 ghost 만큼, 붙잡는 동안 줄어든다.
+        // 차례: intro 를 한 번 → frames 를 끝없이 (intro 끝 장 다음이 frames 첫 장)
         Texture2D LoopFrame(out Texture2D prev, out float ghost)
         {
-            int n = loop.frames.Length;
+            Texture2D[] intro = loop.intro ?? System.Array.Empty<Texture2D>();
+            int m = intro.Length, n = loop.frames.Length;
             int hold = Mathf.Max(1, loop.ticks);
             float t = loopStart < 0 ? 0 : Time.unscaledTime - loopStart;
             int tick = Mathf.FloorToInt(t * Mathf.Max(.1f, loop.fps));
-            int i = tick / hold % n;
+            int s = tick / hold;
             int h = tick % hold;
-            Texture2D Frame(int k) => loop.frames[k] != null ? loop.frames[k] : loop.frames[0];
-            prev = Frame((i - 1 + n) % n);
+            Texture2D Pick(Texture2D[] a, int k) => a[k] != null ? a[k] : loop.frames[0];
+            Texture2D cur;
+            if (s < m)
+            {
+                cur = Pick(intro, s);
+                prev = s > 0 ? Pick(intro, s - 1) : cur;
+            }
+            else
+            {
+                int j = (s - m) % n;
+                cur = Pick(loop.frames, j);
+                prev = j > 0 ? Pick(loop.frames, j - 1) : s == m && m > 0 ? Pick(intro, m - 1) : Pick(loop.frames, n - 1);
+            }
             ghost = loopStart < 0 ? 0 : Mathf.Clamp01(loop.ghost) * (1 - (float)h / hold);
-            return Frame(i);
+            return cur;
         }
 
         // 지금까지 튼 비율 (영상이 없으면 시간표를 따르도록 -1)
