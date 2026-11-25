@@ -96,9 +96,11 @@
 - **토큰 한도:** Claude나 Codex 토큰이 떨어지면 초기화 뒤 자동으로 이어 감. 예약 작업 `tod-23-resume-watch`(매시간)가 멈춘 23차 세션을 깨우고, 모두 끝나면 스스로 꺼짐. Codex 한도는 각 세션이 백그라운드에서 기다렸다 다시 시도(22차 `run_22.sh` 방식).
 - **쉬어가기 NPC 4종 (모두):** 축복(이번 등반 동안 영구 버프), 조각 선물, 경험치, 도박 거래(체력을 내고 무작위 보상). 디자인은 '바느질 요괴들': 축복 = 눈먼 수녀 재봉사(눈을 실로 꿰맨 키 큰 여인, 바늘 묵주), 조각 = 누더기 행상 쥐(등에 천 보따리, 골무 모자), 경험치 = 촛불 유령(녹아내리는 촛농 머리, 기억을 마시는 유령), 도박 = 단추 눈 인형(낡은 헝겊 인형, 주사위 저글링). 리깅은 모이라처럼 관절 점을 잡고 오른쪽 웹 리깅 페이지에서. 한 번 만난 NPC는 재봉실에 나오고 말을 걸면 무작위 템이나 버프를 줌.
 
-### 조율 확인 (02:55) — 남은 것 [ ]
-- [ ] **23-inventory:** "E 증강 고르기" 등 화면 아래 E 안내가 새 포션 칸 5개와 겹침(`Temp/Shots/boss23_6_absorb.png`). 둘이 안 겹치게 고치고 `Temp/Shots/inv23_prompt_*.png`로 확인. (고치던 중 Claude 5시간 한도로 멈춤, 07시 초기화 뒤 이어서)
-- [ ] **23-ui:** 욕망 쪽지(삼킴/안 삼킴)가 다음 층 암시 문구와 화면 가운데에서 겹침(`Temp/Shots/ui23_desire_swallow.png`). 안 겹치게 고치고 `Temp/Shots/ui23_desire_fix_*.png`로 확인. (같은 이유로 멈춤)
+### 조율 확인 (02:55) — 남은 것 → 모두 끝 (2026-11-25 09시, 23-fix 세션)
+- [x] **23-inventory:** E 안내와 포션 칸 겹침. 포션 줄(`.potion-bar`, Potion.uss)을 오른쪽 아래(right 26px, bottom 50px)로 옮긴 것(커밋 d00eabb에 들어 있었음)을 플레이로 확인. "E 증강 고르기"는 아래 가운데(bottom 100px), 포션 칸은 오른쪽 아래로 안 겹침: `Temp/Shots/inv23_prompt_combat.png`, `inv23_prompt_cleared2.png`.
+- [x] **23-ui:** 욕망 쪽지와 층 암시 겹침. 층 암시는 쪽지가 사라진 뒤에 뜨게 미룸(`ElementHud`가 `GameUI.DesireEchoEnd`를 봄, d00eabb). 그런데 쪽지를 `top: 14%`로 올린 탓에 층 이름 띠(`.banner` "2층  거울 무도회", top 146px)와 새로 겹쳐서, 쪽지를 `top: 226px`로 내림(Main.uss `.desire-echo`). 1920×1080 기준 띠 146~198, 쪽지 221~380, 층 암시 396~456(쪽지가 사라진 뒤에만). 삼킴/안 삼킴 모두 확인: `Temp/Shots/ui23_desire_fix_<swallow|refuse>_0~5.png`, 모음 `ui23_desire_fix_sheet.png`, 수치 `ui23_desire_fix_log.txt`.
+- 참고: 시간 끝난 라운드에서 계단이 화면 위쪽에 있으면 계단 꼬리표 "E 위로 올라가기"가 타이머 옆 "1층 1라운드" 표시와 겹쳐 보임(`inv23_prompt_cleared2.png`). 이번 범위 밖이라 그대로 둠.
+- 캡처 요령: Unity 창이 뒤에 있으면 에디터가 거의 안 돎 → PowerShell로 Alt 키를 한 번 누른 뒤 `SetForegroundWindow`. 층 암시 글은 다른 UIDocument(`ElementHud`)에 있음.
 
 ### 요청 목록 (나머지는 세션이 판단)
 - 아버지의 일기 제목 밑의 안 보이는 글씨 제거.

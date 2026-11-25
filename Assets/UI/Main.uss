@@ -595,7 +595,7 @@ Button:disabled { opacity: 0.5; }
 
 /* 23차: 보스 욕망을 고른 뒤 잠깐 뜨는 한 줄 (GameUI.DesireEcho.cs). 움직임과 글자 번짐은 코드, 여기는 모양만.
    찢어진 종이 띠(panel_light 9-slice) 위에 잉크 글씨가 한 자씩 번지고, 아래 바느질 실이 왼쪽에서 오른쪽으로 꿰매진다. */
-.desire-echo { position: absolute; left: 0; right: 0; top: 14%; align-items: center; }   /* 층 암시 줄(화면 40% 쯤)과 겹치지 않게 */
+.desire-echo { position: absolute; left: 0; right: 0; top: 226px; align-items: center; }   /* 층 이름 띠(.banner, top 146px)의 아래, 층 암시 줄(.floor-hint, 36%) 위. 층 암시는 쪽지가 사라진 뒤에 뜬다(ElementHud) */
 .desire-echo-paper {
     min-width: 560px; height: 150px; padding: 0 70px 10px 70px; justify-content: center; align-items: center;
     background-image: url("project://database/Assets/UI/Paper/panel_light.png");
