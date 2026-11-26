@@ -1,0 +1,154 @@
+{
+  "_note": "24차 미래 보기 3판 (2026-11-25): 죄종마다 key(키프레임) → action 16장(key 첨부, 끝 = 멈춘 자세) → loop 12장(action_016 첨부, 인물 그대로 배경 요소만). 틀은 style/action_tpl/loop_tpl, {k} = 번호, {beat} = 동작, {ambient} = 반복 요소, {phase} = loop_phases[k-1]. 분노는 손으로 짬(fate_loop.txt [wrath 3판]).",
+  "style": "Square 1:1 rough expressive painting in thick gouache and oil pastel, bold wide flat brush strokes and scribbled pastel marks, raw unfinished look, very little detail, figures reduced to strong simple silhouettes with heavy black brush contour lines and a glowing yellow rim outline, big high-contrast flat color fields with complementary colors, paper showing through in places, dark fairy-tale legend, composed to sit inside a round crystal ball (main silhouettes large in the center circle, corners fade into dark), no text, no border, no frame, no letters. Shot like a slow shutter speed long exposure, step-printed film look: streaky motion-blur smears and ghostly afterimages trail behind moving parts.",
+  "action_tpl": "Frame {k} of a looping step-printed action cel animation - edit the ATTACHED image (never a later output). Keep the SAME painting: same camera, background, colors, rough brush style, figures in the same places. Change only the action: {beat} Slow-shutter motion-blur smears on whatever moves. Square 1:1, no text.",
+  "loop_tpl": "Loop frame {k} of a seamless 12-frame loop - edit the ATTACHED image (never a later output). Keep the figures, their exact poses, the buildings, sky and ground EXACTLY identical. Only {ambient} change: {phase}. Square 1:1, no text.",
+  "loop_phases": [
+    "just like the attached image, a tiny bit stronger",
+    "a little stronger and brighter",
+    "stronger, with more movement",
+    "at their strongest and brightest",
+    "still strong but starting to fade",
+    "medium",
+    "softer",
+    "at their weakest and dimmest",
+    "rising again",
+    "medium again",
+    "nearly as in the attached image",
+    "almost exactly as in the attached image"
+  ],
+  "sins": {
+    "pride": {
+      "key": "Main colors royal purple #7B4FC9 and gold against a deep amber-orange sky glow. Scene: a crowned king in a long purple robe stands on top of a tall unfinished stone tower at night, chin raised, one arm pointing up at a huge blazing gold star; his oversized golden crown is heavy; cracks run down the top stones beneath his feet.",
+      "ambient": "the gold star's glow, its rays, the twinkling of the other stars and the faint glow in the cracks",
+      "action": [
+        "the king stands still looking up at the star, his pointing arm lowered at his side.",
+        "he slowly raises his arm toward the star, his robe stirring.",
+        "he stretches up on tiptoe reaching for the star, arm fully extended.",
+        "the gold star flares much brighter, golden rays bursting outward.",
+        "a blast of golden light pours down from the star onto the king, his robe whipping back.",
+        "cracks split wide open under his feet, glowing gold, chips of stone flying.",
+        "the top stones of the tower break off and fall away below him.",
+        "the king staggers sideways, his heavy crown tilting, arms flailing.",
+        "he leans far backward about to fall off the tower, crown slipping.",
+        "he grabs his crown with one hand and catches his balance with the other arm.",
+        "more stones tumble down the side of the tower while he crouches low.",
+        "he pushes himself back up, rising, robe swirling.",
+        "he stands tall again, chin raised proudly.",
+        "his robe settles and the light from the star calms.",
+        "he lifts his arm and points defiantly at the star again.",
+        "still pose: the king stands proudly pointing at the star, the cracks under his feet glowing faintly."
+      ]
+    },
+    "greed": {
+      "key": "Main colors gold #D9A520 against deep violet-blue shadows. Scene: an endless waterfall of gold coins pours down the steps of a golden stepped pyramid at night; servants in white kilts are buried up to their shoulders in coins at the bottom, arms raised; at the top a greedy figure crouches reaching for the falling coins.",
+      "ambient": "the glints on the gold and the thin trickle of falling coins",
+      "action": [
+        "the figure at the top crouches, eyes fixed on the falling coins.",
+        "he rises, both arms reaching up.",
+        "he leaps up into the pouring coins, arms wide.",
+        "he grabs fistfuls of coins in mid-air, coins bursting around him.",
+        "the coin waterfall surges bigger, crashing down the steps.",
+        "the flood of coins hits the buried servants, their raised arms shaking.",
+        "coins spray outward at the bottom, the servants sinking deeper.",
+        "the figure lands back on the top step clutching coins to his chest.",
+        "coins slip through his fingers and stream down.",
+        "he stares at his emptying hands as the coins fall away.",
+        "he lunges again, reaching up for more falling coins.",
+        "he hugs a pile of coins, hunched greedily.",
+        "the waterfall thins to a trickle.",
+        "the servants' raised hands tremble above the coin pile.",
+        "the figure crouches over his hoard, reaching upward with one hand.",
+        "still pose: he crouches at the top reaching up for the falling coins, the servants buried below with raised arms."
+      ]
+    },
+    "lust": {
+      "key": "Main colors deep pink #D9418C and magenta against a teal-green night. Scene: a man and a woman in flowing magenta robes face each other in the center, hands almost touching, bound together by glowing pink ribbons spiraling around their arms that tighten into a heart-shaped knot between them, pink petals drifting.",
+      "ambient": "the glow of the heart knot and ribbons and the drifting pink petals",
+      "action": [
+        "the two stand facing each other, hands apart.",
+        "the glowing ribbons tighten, pulling them toward each other.",
+        "they are drawn together, robes flowing, petals whirling.",
+        "they clasp hands and begin to spin in a dance.",
+        "mid-spin, robes flaring outward, ribbons spiraling around both of them.",
+        "spinning faster, the figures smeared into streaks, petals swirling.",
+        "they spin apart at arm's length, ribbons stretched taut.",
+        "they pull back together, faces close.",
+        "the heart knot flares bright between them.",
+        "the heart knot pulls tight, yanking them apart, hands slipping.",
+        "they drift apart, reaching for each other.",
+        "fingertips nearly touching, the knot pulsing.",
+        "they lean in, almost touching.",
+        "the ribbons loosen gently, robes settling.",
+        "they hold still, fingertips just short of touching.",
+        "still pose: facing each other, fingertips almost touching, the glowing heart knot between them."
+      ]
+    },
+    "envy": {
+      "key": "Main colors poison green #4FA34A against a red-violet glow. Scene: two hooded figures stand in a dark shrine doorway on the left with glowing green eyes and green flames in their hands, staring at a joyful feast at a long white table on the right; a creeping poison-green mist curls like thorny vines toward the table.",
+      "ambient": "the watchers' glowing green eyes, their green flames and the curling green mist",
+      "action": [
+        "the two hooded watchers stand in the doorway, staring.",
+        "their green eyes flare brighter and they lean forward.",
+        "one raises a hand with a green flame, the other crouches.",
+        "they hurl the green flames toward the feast in long green streaks.",
+        "the green flames burst over the table, poison mist exploding outward.",
+        "thorny green mist vines lash across the table.",
+        "the vines wrap around the feasting people, cups toppling.",
+        "the feasting people freeze mid-laugh, turning pale green.",
+        "the mist coils tighter around the table legs and the people.",
+        "the watchers step forward out of the doorway, eyes blazing.",
+        "they stop, savoring it, mist swirling.",
+        "they slowly step back toward the doorway.",
+        "they settle back into the shadows of the doorway.",
+        "the mist slows, curling lazily.",
+        "the watchers stand still, eyes glowing, watching.",
+        "still pose: the watchers in the doorway with glowing green eyes, the frozen feast wrapped in green mist vines."
+      ]
+    },
+    "gluttony": {
+      "key": "Main colors orange #E07A2A against deep blue shadows. Scene: a fat crowned king sits at a long table heaped with bread, fruit and roast meat, stuffing food into his mouth with both hands; behind him a tall brick tower cracks and starts to crumble; candles on the table.",
+      "ambient": "the candle flames and the dust hanging in the air",
+      "action": [
+        "the king holds a roast leg near his mouth.",
+        "he stuffs the roast leg into his mouth with both hands.",
+        "he tears meat off with his teeth, head jerking.",
+        "he grabs bread and fruit with both hands, crumbs flying.",
+        "he shoves them into his mouth, cheeks bulging.",
+        "a crack runs up the brick tower behind him.",
+        "bricks break loose from the top of the tower and fall.",
+        "bricks crash onto the table, dust and food spraying.",
+        "the king does not look up, grabbing more food from the rubble.",
+        "more bricks fall, a big one smashing a plate beside him.",
+        "he lifts a whole roast to his mouth.",
+        "he chews hugely while dust swirls.",
+        "a last brick tumbles down.",
+        "the dust begins to settle.",
+        "he keeps eating, hands at his mouth.",
+        "still pose: the king seated holding food at his mouth, a pile of fallen bricks on the table, dust hanging in the air."
+      ]
+    },
+    "sloth": {
+      "key": "Main colors grey blue #6F8FA8 against warm amber sand. Scene: a guard with a spear sleeps slumped on a stone seat before a blue-grey temple door at night under a crescent moon; fine sand blows in from the right and piles in soft dunes over his feet and the door.",
+      "ambient": "the thin ribbons of drifting sand and the moon's glow",
+      "action": [
+        "the guard sleeps slumped on the stone seat.",
+        "his head nods slowly forward.",
+        "a gust of sand blows in from the right in long streaks.",
+        "the sand storm swirls around him, burying his feet.",
+        "sand piles up over the temple door.",
+        "his head nods deeper, the spear tipping.",
+        "the spear slips from his hand and falls toward the sand.",
+        "he jolts awake, eyes wide, grabbing for the spear.",
+        "he swings the spear wildly at the blowing sand.",
+        "he half stands, spear raised, looking around.",
+        "he yawns hugely, the spear lowering.",
+        "he sinks back onto the stone seat.",
+        "his head droops, eyes closing.",
+        "he slumps, the spear leaning on his shoulder.",
+        "sand settles softly over his feet.",
+        "still pose: the guard asleep slumped on the seat, spear leaning on his shoulder, sand dunes over his feet."
+      ]
+    }
+  }
+}
