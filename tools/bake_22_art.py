@@ -194,8 +194,9 @@ def fit_part(col, a, base, part):
     canvas.paste(im, (ox + L, oy + T), im)
     if L == T == R == B == 0:
         return canvas, None, ratio
-    # 원래 피벗 (0.5, 0.5) = 원래 캔버스 가운데. Unity 피벗 y 는 아래에서 잰다
-    pivot = [(L + W / 2) / canvas.width, (B + H / 2) / canvas.height]
+    # 원래 피벗 = 원래 캔버스의 아래 끝 가운데 (적 파츠는 ProjectSetup 이 BottomCenter 로 가져옴). Unity 피벗 y 는 아래에서 잰다.
+    # 25차: 예전엔 원래 피벗을 (0.5, 0.5) 로 잘못 알고 y 를 (B + H/2) 로 적어, 넓힌 파츠가 제 길이 절반만큼 관절에서 떨어져 보였다.
+    pivot = [(L + W / 2) / canvas.width, B / canvas.height]
     return canvas, pivot, ratio
 
 

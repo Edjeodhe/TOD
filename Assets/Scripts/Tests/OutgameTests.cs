@@ -337,6 +337,11 @@ namespace TOD.Tests
             Assert.IsTrue(Gear.Owns(r.bag, kind), "챙긴 조각이 등반 가방에 없습니다");
             Assert.AreEqual(0, p.items.Count, "등반을 시작했는데 챙긴 조각이 남았습니다");
             Assert.AreEqual(0, p.placements.Count);
+            // 25차: 등반에서 돌아오면(죽어도) 같은 진열에서 다시 고를 수 있다 (고른 기록이 남아 "2/2개"로 막히던 버그)
+            Assert.AreEqual(0, p.hubTaken.Count, "등반을 시작했는데 고른 기록이 남았습니다");
+            for (int i = 0; i < HubShop.Picks(db); i++) p.hubTaken.Add(-1 - i);   // 앞 등반에서 한도까지 고른 것처럼
+            HubShop.ConsumePacked(p);
+            Assert.AreEqual(PackResult.Packed, HubShop.Take(db, p, kind, out _), "돌아와서 다시 못 챙김");
         }
 
         // 19차 모이라 칸 강화: 판 가장자리 손잡이로 고른 가로 줄 또는 세로 줄 하나, 같은 줄은 다시 못 고름(단계는 둘을 같이 셈).
