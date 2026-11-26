@@ -108,7 +108,7 @@
     },
     "gluttony": {
       "key": "Main colors orange #E07A2A against deep blue shadows. Scene: a fat crowned king sits at a long table heaped with bread, fruit and roast meat, stuffing food into his mouth with both hands; behind him a tall brick tower cracks and starts to crumble; candles on the table.",
-      "ambient": "the candle flames and the dust hanging in the air",
+      "ambient": "the long string of drool slowly stretching and dripping from his lip, the candle flames and the dust hanging in the air",
       "action": [
         "the king holds a roast leg near his mouth.",
         "he stuffs the roast leg into his mouth with both hands.",
@@ -124,8 +124,8 @@
         "he chews hugely while dust swirls.",
         "a last brick tumbles down.",
         "the dust begins to settle.",
-        "he keeps eating, hands at his mouth.",
-        "still pose: the king seated holding food at his mouth, a pile of fallen bricks on the table, dust hanging in the air."
+        "he swallows the very last bite and the bare bone drops from his greasy hands; every plate in front of him is now empty.",
+        "still pose: the king slumped in his chair, full and dazed, every plate empty with only bare bones and crumbs left among the fallen bricks, his mouth hanging open with a long glistening string of drool dripping from his lower lip down his chin, dust hanging in the air."
       ]
     },
     "sloth": {
