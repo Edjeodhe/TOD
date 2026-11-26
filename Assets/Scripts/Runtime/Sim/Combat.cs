@@ -117,6 +117,7 @@ namespace TOD
         }
 
         void Event(RunState r, string type, string message = null) => r.events.Add(new GameEvent { type = type, message = message });
+        void Event(RunState r, string type, int count) => r.events.Add(new GameEvent { type = type, count = count });   // 24차-hit-audio: 세기가 있는 소리 이벤트
 
         Fx Spawn(RunState r, FxKind kind, float x, float y, FxSpec spec)
         {
@@ -948,6 +949,7 @@ namespace TOD
             int transfers = 0;
             float totalDealt = 0;
             bool anyCrit = false;   // 24차 줌 펀치
+            int crits = 0;          // 24차-hit-audio: 치명타 맞은 적 수 (강조음 hitcrit 은 당기기마다 한 번)
             ActiveSet main = MainSet(r);   // 16차: 메인 세트 = 이 당기기 피해 전체의 속성 (없으면 무속성)
             Element mainElement = main?.def.element ?? Element.Plain;
             foreach (Enemy e in living)
@@ -996,6 +998,7 @@ namespace TOD
                 number.crit = crit;   // 치명타: 노란 글꼴 + 뾰족 아이콘
                 number.element = mainElement;   // 21차: 실 피해는 속성 글꼴 대신 흐린 외곽 주아 숫자(visual.damageFont). 속성 피해는 따로 속성 글꼴
                 if (crit) { Event(r, "crit"); anyCrit = true; }
+                if (crit) crits++;
                 if (binding)
                 {
                     // 결박 폭발: 적 자리에서 속성 폭발(뷰가 화염 기둥·낙뢰·얼음 가시로 그림) + 머리 위 글자, 숫자는 최대 크기로 튄다
@@ -1061,6 +1064,10 @@ namespace TOD
                 else p.spiteReady = false;
             }
             r.combo = impacts;
+            // 24차-hit-audio: 타격음 겹 (hit = 쿵·찢김·튕김, 세기 = 타수) + 강조음 (처치·치명타). 결박 강조는 아래 bind 이벤트
+            if (impacts > 0) Event(r, "hit", impacts);
+            if (pullKills > 0) Event(r, "pullkill", pullKills);
+            if (crits > 0) Event(r, "hitcrit", crits);
             r.freeze = impacts > 0 ? Mathf.Min(F.freezeMax, F.freezeBase + impacts * F.freezePerHit) * (F.hitStopScale > 0 ? F.hitStopScale : 1) : 0;
             r.shake = impacts > 0 ? Mathf.Min(F.shakeMax, F.shakeBase + impacts * F.shakePerHit) : F.shakeEmpty;
             bool anyBound = wounded.Any(bound.Contains);

@@ -54,7 +54,7 @@ namespace TOD
             Profile = Gear.Load(db);
             arena.Text = ui;
             arena.Init(Combat);
-            sound.Init(db.sounds);
+            sound.Init(db.sounds, db.hitAudio);
             Settings.Load(db.settings);   // 24차: UI 가 키 이름을 쓰므로 먼저
             frameClock = Clock;
             ui.Init(this);
@@ -826,7 +826,7 @@ namespace TOD
             {
                 foreach (GameEvent e in Run.events)
                 {
-                    sound.Play(e.type, e.type == "pull" ? 1 + Run.combo * .12f : 1);
+                    sound.PlayEvent(e.type, e.count, e.type == "pull" ? 1 + Run.combo * .12f : 1);   // 24차-hit-audio: 겹이 있는 이벤트는 여러 겹
                     if (e.type is "loot" or "empty") ui.Say(e.message);
                     else if (!string.IsNullOrEmpty(e.message)) ui.Banner(e.message, e.type == "desire" ? 3.2f : 1.7f);
                 }

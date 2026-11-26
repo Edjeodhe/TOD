@@ -128,7 +128,7 @@ namespace TOD
         public float Fade => max > 0 ? time / max : 0;
     }
 
-    public struct GameEvent { public string type, message; }
+    public struct GameEvent { public string type, message; public int count; }   // count: 24차-hit-audio 세기 (타수·처치 수·치명타 수)
 
     public class RunState
     {
