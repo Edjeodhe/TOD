@@ -41,7 +41,7 @@ namespace TOD
             FlashId = Shader.PropertyToID("_TOD_Flash"), SnapId = Shader.PropertyToID("_TOD_Snap"), HurtId = Shader.PropertyToID("_TOD_Hurt"),
             BorderId = Shader.PropertyToID("_TOD_Border"), CanvasHeightId = Shader.PropertyToID("_TOD_CanvasHeight"),
             PurifiedId = Shader.PropertyToID("_TOD_Purified"), WarpId = Shader.PropertyToID("_TOD_Warp"), WarpTintId = Shader.PropertyToID("_TOD_WarpTint"),
-            WarpParamsId = Shader.PropertyToID("_TOD_WarpParams");
+            WarpParamsId = Shader.PropertyToID("_TOD_WarpParams"), LookId = Shader.PropertyToID("_TOD_Look");
 
         float Clock => Time.unscaledTime;
         string Opened => ui.Opened;
@@ -855,6 +855,8 @@ namespace TOD
             float fraction = Combat.DesireFraction(r);
             Shader.SetGlobalFloat(EnabledId, 1);
             Shader.SetGlobalFloat(MotionId, 1);
+            PostFxLook look = db.postFx;   // 24차: 잉크 외곽선, 색 보정, 종이 결, 비네트 세기 (재봉실과 캐릭터가 달라 보이지 않게)
+            Shader.SetGlobalVector(LookId, look != null ? new Vector4(look.ink, look.tone, look.paper, look.vignette) : Vector4.one);
             Shader.SetGlobalFloat(DesireId, Mathf.Max(0, fraction - .4f) / .6f);
             Color tint = r.flashTint;
             Shader.SetGlobalVector(FlashId, new Vector4(tint.r, tint.g, tint.b, Mathf.Min(.07f, r.flash * .5f)));

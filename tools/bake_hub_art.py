@@ -83,15 +83,16 @@ def save(col, a, name, max_side):
     print("wrote", name, im.size)
 
 
-if (RAW / "hub_facilities.png").exists():
-    for (col, a), name in zip(grid(RAW / "hub_facilities.png", 2, 2), FACILITIES):
-        save(col, a, f"hub_{name}", 512)
-if (RAW / "hub_facilities2.png").exists():   # 20차: 같은 이름을 덮어씀 (옛 시트의 재봉 상자는 그대로)
-    for (col, a), name in zip(grid(RAW / "hub_facilities2.png", 3, 1), ["attic", "tower_door", "diary_board"]):
-        save(vignette(col, a), a, f"hub_{name}", 512)
-if (RAW / "hub_room.png").exists():
-    Image.open(RAW / "hub_room.png").convert("RGB").save(OUT / "hub_room.png")
-    print("wrote hub_room")
-if (RAW / "hub_room2.png").exists():   # 20차: 오브젝트 자리에 맞춰 다시 그린 재봉실 (데이터 hub.backdrop 이 이 그림)
-    Image.open(RAW / "hub_room2.png").convert("RGB").save(OUT / "hub_room2.png")
-    print("wrote hub_room2")
+if __name__ == "__main__":   # 24차: 다른 스크립트(bake_hub_corners.py)가 함수만 가져다 쓸 수 있게
+    if (RAW / "hub_facilities.png").exists():
+        for (col, a), name in zip(grid(RAW / "hub_facilities.png", 2, 2), FACILITIES):
+            save(col, a, f"hub_{name}", 512)
+    if (RAW / "hub_facilities2.png").exists():   # 20차: 같은 이름을 덮어씀 (옛 시트의 재봉 상자는 그대로)
+        for (col, a), name in zip(grid(RAW / "hub_facilities2.png", 3, 1), ["attic", "tower_door", "diary_board"]):
+            save(vignette(col, a), a, f"hub_{name}", 512)
+    if (RAW / "hub_room.png").exists():
+        Image.open(RAW / "hub_room.png").convert("RGB").save(OUT / "hub_room.png")
+        print("wrote hub_room")
+    if (RAW / "hub_room2.png").exists():   # 20차: 오브젝트 자리에 맞춰 다시 그린 재봉실 (데이터 hub.backdrop 이 이 그림)
+        Image.open(RAW / "hub_room2.png").convert("RGB").save(OUT / "hub_room2.png")
+        print("wrote hub_room2")

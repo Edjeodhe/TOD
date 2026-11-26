@@ -31,6 +31,7 @@ Shader "TOD/PostFX"
             float4 _TOD_FateSwirl, _TOD_FateTint;   // 22차 미래 보기: 구슬(xy = 화면 uv 중심, z = 반지름(화면 높이 비율), w = 당김 세기), 바깥 물들임(rgb Linear, a = 양)
             float _TOD_FateBlur;                    // 22차 2차: 줌 속도만큼 구슬 바깥이 방사형으로 번지는 양 (반지름 비율)
             float _TOD_FateStill;                   // 22차 2차: 1 이면 화면이 미동도 없게 (촛불 깜빡임까지 멈춤)
+            float4 _TOD_Look;                       // 24차: x 잉크 외곽선, y 색 보정, z 종이 결, w 비네트 세기 (GameDatabase.postFx, 1 = 예전)
 
             float hash(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
             float noise(float2 p)
@@ -138,24 +139,26 @@ Shader "TOD/PostFX"
                 float gx = -tl - 2. * ml - bl + tr + 2. * mr + br;
                 float gy = -tl - 2. * tc - tr + bl + 2. * bc + br;
                 float edge = smoothstep(.12, .42, length(float2(gx, gy)));
-                c = lerp(c, float3(.07, .05, .08), edge * .43);
+                c = lerp(c, float3(.07, .05, .08), edge * .43 * _TOD_Look.x);
 
-                // 유령 신부 톤: 채도 낮추고 그림자는 청회색, 밝은 곳은 바랜 분홍/상아.
+                // 유령 신부 톤: 채도 낮추고 그림자는 청회색, 밝은 곳은 바랜 분홍/상아. (24차: _TOD_Look.y 만큼만)
+                float3 raw = c;
                 float l = lum(c);
                 c = lerp(l.xxx, c, .8);
                 float3 shadowTint = float3(.9, .97, 1.18), lightTint = float3(1.06, .98, .95);
                 c *= lerp(shadowTint, lightTint, smoothstep(.08, .6, l));
                 c = lerp(c, c * float3(.9, .95, 1.08), .35 * (1. - smoothstep(.0, .35, l)));
                 c = c * 1.04 + .03;
+                c = lerp(raw, c, _TOD_Look.y);
 
-                // 종이: 큰 얼룩 + 가는 섬유결
+                // 종이: 큰 얼룩 + 가는 섬유결 (24차: _TOD_Look.z 만큼)
                 float blot = fbm(st * 3.2);
                 float fiber = fbm(st * float2(520., 140.)) * .6 + fbm(st * float2(140., 520.)) * .4;
-                c *= 1. - .07 * blot - .075 * (fiber - .5);
+                c *= 1. - (.07 * blot + .075 * (fiber - .5)) * _TOD_Look.z;
 
-                // 비네트 + 욕망 수치가 높으면 붉게 조여 온다.
+                // 비네트 + 욕망 수치가 높으면 붉게 조여 온다. (24차: 기본 세기 _TOD_Look.w, 욕망이 높을 때 붉게 조이는 것은 그대로)
                 float2 d = (st - .5) * float2(1.05, 1.25);
-                float vig = smoothstep(.4, .95, length(d)) * (1. - saturate(_TOD_Purified));
+                float vig = smoothstep(.4, .95, length(d)) * (1. - saturate(_TOD_Purified)) * lerp(_TOD_Look.w, 1., desire);
                 c = lerp(c, float3(.05, .03, .06) + float3(.18, 0., .07) * desire, vig * (.55 + .25 * desire));
 
                 // 촛불 깜빡임 (화면 전체 밝기가 천천히 조금). (2026-11-24) 픽셀마다 1초에 12번 바뀌던 필름 그레인은 지글거려서 뺐다.

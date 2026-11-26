@@ -130,6 +130,17 @@
 - [x] **재봉실 앞뒤 가림 (2026-11-26, 사용자 "단추 뒤로 가면 캐릭터가 가려지게"):** 2D 렌더러는 Y 사용자 축으로 정렬하는데 시설 그림(상인 단추, 탑 문, 다락, 일기 게시판)은 가운데 피벗이라 그림 가운데 높이로 정렬됨 → 상인 발보다 조금 뒤에 서도 주인공이 앞에 그려졌음. `HubView.Tick` 이 매 프레임 시설 발밑 높이와 주인공 발밑(리그 원점)을 비교해 `sortingOrder` 1(앞) / −1(뒤). 그림 가져오기 피벗은 안 바꿈(전투 상인 그리기가 가운데 피벗을 씀). 확인 `Temp/Shots/w24_sort_compare.png`(뒤 = 단추에 가려짐, 앞 = 주인공이 위).
 - [x] **대시 끝 몸 뜸 (2026-11-26, 사용자 "점프 끝날 때 살짝 몸이 뜨는 거 프레임 분석"):** 1/60초 측정(재봉실 `HubView.Tick`, 리그 원점·발바닥·머리 높이 px): 이동은 .17~.18초에 멈추는데 떠오름(`HeroView.Hop`)이 대시 자세 길이 .29초에 걸쳐 있어서 멈춘 순간 14px 떠 있고 제자리에서 .1초 동안 내려앉았음(달리며 대시하면 속도 0 인 순간이 가장 높음). → 떠오름 구간 = `feel.dashDuration` + `visual.dodgeHopLand`(새, .03초, MCP). 결과: 꼭대기 .10초(15px), .183초 1.9px, .20초 땅(이동 멈춤과 같이), 그 뒤 머리 .4px 만 정리. 전투도 같은 함수.
   - 전: `root 0 1 3.4 6.2 9.1 11.6 13.6 14.8 15.0 14.2 12.5 10.1 7.3 4.4 1.9 0.1 0` / 후: `2.0 5.3 8.9 12.1 14.2 15.0 14.2 12.1 8.9 5.3 2.0 0 …` (속도 1828 → 80(.167초) → 2(.183초)).
+- [x] **히트스톱 줄임, 회피 문구 (2026-11-26, 사용자 "히트스탑 좀 줄이고", "회피! 말고 영어로, ! 빼"):** MCP 데이터만: `feel.hitStopScale` 1.2 → .75(1타 약 .07초, 상한 약 .13초), `bind.freezeBonus` .1 → .06, `messages.dodge` "회피!" → "DODGE"(피해 숫자 그림 글꼴엔 영문이 없어 UI 글꼴로 그려짐, 예전 한글과 같음). 씬 저장.
+- [x] **전투·로비 캐릭터 셰이더 차이 (2026-11-26, 사용자 "전투와 로비에서 캐릭터에게 각기 다른 셰이더가 적용된 것처럼 보임"):** 주인공 그림·재질·코드는 같고, 전투에서만 켜지는 화면 후처리(`PostFX.shader`, `_TOD_Enabled`)가 원인. 단계별로 끄고 찍어 비교(`Temp/Shots/w24_look_compare.png`: 재봉실 / 전투 지금 / 잉크 0 / +톤 0 / +종이 0) → **잉크 외곽선(밝기 Sobel 경계 어둡게)** 이 주인공의 촘촘한 결을 얼룩덜룩한 먹선으로 바꾸는 주범, 색 보정은 채도만 조금.
+  - 새 `Data/PostFxData.cs` `PostFxLook`(ink, tone, paper, vignette, 0~1, 1 = 예전) → `GameDatabase.postFx` → `GameController.ApplyPostFx` 가 `_TOD_Look` 전역값으로. 셰이더는 각 단계에 곱함(비네트는 욕망이 높을 때 붉게 조이는 건 그대로).
+  - 값(MCP): ink **0**, tone **.5**, paper 1, vignette 1. 전투 장면 전체(몬스터, 소품)도 먹선이 빠짐 — 더 진한 분위기를 원하면 tone 을 올리면 됨.
+- [x] **재봉실 구석 가구 (A안) + 새 재봉실 배경 (2026-11-26, 사용자가 추천안 수락):** NPC 가 빈 바닥에 서 있던 것을 각자 가구 앞에 세움.
+  - 가구 5종(Codex, `tools/codex_prompts/hub_corners.txt`, 참고 `hub_facilities2.png`·`hub_room2.png`·NPC 줄 세운 그림 `art_src/raw/hub_corners_npcs_ref.png`) → `art_src/raw/hub_corners.png` → `python tools/bake_hub_corners.py` → `Assets/sprites/hub_corner_{nun,ghost,cart,rat,doll}.png`(방 빛 비네트, 가져오기 설정은 `hub_attic` 복사). 수녀 = 기도대·촛대·바늘 묵주 선반, 촛불 유령 = 녹은 초 가득한 장식장, 단추 = 바퀴 달린 노점 수레(차양·단추 줄·초롱), 쥐 = 보따리·골무 진열 상자, 인형 = 장난감 상자·주사위 탁자.
+  - 배치(바닥 좌표, 발밑): 뒷벽 = 사다리 225 · 기도대 365 · 탑 문 500 · 장식장 640 · 게시판 775. 수녀 (450, 310), 유령 (585, 300) 은 가구 앞. 쥐 (210, 625) + 좌판 왼쪽, 단추 (815, 590) + 수레 뒤 오른쪽, 인형 (790, 805) + 장난감 구석 오른쪽 아래. 가구는 그 NPC 를 만났을 때만 나옴(상인 수레는 늘).
+  - 새 배경 `hub_room3`(Codex `hub_room3.txt`, 배치 그림 `art_src/raw/hub_layout3_ref.png`): 가구 자리 벽을 비우고(옛 선반·등불 치움, 등불은 게시판 오른쪽 89%로), 자리마다 바닥 그림자, 쥐·상인 자리 매트, 인형 자리 나무 블록. 데이터 `hub.backdrop` = hub_room3 (옛 hub_room2 는 남김).
+  - 코드: `HubData.HubProp`(sprite, offset, height, flip, block, blockOffset, shadowSize, shadowOffset) + `HubFacility.props`. `HubView`: 시설 템플릿·그림자·드리운 그림자 복제로 그림(`PaintProp`, `TickProps`), 시설이 보일 때만 켜짐, 방 빛 곱함, 걸음 막기(`Push`), 드리운 그림자(`Cast` 로 묶음). 앞뒤: 시설·가구·**NPC 리그도** 발밑 높이로 주인공 앞(1)/뒤(−1).
+  - 확인: `Temp/Shots/w24_corners_all.png`(모두 만남), `w24_corners_none.png`(아무도 안 만남 — 뒷벽 빈 벽, 왼쪽 빈 매트), `w24_corners_final.png`(수녀 살짝 옮김, 수레 뒤에 서면 주인공 가려짐). EditMode 91개 통과(다른 세션 테스트 포함).
+  - `tools/bake_hub_art.py` 는 함수만 가져다 쓰도록 굽는 부분을 `__main__` 아래로 옮김(동작 같음).
 - [ ] 사용자 확인 필요: 교만·시기 cap .9, 사람이 직접 한 플레이 느낌(식탐 허기 속도, 색욕 시야 7층 60%).
 - **다른 세션 (2026-11-25 15:45 확인, 두 세션 모두 앱 목록에서 사라짐):** `fate-cel-anim` — 프레임 루프 코드 끝, Claude in Chrome 연결 대기로 그림 생성 멈춤(사용자가 15:30 연결함). `data-tables` — 사용자 답(범위 **밸런스만**, 하나뿐인 설정 묶음은 **세로 키·값**(group | key | type | value), **내보내기만**(가져오기 도구 없음))을 받고 데이터 구조를 훑다가 5시간 한도로 멈춤. **만든 파일 없음** — 처음부터 다시(`기획서/데이터테이블.xlsx`, 스크립트 `tools/`, 자료형 int/string/float/enum, 효과는 effect + value + value_type, `enums` 시트).
 ### 24차-fate-cel-anim (미래 보기 구슬 속 셀 애니 루프) — 진행 중 (분노 끝, 사용자 확인 뒤 6죄종)
@@ -183,6 +194,22 @@
 - **확인:** EditMode 91개 중 89 통과 — 새 `SewSparkTests` 3개(데이터 채움, 타수·결박 배율, 당기기가 맞은 적마다 Sew Fx·결박이면 죄종 색) 통과. 실패 2개는 `HitAudioTests`(hit-audio 세션 데이터가 아직 안 들어감, 이 작업과 무관). 플레이: 등반 시작 → 적 셋(1타, 3타, 색욕 결박 5) 당김, 프레임 스톱을 잠깐 1.2초로 늘려(`Run.freeze`, 데이터는 안 바꿈) 찍음 `Temp/Shots/w24_hitsparks_stop.png`, 풀린 뒤 `_t1/_t2/_t3.png`, 확대 모음 `w24_hitsparks_zoom.png`, 분노 결박(glow 낮춘 뒤) `w24_hitsparks_wrath_t1.png`. 처음 glow .35 는 회색 안개처럼 보여 .15 로 낮춤. 프로필은 `Temp/profile_backup_hitsparks.json` 에서 되돌림, 잠금 풀어 둠.
   - 참고: 당기기 때 콘솔에 `Invalid worldAABB / localAABB` 오류가 찍히는데, sparks.time = 0 으로 끄고 당겨도 똑같이 나와 이 작업 것이 아님(다른 당기기 연출 쪽, 원인 미확인).
 - **남은 것:** 실제 속도로 사람이 보는 손맛(개수, 퍼짐, 빛). 프레임 스톱 첫 장에서는 베기 섬광이 밝아 조각이 잘 안 보임 — 더 보이게 하려면 `startOffset`·burst size 를 올리기.
+
+### 24차-hit-audio (당기기 타격음 여러 겹) — 완료 (2026-11-26)
+- **무엇:** 당기기로 맞히면 합성음 `pull`(실 당기는 소리, 그대로) 위에 **겹**이 얹힘. (1) `hit_thud` 둔탁한 쿵(몸에 맞는 무게) + (2) `hit_tear` 천 찢김 + `hit_twang` 실 튕김 → 타수가 많을수록 볼륨이 오르고, 찢김은 2타마다 한 겹씩(최대 3) 조금씩 늦게 겹치고, **5타부터** `hit_boom` 깊은 둥이 붙음. (3) 강조음: 처치 = `hit_snip` 가위 싹둑(처치 2마리마다 한 겹, 최대 3) + 낮게 깐 쿵, 치명타 = `hit_crit` 바늘 반짝 핑(당기기마다 한 번, 2마리 이상이면 두 번), 결박 = 기존 합성음 `bind` + `hit_boom` 낮게. 겹마다 피치·볼륨을 매번 무작위로 흔듦(같은 소리 반복이 덜 지겨움). '마지막 타'는 막타 = 처치로 해석.
+- **이벤트 (Sim):** `Combat.Pull` 끝(`r.combo = impacts` 아래)에서 `hit`(세기 = 타수), `pullkill`(처치 수), `hitcrit`(치명타 맞은 적 수). 결박은 원래 `bind`. `GameEvent.count` 추가, `Combat.Event(r, type, int count)` 오버로드. 기존 적마다 `crit` 이벤트(소리 없음, 줌 펀치 세션 줄)는 그대로 둠.
+- **재생:** `SoundBank.PlayEvent(type, count, power)` — `GameDatabase.hitAudio.cues` 에 그 이벤트 겹이 있으면 겹들을, 없으면 예전처럼 `Play(type)`. 겹은 `SoundBank.voices`(MCP 로 만든 `GameController/SoundVoices/Voice0~13`, AudioSource 2D 14개)로 피치·볼륨·지연(`PlayScheduled`)을 넣어 냄. 다 바쁘면 차례로 가장 오래된 것을 끊음. `SoundBank.logCues`(평소 꺼짐)를 켜면 `[hit-audio] hit x6: hit_thud v1.07 p0.93 +0ms, …` 로그.
+- **파일:** `Runtime/Data/AudioData.cs`(새: `SoundCue`, `HitAudioConfig`, `SoundCues.Plan`), `Runtime/Audio/SoundBank.cs`, `Sim/Combat.cs`·`Sim/RunState.cs`·`Data/GameDatabase.cs`(`hitAudio`)·`Game/GameController.cs`(Init·PlayEvent 각 한 줄), 테스트 `Tests/HitAudioTests.cs`(5개), WAV `Assets/Audio/Hit/hit_*.wav`, 생성기 `tools/make_hit_audio.py`.
+- **값 (씬 GameDatabase, MCP execute_code):**
+  - 소리 레벨(`sounds[].volume`, 샘플 꼭짓점 0.95 기준): thud .32, tear .16, twang .12, snip .2, crit .13, boom .3 (합성 `pull` 꼭짓점 .1 과 맞춤).
+  - `hitAudio.countCap` 10. 겹(`cues`, trigger → sound: volume +perCount (max) ±jitter / pitch +perCount ±jitter / delay / copies):
+    - hit → thud .85 +.07 (1.25) ±12% / 1 −.025 ±.06 / 0 · tear .7 +.06 (1.1) ±20% / 1 +.015 ±.12 / 8ms / 2타마다 +1겹 최대 3, 간격 28ms · twang .5 +.04 (.8) ±20% / 1 +.03 ±.1 / 15ms · boom(5타부터) .45 +.08 (.8) ±10% / 1.05 ±.05
+    - pullkill → snip .9 +.1 (1.2) ±12% / 1 +.04 ±.08 / 30ms / 2처치마다 +1겹 최대 3, 50ms · thud .5 ±10% / .75 ±.05 / 25ms
+    - hitcrit → crit .9 +.1 (1.1) ±10% / 1 ±.04 / 5ms / 치명타 수만큼 최대 2, 60ms
+    - bind → bind(합성) 1 ±5% / 1 ±.03 · boom 1 ±10% / .9 ±.05
+- **확인:** EditMode 91개 통과(새 HitAudioTests 5: 1타 = hit 세기 1·헛당기기 무음, 3마리 처치 = pullkill 3, 결박 = bind + hit 5, 치명타 강조는 당기기마다 한 번, 데이터가 실제 WAV 를 가리킴, 타수↑ = 겹·볼륨↑, 피치 흔들림 범위). 플레이(StartRun → 적 소환 + 실 꽂고 당기기)에서 로그·소스 상태로 1타 3겹, 6타+6처치 10겹, 결박5+치명 9겹이 각 Voice 에서 다른 피치로 재생됨. 파형 `Temp/Shots/w24_hitaudio_waves.png`(소리 6개), 섞은 모양 `w24_hitaudio_mix.png`(꼭짓점 1타 .30 / 6타+처치 .54 / 결박+치명 .88 — 안 찢어짐). **귀로는 못 들어 봄 — 사용자 확인 필요.**
+- **들어 보고 조절할 것:** 쿵이 약하면 `sounds` hit_thud volume(.32), 찢김이 거슬리면 hit_tear volume·`cues` tear pitchJitter(.12), 많이 맞힐 때 너무 시끄러우면 각 cue 의 volumeMax·maxCopies, 둥이 너무 자주면 boom minCount(5), 처치음이 날카로우면 snip pitch(1)·volume(.9). 소리 결 자체(길이·밝기)는 `tools/make_hit_audio.py` 의 함수(thud/tear/twang/snip/crit/boom)를 고쳐 다시 만들기.
+- **다시 만드는 법:** `python tools/make_hit_audio.py` (numpy·Pillow, seed 고정) → Unity 가 WAV 를 다시 가져옴(연결은 그대로). 새 겹은 `sounds` 에 id + sample 을 넣고 `hitAudio.cues` 에 trigger 줄 추가 — 코드 변경 없음. 새 이벤트에 겹을 달려면 Sim 에서 `Event(r, "이름", 세기)` 한 줄.
 
 ## 23차 (2026-11-25 시작) — 문구, 소리 정리, 포션 칸, 우클릭 해제, 층 표시, 보스 파편, 개발자 모드, 라틴어 특수공격, 피해 숫자, 쉬어가기 NPC — 진행 중
 

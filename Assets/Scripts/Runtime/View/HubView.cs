@@ -31,6 +31,9 @@ namespace TOD
         readonly Dictionary<HubStation, SpriteRenderer> renderers = new();
         readonly Dictionary<HubStation, SpriteRenderer> shadows = new();
         readonly Dictionary<HubStation, SpriteRenderer> casts = new();
+        // 24차 구석 가구: 시설(NPC, 상인)마다 HubFacility.props 를 facilityTemplate·shadowTemplate·castTemplate 복제로 그린다
+        class PropView { public HubFacility f; public HubProp p; public SpriteRenderer sr, shadow, cast; }
+        readonly List<PropView> props = new();
         MaterialPropertyBlock block;
         bool placed;
         HubRoom main;                          // 재봉실 본방 (HubConfig 옛 필드를 묶은 것)
@@ -76,6 +79,17 @@ namespace TOD
                         SpriteRenderer cast = Instantiate(castTemplate, facilityRoot);
                         cast.name = f.station + "Cast";
                         casts[f.station] = cast;
+                    }
+                    for (int k = 0; f.props != null && k < f.props.Length; k++)
+                    {
+                        HubProp p = f.props[k];
+                        if (p == null || p.sprite == null) continue;
+                        var v = new PropView { f = f, p = p, sr = Instantiate(facilityTemplate, facilityRoot) };
+                        v.sr.name = $"{f.station}Prop{k}";
+                        PaintProp(v);
+                        if (shadowTemplate != null && p.shadowSize.x > 0) { v.shadow = Instantiate(shadowTemplate, facilityRoot); v.shadow.name = v.sr.name + "Shadow"; }
+                        if (castTemplate != null) { v.cast = Instantiate(castTemplate, facilityRoot); v.cast.name = v.sr.name + "Cast"; }
+                        props.Add(v);
                     }
                 }
             ShowRoom();
@@ -141,6 +155,8 @@ namespace TOD
                 rig.transform.localPosition = Space.Ground(f.position.x, f.position.y);
                 float s = rig.height > 0 ? f.height / rig.height : 1;
                 rig.transform.localScale = new Vector3(s * (f.flip ? -1 : 1), s, 1);
+                // 24차: 시설·구석 가구와 같은 규칙으로 발밑 높이에 따라 주인공 앞(1)/뒤(-1)
+                if (rig.group != null && hero != null) rig.group.sortingOrder = rig.transform.position.y < hero.transform.position.y ? 1 : -1;
                 FacilityLook look = H.look;
                 if (look != null && look.brightness > 0) { rig.tint = look.tint; rig.saturation = look.saturation; rig.brightness = look.brightness * (f.brightness > 0 ? f.brightness : 1); }
             }
@@ -203,14 +219,27 @@ namespace TOD
         }
 
         // 20차: 발밑 그림자 = 부드러운 타원 (그림 아래 끝 가운데 + shadowOffset, 지름 shadowSize 캔버스 px)
-        void PlaceShadow(HubFacility f, SpriteRenderer sh, SpriteRenderer sr)
+        void PlaceShadow(HubFacility f, SpriteRenderer sh, SpriteRenderer sr) =>
+            PlaceShadow(sh, sr != null ? Foot(sr) : Space.Ground(f.position.x, f.position.y), f.shadowOffset, f.shadowSize);
+
+        void PlaceShadow(SpriteRenderer sh, Vector3 foot, Vector2 offset, Vector2 size)
         {
-            Vector3 at = sr != null ? Foot(sr) : Space.Ground(f.position.x, f.position.y);
-            sh.transform.localPosition = at + new Vector3(f.shadowOffset.x, -f.shadowOffset.y, 0) / Space.Ppu;
+            sh.transform.localPosition = foot + new Vector3(offset.x, -offset.y, 0) / Space.Ppu;
             Vector2 px = sh.sprite != null ? (Vector2)sh.sprite.bounds.size * Space.Ppu : Vector2.one;
-            sh.transform.localScale = new Vector3(f.shadowSize.x / px.x, f.shadowSize.y / px.y, 1);
+            sh.transform.localScale = new Vector3(size.x / px.x, size.y / px.y, 1);
             FacilityLook look = H.look;
             if (look != null) sh.color = look.shadowColor;
+        }
+
+        // 24차 구석 가구: 시설 자리 + offset 에 그림 아래 가운데, 높이 height (시설 Paint 와 같은 방식)
+        void PaintProp(PropView v)
+        {
+            HubProp p = v.p;
+            v.sr.sprite = p.sprite;
+            float scale = p.height / (p.sprite.bounds.size.y * Space.Ppu);
+            v.sr.transform.localScale = new Vector3(scale * (p.flip ? -1 : 1), scale, 1);
+            Vector2 at = v.f.position + p.offset;
+            v.sr.transform.localPosition = Space.Ground(at.x, at.y) + Vector3.up * PivotLift(p.sprite, scale);
         }
 
         // 20차 드리운 그림자: 시설 그림(상인은 지금 자세)을 발밑에서 뒤집어 castLength 만큼 납작하게 앞으로 눕힌다.
@@ -219,29 +248,32 @@ namespace TOD
         {
             FacilityLook look = H.look;
             if (look == null || look.castLength <= 0) { foreach (var pair in casts) pair.Value.enabled = false; return; }
-            float cx = Room.backdropRect.center.x;
             foreach (HubFacility f in Room.facilities)
-            {
-                if (!casts.TryGetValue(f.station, out SpriteRenderer cast) || !renderers.TryGetValue(f.station, out SpriteRenderer sr)) continue;
-                cast.enabled = sr.sprite != null;
-                if (sr.sprite == null) continue;
-                cast.sprite = sr.sprite;
-                cast.flipX = sr.flipX;
-                Vector3 s = sr.transform.localScale;
-                cast.transform.localScale = new Vector3(s.x, -Mathf.Abs(s.y) * look.castLength, 1);
-                float side = Mathf.Sign(f.position.x - cx);
-                float angle = Mathf.Atan(look.castLean) * side;
-                cast.transform.localRotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg);
-                // 뒤집힌 그림의 가까운 끝(그림 아래 끝)이 시설 발밑에 오도록 가운데를 옮긴다 (기운 만큼 돌려서)
-                Vector3 foot = Foot(sr);
-                float near = sr.sprite.pivot.y / sr.sprite.pixelsPerUnit * Mathf.Abs(s.y) * look.castLength;
-                cast.transform.localPosition = foot + new Vector3(Mathf.Sin(angle) * near, -Mathf.Cos(angle) * near, 0);
-                cast.color = new Color(1, 1, 1, look.castColor.a);
-                block.Clear();
-                block.SetVector(CastId, new Vector4(1, look.castFade, look.castBlur, 0));
-                block.SetColor(FillId, look.castColor);
-                cast.SetPropertyBlock(block);
-            }
+                if (casts.TryGetValue(f.station, out SpriteRenderer cast) && renderers.TryGetValue(f.station, out SpriteRenderer sr)) Cast(cast, sr, f.position.x, look);
+            foreach (PropView v in props)   // 24차 구석 가구
+                if (v.cast != null && v.cast.gameObject.activeSelf) Cast(v.cast, v.sr, v.f.position.x + v.p.offset.x, look);
+        }
+
+        void Cast(SpriteRenderer cast, SpriteRenderer sr, float x, FacilityLook look)
+        {
+            cast.enabled = sr.sprite != null;
+            if (sr.sprite == null) return;
+            cast.sprite = sr.sprite;
+            cast.flipX = sr.flipX;
+            Vector3 s = sr.transform.localScale;
+            cast.transform.localScale = new Vector3(s.x, -Mathf.Abs(s.y) * look.castLength, 1);
+            float side = Mathf.Sign(x - Room.backdropRect.center.x);
+            float angle = Mathf.Atan(look.castLean) * side;
+            cast.transform.localRotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg);
+            // 뒤집힌 그림의 가까운 끝(그림 아래 끝)이 시설 발밑에 오도록 가운데를 옮긴다 (기운 만큼 돌려서)
+            Vector3 foot = Foot(sr);
+            float near = sr.sprite.pivot.y / sr.sprite.pixelsPerUnit * Mathf.Abs(s.y) * look.castLength;
+            cast.transform.localPosition = foot + new Vector3(Mathf.Sin(angle) * near, -Mathf.Cos(angle) * near, 0);
+            cast.color = new Color(1, 1, 1, look.castColor.a);
+            block.Clear();
+            block.SetVector(CastId, new Vector4(1, look.castFade, look.castBlur, 0));
+            block.SetColor(FillId, look.castColor);
+            cast.SetPropertyBlock(block);
         }
 
         public SpriteRenderer FacilityRenderer(HubStation station) => renderers.TryGetValue(station, out SpriteRenderer sr) ? sr : null;
@@ -323,6 +355,7 @@ namespace TOD
                 sr.SetPropertyBlock(block);
                 if (shadows.TryGetValue(f.station, out SpriteRenderer sh)) PlaceShadow(f, sh, sr);
             }
+            TickProps(heroFoot);   // 24차 구석 가구
             AnimateMerchant(clock);
             UpdateCasts();
             float zoom = Room.cameraZoom > 0 ? Room.cameraZoom : 1;
@@ -372,14 +405,44 @@ namespace TOD
         {
             foreach (HubFacility f in Room.facilities)
             {
-                if (f.block.x <= 0 || f.block.y <= 0 || !Visible(f.station)) continue;
-                Vector2 c = f.position + f.blockOffset;
-                float nx = (player.x - c.x) / f.block.x, ny = (player.y - c.y) / f.block.y;
-                float d = Mathf.Sqrt(nx * nx + ny * ny);
-                if (d >= 1) continue;
-                if (d < 1e-4f) { nx = 0; ny = 1; d = 1; }
-                player.x = c.x + nx / d * f.block.x;
-                player.y = c.y + ny / d * f.block.y;
+                if (!Visible(f.station)) continue;
+                Push(f.position + f.blockOffset, f.block);
+                for (int k = 0; f.props != null && k < f.props.Length; k++)   // 24차 구석 가구
+                    if (f.props[k] != null) Push(f.position + f.props[k].offset + f.props[k].blockOffset, f.props[k].block);
+            }
+        }
+
+        void Push(Vector2 c, Vector2 r)
+        {
+            if (r.x <= 0 || r.y <= 0) return;
+            float nx = (player.x - c.x) / r.x, ny = (player.y - c.y) / r.y;
+            float d = Mathf.Sqrt(nx * nx + ny * ny);
+            if (d >= 1) return;
+            if (d < 1e-4f) { nx = 0; ny = 1; d = 1; }
+            player.x = c.x + nx / d * r.x;
+            player.y = c.y + ny / d * r.y;
+        }
+
+        // 24차 구석 가구: 지금 방에 있고 시설이 보일 때(만난 NPC)만 켜고, 방 빛을 곱하고, 발밑 높이로 주인공 앞/뒤를 정한다
+        void TickProps(float heroFoot)
+        {
+            var here = new HashSet<HubFacility>(Room.facilities ?? new HubFacility[0]);
+            FacilityLook look = H.look;
+            bool styled = look != null && look.brightness > 0;
+            foreach (PropView v in props)
+            {
+                bool on = here.Contains(v.f) && Visible(v.f.station);
+                if (v.sr.gameObject.activeSelf != on) v.sr.gameObject.SetActive(on);
+                if (v.shadow != null && v.shadow.gameObject.activeSelf != on) v.shadow.gameObject.SetActive(on);
+                if (v.cast != null && v.cast.gameObject.activeSelf != on) v.cast.gameObject.SetActive(on);
+                if (!on) continue;
+                v.sr.sortingOrder = facilityRoot.TransformPoint(Foot(v.sr)).y < heroFoot ? 1 : -1;
+                v.sr.color = styled ? look.tint : Color.white;
+                block.Clear();
+                block.SetFloat(SatId, styled ? look.saturation : 1);
+                block.SetFloat(BrightId, (Near == v.f ? H.highlight : 1) * (styled ? look.brightness : 1));
+                v.sr.SetPropertyBlock(block);
+                if (v.shadow != null) PlaceShadow(v.shadow, Foot(v.sr), v.p.shadowOffset, v.p.shadowSize);
             }
         }
 

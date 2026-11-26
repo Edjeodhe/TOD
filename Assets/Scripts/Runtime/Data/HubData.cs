@@ -144,6 +144,20 @@ namespace TOD
         public Vector2 shadowSize;            // 20차 발밑 그림자 타원 지름 (캔버스 px). 0 = 없음
         public Vector2 shadowOffset;          // 그림자 중심: 그림 아래 가운데에서 (캔버스 px, y 아래 +)
         public float brightness;              // 20차 이 시설만 더 곱하는 밝기 (0 = 1). 다시 그리지 않은 그림(상인 단추)을 방에 맞출 때
+        public HubProp[] props;               // 24차 이 시설(NPC, 상인) 곁 가구. 시설이 보일 때만 (만난 NPC 만) 나온다
+    }
+
+    // 24차 재봉실 구석 가구 (수녀의 기도대, 유령의 촛대 장식장, 단추의 수레 …). 그림 아래 가운데가 시설 자리 + offset 에 닿는다.
+    [Serializable] public class HubProp
+    {
+        public Sprite sprite;
+        public Vector2 offset;                // 시설 자리에서 가구 발밑까지 (바닥 좌표)
+        public float height;                  // 그림 높이 (캔버스 px)
+        public bool flip;
+        public Vector2 block;                 // 걸어서 못 들어가는 바닥 타원 반지름 (x, y). 0 = 막지 않음
+        public Vector2 blockOffset;           // 막는 타원 중심 (가구 발밑 기준)
+        public Vector2 shadowSize;            // 발밑 그림자 타원 지름 (캔버스 px). 0 = 없음
+        public Vector2 shadowOffset;          // 그림자 중심: 그림 아래 가운데에서 (캔버스 px, y 아래 +)
     }
 
     // 20차: 시설 그림을 방 빛에 맞추는 값 (모든 시설에 곱함. 모이라는 MoiraRig 의 값)
