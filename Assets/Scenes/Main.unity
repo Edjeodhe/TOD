@@ -39494,6 +39494,7 @@ MonoBehaviour:
     dodgeLaunchEnd: 0.055
     dodgeAirEnd: 0.2
     dodgeHop: 15
+    dodgeHopLand: 0.03
     strandSegment: 16
     frustrationSegment: 13
     dodgeColor: {r: 0.4235, g: 0.7843, b: 1, a: 1}

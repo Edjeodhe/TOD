@@ -81,9 +81,12 @@ namespace TOD
         bool InDash(Player p) => p.action != HeroAction.Die && (p.dash > 0 || p.dashGrace > 0);
 
         // 대쉬 떠오름 0~1: 가운데서 가장 높고, 양 끝은 기울기 0 (sin^1.5)
+        // 24차: 예전엔 대시 자세 길이(rig.dash.length .29초)에 걸쳐 떠서, 이동이 .17초에 멈춘 순간 가장 높이(15px) 떠 있다가
+        // 제자리에서 .1초 동안 내려앉았다 (= 끝날 때 몸이 뜸). 이제 이동 시간 + dodgeHopLand 안에 내려앉는다.
         float Hop(float t)
         {
-            float u = Mathf.Clamp01((t - .02f) / Mathf.Max(.05f, rig.dash.length - .04f));
+            float span = db.feel.dashDuration + Mathf.Max(0, db.visual.dodgeHopLand);
+            float u = Mathf.Clamp01(t / Mathf.Max(.05f, span));
             return Mathf.Pow(Mathf.Max(0, Mathf.Sin(Mathf.PI * u)), 1.5f);   // sin(π) 는 아주 작은 음수 → Pow 가 NaN 이 되지 않게
         }
 
@@ -115,7 +118,7 @@ namespace TOD
                 ry = p.recoil.y * f.recoilHero * k * Space.Proj;
             }
             // 대쉬는 짧게 떠오른다 (예전 회피 통그림의 도약 대신).
-            // 23차: 대쉬 자세가 풀리는 동안(rig.dash.length) 이어지고 끝에서 사뿐히 내려앉는다.
+            // 23차: 끝에서 사뿐히 내려앉는다. 24차: 이동이 멈출 즈음 땅에 닿는다 (Hop).
             // 예전에는 InDash 동안만 떠서 dashGrace 가 없는 재봉실에선 끝 프레임에 툭 떨어졌고, 착지가 가팔라 웅크림이 풀리며 다시 솟았다.
             if (action == HeroAction.Dash) ry -= Hop(t) * db.visual.dodgeHop;
             return new HeroFrame { pose = pose, root = Space.Canvas(p.x + rx, Space.ProjectY(p.y) + ry), scale = Scale(p.y), facing = facing };

@@ -556,6 +556,7 @@ namespace TOD
         public Vector2 critIconOffset;        // 숫자 왼쪽 위 모서리에서 아이콘 가운데까지 (숫자 높이 대비, +x 오른쪽 +y 아래)
         public Color levelUpColor;
         public float dodgeScale, dodgeLaunchEnd, dodgeAirEnd, dodgeHop;
+        public float dodgeHopLand;            // 24차: 대시 떠오름은 대시 이동 시간(feel.dashDuration) + 이만큼(초) 안에 내려앉는다 (멈춘 뒤 공중에 떠 있지 않게)
         public float strandSegment, frustrationSegment;
         public Color dodgeColor;
         [Header("세트 속성 (12차)")]

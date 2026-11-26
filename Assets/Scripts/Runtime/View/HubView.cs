@@ -306,9 +306,13 @@ namespace TOD
             hero.Render(player, 1, db.palette.shadow);
 
             Near = Nearest();
+            // 24차: 시설 그림은 가운데 피벗이라 Y 정렬(렌더러 2D 사용자 축)이 그림 가운데 높이로 돼서, 상인 발보다 조금 뒤에 서도 주인공이 앞에 그려졌다.
+            // → 발밑 높이로 주인공보다 앞(아래)이면 위, 뒤면 아래에 그린다 (주인공 리그는 발밑 피벗, 같은 Actors 층 order 0).
+            float heroFoot = hero.transform.position.y;
             foreach (HubFacility f in Room.facilities)
             {
                 if (!renderers.TryGetValue(f.station, out SpriteRenderer sr)) continue;
+                sr.sortingOrder = facilityRoot.TransformPoint(Foot(sr)).y < heroFoot ? 1 : -1;
                 // 20차: 방 빛에 맞춰 색을 곱하고 채도, 밝기를 낮춘다 (가까이 가면 highlight 만큼 밝게)
                 FacilityLook look = H.look;
                 bool styled = look != null && look.brightness > 0;
