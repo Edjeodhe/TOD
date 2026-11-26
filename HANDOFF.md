@@ -161,6 +161,18 @@
 - **다시 뽑기:** Unity MCP `execute_code` 로 `tools/dump_gamedb.cs` 본문 실행(읽기만, `Temp/gamedb_dump.json`) → `python tools/export_data_tables.py`. 스크립트가 자료형, enum 값, 열 수를 검사함. 새 필드·새 죄종·새 ItemEffect 가 생기면 스크립트의 표(SETTINGS, SET_EFFECT, ITEM_TYPE 등)에 줄을 더해야 함(모르는 값이면 KeyError로 멈춤).
 - 가져오기(엑셀 → 게임) 도구는 없음(사용자 결정).
 
+### 24차-hit-zoom (당기기 맞힌 순간 카메라 줌 펀치) — 완료 (2026-11-26)
+- **요청:** 타격감 강화안 중 '줌 펀치'(사용자 수락, 세 세션 hit-zoom / hit-sparks / hit-audio 로 나눔). 당기기로 맞힌 순간 화면이 2~3% 확 다가갔다가 부드럽게 돌아옴, 결박·치명타면 크게, 타수가 많을수록 조금 더.
+- **동작:** 당겨서 하나라도 맞히면 `Combat.Pull` 끝(반동 `kick` 옆)에서 `RunState.zoomPunch`(Timed: x = 세기, max = 다가감 + 돌아옴, done = 다가감 시간)를 만듦. 세기 = min(`zoomPunchMax`, `zoomPunchBase` + (타수−1) × `zoomPunchPerHit`) + 결박이면 `zoomPunchBind` + 치명타가 하나라도 있으면 `zoomPunchCrit`, 전체 상한 `zoomPunchCap`.
+  - **프레임 스톱과 맞춤:** `Combat.Update` 에서 줄임. `frameLead`(.035초) 동안 다가가고(다가감 .04초라 멈추는 순간 최대의 99%), **멈춤(`FrameHeld`) 동안은 다 다가간 채 서 있다가**, 풀리면 돌아옴. 그래서 '쾅 → 정지 → 풀림'이 한 박자로 읽힘.
+  - 곡선 `Combat.ZoomPunch(r)`(static): 다가감 ease-out(1−(1−t)²), 돌아옴 (1−u)²(처음 빠르고 끝이 부드럽게).
+  - **카메라:** `CameraRig.Apply(..., punch)` 새 인자. 직교 크기 = `FitSize(...)` × (1 − punch × `Settings.Shake`). 화면 비율 맞춤(24차 `FitSize`) **뒤에** 곱해서 4:3·21:9 에서도 똑같이 다가가고(좁은 화면에서 방 높이 상한에 먹히지 않음), `Zoom` 에도 들어가 PostFX 캔버스 높이가 맞음. 환경설정 '화면 흔들림' 0 이면 줌 펀치도 꺼짐. 정화 줌아웃(`zoomPhase`)과는 곱해짐. 재봉실(`HubView`)은 안 씀(기본값 0).
+- **데이터 (`FeelConfig`, MCP execute_code, 씬 저장):** `zoomPunchBase` .015 · `zoomPunchPerHit` .003 · `zoomPunchMax` .022 · `zoomPunchBind` .01 · `zoomPunchCrit` .008 · `zoomPunchCap` .035 · `zoomPunchIn` .04 · `zoomPunchOut` .2. → 1타 1.5%, 3타 2.1%, 결박(5가닥) 3.2%, 1타 치명 2.3%, 결박+치명 3.5%(상한). 전체 길이 약 .24초 + 멈춤 시간.
+- **테스트:** `CombatTests.PullZoomPunch`(당기기 전 0 → 맞히면 생김, 1타 = 기본값, 3타 ≥ 1타, 결박 5가닥 > 4가닥, 치명타 > 1타, 멈춤 동안 값 그대로, 시간이 지나면 null·0). EditMode 88개 중 86 통과 — 실패 2개는 hit-audio 세션의 새 `HitAudioTests`(그 세션 데이터가 아직 씬에 안 들어간 때라 그쪽 몫).
+- **플레이 확인 (2026-11-26 14:30):** 등반 시작 → 적 하나에 바늘 1·5개를 꽂고 `pullRequested`(리플렉션) → `GameController.Update` 를 직접 불러 프레임마다 기록. 1타(치명): 0 → .0049 → … → .0228(멈춤 시작, `orthographicSize` 2.95 → 2.883) → 멈춤 .072초 동안 그대로 → 풀리고 .0217, .0207 … 로 돌아옴. 결박 5가닥: 최대 .0317(2.95 → 2.857), 멈춤 .18초 동안 그대로. 그림 `Temp/Shots/w24_hitzoom_before.png` / `_peak.png` / `_compare.png`(왼쪽 당기기 전, 오른쪽 결박 당기기 멈춘 순간).
+  - 같이 본 것: 당기기마다 콘솔에 `Invalid worldAABB / localAABB` 단언이 뜸. **줌 펀치 값을 0 으로 해도 똑같이 떠서 이 작업 때문은 아님**(당기기 경로의 새 코드 — 같은 때 들어온 바느질 타격 파티클 쪽으로 보임 — 확인 필요).
+- 손맛은 사람이 해 보고 `zoomPunch*` 다듬기. 좀 더 '쿵' 하게 하려면 `zoomPunchBind`/`zoomPunchCap` 을 올리고, 어지러우면 `zoomPunchOut` 을 줄임.
+
 ## 23차 (2026-11-25 시작) — 문구, 소리 정리, 포션 칸, 우클릭 해제, 층 표시, 보스 파편, 개발자 모드, 라틴어 특수공격, 피해 숫자, 쉬어가기 NPC — 진행 중
 
 > 사용자 요청(스크린샷 4장)과 질문 답입니다. 세션마다 아래에 자기 절(`23차-<세션>`)을 만들어 진행을 적습니다. 커밋, 브랜치 전환 금지. Unity 잠금(`Temp/claude_unity.lock`) 규칙은 22차와 같습니다.

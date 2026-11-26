@@ -121,6 +121,54 @@ namespace TOD.Tests
             Assert.Less(fx.time, fxTime, "풀리면 이펙트가 다시 흐른다");
         }
 
+        // 24차 줌 펀치: 당겨 맞히면 줌 값이 생기고, 결박·치명타면 더 크고, 프레임 스톱 동안은 최대에서 서 있다가, 시간이 지나면 0.
+        [Test]
+        public void PullZoomPunch()
+        {
+            FeelConfig F = db.feel;
+            Assert.Greater(F.zoomPunchBase, 0, "줌 펀치 데이터");
+            Assert.Greater(F.zoomPunchIn + F.zoomPunchOut, 0, "줌 펀치 시간 데이터");
+            float Peak(int strands, bool crit)
+            {
+                RunState r = NewRun();
+                if (crit) r.random = () => 0;   // 치명타 확률을 반드시 넘김
+                r.player.x = 500; r.player.y = 350;
+                Enemy a = Add(r, "boss", 700, 350);
+                for (int i = 0; i < strands; i++)
+                    r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Plain });
+                Assert.AreEqual(0, Combat.ZoomPunch(r), "당기기 전엔 0");
+                combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
+                Assert.IsNotNull(r.zoomPunch, "맞히면 줌 펀치");
+                float peak = r.zoomPunch.x;
+                // 다가감: 프레임 스톱에 걸리면 최대에서 서 있다
+                float best = 0;
+                for (int i = 0; i < 240 && r.zoomPunch != null && !r.FrameHeld; i++) { combat.Update(r, 1 / 240f, new CombatInput()); best = Mathf.Max(best, Combat.ZoomPunch(r)); }
+                if (r.FrameHeld)
+                {
+                    for (int i = 0; i < 240 && r.zoomPunch.max - r.zoomPunch.time < r.zoomPunch.done && r.FrameHeld; i++) combat.Update(r, 1 / 240f, new CombatInput());
+                    float held = Combat.ZoomPunch(r);
+                    if (r.FrameHeld)
+                    {
+                        combat.Update(r, 1 / 240f, new CombatInput());
+                        if (r.FrameHeld) Assert.AreEqual(held, Combat.ZoomPunch(r), 1e-6f, "멈춘 동안 줌은 그대로");
+                    }
+                    best = Mathf.Max(best, held);
+                }
+                Assert.Greater(best, 0, "다가간다");
+                Assert.LessOrEqual(best, peak + 1e-6f);
+                for (int i = 0; i < 600 && r.zoomPunch != null; i++) combat.Update(r, 1 / 60f, new CombatInput());
+                Assert.IsNull(r.zoomPunch, "시간이 지나면 끝");
+                Assert.AreEqual(0, Combat.ZoomPunch(r), "돌아오면 0");
+                return peak;
+            }
+            float one = Peak(1, false);
+            Assert.AreEqual(F.zoomPunchBase, one, 1e-5f, "한 타 = 기본");
+            float three = Peak(3, false);
+            Assert.GreaterOrEqual(three, one, "타수가 많으면 조금 더");
+            Assert.Greater(Peak(db.bind.strands, false), Peak(db.bind.strands - 1, false), "결박이면 더 크다");
+            if (db.hero.critChance > 0) Assert.Greater(Peak(1, true), one, "치명타면 더 크다");
+        }
+
         // 결박: 같은 적에게 바늘이 db.bind.strands 개 꽂힌 채 당기면 추가 피해 + 결박 폭발, 하나 모자라면 없음.
         [Test]
         public void BindingFiveStrandsHitsHarder()

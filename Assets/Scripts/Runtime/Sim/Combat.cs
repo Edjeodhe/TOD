@@ -868,6 +868,18 @@ namespace TOD
             r.frameStop = true;
         }
 
+        // 24차 줌 펀치의 지금 세기 (0 ~ zoomPunch.x): 다가감은 빠르게 감속(ease-out), 돌아옴은 처음 빠르고 끝이 부드럽게
+        public static float ZoomPunch(RunState r)
+        {
+            Timed z = r?.zoomPunch;
+            if (z == null || z.max <= 0) return 0;
+            float elapsed = z.max - z.time;
+            if (elapsed < z.done) { float t = elapsed / z.done; return z.x * (1 - (1 - t) * (1 - t)); }
+            float back = z.max - z.done;
+            float u = back > 0 ? Mathf.Clamp01((elapsed - z.done) / back) : 1;
+            return z.x * (1 - u) * (1 - u);
+        }
+
         void Pull(RunState r)
         {
             Player p = r.player;
@@ -935,6 +947,7 @@ namespace TOD
             var wounded = new List<Enemy>();
             int transfers = 0;
             float totalDealt = 0;
+            bool anyCrit = false;   // 24차 줌 펀치
             ActiveSet main = MainSet(r);   // 16차: 메인 세트 = 이 당기기 피해 전체의 속성 (없으면 무속성)
             Element mainElement = main?.def.element ?? Element.Plain;
             foreach (Enemy e in living)
@@ -982,7 +995,7 @@ namespace TOD
                 number.text = dealt.ToString("0"); number.color = transferred > 0 ? X.transferColor : X.damageColor; number.pop = Mathf.Min(count, F.maxPopCount);
                 number.crit = crit;   // 치명타: 노란 글꼴 + 뾰족 아이콘
                 number.element = mainElement;   // 21차: 실 피해는 속성 글꼴 대신 흐린 외곽 주아 숫자(visual.damageFont). 속성 피해는 따로 속성 글꼴
-                if (crit) Event(r, "crit");
+                if (crit) { Event(r, "crit"); anyCrit = true; }
                 if (binding)
                 {
                     // 결박 폭발: 적 자리에서 속성 폭발(뷰가 화염 기둥·낙뢰·얼음 가시로 그림) + 머리 위 글자, 숫자는 최대 크기로 튄다
@@ -1065,6 +1078,13 @@ namespace TOD
                 float power = Mathf.Min(F.kickMax, F.kickBase + impacts * F.kickPerHit);
                 if (anyBound) power += db.bind.kickBonus;
                 r.kick = new Timed { x = k.x * power, y = k.y * power, time = F.kickTime, max = F.kickTime };
+                // 24차 줌 펀치: 타수가 많을수록 조금, 결박·치명타면 크게
+                float punch = Mathf.Min(F.zoomPunchMax, F.zoomPunchBase + (impacts - 1) * F.zoomPunchPerHit);
+                if (anyBound) punch += F.zoomPunchBind;
+                if (anyCrit) punch += F.zoomPunchCrit;
+                if (F.zoomPunchCap > 0) punch = Mathf.Min(F.zoomPunchCap, punch);
+                float punchIn = Mathf.Max(0, F.zoomPunchIn), punchTotal = punchIn + Mathf.Max(0, F.zoomPunchOut);
+                r.zoomPunch = punch > 0 && punchTotal > 0 ? new Timed { x = punch, time = punchTotal, max = punchTotal, done = punchIn } : null;
                 r.flash = Mathf.Min(F.flashMax, F.flashBase + impacts * F.flashPerHit);
                 r.flashTint = X.pullFlashColor;
                 if (anyBound)
@@ -1484,6 +1504,9 @@ namespace TOD
             Player p = r.player;
             if (p.recoil != null && (p.recoil.time -= dt) <= 0) p.recoil = null;
             if (r.kick != null && (r.kick.time -= dt) <= 0) r.kick = null;
+            // 24차 줌 펀치: 프레임 스톱 앞(frameLead)에 다가가고, 멈춤 동안은 다 다가간 채로, 풀리면 돌아온다
+            if (r.zoomPunch != null && !(r.FrameHeld && r.zoomPunch.max - r.zoomPunch.time >= r.zoomPunch.done)
+                && (r.zoomPunch.time -= dt) <= 0) r.zoomPunch = null;
             if (r.freeze > 0)
             {
                 // 24차 프레임 스톱: frameLead 동안은 베기 섬광, 숫자, 주인공 당기는 자세가 흘러 맞는 순간에 닿고, 그 뒤는 이펙트까지 멈춘다

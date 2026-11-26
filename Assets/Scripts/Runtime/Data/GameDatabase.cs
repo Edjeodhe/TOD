@@ -175,6 +175,15 @@ namespace TOD
         public float hitStopScale;            // 당기기 멈춤 시간 배율 (freezeBase + 타수 × freezePerHit, 상한 freezeMax 에 곱한다. 0 = 1)
         public float shakeBase, shakePerHit, shakeMax, shakeEmpty;
         public float kickBase, kickPerHit, kickMax, kickTime;
+        [Header("24차 줌 펀치 (당기기로 맞힌 순간 카메라가 확 다가갔다가 돌아옴). 값 = 직교 크기를 줄이는 비율 (.02 = 2%)")]
+        public float zoomPunchBase;           // 한 타 맞힘
+        public float zoomPunchPerHit;         // 타수 하나 늘 때마다 (2타부터)
+        public float zoomPunchMax;            // 타수 몫의 상한
+        public float zoomPunchBind;           // 결박(같은 적에 바늘 여러 개)이면 더함
+        public float zoomPunchCrit;           // 치명타가 하나라도 있으면 더함
+        public float zoomPunchCap;            // 전체 상한
+        public float zoomPunchIn;             // 다가가는 시간(초). 프레임 스톱 동안은 다 다가간 채로 멈춰 있음
+        public float zoomPunchOut;            // 돌아오는 시간(초)
         public float flashBase, flashPerHit, flashMax;
         public int maxPopCount;
     }

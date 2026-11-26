@@ -13,10 +13,11 @@ namespace TOD
         public float Zoom { get; private set; } = 1;   // baseSize 대비 실제 직교 크기 (화면 비율 맞춤 포함)
 
         // focus: 캔버스 좌표의 바라볼 점, bounds: 카메라 중심이 머물 수 있는 캔버스 영역
-        public void Apply(Vector2 focus, Rect bounds, float zoom, float shake, Timed kick, float clock)
+        // punch: 24차 줌 펀치 (직교 크기를 줄이는 비율). 화면 비율 맞춤 뒤에 곱해서 어떤 비율에서도 똑같이 다가간다. 환경설정 '화면 흔들림'을 따른다
+        public void Apply(Vector2 focus, Rect bounds, float zoom, float shake, Timed kick, float clock, float punch = 0)
         {
             if (baseSize <= 0) baseSize = view.orthographicSize;   // 값이 아직 안 들어갔으면 씬 카메라 크기를 쓴다
-            float size = FitSize(baseSize * zoom, bounds);
+            float size = FitSize(baseSize * zoom, bounds) * (1 - Mathf.Clamp01(punch * Settings.Shake));
             Zoom = size / baseSize;
             view.orthographicSize = size;
             float halfH = size * Space.Ppu;

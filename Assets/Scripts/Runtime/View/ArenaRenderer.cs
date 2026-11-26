@@ -294,7 +294,7 @@ namespace TOD
             MapConfig m = db.map;
             float o = m.cameraOverscan;
             Rect bounds = Rect.MinMaxRect(-o, Space.ProjectY(0) - m.wallHeight - o, db.arena.width + o, Space.ProjectY(db.arena.height) + o);
-            cameraRig.Apply(C(r.player.x, r.player.y), bounds, zoom, r.shake, r.kick, clock);
+            cameraRig.Apply(C(r.player.x, r.player.y), bounds, zoom, r.shake, r.kick, clock, Combat.ZoomPunch(r));   // 24차 줌 펀치
             view = cameraRig.VisibleCanvas();
         }
 

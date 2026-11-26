@@ -37311,6 +37311,14 @@ MonoBehaviour:
     kickPerHit: 1.6
     kickMax: 16
     kickTime: 0.2
+    zoomPunchBase: 0.015
+    zoomPunchPerHit: 0.003
+    zoomPunchMax: 0.022
+    zoomPunchBind: 0.01
+    zoomPunchCrit: 0.008
+    zoomPunchCap: 0.035
+    zoomPunchIn: 0.04
+    zoomPunchOut: 0.2
     flashBase: 0.05
     flashPerHit: 0.018
     flashMax: 0.16

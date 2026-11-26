@@ -188,6 +188,7 @@ namespace TOD
         public bool artifactRerolled;        // 쉬어가기 탑: 층마다 한 번 다시 굴리기
         public BossDeath bossDeath;          // 보스 처치 연출 (BossDying 단계)   // 증강 id → 고른 횟수 (카드에 Lv 로 표시)
         public Timed kick;
+        public Timed zoomPunch;              // 24차 줌 펀치: x = 세기(직교 크기 줄이는 비율), time = 남은 시간, max = 다가감 + 돌아옴, done = 다가감 시간
         public Echo echo;
         public Outcome outcome;
         public Phase phase = Phase.Combat;
