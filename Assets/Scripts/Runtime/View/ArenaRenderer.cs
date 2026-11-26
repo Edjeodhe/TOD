@@ -1074,6 +1074,7 @@ namespace TOD
                 switch (fx.kind)
                 {
                     case FxKind.Flip: DrawFlip(fx); break;
+                    case FxKind.Sew: DrawSew(fx); break;   // 24차-hit-sparks (ArenaRenderer.Sew.cs)
                     case FxKind.Cut: DrawCut(fx, fade); break;
                     case FxKind.Sliced: DrawSliced(fx, fade); break;
                     case FxKind.Sprite: DrawSpriteFx(fx, fade, at); break;

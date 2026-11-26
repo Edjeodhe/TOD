@@ -38860,6 +38860,220 @@ MonoBehaviour:
     bossBurstColor: {r: 0.9216, g: 0.5882, b: 0.7098, a: 1}
     meleeSlashColor: {r: 0.9098, g: 0.6118, b: 0.6667, a: 1}
     pullFlashColor: {r: 1, g: 0.902, b: 0.9451, a: 1}
+    sparks:
+      time: 0.9
+      burst:
+        frames:
+        - {fileID: 1476177635, guid: fb7a9739f29cb4e4a897afc155f2e0f1, type: 3}
+        - {fileID: -62218528, guid: fb7a9739f29cb4e4a897afc155f2e0f1, type: 3}
+        - {fileID: -1040089170, guid: fb7a9739f29cb4e4a897afc155f2e0f1, type: 3}
+        - {fileID: 1105703912, guid: fb7a9739f29cb4e4a897afc155f2e0f1, type: 3}
+        - {fileID: -382960884, guid: fb7a9739f29cb4e4a897afc155f2e0f1, type: 3}
+        - {fileID: 96526549, guid: fb7a9739f29cb4e4a897afc155f2e0f1, type: 3}
+        - {fileID: 605554632, guid: fb7a9739f29cb4e4a897afc155f2e0f1, type: 3}
+        - {fileID: -1521564985, guid: fb7a9739f29cb4e4a897afc155f2e0f1, type: 3}
+        - {fileID: 1850969214, guid: fb7a9739f29cb4e4a897afc155f2e0f1, type: 3}
+        - {fileID: -935562138, guid: fb7a9739f29cb4e4a897afc155f2e0f1, type: 3}
+        glow:
+        - {fileID: 900884301, guid: 30db01ab82dfcf14996e5bb971e00ad8, type: 3}
+        - {fileID: -3896162, guid: 30db01ab82dfcf14996e5bb971e00ad8, type: 3}
+        - {fileID: 1255488180, guid: 30db01ab82dfcf14996e5bb971e00ad8, type: 3}
+        - {fileID: 1580778660, guid: 30db01ab82dfcf14996e5bb971e00ad8, type: 3}
+        - {fileID: 492348067, guid: 30db01ab82dfcf14996e5bb971e00ad8, type: 3}
+        - {fileID: -2056131576, guid: 30db01ab82dfcf14996e5bb971e00ad8, type: 3}
+        - {fileID: -494399892, guid: 30db01ab82dfcf14996e5bb971e00ad8, type: 3}
+        - {fileID: -1072456715, guid: 30db01ab82dfcf14996e5bb971e00ad8, type: 3}
+        - {fileID: -752630422, guid: 30db01ab82dfcf14996e5bb971e00ad8, type: 3}
+        - {fileID: 912838645, guid: 30db01ab82dfcf14996e5bb971e00ad8, type: 3}
+        fps: 0
+        size: 120
+        tint: {r: 1, g: 1, b: 1, a: 1}
+      burstTime: 0.3
+      burstGrowth: 14
+      pieces:
+      - name: thread
+        clip:
+          frames:
+          - {fileID: 121691423, guid: 96a01dfda260e74459c2299de834cf64, type: 3}
+          - {fileID: 935699057, guid: 96a01dfda260e74459c2299de834cf64, type: 3}
+          - {fileID: -403836358, guid: 96a01dfda260e74459c2299de834cf64, type: 3}
+          - {fileID: 947838646, guid: 96a01dfda260e74459c2299de834cf64, type: 3}
+          - {fileID: -1015407815, guid: 96a01dfda260e74459c2299de834cf64, type: 3}
+          - {fileID: 669817741, guid: 96a01dfda260e74459c2299de834cf64, type: 3}
+          - {fileID: 447181251, guid: 96a01dfda260e74459c2299de834cf64, type: 3}
+          - {fileID: 2024446909, guid: 96a01dfda260e74459c2299de834cf64, type: 3}
+          glow:
+          - {fileID: -1078729854, guid: 2c806ac5d51642440b7d19bd118fd384, type: 3}
+          - {fileID: 792018456, guid: 2c806ac5d51642440b7d19bd118fd384, type: 3}
+          - {fileID: -1152402059, guid: 2c806ac5d51642440b7d19bd118fd384, type: 3}
+          - {fileID: -687601689, guid: 2c806ac5d51642440b7d19bd118fd384, type: 3}
+          - {fileID: 1624101001, guid: 2c806ac5d51642440b7d19bd118fd384, type: 3}
+          - {fileID: -1618585264, guid: 2c806ac5d51642440b7d19bd118fd384, type: 3}
+          - {fileID: -395084486, guid: 2c806ac5d51642440b7d19bd118fd384, type: 3}
+          - {fileID: 359883860, guid: 2c806ac5d51642440b7d19bd118fd384, type: 3}
+          fps: 14
+          size: 28
+          tint: {r: 0.98, g: 0.95, b: 0.88, a: 1}
+        loop: 1
+        weight: 3
+        speed: 260
+        speedJitter: 0.4
+        rise: 170
+        gravity: 900
+        drag: 3.5
+        life: 0.85
+        sizeJitter: 0.3
+        tintMix: 1
+      - name: fluff
+        clip:
+          frames:
+          - {fileID: -883918035, guid: 39c3ddc6a62a84b4394d9f437b52cc73, type: 3}
+          - {fileID: -2066360864, guid: 39c3ddc6a62a84b4394d9f437b52cc73, type: 3}
+          - {fileID: 1702025648, guid: 39c3ddc6a62a84b4394d9f437b52cc73, type: 3}
+          - {fileID: 1678782941, guid: 39c3ddc6a62a84b4394d9f437b52cc73, type: 3}
+          - {fileID: -1595199182, guid: 39c3ddc6a62a84b4394d9f437b52cc73, type: 3}
+          - {fileID: -1704204197, guid: 39c3ddc6a62a84b4394d9f437b52cc73, type: 3}
+          - {fileID: -1977402506, guid: 39c3ddc6a62a84b4394d9f437b52cc73, type: 3}
+          - {fileID: -1852838719, guid: 39c3ddc6a62a84b4394d9f437b52cc73, type: 3}
+          glow:
+          - {fileID: 1476541423, guid: 5fcb31ffc6eb8cc4482dfb5218733b0e, type: 3}
+          - {fileID: -2106050172, guid: 5fcb31ffc6eb8cc4482dfb5218733b0e, type: 3}
+          - {fileID: -520460014, guid: 5fcb31ffc6eb8cc4482dfb5218733b0e, type: 3}
+          - {fileID: -1591614993, guid: 5fcb31ffc6eb8cc4482dfb5218733b0e, type: 3}
+          - {fileID: -1014682329, guid: 5fcb31ffc6eb8cc4482dfb5218733b0e, type: 3}
+          - {fileID: 902169498, guid: 5fcb31ffc6eb8cc4482dfb5218733b0e, type: 3}
+          - {fileID: -1170604961, guid: 5fcb31ffc6eb8cc4482dfb5218733b0e, type: 3}
+          - {fileID: 1314095757, guid: 5fcb31ffc6eb8cc4482dfb5218733b0e, type: 3}
+          fps: 8
+          size: 26
+          tint: {r: 1, g: 1, b: 0.97, a: 1}
+        loop: 1
+        weight: 2
+        speed: 170
+        speedJitter: 0.4
+        rise: 90
+        gravity: 260
+        drag: 4.5
+        life: 1
+        sizeJitter: 0.35
+        tintMix: 0.6
+      - name: cloth
+        clip:
+          frames:
+          - {fileID: -1630187399, guid: 0c3628c9d06bedf4b9feecb256472d3c, type: 3}
+          - {fileID: 977716779, guid: 0c3628c9d06bedf4b9feecb256472d3c, type: 3}
+          - {fileID: -1783949094, guid: 0c3628c9d06bedf4b9feecb256472d3c, type: 3}
+          - {fileID: -440687267, guid: 0c3628c9d06bedf4b9feecb256472d3c, type: 3}
+          - {fileID: 1264516925, guid: 0c3628c9d06bedf4b9feecb256472d3c, type: 3}
+          - {fileID: 314457979, guid: 0c3628c9d06bedf4b9feecb256472d3c, type: 3}
+          - {fileID: -435614860, guid: 0c3628c9d06bedf4b9feecb256472d3c, type: 3}
+          - {fileID: 1273687235, guid: 0c3628c9d06bedf4b9feecb256472d3c, type: 3}
+          glow:
+          - {fileID: 1547185901, guid: a132a0f8f5ce4614a9c6c60cf3c12526, type: 3}
+          - {fileID: -11293583, guid: a132a0f8f5ce4614a9c6c60cf3c12526, type: 3}
+          - {fileID: -998682760, guid: a132a0f8f5ce4614a9c6c60cf3c12526, type: 3}
+          - {fileID: -1348568320, guid: a132a0f8f5ce4614a9c6c60cf3c12526, type: 3}
+          - {fileID: 1118037964, guid: a132a0f8f5ce4614a9c6c60cf3c12526, type: 3}
+          - {fileID: -310255984, guid: a132a0f8f5ce4614a9c6c60cf3c12526, type: 3}
+          - {fileID: 909977915, guid: a132a0f8f5ce4614a9c6c60cf3c12526, type: 3}
+          - {fileID: 755047613, guid: a132a0f8f5ce4614a9c6c60cf3c12526, type: 3}
+          fps: 12
+          size: 26
+          tint: {r: 0.95, g: 0.9, b: 0.82, a: 1}
+        loop: 1
+        weight: 2
+        speed: 230
+        speedJitter: 0.4
+        rise: 140
+        gravity: 650
+        drag: 3.5
+        life: 0.9
+        sizeJitter: 0.3
+        tintMix: 1
+      - name: button
+        clip:
+          frames:
+          - {fileID: 1682841171, guid: 2a440044fcd810145968a41177c44103, type: 3}
+          - {fileID: -1014920464, guid: 2a440044fcd810145968a41177c44103, type: 3}
+          - {fileID: -1821065322, guid: 2a440044fcd810145968a41177c44103, type: 3}
+          - {fileID: 1513589749, guid: 2a440044fcd810145968a41177c44103, type: 3}
+          - {fileID: 34791008, guid: 2a440044fcd810145968a41177c44103, type: 3}
+          - {fileID: 83827090, guid: 2a440044fcd810145968a41177c44103, type: 3}
+          - {fileID: -516337068, guid: 2a440044fcd810145968a41177c44103, type: 3}
+          - {fileID: -1399794973, guid: 2a440044fcd810145968a41177c44103, type: 3}
+          glow:
+          - {fileID: -1938219017, guid: d601a1c7c37128f4e85e819393593b74, type: 3}
+          - {fileID: 408806940, guid: d601a1c7c37128f4e85e819393593b74, type: 3}
+          - {fileID: 2026498940, guid: d601a1c7c37128f4e85e819393593b74, type: 3}
+          - {fileID: -1809639007, guid: d601a1c7c37128f4e85e819393593b74, type: 3}
+          - {fileID: -170246491, guid: d601a1c7c37128f4e85e819393593b74, type: 3}
+          - {fileID: 804498186, guid: d601a1c7c37128f4e85e819393593b74, type: 3}
+          - {fileID: -1325799022, guid: d601a1c7c37128f4e85e819393593b74, type: 3}
+          - {fileID: -567865521, guid: d601a1c7c37128f4e85e819393593b74, type: 3}
+          fps: 16
+          size: 19
+          tint: {r: 0.97, g: 0.93, b: 0.85, a: 1}
+        loop: 1
+        weight: 1
+        speed: 300
+        speedJitter: 0.35
+        rise: 220
+        gravity: 1200
+        drag: 2.5
+        life: 0.9
+        sizeJitter: 0.2
+        tintMix: 0.8
+      - name: glint
+        clip:
+          frames:
+          - {fileID: -2004128086, guid: 85e0c437608035040a406bd378cab0f6, type: 3}
+          - {fileID: -421858646, guid: 85e0c437608035040a406bd378cab0f6, type: 3}
+          - {fileID: -1159726458, guid: 85e0c437608035040a406bd378cab0f6, type: 3}
+          - {fileID: -517885894, guid: 85e0c437608035040a406bd378cab0f6, type: 3}
+          - {fileID: 906435061, guid: 85e0c437608035040a406bd378cab0f6, type: 3}
+          - {fileID: -2093847220, guid: 85e0c437608035040a406bd378cab0f6, type: 3}
+          - {fileID: -412194538, guid: 85e0c437608035040a406bd378cab0f6, type: 3}
+          - {fileID: 276102906, guid: 85e0c437608035040a406bd378cab0f6, type: 3}
+          glow:
+          - {fileID: 485879611, guid: df70d56274cae014f906807c8e7f6fb4, type: 3}
+          - {fileID: -1234987032, guid: df70d56274cae014f906807c8e7f6fb4, type: 3}
+          - {fileID: 2046947758, guid: df70d56274cae014f906807c8e7f6fb4, type: 3}
+          - {fileID: -53115844, guid: df70d56274cae014f906807c8e7f6fb4, type: 3}
+          - {fileID: -406298537, guid: df70d56274cae014f906807c8e7f6fb4, type: 3}
+          - {fileID: 334820018, guid: df70d56274cae014f906807c8e7f6fb4, type: 3}
+          - {fileID: 1441772888, guid: df70d56274cae014f906807c8e7f6fb4, type: 3}
+          - {fileID: 844816790, guid: df70d56274cae014f906807c8e7f6fb4, type: 3}
+          fps: 24
+          size: 34
+          tint: {r: 1, g: 1, b: 1, a: 1}
+        loop: 0
+        weight: 1.2
+        speed: 120
+        speedJitter: 0.5
+        rise: 40
+        gravity: 200
+        drag: 6
+        life: 0.45
+        sizeJitter: 0.3
+        tintMix: 0.5
+      baseCount: 6
+      perHit: 3
+      maxCount: 18
+      maxHits: 6
+      sizePerHit: 0.1
+      speedPerHit: 0.08
+      spread: 1.1
+      omni: 0.35
+      startOffset: 14
+      fadeTail: 0.35
+      glow: 0.15
+      maxPieces: 180
+      bindCount: 1.6
+      bindSize: 1.3
+      bindSpeed: 1.2
+      bindTint: 0.75
+      bindGlow: 0.5
+      bindWhite: 0.15
   purify:
     duration: 4
     zoom: 1.6

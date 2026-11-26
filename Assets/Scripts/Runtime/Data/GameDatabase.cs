@@ -524,6 +524,7 @@ namespace TOD
         public int maxGrowthHits, maxFlashHits;
         public Color hurtNumberColor, hurtBurstColor, dodgeTextColor, damageColor, transferColor, comboColor, rageComboColor;
         public Color killBurstColor, bossBurstColor, meleeSlashColor, pullFlashColor;
+        public SewSparkConfig sparks;         // 24차-hit-sparks: 당기기 맞은 자리 바느질 타격 파티클 (SewSparkData.cs)
     }
 
     // 그림 글꼴: 아틀라스(Assets/Art/Generated/damage_font.png)에서 잘라 낸 글자 스프라이트. chars[i] ↔ glyphs[i].

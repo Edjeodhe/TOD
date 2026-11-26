@@ -1017,6 +1017,7 @@ namespace TOD
                         title.size = e.IsBoss ? X.bossScale : 1;
                     }
                 }
+                SpawnSewSparks(r, e, count, binding, rage ? Element.Wrath : element, angle + Mathf.PI);   // 24차-hit-sparks: 바느질 타격 파티클 (CombatSew.cs)
                 float cut = cutAngle.TryGetValue(e, out float c) ? c : angle;
                 bool heavy = count >= 2 || e.hp <= 0;
                 float big = e.IsBoss ? X.bossScale : 1;

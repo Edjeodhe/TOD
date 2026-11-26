@@ -105,7 +105,7 @@ namespace TOD
     public class Echo { public float until; public List<Strand> strands; }
 
     // ElementHit = 속성 피해 그림(ElementTone.hit), Chain = 번개가 옆 적에게 튀는 줄기 (x,y → toX,toY)
-    public enum FxKind { Sprite, Flip, Number, Combo, Burst, Slash, Dust, Pull, Cut, Sliced, Transfer, Afterimage, Bind, ElementHit, Chain, Proc, BossHit, Growth }   // Proc = 부가 세트 발동, BossHit = 보스 속성 공격이 주인공에 맞음, Growth = 21차 증강 성장 (주인공을 따라감, text = 오른 능력치)
+    public enum FxKind { Sprite, Flip, Number, Combo, Burst, Slash, Dust, Pull, Cut, Sliced, Transfer, Afterimage, Bind, ElementHit, Chain, Proc, BossHit, Growth, Sew }   // Proc = 부가 세트 발동, BossHit = 보스 속성 공격이 주인공에 맞음, Growth = 21차 증강 성장 (주인공을 따라감, text = 오른 능력치), Sew = 24차 바느질 타격 파티클 (pop = 타수, bound = 결박)
     public enum FxSprite { None, Pull, Dash, Boss, Needle, Stitch, Streak, Launch, Dodge, Shock }
     public enum FlipSheet { Puncture, Slash, Snip, Flash, Muzzle, Thunk }
 
