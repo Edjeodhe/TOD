@@ -491,6 +491,45 @@ sheet("일기_보상", [I("floor"), I("read_shards"), I("pattern"), S("pattern_n
       [[x["floor"], x["readShards"], x["patternKind"], pname(x["patternKind"]),
         x["patternTainted"], pname(x["patternTainted"])] for x in d["diary"]["entries"]])
 
+# value_type 정의 (맨 앞 시트) -------------------------------------------------------
+# (이름, 뜻, 계산, 예시). 번호는 DOC_ENUMS["ValueType"] 순서와 같아야 함.
+VALUE_TYPE_DEF = [
+    ("flat", "단위 없는 수를 그대로 더하거나 뺌",
+     "결과 = 기준 + value (감소 효과면 기준 − value)",
+     "증강 attack: Damage 3 → 실 피해 +3 / 포션 heal 32 → 체력 +32"),
+    ("percent", "비율. 게임 값 그대로 0~1 (0.3 = 30%)",
+     "늘리는 효과: 기준 × (1 + value) / 줄이는 효과(…Down, slow 등): 기준 × (1 − value) / 확률·비율에 더하는 효과: 그 확률에 value 를 더함(%p)",
+     "날씨 GainDown 0.3 → 경험치·골드 ×0.7 / 조각 Speed 0.04 → 이동 속도 ×1.04 / 왕좌 0.15 → 치명타 확률 +15%p"),
+    ("multiplier", "곱하는 배율",
+     "결과 = 기준 × value (1 = 그대로, 1보다 작으면 줄어듦)",
+     "증강 attackSpeed: FireInterval 0.9 → 발사 간격 ×0.9 (10% 더 자주) / 격분 pull_damage 2 → 당기기 피해 ×2"),
+    ("per_second", "1초마다 value 만큼 (지속 시간 동안)",
+     "총량 = value × 지속(초)",
+     "세트 분노 burn_dps 2 (per_tier) → 3단계면 화상 초당 6 / 보스 분노 burn_dps 6, burn_time 3 → 18"),
+    ("seconds", "시간 (초)",
+     "효과가 value 초 동안 유지, 또는 value 초 안에",
+     "세트 색욕 charm_time 1.5 → 1.5초 매혹 / 조각 Leap param 1 → 대쉬 후 1초 안"),
+    ("count", "개수 (정수로 씀): 털실, 바늘, 겹, 마리, 매듭, 금화, 파편",
+     "결과 = 기준 + value 개 (최대 겹·조건 수면 그 개수)",
+     "조각 Rewind 1 → 처치마다 털실 +1 / 시기 poison_max_stacks 6 → 독 6겹까지"),
+    ("distance", "거리 (전투장 좌표 px, 플레이어 이동 속도와 같은 단위)",
+     "반경·거리 = value",
+     "세트 시기 spread_range 220 → 220 안의 적에게 독이 옮음"),
+]
+assert [x[0] for x in VALUE_TYPE_DEF] == [x[0] for x in DOC_ENUMS["ValueType"]]
+VT_NAMES = {x[0] for x in VALUE_TYPE_DEF}
+used = {v: [] for v in VT_NAMES}
+for name, cols, data in SHEETS:
+    for i, (c, t) in enumerate(cols):
+        if t != "enum":
+            continue
+        vals = {r[i] for r in data if r[i] is not None}
+        if vals and vals <= VT_NAMES:
+            for v in vals:
+                used[v].append(f"{name}.{c}")
+SHEETS.insert(0, ("value_type", [S("value_type"), I("value"), S("meaning"), S("formula"), S("example"), S("used_in")],
+                  [[n, i, m, f, e, ", ".join(used[n])] for i, (n, m, f, e) in enumerate(VALUE_TYPE_DEF)]))
+
 # enums -------------------------------------------------------------------------
 rows = []
 for en in GAME_ENUMS:
@@ -519,7 +558,7 @@ for name, cols, data in SHEETS:
                 assert isinstance(v, int) and not isinstance(v, bool), (name, c, v)
             elif t == "float":
                 assert isinstance(v, (int, float)), (name, c, v)
-for r in SHEETS[0][2]:
+for r in next(x for x in SHEETS if x[0] == "설정")[2]:
     assert r[2] in ("int", "float") and isinstance(r[3], (int, float)), r
 
 # ---------- xlsx ----------
