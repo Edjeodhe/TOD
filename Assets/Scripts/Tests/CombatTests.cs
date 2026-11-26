@@ -92,6 +92,35 @@ namespace TOD.Tests
             Assert.AreEqual(0, r.strands.Count, "당기면 실을 모두 회수");
         }
 
+        // 24차 프레임 스톱: 당겨 맞히면 hitStopLead 만큼 이펙트, 주인공 자세가 흐른 뒤, 멈춤 동안은 이펙트까지 서고, 끝나면 다시 흐른다.
+        [Test]
+        public void PullFrameStopHoldsEffects()
+        {
+            RunState r = NewRun();
+            r.player.x = 500; r.player.y = 350;
+            Enemy a = Add(r, "boss", 700, 350);
+            r.strands.Add(new Strand { x = a.x, y = a.y, target = a, state = StrandState.Stuck, element = Element.Plain });
+            combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
+            Assert.IsTrue(r.frameStop && r.freeze > 0, "맞히면 프레임 스톱");
+            float hold = r.freeze;
+            Fx fx = r.effects.Find(e => e.time > 0);
+            Assert.IsNotNull(fx);
+            float lead = Mathf.Max(0, db.feel.hitStopLead);
+            float action = r.player.actionTime;
+            for (float t = 0; t < lead + .001f; t += 1 / 120f) combat.Update(r, 1 / 120f, new CombatInput());
+            Assert.IsTrue(r.FrameHeld, "먼저 흐를 시간이 지나면 멈춘다");
+            Assert.AreEqual(hold, r.freeze, 1e-4f, "먼저 흐르는 동안은 멈춤 시간이 줄지 않는다");
+            Assert.Greater(r.player.actionTime, action, "먼저 흐르는 동안 주인공 자세가 맞는 순간으로 간다");
+            float fxTime = fx.time, heroTime = r.player.actionTime;
+            combat.Update(r, hold * .5f, new CombatInput());
+            Assert.AreEqual(fxTime, fx.time, 1e-5f, "멈춘 동안 이펙트가 서 있다");
+            Assert.AreEqual(heroTime, r.player.actionTime, 1e-5f, "멈춘 동안 주인공도 서 있다");
+            for (int i = 0; i < 60 && r.freeze > 0; i++) combat.Update(r, 1 / 60f, new CombatInput());
+            Assert.IsFalse(r.frameStop, "끝나면 풀린다");
+            combat.Update(r, 1 / 60f, new CombatInput());
+            Assert.Less(fx.time, fxTime, "풀리면 이펙트가 다시 흐른다");
+        }
+
         // 결박: 같은 적에게 바늘이 db.bind.strands 개 꽂힌 채 당기면 추가 피해 + 결박 폭발, 하나 모자라면 없음.
         [Test]
         public void BindingFiveStrandsHitsHarder()

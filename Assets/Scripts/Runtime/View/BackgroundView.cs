@@ -98,7 +98,11 @@ namespace TOD
             {
                 Vector3 at = Space.Canvas(visibleCanvas.center);
                 shade.transform.position = new Vector3(at.x, at.y, shade.transform.position.z);
-                shade.transform.localScale = new Vector3(zoom, zoom, 1);
+                // 24차: 21:9 처럼 그늘 그림보다 넓은(높은) 화면은 그만큼 늘려서 가장자리에 밝은 띠가 안 생기게
+                Vector2 px = shade.sprite != null ? (Vector2)shade.sprite.bounds.size * Space.Ppu : Vector2.zero;
+                float sx = px.x > 0 ? Mathf.Max(zoom, visibleCanvas.width / px.x) : zoom;
+                float sy = px.y > 0 ? Mathf.Max(zoom, visibleCanvas.height / px.y) : zoom;
+                shade.transform.localScale = new Vector3(sx, sy, 1);
                 // 16차: 가장자리 안개를 층 속성 색으로 (fogTint.a 만큼)
                 shadeBase ??= shade.color;
                 Color baseColor = shadeBase.Value;

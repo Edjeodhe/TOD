@@ -89,7 +89,8 @@ namespace TOD
             if (room == null || lobby == null) return;
             if (!string.IsNullOrEmpty(room.title)) lobby.Q<Label>(className: "brand-name").text = room.title;
             if (!string.IsNullOrEmpty(room.subtitle)) lobby.Q<Label>(className: "brand-sub").text = room.subtitle;
-            Text(root, "hub-hint", room.hint ?? "");
+            hubRoomHint = room.hint ?? "";
+            Text(root, "hub-hint", Settings.Relabel(hubRoomHint));   // 24차: 바꾼 키 이름
         }
 
         // 화면이 half 초 동안 어두워졌다가 → mid → half 초 동안 밝아진다. 어두운 판이 없으면 바로 mid.

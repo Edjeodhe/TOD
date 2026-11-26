@@ -37,7 +37,7 @@ namespace TOD
             for (int i = 0; i < n; i++)
             {
                 VisualElement slot = Slot(slots, "potion-slot");
-                slot.Q<Label>("key").text = (i + 1).ToString();
+                slot.Q<Label>("key").text = i < 5 ? Settings.KeyName(KeyAction.Potion1 + i) : (i + 1).ToString();   // 24차: 바꾼 키 이름
                 if (hover)
                 {
                     int k = i;

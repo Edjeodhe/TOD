@@ -28,6 +28,7 @@ namespace TOD
         (Outcome outcome, int floor, int kills)? summary;
         bool paused, animatingDeath, holdingFire, fireRequested, pullRequested, dashRequested;
         float deathClock, lastWhisper;
+        float frameClock = -1;   // 24차: 전투 그림 시계 (프레임 스톱 동안 멈춤)
         Vector2 aim;
         int? selected;
         int turns;
@@ -54,8 +55,10 @@ namespace TOD
             arena.Text = ui;
             arena.Init(Combat);
             sound.Init(db.sounds);
-            sound.Enabled = true;
+            Settings.Load(db.settings);   // 24차: UI 가 키 이름을 쓰므로 먼저
+            frameClock = Clock;
             ui.Init(this);
+            InitSettings();   // 24차 환경설정: 저장된 음량, 그래픽, 키 (GameController.Settings.cs)
             InitHub();   // 15차 재봉실 허브: GameController.Hub.cs
             InitNpcs();  // 23차 쉬어가기 NPC, 재봉실 NPC: GameController.Npc.cs
             InitMoira();   // 19차 모이라 카드: 확인 창이 닫히면 카드 갱신
@@ -91,14 +94,6 @@ namespace TOD
             if (picking != null) { EndPick(); return; }   // 19차: 모이라의 줄 고르기 → 모이라 창으로
             if (screen == UiScreen.Attic && Run == null && hub != null && hub.InAttic && summary == null) { LeaveMoira(); return; }   // 19차: 카드가 손으로 돌아간 뒤
             ShowScreen(summary != null ? roomReturn : UiScreen.Lobby);
-        }
-
-        public void ToggleSound()
-        {
-            sound.Enabled = !sound.Enabled;
-            if (sound.Enabled) sound.Play("loot");
-            ui.SetSoundMuted(!sound.Enabled);
-            ui.Say(sound.Enabled ? db.ui.soundOn : db.ui.soundOff);
         }
 
         // ---------------------------------------------------------------- run flow
@@ -173,9 +168,9 @@ namespace TOD
 
         public void TogglePause()
         {
-            if (Run == null || Run.phase == Phase.Victory || Run.outcome != Outcome.None || (Opened != "" && Opened != "pause") || FloorFading) return;
+            if (Run == null || Run.phase == Phase.Victory || Run.outcome != Outcome.None || (Opened != "" && Opened != "settings") || FloorFading) return;
             paused = !paused;
-            if (paused) ui.ShowDialog("pause"); else ui.CloseDialog();
+            if (paused) ui.ShowSettings(true); else ui.CloseDialog();   // 24차: 일시 정지 = 환경설정 창 (계속하기, 귀환 단추가 같이)
         }
 
         public void AskRetreat() { shopOpenedBeforeRetreat = Opened == "shop"; ui.ShowDialog("retreat"); }
@@ -277,7 +272,7 @@ namespace TOD
                 case "desire": Absorb(); break;
                 case "artifact": PickArtifact(Run.artifactOffer[0]); break;
                 case "shop": ui.CloseDialog(); break;
-                case "pause": TogglePause(); break;
+                case "settings": CloseSettings(); break;
             }
         }
 
@@ -736,25 +731,26 @@ namespace TOD
         {
             Keyboard k = Keyboard.current;
             if (k == null || FloorFading) return;   // 23차: 욕망을 고른 뒤 다음 층으로 넘어가는 동안은 키를 받지 않는다
+            if (ui.SettingsCapturing) return;       // 24차: 환경설정에서 새 키를 받는 중 (그 프레임의 Esc 도 창이 먹는다)
             if (k.escapeKey.wasPressedThisFrame) Escape();
-            if (k.enterKey.wasPressedThisFrame && screen == UiScreen.Lobby && Run == null && Opened == "") StartRun();
-            if (k.rKey.wasPressedThisFrame && (screen == UiScreen.Inventory || runInventory)) Rotate();
-            if (IsCombat && k.spaceKey.wasPressedThisFrame) dashRequested = true;
-            if (IsCombat && Run.freeze <= 0) DrinkPotion(k);   // 23차 포션: 숫자키 1~5
-            if (k.eKey.wasPressedThisFrame && ui.FateShowing) ui.AdvanceFate();   // 22차 미래 보기: 자세히 살펴보기, 돌아가기
-            else if (k.eKey.wasPressedThisFrame && !runInventory) Interact();
-            if (k.iKey.wasPressedThisFrame) { if (Run != null) ToggleRunInventory(); else ToggleOutgameInventory(); }   // 20차: 아웃게임에서도 언제든 I
+            if (Opened == "settings") return;       // 24차: 환경설정 창이 열린 동안은 Esc 만
+            // 24차: 키는 모두 환경설정의 키 설정을 거친다 (Settings.cs, 기본값 GameDatabase.settings.keys)
+            if (Settings.Pressed(KeyAction.StartRun) && screen == UiScreen.Lobby && Run == null && Opened == "") StartRun();
+            if (Settings.Pressed(KeyAction.Rotate) && (screen == UiScreen.Inventory || runInventory)) Rotate();
+            if (IsCombat && Settings.Pressed(KeyAction.Dash)) dashRequested = true;
+            if (IsCombat && Run.freeze <= 0) DrinkPotion();   // 23차 포션: 숫자키 1~5
+            bool interact = Settings.Pressed(KeyAction.Interact);
+            if (interact && ui.FateShowing) ui.AdvanceFate();   // 22차 미래 보기: 자세히 살펴보기, 돌아가기
+            else if (interact && !runInventory) Interact();
+            if (Settings.Pressed(KeyAction.Inventory)) { if (Run != null) ToggleRunInventory(); else ToggleOutgameInventory(); }   // 20차: 아웃게임에서도 언제든 I
         }
 
-        // 23차 포션 칸: 숫자키(위 숫자줄, 숫자 패드) 1~5 → 그 칸의 포션을 마신다 (Combat.UsePotion, CombatPotions.cs)
-        static readonly Key[] PotionKeys = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5, Key.Digit6, Key.Digit7, Key.Digit8, Key.Digit9 };
-        static readonly Key[] PotionPadKeys = { Key.Numpad1, Key.Numpad2, Key.Numpad3, Key.Numpad4, Key.Numpad5, Key.Numpad6, Key.Numpad7, Key.Numpad8, Key.Numpad9 };
-
-        void DrinkPotion(Keyboard k)
+        // 23차 포션 칸: 포션 키(기본 숫자줄 1~5, 숫자 패드는 늘 같이) → 그 칸의 포션을 마신다 (Combat.UsePotion, CombatPotions.cs)
+        void DrinkPotion()
         {
-            for (int i = 0; i < Run.potions.Length && i < PotionKeys.Length; i++)
+            for (int i = 0; i < Run.potions.Length && i < 5; i++)
             {
-                if (!k[PotionKeys[i]].wasPressedThisFrame && !k[PotionPadKeys[i]].wasPressedThisFrame) continue;
+                if (!Settings.Pressed(KeyAction.Potion1 + i)) continue;
                 PotionDef def = Potions.Def(db, Run.potions[i].id);
                 if (def != null && Combat.UsePotion(Run, i)) ui.PotionUsed(i, def.color);
                 return;
@@ -771,13 +767,14 @@ namespace TOD
             {
                 case "diary": case "desire": return;
                 case "retreat": CancelRetreat(); return;
-                case "pause": TogglePause(); return;
+                case "settings": CloseSettings(); return;   // 24차 환경설정 (등반 중이면 일시 정지도 풀림)
                 case "": break;
                 default: ui.CloseDialog(); return;
             }
             if (Run == null)
             {
                 if (screen is UiScreen.Inventory or UiScreen.Attic) BackFromRoom();   // 챙기기 판, 모이라의 줄 고르기, 모이라 창
+                else OpenSettings();   // 24차: 열린 창이 없으면 환경설정
                 return;
             }
             TogglePause();
@@ -786,13 +783,10 @@ namespace TOD
         CombatInput ReadCombatInput()
         {
             var input = new CombatInput();
-            Keyboard k = Keyboard.current;
             Mouse m = Mouse.current;
-            if (k != null)
-            {
-                input.x = (k.dKey.isPressed || k.rightArrowKey.isPressed ? 1 : 0) - (k.aKey.isPressed || k.leftArrowKey.isPressed ? 1 : 0);
-                input.y = (k.sKey.isPressed || k.downArrowKey.isPressed ? 1 : 0) - (k.wKey.isPressed || k.upArrowKey.isPressed ? 1 : 0);
-            }
+            Vector2 move = MoveKeys();
+            input.x = move.x;
+            input.y = move.y;
             if (m != null)
             {
                 Vector2 screenPos = m.position.ReadValue();
@@ -838,7 +832,9 @@ namespace TOD
                 }
                 Run.events.Clear();
                 float heroTime = Run.outcome == Outcome.Dead ? Mathf.Min(deathDuration, Clock - (animatingDeath ? deathClock : Clock)) : Run.player.actionTime;
-                arena.Render(Run, aim, Clock, IsCombat, heroTime, Combat.Nearest(Run));
+                // 24차 프레임 스톱: 멈춘 동안은 그림 시계도 멈춘다 (몬스터 몸짓, 장식, 드롭이 같이 선다). 카메라 흔들림만 진짜 시계로
+                if (!Run.FrameHeld) frameClock += Time.unscaledDeltaTime;
+                arena.Render(Run, aim, frameClock, IsCombat, heroTime, Combat.Nearest(Run), Clock);
                 ApplyPostFx();
                 ui.UpdateHud(Run, Combat);
                 ui.UpdatePotions(Run);   // 23차 포션 칸 (GameUI.Potions.cs)

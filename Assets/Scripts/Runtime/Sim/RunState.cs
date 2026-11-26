@@ -164,6 +164,10 @@ namespace TOD
         public bool purified;
         public readonly Stack<Enemy> enemyPool = new();
         public float winding, dry, freeze, shake, flash, snapFlash, hurtFlash, deathClock;
+        // 24차 프레임 스톱: freeze 동안 이펙트, 주인공 자세까지 멈춘다 (frameLead 초는 먼저 흐름). 바늘 박힘 같은 짧은 멈춤은 false
+        public bool frameStop;
+        public float frameLead;
+        public bool FrameHeld => frameStop && freeze > 0 && frameLead <= 0;
         public Color flashTint;
         public Element element;
         public Mood mood;

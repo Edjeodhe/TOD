@@ -861,6 +861,13 @@ namespace TOD
             }
         }
 
+        // 24차 프레임 스톱 (당기기, 보스 마지막 베기). 이미 멈춰 있으면 먼저 흐를 시간은 다시 주지 않는다
+        void BeginFrameStop(RunState r)
+        {
+            if (!r.frameStop) r.frameLead = Mathf.Max(0, F.hitStopLead);
+            r.frameStop = true;
+        }
+
         void Pull(RunState r)
         {
             Player p = r.player;
@@ -1040,7 +1047,7 @@ namespace TOD
                 else p.spiteReady = false;
             }
             r.combo = impacts;
-            r.freeze = impacts > 0 ? Mathf.Min(F.freezeMax, F.freezeBase + impacts * F.freezePerHit) : 0;
+            r.freeze = impacts > 0 ? Mathf.Min(F.freezeMax, F.freezeBase + impacts * F.freezePerHit) * (F.hitStopScale > 0 ? F.hitStopScale : 1) : 0;
             r.shake = impacts > 0 ? Mathf.Min(F.shakeMax, F.shakeBase + impacts * F.shakePerHit) : F.shakeEmpty;
             bool anyBound = wounded.Any(bound.Contains);
             if (anyBound)
@@ -1049,6 +1056,7 @@ namespace TOD
                 r.freeze += db.bind.freezeBonus;
                 r.shake += db.bind.shakeBonus;
             }
+            if (r.freeze > 0) BeginFrameStop(r);   // 24차: 맞는 순간 화면 전체가 멈춘다
             if (impacts > 0)
             {
                 float kx = 0, ky = 0;
@@ -1476,8 +1484,18 @@ namespace TOD
             Player p = r.player;
             if (p.recoil != null && (p.recoil.time -= dt) <= 0) p.recoil = null;
             if (r.kick != null && (r.kick.time -= dt) <= 0) r.kick = null;
+            if (r.freeze > 0)
+            {
+                // 24차 프레임 스톱: frameLead 동안은 베기 섬광, 숫자, 주인공 당기는 자세가 흘러 맞는 순간에 닿고, 그 뒤는 이펙트까지 멈춘다
+                bool lead = r.frameStop && r.frameLead > 0;
+                if (!r.frameStop || lead) r.effects.RemoveAll(fx => (fx.time -= dt) <= 0);
+                if (lead) { r.frameLead -= dt; p.actionTime += dt; }
+                else r.freeze -= dt;   // 멈춤 시간은 맞는 순간부터 센다
+                if (r.freeze <= 0) r.frameStop = false;
+                return;
+            }
+            r.frameStop = false;
             r.effects.RemoveAll(fx => (fx.time -= dt) <= 0);
-            if (r.freeze > 0) { r.freeze -= dt; return; }
             r.time += dt;
             r.elapsed += dt;
             p.actionTime += dt;
@@ -1611,6 +1629,7 @@ namespace TOD
                         r.shake = Mathf.Max(r.shake, bd.shake * 1.6f);
                         r.snapFlash = F.cutFlash;
                         r.freeze = Mathf.Max(r.freeze, F.freezeMax);
+                        BeginFrameStop(r);   // 24차 프레임 스톱
                         Event(r, "bosscut");
                     }
                     if (r.bossDeath.time >= bd.Total) BeginPurify(r);

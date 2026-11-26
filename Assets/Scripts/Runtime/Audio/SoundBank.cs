@@ -12,6 +12,7 @@ namespace TOD
 
         readonly Dictionary<string, (AudioClip clip, float volume)> clips = new();
         public bool Enabled { get; set; }
+        public float Volume { get; set; } = 1;   // 24차 환경설정 효과음 음량 (전체 음량은 AudioListener.volume)
 
         public void Init(SynthSound[] sounds)
         {
@@ -55,8 +56,8 @@ namespace TOD
 
         public void Play(string id, float power = 1)
         {
-            if (!Enabled || !clips.TryGetValue(id, out var entry)) return;
-            source.PlayOneShot(entry.clip, entry.volume * Mathf.Min(1.5f, power));
+            if (!Enabled || Volume <= 0 || !clips.TryGetValue(id, out var entry)) return;
+            source.PlayOneShot(entry.clip, entry.volume * Mathf.Min(1.5f, power) * Volume);
         }
     }
 }

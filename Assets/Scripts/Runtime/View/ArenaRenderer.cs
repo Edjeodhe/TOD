@@ -100,12 +100,13 @@ namespace TOD
             particles.Clear();
         }
 
-        public void Render(RunState r, Vector2 aim, float clock, bool active, float heroActionTime, Interactable nearest)
+        // clock = 그림 시계 (24차 프레임 스톱 동안 멈춤), shakeClock = 카메라 흔들림 시계 (늘 흐름, 없으면 clock)
+        public void Render(RunState r, Vector2 aim, float clock, bool active, float heroActionTime, Interactable nearest, float shakeClock = -1)
         {
             painter.Begin();
             float viewDt = viewClock < 0 ? 0 : Mathf.Clamp(clock - viewClock, 0, .1f);
             viewClock = clock;
-            UpdateCamera(r, viewDt, clock);
+            UpdateCamera(r, viewDt, shakeClock >= 0 ? shakeClock : clock);
             background.Render(r, view, clock, Zoom);
             ApplyPurifyGlobals(r);
             DrawMap();
@@ -522,7 +523,7 @@ namespace TOD
 
         void PropLabel(string text, Vector2 at, bool near) =>
             // 작은 글자는 테두리가 글자 안을 덮지 않게 글자 크기에 맞춰 얇게 둔다.
-            Text?.Label(text, at, PropPx, near ? Pal.promptActive : Pal.promptIdle, Pal.textStroke, Mathf.Max(1.5f, PropPx * .14f), near ? 1.1f : 1, 0, false);
+            Text?.Label(Settings.Relabel(text), at, PropPx, near ? Pal.promptActive : Pal.promptIdle, Pal.textStroke, Mathf.Max(1.5f, PropPx * .14f), near ? 1.1f : 1, 0, false);
 
         float PropPx => Pal.propLabelPx > 0 ? Pal.propLabelPx : 15;
 

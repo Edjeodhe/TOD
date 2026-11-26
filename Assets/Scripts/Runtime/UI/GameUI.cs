@@ -73,6 +73,7 @@ namespace TOD
             Bind("attic-back", game.BackFromRoom);
             Bind("rotate", game.Rotate);
             InitSort();   // 21차 목록 정렬 (GameUI.Board.cs)
+            InitSettings();   // 24차 환경설정 창 (GameUI.Settings.cs)
             root.Q("board").RegisterCallback<PointerLeaveEvent>(_ => { if (!dragging) game.HoverCell(null); });
             // 꾹 눌러 끌기: 판 위 조각·목록 줄을 누른 채 기다리거나 끌면 집어 들고, 놓은 칸에 다시 장착한다.
             inventory.RegisterCallback<PointerDownEvent>(OnPressDown, TrickleDown.TrickleDown);
@@ -87,7 +88,7 @@ namespace TOD
         void Bind(string name, Action action) => root.Q<Button>(name).clicked += action;
 
         // 24차: 소리를 끄면 소리 단추 음표 위에 빗금 (Main.uss .sound-button.muted)
-        public void SetSoundMuted(bool muted) => root?.Q("sound")?.EnableInClassList("muted", muted);
+        public void SetSoundMuted(bool muted) => root?.Query(className: "sound-button").ForEach(e => e.EnableInClassList("muted", muted));   // 위 띠 ♪ + 환경설정 창 ♪
 
         // UXML 템플릿에서 이름이 같은 요소를 하나 복제한다 (템플릿 슬롯 복제).
         VisualElement Slot(VisualTreeAsset asset, string name)
@@ -136,6 +137,7 @@ namespace TOD
 
         public void Tick()
         {
+            TickSettings();   // 24차: 환경설정에서 새 키 받기
             // 유니크·레전더리 카드: 빛 줄기가 카드를 가로질러 지나가고, 레전더리는 테두리가 숨 쉬듯 밝아진다.
             foreach (var (card, shine, strength, phase, color) in shines)
             {
@@ -322,8 +324,8 @@ namespace TOD
             // 라운드가 끝난 뒤 쌓인 증강 안내
             bool pending = r.phase != Phase.Combat && r.augmentQueue > 0 && Opened == "";
             Show(hint, pending);
-            if (pending) hintText.text = string.Format(T.augmentHint, r.augmentQueue);
-            else if (game.CanOpenRunInventory) { Show(hint, true); hintText.text = T.inventoryHint; }
+            if (pending) hintText.text = Settings.Relabel(string.Format(T.augmentHint, r.augmentQueue));
+            else if (game.CanOpenRunInventory) { Show(hint, true); hintText.text = Settings.Relabel(T.inventoryHint); }
 
             Show(hud.Q("boss-hud"), boss != null);
             if (boss != null) Meter(hud, "boss-bar", boss.hp / boss.maxHp);

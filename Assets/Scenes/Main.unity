@@ -22351,6 +22351,7 @@ MonoBehaviour:
   view: {fileID: 1203403047}
   shakeScale: 14
   baseSize: 2.95
+  referenceAspect: 1.7777778
 --- !u!1 &1204438533
 GameObject:
   m_ObjectHideFlags: 0
@@ -37300,6 +37301,8 @@ MonoBehaviour:
     freezeBase: 0.08
     freezePerHit: 0.016
     freezeMax: 0.17
+    hitStopLead: 0.035
+    hitStopScale: 1.2
     shakeBase: 0.11
     shakePerHit: 0.038
     shakeMax: 0.37
@@ -42625,10 +42628,6 @@ MonoBehaviour:
     fateConfirm: "\uAE30\uC5B5\uC758 \uD30C\uD3B8 {0}\uAC1C\uB97C \uAC74\uB124\uACE0
       \uC810\uC131\uAD6C \uC18D \uBBF8\uB798\uB97C \uBD05\uB2C8\uB2E4."
     fateIntro: 
-    fateBadgeTag: "\uC608\uC5B8"
-    fateBadgeText: "\uC138\uD2B8 \uC870\uAC01 \uD655\uB960 +{1}%"
-    fateBadgeOffset: {x: 34, y: -36}
-    fateBadgePop: 0.45
     fateShow:
       sparkTime: 0.55
       sparkStagger: 0.07
@@ -44463,6 +44462,77 @@ MonoBehaviour:
         line: "\uD558\uB098... \uAF5D\uC5D0 \uAC00\uAE5D\uB124. \uD788\uD788."
         bad: 0
       station: 10
+  settings:
+    saveKey: TOD.settings.v1
+    master: 1
+    sfx: 1
+    vsync: 1
+    frameCap: 0
+    frameCaps: 1e0000003c0000007800000090000000a5000000f000000000000000
+    minResolution: {x: 1280, y: 720}
+    shake: 1
+    keys:
+    - action: 0
+      key: 37
+    - action: 1
+      key: 33
+    - action: 2
+      key: 15
+    - action: 3
+      key: 18
+    - action: 4
+      key: 1
+    - action: 5
+      key: 19
+    - action: 6
+      key: 23
+    - action: 7
+      key: 32
+    - action: 8
+      key: 2
+    - action: 9
+      key: 41
+    - action: 10
+      key: 42
+    - action: 11
+      key: 43
+    - action: 12
+      key: 44
+    - action: 13
+      key: 45
+    altKeys:
+    - action: 0
+      key: 63
+    - action: 1
+      key: 64
+    - action: 2
+      key: 61
+    - action: 3
+      key: 62
+    - action: 8
+      key: 77
+    - action: 9
+      key: 85
+    - action: 10
+      key: 86
+    - action: 11
+      key: 87
+    - action: 12
+      key: 88
+    - action: 13
+      key: 89
+    screenModeNames:
+    - "\uC804\uCCB4 \uD654\uBA74"
+    - "\uB3C5\uC810 \uC804\uCCB4 \uD654\uBA74"
+    - "\uCC3D \uBAA8\uB4DC"
+    on: "\uCF2C"
+    off: "\uB054"
+    unlimited: "\uC81C\uD55C \uC5C6\uC74C"
+    fpsFormat: '{0}'
+    resolutionFormat: "{0} \xD7 {1}"
+    percentFormat: '{0}%'
+    listening: "\uD0A4\uB97C \uB204\uB974\uC138\uC694"
+    vsyncNote: "\uC218\uC9C1 \uB3D9\uAE30\uD654 \uCF1C\uC9D0"
 --- !u!1 &1610423764
 GameObject:
   m_ObjectHideFlags: 0

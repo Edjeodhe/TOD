@@ -22,7 +22,7 @@ namespace TOD
             root.Q<Button>("close-hubshop")?.RegisterCallback<ClickEvent>(_ => CloseDialog());
             root.Q<Button>("close-hubpack")?.RegisterCallback<ClickEvent>(_ => CloseDialog());
             root.Q<Button>("hubpack-board")?.RegisterCallback<ClickEvent>(_ => packBoard?.Invoke());
-            if (db.hub != null) Text(root, "hub-hint", db.hub.hint ?? "");
+            if (db.hub != null) Text(root, "hub-hint", Settings.Relabel(db.hub.hint ?? ""));
             InitMerchant();   // 16차 상인 말풍선 (GameUI.Merchant.cs)
         }
 

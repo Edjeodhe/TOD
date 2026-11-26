@@ -73,8 +73,8 @@ namespace TOD
             fateText.text = "";
             fateShownText = null;
             fateText.style.color = Color.Lerp(tint, Color.white, .42f);   // 죄종 색을 밝힌 글자 (어두운 띠 위에서 읽히게)
-            fateSkip.text = s.skipHint ?? "";
-            if (fatePromptText != null) fatePromptText.text = s.promptText ?? "";
+            fateSkip.text = Settings.Relabel(s.skipHint ?? "");   // 24차: 바꾼 키 이름
+            if (fatePromptText != null) fatePromptText.text = Settings.Relabel(s.promptText ?? "");
             Show(fate, true);
             attic.AddToClassList("fate-on");
             attic.RemoveFromClassList("fate-zoom");

@@ -73,16 +73,10 @@ namespace TOD
         {
             if (hub != null && hubRoot != null && hubRoot.activeSelf) hub.AnimateMoira(dt);   // 19차: 모이라 카드 창 동안에도
             if (!InHub) return;
-            Vector2 move = Vector2.zero;
-            Keyboard k = Keyboard.current;
-            if (k != null)
-            {
-                move.x = (k.dKey.isPressed || k.rightArrowKey.isPressed ? 1 : 0) - (k.aKey.isPressed || k.leftArrowKey.isPressed ? 1 : 0);
-                move.y = (k.sKey.isPressed || k.downArrowKey.isPressed ? 1 : 0) - (k.wKey.isPressed || k.upArrowKey.isPressed ? 1 : 0);
-            }
+            Vector2 move = MoveKeys();   // 24차: 환경설정 키 (GameController.Settings.cs)
             if (hubAutoMove != Vector2.zero) move = hubAutoMove;
             bool free = Opened == "" && !roomMoving;
-            bool dash = (k != null && k.spaceKey.wasPressedThisFrame) || hubAutoDash;   // 23차: 재봉실에서도 Space 대시
+            bool dash = (free && Settings.Pressed(KeyAction.Dash)) || hubAutoDash;   // 23차: 재봉실에서도 Space 대시
             hubAutoDash = false;
             if (hub.Tick(dt, move, free, Clock, dash)) sound.Play("dash");
             HubFacility near = free ? hub.Near : null;

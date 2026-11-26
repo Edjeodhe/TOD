@@ -170,6 +170,9 @@ namespace TOD
         [Header("Yank")] public float yankReach, yankBoss, yankTime, yankMinGap, stretchTime;
         [Header("Pull impact")] public float pullHitPad, pullEnemyFlash;
         public float freezeBase, freezePerHit, freezeMax;
+        [Header("24차 프레임 스톱 (당기기, 보스 마지막 베기): 맞는 자세까지 흐른 뒤 화면 전체가 멈춘다. 흔들림만 계속")]
+        public float hitStopLead;             // 당긴 뒤 이만큼(초)은 베기 섬광, 숫자, 주인공 자세가 흘러 맞는 순간에 닿는다
+        public float hitStopScale;            // 당기기 멈춤 시간 배율 (freezeBase + 타수 × freezePerHit, 상한 freezeMax 에 곱한다. 0 = 1)
         public float shakeBase, shakePerHit, shakeMax, shakeEmpty;
         public float kickBase, kickPerHit, kickMax, kickTime;
         public float flashBase, flashPerHit, flashMax;
@@ -667,6 +670,7 @@ namespace TOD
         public PotionConfig potions;          // 23차: 포션 칸 (PotionData.cs)
         public BossConfig bosses;             // 23차-boss7: 칠죄종 보스 7종, 패턴, 2페이즈 (BossData.cs)
         public NpcConfig npcs;                // 23차: 쉬어가기 NPC 4종, 재봉실 NPC (NpcData.cs)
+        public SettingsConfig settings;       // 24차: 환경설정 기본값과 기본 키 (SettingsData.cs)
 
         public EnemyType Enemy(string id) => Array.Find(enemies.types, t => t.id == id);
         public AugmentDef Augment(string id) => Array.Find(augments.augments, a => a.id == id);

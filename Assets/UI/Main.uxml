@@ -7,6 +7,7 @@
     <Style src="project://database/Assets/UI/Merchant.uss" />
     <Style src="project://database/Assets/UI/Moira.uss" />
     <Style src="project://database/Assets/UI/Potion.uss" />
+    <Style src="project://database/Assets/UI/Settings.uss" />
     <ui:VisualElement name="root" class="root" picking-mode="Ignore">
 
         <!-- 전투 중 글자 (피해 숫자, N HIT, ×N) -->
@@ -123,7 +124,7 @@
                     <ui:VisualElement class="bar-ink" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement class="controls-hint" picking-mode="Ignore">
+            <ui:VisualElement name="controls-hint" class="controls-hint" picking-mode="Ignore">
                 <ui:Label text="WASD 이동" />
                 <ui:Label text="좌클릭 바늘 발사" />
                 <ui:Label text="우클릭 실 당기기" />
@@ -153,7 +154,7 @@
             </ui:VisualElement>
             <ui:VisualElement name="hub-prompt" class="hub-prompt hidden" picking-mode="Ignore">
                 <ui:VisualElement class="hub-prompt-tag" picking-mode="Ignore">
-                    <ui:Label text="E" class="kbd" picking-mode="Ignore" />
+                    <ui:Label text="E" class="kbd keyed" picking-mode="Ignore" />
                     <ui:Label name="hub-prompt-text" class="hub-prompt-text" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -303,7 +304,7 @@
                 <ui:VisualElement name="fate-dim" class="fate-dim" picking-mode="Ignore" />
                 <ui:VisualElement name="fate-prompt" class="hub-prompt fate-prompt" picking-mode="Ignore">
                     <ui:VisualElement class="hub-prompt-tag" picking-mode="Ignore">
-                        <ui:Label text="E" class="kbd" picking-mode="Ignore" />
+                        <ui:Label text="E" class="kbd keyed" picking-mode="Ignore" />
                         <ui:Label name="fate-prompt-text" class="hub-prompt-text" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -342,13 +343,95 @@
         <ui:VisualElement name="merchant-world" class="layer" picking-mode="Ignore" />
 
         <ui:VisualElement name="overlay" class="layer overlay hidden">
-            <ui:VisualElement name="dialog-pause" class="dialog hidden">
-                <ui:Label text="등반 중" class="eyebrow" />
-                <ui:Label text="일시 정지" class="dialog-title" />
-                <ui:Label text="전투를 계속하거나 기억의 파편을 가지고 귀환할 수 있습니다." class="dialog-text" />
-                <ui:VisualElement class="actions">
+            <!-- 24차 환경설정 (Esc). 등반 중에는 일시 정지 창을 겸한다: 계속하기, 귀환 (GameUI.Settings.cs, Settings.uss) -->
+            <ui:VisualElement name="dialog-settings" class="dialog settings-dialog hidden">
+                <ui:Label name="settings-paused" text="등반 중 일시 정지" class="eyebrow" />
+                <ui:Label text="환경설정" class="dialog-title" />
+                <ui:VisualElement class="settings-tabs">
+                    <ui:Button name="settings-tab-sound" text="소리" class="settings-tab" />
+                    <ui:Button name="settings-tab-keys" text="조작" class="settings-tab" />
+                    <ui:Button name="settings-tab-video" text="그래픽" class="settings-tab" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="settings-page-sound" class="settings-page">
+                    <ui:VisualElement class="settings-row">
+                        <ui:Label text="전체 음량" class="settings-name" />
+                        <ui:Button name="set-master-mute" text="♪" class="icon-button sound-button settings-mute" tooltip="소리 켜기/끄기">
+                            <ui:VisualElement class="sound-slash" picking-mode="Ignore" />
+                        </ui:Button>
+                        <ui:Slider name="set-master" low-value="0" high-value="100" class="settings-slider" />
+                        <ui:Label name="set-master-value" class="settings-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="settings-row">
+                        <ui:Label text="효과음" class="settings-name" />
+                        <ui:VisualElement class="settings-mute-space" />
+                        <ui:Slider name="set-sfx" low-value="0" high-value="100" class="settings-slider" />
+                        <ui:Label name="set-sfx-value" class="settings-value" />
+                    </ui:VisualElement>
+                    <ui:Label text="막대를 왼쪽 끝까지 당기면 소리가 꺼집니다." class="settings-note" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="settings-page-keys" class="settings-page hidden">
+                    <ui:VisualElement class="settings-keys">
+                        <ui:VisualElement class="settings-key"><ui:Label text="위로 이동" class="settings-name" /><ui:Button name="bind-MoveUp" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="아래로 이동" class="settings-name" /><ui:Button name="bind-MoveDown" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="왼쪽으로 이동" class="settings-name" /><ui:Button name="bind-MoveLeft" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="오른쪽으로 이동" class="settings-name" /><ui:Button name="bind-MoveRight" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="대시" class="settings-name" /><ui:Button name="bind-Dash" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="상호작용" class="settings-name" /><ui:Button name="bind-Interact" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="재봉 상자" class="settings-name" /><ui:Button name="bind-Inventory" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="조각 돌리기" class="settings-name" /><ui:Button name="bind-Rotate" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="바로 등반" class="settings-name" /><ui:Button name="bind-StartRun" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="포션 1" class="settings-name" /><ui:Button name="bind-Potion1" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="포션 2" class="settings-name" /><ui:Button name="bind-Potion2" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="포션 3" class="settings-name" /><ui:Button name="bind-Potion3" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="포션 4" class="settings-name" /><ui:Button name="bind-Potion4" class="settings-bind" /></ui:VisualElement>
+                        <ui:VisualElement class="settings-key"><ui:Label text="포션 5" class="settings-name" /><ui:Button name="bind-Potion5" class="settings-bind" /></ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="settings-keys-foot">
+                        <ui:Label text="칸을 누른 뒤 새 키를 누르세요. Esc는 취소. 방향키와 숫자 패드는 늘 같이 쓸 수 있습니다." class="settings-note" />
+                        <ui:Button name="set-keys-reset" text="기본값으로" class="settings-small" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="settings-page-video" class="settings-page hidden">
+                    <ui:VisualElement class="settings-row">
+                        <ui:Label text="화면 모드" class="settings-name" />
+                        <ui:Button name="set-mode-prev" text="◀" class="settings-arrow" />
+                        <ui:Label name="set-mode-value" class="settings-choice" />
+                        <ui:Button name="set-mode-next" text="▶" class="settings-arrow" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="settings-row">
+                        <ui:Label text="해상도" class="settings-name" />
+                        <ui:Button name="set-res-prev" text="◀" class="settings-arrow" />
+                        <ui:Label name="set-res-value" class="settings-choice" />
+                        <ui:Button name="set-res-next" text="▶" class="settings-arrow" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="settings-row">
+                        <ui:Label text="수직 동기화" class="settings-name" />
+                        <ui:Button name="set-vsync-prev" text="◀" class="settings-arrow" />
+                        <ui:Label name="set-vsync-value" class="settings-choice" />
+                        <ui:Button name="set-vsync-next" text="▶" class="settings-arrow" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="settings-row">
+                        <ui:Label text="최대 프레임" class="settings-name" />
+                        <ui:Button name="set-fps-prev" text="◀" class="settings-arrow" />
+                        <ui:Label name="set-fps-value" class="settings-choice" />
+                        <ui:Button name="set-fps-next" text="▶" class="settings-arrow" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="settings-row">
+                        <ui:Label text="화면 흔들림" class="settings-name" />
+                        <ui:Slider name="set-shake" low-value="0" high-value="100" class="settings-slider" />
+                        <ui:Label name="set-shake-value" class="settings-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="settings-run" class="actions">
                     <ui:Button name="resume" text="계속하기" class="primary" />
                     <ui:Button name="retreat" text="다락으로 귀환" />
+                </ui:VisualElement>
+                <ui:VisualElement name="settings-out" class="actions">
+                    <ui:Button name="settings-close" text="닫기" class="primary" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="dialog-retreat" class="dialog hidden">

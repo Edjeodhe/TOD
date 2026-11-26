@@ -1,0 +1,48 @@
+/* 24차 환경설정 창 (Main.uxml dialog-settings, GameUI.Settings.cs). 양피지 대화 상자 위: 글자 #2e2120, 흐린 #5f4a3c, 포도주 #7d2f3e */
+.settings-dialog { width: 1040px; padding: 52px 74px 50px 74px; }
+.settings-dialog .dialog-title { margin-bottom: 4px; }
+
+/* 탭: 고른 탭만 포도주 종이 */
+.settings-tabs { flex-direction: row; margin: 14px 0 18px 0; }
+.settings-tab { margin-right: 12px; min-height: 48px; padding: 6px 30px 8px 30px; font-size: 22px; }
+.settings-tab.selected { -unity-background-image-tint-color: #b5596c; color: #fbeedd; -unity-text-outline-width: 1px; -unity-text-outline-color: #3b1219; }
+
+.settings-page { min-height: 400px; }
+.settings-row { flex-direction: row; align-items: center; min-height: 66px; }
+.settings-name { width: 210px; color: #2e2120; font-size: 24px; }
+.settings-value { width: 90px; color: #5f4a3c; font-size: 22px; -unity-text-align: middle-right; }
+.settings-note { color: #6e5848; font-size: 18px; margin-top: 12px; }
+
+/* 소리: ♪ 인장 단추 (끄면 빗금, Main.uss .sound-button.muted) */
+.settings-mute { width: 52px; height: 52px; min-height: 52px; font-size: 21px; margin-right: 16px; }
+.settings-mute-space { width: 52px; margin-right: 16px; }
+
+/* 막대: 잉크 홈 + 포도주 채움 + 밀랍 손잡이 */
+.settings-slider { flex-grow: 1; margin: 0 18px 0 0; }
+.settings-slider .unity-base-slider__input { min-height: 40px; }
+.settings-slider .unity-base-slider__tracker {
+    height: 10px; margin-top: -5px; border-width: 2px; border-radius: 5px;
+    border-color: #1a1013; background-color: #c8b392;
+}
+.settings-slider .unity-base-slider__dragger {
+    width: 30px; height: 30px; margin-top: -15px; border-radius: 15px; border-width: 2px;
+    border-color: #2a0c12; background-color: #a8384e;
+}
+.settings-slider:hover .unity-base-slider__dragger { background-color: #c9516a; }
+.settings-slider .unity-base-slider__dragger-border { display: none; }
+.settings-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background-color: #7d2f3e; }
+
+/* 키: 두 줄로 위에서 아래 (7칸씩) */
+.settings-keys { flex-direction: column; flex-wrap: wrap; height: 378px; }
+.settings-key { flex-direction: row; align-items: center; width: 50%; height: 54px; padding-right: 30px; }
+.settings-key .settings-name { width: auto; flex-grow: 1; }
+.settings-bind { width: 170px; min-height: 46px; padding: 4px 10px 6px 10px; font-size: 22px; -unity-text-align: middle-center; }
+.settings-bind.listening { -unity-background-image-tint-color: #e8c66a; color: #3b1219; }
+.settings-keys-foot { flex-direction: row; align-items: center; justify-content: space-between; margin-top: 8px; }
+.settings-keys-foot .settings-note { flex-shrink: 1; margin-top: 0; margin-right: 20px; }
+.settings-small { min-height: 46px; padding: 4px 24px 6px 24px; font-size: 21px; flex-shrink: 0; }
+
+/* 그래픽: ◀ 값 ▶ */
+.settings-arrow { width: 54px; min-height: 46px; padding: 0 0 4px 0; font-size: 20px; }
+.settings-choice { width: 300px; color: #2e2120; font-size: 24px; -unity-text-align: middle-center; }
+.settings-choice.off { color: #8a7566; }
