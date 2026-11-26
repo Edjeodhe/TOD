@@ -86,6 +86,9 @@ namespace TOD
 
         void Bind(string name, Action action) => root.Q<Button>(name).clicked += action;
 
+        // 24차: 소리를 끄면 소리 단추 음표 위에 빗금 (Main.uss .sound-button.muted)
+        public void SetSoundMuted(bool muted) => root?.Q("sound")?.EnableInClassList("muted", muted);
+
         // UXML 템플릿에서 이름이 같은 요소를 하나 복제한다 (템플릿 슬롯 복제).
         VisualElement Slot(VisualTreeAsset asset, string name)
         {

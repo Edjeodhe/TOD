@@ -146,7 +146,10 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="shards" tooltip="기억의 파편"><ui:VisualElement /><ui:Label name="meta-shards" text="0" /></ui:VisualElement>
-                <ui:Button name="sound" text="♪" class="icon-button" tooltip="소리 켜기/끄기" />
+                <ui:Button name="sound" text="♪" class="icon-button sound-button" tooltip="소리 켜기/끄기">
+                    <!-- 24차: 소리를 끄면 음표 위에 빗금 (.sound-button.muted) -->
+                    <ui:VisualElement class="sound-slash" picking-mode="Ignore" />
+                </ui:Button>
             </ui:VisualElement>
             <ui:VisualElement name="hub-prompt" class="hub-prompt hidden" picking-mode="Ignore">
                 <ui:VisualElement class="hub-prompt-tag" picking-mode="Ignore">
@@ -337,15 +340,6 @@
         <!-- 대화 상자 -->
         <!-- 16차 상인 단추 월드 말풍선 (GameUI.Merchant.cs) -->
         <ui:VisualElement name="merchant-world" class="layer" picking-mode="Ignore" />
-        <!-- 24차 예언 카드: 미래 보기를 읽어 둔 동안 재봉실 캐릭터 옆에 '확률 오른 세트'를 띄운다 (GameUI.FateBadge.cs) -->
-        <ui:VisualElement name="fate-world" class="layer" picking-mode="Ignore">
-            <ui:VisualElement name="fate-badge" class="fate-badge hidden" picking-mode="Ignore">
-                <ui:Label name="fate-badge-tag" class="fate-badge-tag" picking-mode="Ignore" />
-                <ui:VisualElement name="fate-badge-icon" class="fate-badge-icon" picking-mode="Ignore" />
-                <ui:Label name="fate-badge-set" class="fate-badge-set" picking-mode="Ignore" />
-                <ui:Label name="fate-badge-text" class="fate-badge-text" picking-mode="Ignore" />
-            </ui:VisualElement>
-        </ui:VisualElement>
 
         <ui:VisualElement name="overlay" class="layer overlay hidden">
             <ui:VisualElement name="dialog-pause" class="dialog hidden">

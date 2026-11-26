@@ -109,6 +109,8 @@
 - [x] **플레이 확인:** 예언 카드(재봉실 캐릭터 오른쪽 위, '예언 / 색욕 / 세트 조각 확률 +200%') `Temp/Shots/w24_fate_badge(_zoom).png`, 색욕 4층 분홍 안개 + 암시 아래 '분홍빛 안개 — 시야 -45%' `w24_lust_a.png`, 탐욕 3층 상시 표시 `w24_greed_bar.png`, 보스 라운드 `w24_boss_bar.png`. 콘솔 오류 없음. 프로필은 `Temp/profile_backup_24main.json`에서 되돌림.
   - 고친 것: 상시 날씨 표시(`floor-weather`)가 타이머 판 뒤에 깔려 가려짐 → `top: 112px`(타이머 아래), 보스 라운드는 `.boss` 클래스로 `148px`(보스 체력 막대 아래). `ElementHud.cs`가 `roundKind == Boss`일 때 클래스를 붙임.
 - [x] 커밋 (fate-cel-anim 의 프레임 루프 코드 `FateOrbView`·`GameUI.FateShow`·`tools/fate_loop_prompts/` 도 같이 들어감 — 프레임이 없으면 옛 영상으로 돌아가므로 안전).
+- [x] **예언 카드 제거 (2026-11-26, 사용자 "별로임 제거해"):** `GameUI.FateBadge.cs`(+meta), `GameController.TickFateBadge`, `Main.uxml` `fate-world/fate-badge`, `Main.uss` `.fate-badge*`, `HubData.fateBadgeTag/Text/Offset/Pop` 지움. 예언 효과(세트 가중치 ×3)는 그대로. 씬에 남은 옛 필드 값은 다음 씬 저장 때 사라짐.
+- [x] **소리 단추 꺼짐 표시 (2026-11-26):** 재봉실 오른쪽 위 ♪ 단추(`Main.uxml` `sound`, 클래스 `sound-button`)에 자식 `sound-slash`(빗금, 45도) 추가. 끄면 `.muted` → 빗금이 보이고 음표가 살짝 흐려짐(`Main.uss`). `GameController.ToggleSound` → `GameUI.SetSoundMuted`. 확인 `Temp/Shots/w24_sound_compare.png`(켬/끔). 주의: 플레이 중 USS 를 다시 가져오면 UIDocument 가 새로 지어져 GameUI 가 옛 root 를 들고 있게 됨 → 플레이를 다시 켜고 확인할 것.
 - [ ] 사용자 확인 필요: 교만·시기 cap .9, 사람이 직접 한 플레이 느낌(식탐 허기 속도, 색욕 시야 7층 60%).
 - **다른 세션 (2026-11-25 15:45 확인, 두 세션 모두 앱 목록에서 사라짐):** `fate-cel-anim` — 프레임 루프 코드 끝, Claude in Chrome 연결 대기로 그림 생성 멈춤(사용자가 15:30 연결함). `data-tables` — 사용자 답(범위 **밸런스만**, 하나뿐인 설정 묶음은 **세로 키·값**(group | key | type | value), **내보내기만**(가져오기 도구 없음))을 받고 데이터 구조를 훑다가 5시간 한도로 멈춤. **만든 파일 없음** — 처음부터 다시(`기획서/데이터테이블.xlsx`, 스크립트 `tools/`, 자료형 int/string/float/enum, 효과는 effect + value + value_type, `enums` 시트).
 ### 24차-fate-cel-anim (미래 보기 구슬 속 셀 애니 루프) — 진행 중 (분노 끝, 사용자 확인 뒤 6죄종)

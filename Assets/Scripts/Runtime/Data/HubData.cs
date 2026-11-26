@@ -245,11 +245,6 @@ namespace TOD
         public string fateFoot, fateReadFoot; // 카드 아랫줄 ({0} 파편), 이미 읽었을 때 ("다시 듣기")
         public string fateConfirm;            // 확인 문구 ({0} 파편)
         public string fateIntro;              // 모이라가 암시 앞에 붙이는 말 (비우면 암시만)
-        [Header("24차 예언 카드 (재봉실 캐릭터 옆, GameUI.FateBadge.cs)")]
-        public string fateBadgeTag;           // 카드 위 꼬리표 (예: "예언")
-        public string fateBadgeText;          // 아래 설명 ({0} 세트 이름, {1} 오른 비율 %, 예: "세트 조각 확률 +{1}%")
-        public Vector2 fateBadgeOffset;       // 캐릭터 발밑 기준 카드 왼쪽 아래 자리 (캔버스 px, +x 오른쪽, +y 아래)
-        public float fateBadgePop;            // 처음 뜰 때 튀어나오는 시간 (초)
         public FateShow fateShow;             // 20차 운명 읽기 연출 (GameUI.FateShow.cs)
         public LineGrow lineGrow;             // 20차 칸 강화, 확장 연출 (GameUI.Board.cs)
 

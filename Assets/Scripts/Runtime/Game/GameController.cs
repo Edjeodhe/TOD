@@ -97,6 +97,7 @@ namespace TOD
         {
             sound.Enabled = !sound.Enabled;
             if (sound.Enabled) sound.Play("loot");
+            ui.SetSoundMuted(!sound.Enabled);
             ui.Say(sound.Enabled ? db.ui.soundOn : db.ui.soundOff);
         }
 
@@ -583,23 +584,6 @@ namespace TOD
             }, paid);
         }
 
-        // 24차 예언 카드: 미래 보기를 읽어 둔 채 재봉실을 걸을 때(모이라 창, 연출, 대화 상자 밖) 캐릭터 옆에 그 세트를 띄운다
-        void TickFateBadge()
-        {
-            SetDef set = null;
-            Sprite icon = null;
-            Vector2? foot = null;
-            if (Run == null && screen == UiScreen.Lobby && hub != null && hub.Player != null && Moira.FateRead(Profile))
-            {
-                Element sin = Moira.FateElement(Profile);
-                set = db.gear.sets.FirstOrDefault(x => x.element == sin);
-                // 그림 = 그 세트에서 가장 높은 등급 조각 아이콘
-                icon = set == null ? null : db.gear.pieces.Where(x => x.set == set.id && x.icon != null).OrderByDescending(x => x.cost).Select(x => x.icon).FirstOrDefault();
-                foot = new Vector2(hub.Player.x, Space.ProjectY(hub.Player.y));
-            }
-            ui.UpdateFateBadge(set, icon, db.gear.fateSetBonus, foot);
-        }
-
         void ReadFateCard()
         {
             if (Moira.FateRead(Profile))   // 다시 듣기 (파편 없음, 점성구부터)
@@ -834,7 +818,6 @@ namespace TOD
             TickHub(dt);   // 15차: 허브 걷기 (로비일 때만)
             TickMerchant();   // 16차: 상인 단추 자세와 말풍선 (GameController.Merchant.cs)
             TickNpcs(dt);     // 23차: NPC 말하기 자세와 말풍선 (GameController.Npc.cs)
-            TickFateBadge();  // 24차: 예언 카드 (재봉실 캐릭터 옆)
             ui.BeginLabels();
             TickFloorFade();   // 23차: 욕망을 고른 뒤 어두워지며 다음 층으로 (GameController.FloorFade.cs)
             if (IsCombat)
