@@ -7,12 +7,15 @@ namespace TOD
     {
         public MerchantTalk merchantTalk { get; set; }
         public Vector2? MerchantHead { get; private set; }
+        float realClock;   // Render 의 진짜 시계 (프레임 스톱에도 흐름)
 
-        void DrawMerchant(RunState r, Interactable nearest, float clock)
+        // MerchantTalk 의 MoodStart·LineStart 는 GameController.Clock(진짜 시계)로 찍히므로 자세도 진짜 시계로 계산한다.
+        // 그림 시계(frameClock)는 재봉실에 있던 시간과 멈춤만큼 뒤처져서 쓰면 경과 시간이 음수가 되고 튐 트윈이 폭주한다.
+        void DrawMerchant(RunState r, Interactable nearest)
         {
             MerchantHead = null;
             if (r.merchant == null) return;
-            MerchantFrame frame = merchantTalk != null ? merchantTalk.Pose(clock) : new MerchantFrame { scaleX = 1, scaleY = 1 };
+            MerchantFrame frame = merchantTalk != null ? merchantTalk.Pose(realClock) : new MerchantFrame { scaleX = 1, scaleY = 1 };
             Sprite sprite = merchantTalk?.Sprite(frame.mood) ?? merchantSprite;
             Vector2 at = C(r.merchant);
             bool near = nearest == Interactable.Merchant;

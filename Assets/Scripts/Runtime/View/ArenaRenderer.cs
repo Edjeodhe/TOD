@@ -106,7 +106,8 @@ namespace TOD
             painter.Begin();
             float viewDt = viewClock < 0 ? 0 : Mathf.Clamp(clock - viewClock, 0, .1f);
             viewClock = clock;
-            UpdateCamera(r, viewDt, shakeClock >= 0 ? shakeClock : clock);
+            realClock = shakeClock >= 0 ? shakeClock : clock;
+            UpdateCamera(r, viewDt, realClock);
             background.Render(r, view, clock, Zoom);
             ApplyPurifyGlobals(r);
             DrawMap();
@@ -348,7 +349,7 @@ namespace TOD
                 if (r.altarAge < db.rounds.towerRiseTime && altarSprite != null) DrawTowerRise(r, dt);
                 else DrawProp(altarSprite, Pal.altarHeight, r.altar, r.artifactTaken ? null : db.ui.promptAltar, nearest == Interactable.Altar, r.artifactTaken ? .55f : 1);
             }
-            DrawMerchant(r, nearest, clock);   // 16차: 자세와 트윈 (ArenaRenderer.Merchant.cs)
+            DrawMerchant(r, nearest);   // 16차: 자세와 트윈 (ArenaRenderer.Merchant.cs)
             DrawNpc(r, nearest, clock);        // 23차: 쉬어가기 NPC 리그 (ArenaRenderer.Npc.cs)
             if (r.stairs == null) return;
             if (stairPieces != null && stairPieces.Length > 0) { DrawStairCascade(r, nearest, clock, dt); return; }
