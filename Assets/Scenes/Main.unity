@@ -43823,21 +43823,21 @@ MonoBehaviour:
     bloodAlpha: {x: 0.7, y: 1}
     bloodTint: {r: 0.9019608, g: 0.8392157, b: 0.80784315, a: 1}
   hub:
-    backdrop: {fileID: 21300000, guid: eb3e0c9314e4ad74da52801e258206ca, type: 3}
+    backdrop: {fileID: 21300000, guid: 08e5c151a31a2eb40b1fab0b50654523, type: 3}
     backdropRect:
       serializedVersion: 2
       x: 0
       y: 0
-      width: 1000
+      width: 2000
       height: 667
     walk:
       serializedVersion: 2
-      x: 60
+      x: 70
       y: 205
-      width: 880
+      width: 1860
       height: 645
-    heroStart: {x: 500, y: 560}
-    returnSpot: {x: 500, y: 290}
+    heroStart: {x: 1000, y: 560}
+    returnSpot: {x: 1000, y: 290}
     walkSpeed: 220
     verticalFactor: 1
     cameraZoom: 1.06
@@ -43857,7 +43857,7 @@ MonoBehaviour:
     - station: 3
       name: "\uD0D1 \uC785\uAD6C"
       prompt: "\uD0D1\uC5D0 \uC624\uB974\uAE30"
-      position: {x: 500, y: 197}
+      position: {x: 1000, y: 197}
       sprite: {fileID: 21300000, guid: e979e2c27b86e3d478c482590e3f00bd, type: 3}
       height: 175
       flip: 0
@@ -43872,7 +43872,7 @@ MonoBehaviour:
     - station: 1
       name: "\uC608\uACAC\uC758 \uB2E4\uB77D"
       prompt: "\uB2E4\uB77D\uC73C\uB85C \uC62C\uB77C\uAC00\uAE30"
-      position: {x: 225, y: 207}
+      position: {x: 725, y: 207}
       sprite: {fileID: 21300000, guid: cd1b89fb940b47a479e22d57eefb518b, type: 3}
       height: 180
       flip: 0
@@ -43887,7 +43887,7 @@ MonoBehaviour:
     - station: 4
       name: "\uC77C\uAE30 \uAC8C\uC2DC\uD310"
       prompt: "\uC544\uBC84\uC9C0\uC758 \uC77C\uAE30 \uBCF4\uAE30"
-      position: {x: 775, y: 207}
+      position: {x: 1275, y: 207}
       sprite: {fileID: 21300000, guid: 1a786d3cd0001c64eb30cd3fd89386ba, type: 3}
       height: 140
       flip: 0
@@ -43902,7 +43902,7 @@ MonoBehaviour:
     - station: 2
       name: "\uC0C1\uC778 \uB2E8\uCD94"
       prompt: "\uB2E8\uCD94\uC640 \uC774\uC57C\uAE30\uD558\uAE30"
-      position: {x: 815, y: 590}
+      position: {x: 1315, y: 590}
       sprite: {fileID: 21300000, guid: 2b8ec106a11c86344916c24a00271767, type: 3}
       height: 105
       flip: 0
@@ -43925,7 +43925,7 @@ MonoBehaviour:
     - station: 7
       name: "\uB208\uBA3C \uC218\uB140 \uC7AC\uBD09\uC0AC"
       prompt: "\uC218\uB140 \uC7AC\uBD09\uC0AC\uC640 \uC774\uC57C\uAE30\uD558\uAE30"
-      position: {x: 450, y: 310}
+      position: {x: 300, y: 345}
       sprite: {fileID: 0}
       height: 185
       flip: 0
@@ -43938,7 +43938,7 @@ MonoBehaviour:
       brightness: 0
       props:
       - sprite: {fileID: 21300000, guid: 7568e4481eb55c446bc9f19b701b54c0, type: 3}
-        offset: {x: -85, y: -110}
+        offset: {x: -100, y: -145}
         height: 190
         flip: 0
         block: {x: 48, y: 20}
@@ -43948,7 +43948,7 @@ MonoBehaviour:
     - station: 8
       name: "\uB204\uB354\uAE30 \uD589\uC0C1 \uC950"
       prompt: "\uD589\uC0C1 \uC950\uC640 \uC774\uC57C\uAE30\uD558\uAE30"
-      position: {x: 210, y: 625}
+      position: {x: 710, y: 625}
       sprite: {fileID: 0}
       height: 118
       flip: 0
@@ -43971,7 +43971,7 @@ MonoBehaviour:
     - station: 9
       name: "\uCD1B\uBD88 \uC720\uB839"
       prompt: "\uCD1B\uBD88 \uC720\uB839\uACFC \uC774\uC57C\uAE30\uD558\uAE30"
-      position: {x: 585, y: 300}
+      position: {x: 1740, y: 355}
       sprite: {fileID: 0}
       height: 155
       flip: 0
@@ -43984,7 +43984,7 @@ MonoBehaviour:
       brightness: 0
       props:
       - sprite: {fileID: 21300000, guid: 344b7704b31a7c34dab6cb5a62ea5ef0, type: 3}
-        offset: {x: 55, y: -100}
+        offset: {x: 35, y: -155}
         height: 205
         flip: 0
         block: {x: 58, y: 20}
@@ -43994,7 +43994,7 @@ MonoBehaviour:
     - station: 10
       name: "\uB2E8\uCD94 \uB208 \uC778\uD615"
       prompt: "\uB2E8\uCD94 \uB208 \uC778\uD615\uACFC \uC774\uC57C\uAE30\uD558\uAE30"
-      position: {x: 790, y: 805}
+      position: {x: 1290, y: 805}
       sprite: {fileID: 0}
       height: 112
       flip: 0
@@ -44067,7 +44067,7 @@ MonoBehaviour:
         props: []
       hint: "WASD \uAC77\uAE30     Space \uB300\uC2DC     E \uB9D0 \uAC78\uAE30    
         I \uC7AC\uBD09 \uC0C1\uC790     Esc \uCC3D \uB2EB\uAE30"
-    atticReturn: {x: 225, y: 275}
+    atticReturn: {x: 725, y: 275}
     roomFade: 0.22
     roomSound: stairstep
     shopStock: 5
