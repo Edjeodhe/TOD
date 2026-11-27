@@ -15,66 +15,42 @@
 
         <!-- 전투 HUD -->
         <ui:VisualElement name="hud" class="layer hud hidden" picking-mode="Ignore">
+            <!-- 25차 3부: 왼쪽 위는 체력(굵게) + 욕망(얇은 띠)만. 레벨은 아래 경험치 바, 털실은 주인공 발밑, 매듭은 경험치 바 위 -->
             <ui:VisualElement class="panel status" picking-mode="Ignore">
-                <ui:VisualElement class="section-head" picking-mode="Ignore">
-                    <ui:Label text="◇" class="mark" />
-                    <ui:Label text="재봉사의 상태" class="heading" />
-                    <ui:Label name="level" text="LV. 1" class="tag" />
-                </ui:VisualElement>
-                <ui:VisualElement class="stat" picking-mode="Ignore">
+                <ui:VisualElement class="stat stat-hp" picking-mode="Ignore">
                     <ui:VisualElement class="stat-label" picking-mode="Ignore">
                         <ui:VisualElement class="icon" style="background-image: url('project://database/Assets/sprites/icon_heart.png');" />
                         <ui:Label text="체력" />
                         <ui:Label name="hp-value" text="100 / 100" class="value" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="bar-frame small" picking-mode="Ignore">
+                    <ui:VisualElement class="bar-frame hp-frame" picking-mode="Ignore">
                         <ui:VisualElement class="bar-track meter" picking-mode="Ignore"><ui:VisualElement name="hp-heal" class="meter-fill heal" picking-mode="Ignore" /><ui:VisualElement name="hp-bar" class="meter-fill health" picking-mode="Ignore" /></ui:VisualElement>
                         <ui:VisualElement class="bar-ink" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement class="stat" picking-mode="Ignore">
-                    <ui:VisualElement class="stat-label" picking-mode="Ignore">
-                        <ui:VisualElement class="icon" style="background-image: url('project://database/Assets/sprites/icon_yarn.png');" />
-                        <ui:Label text="털실" />
-                        <ui:Label name="yarn-value" text="6 / 6" class="value" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="yarn-pips" class="yarn-pips" />
-                    <ui:VisualElement class="thread-status" picking-mode="Ignore">
-                        <ui:Label name="thread-count" text="실 0가닥" />
-                        <ui:Label name="knot-ready" text="매듭까지 5발" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:VisualElement class="stat" picking-mode="Ignore">
+                <ui:VisualElement class="stat stat-desire" picking-mode="Ignore">
                     <ui:VisualElement class="stat-label" picking-mode="Ignore">
                         <ui:VisualElement class="icon" style="background-image: url('project://database/Assets/sprites/icon_desire.png');" />
                         <ui:Label text="욕망" />
                         <ui:Label name="desire-value" text="0 / 100" class="value" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="bar-frame small" picking-mode="Ignore">
+                    <ui:VisualElement class="bar-frame desire-frame" picking-mode="Ignore">
                         <ui:VisualElement class="bar-track meter" picking-mode="Ignore"><ui:VisualElement name="desire-bar" class="meter-fill desire" picking-mode="Ignore" /></ui:VisualElement>
                         <ui:VisualElement class="bar-ink" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement class="stat" picking-mode="Ignore">
-                    <ui:VisualElement class="stat-label" picking-mode="Ignore">
-                        <ui:VisualElement class="icon dash-icon" />
-                        <ui:Label text="대쉬" />
-                        <ui:Label name="dash-value" text="2 / 2" class="value" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="dash-pips" class="dash-pips" picking-mode="Ignore" />
-                </ui:VisualElement>
-                <ui:VisualElement class="status-bottom" picking-mode="Ignore">
-                    <ui:VisualElement>
-                        <ui:VisualElement class="icon" style="background-image: url('project://database/Assets/sprites/icon_gold.png');" />
-                        <ui:Label text="골드" />
-                        <ui:Label name="gold" text="0" class="value" />
-                    </ui:VisualElement>
-                    <ui:VisualElement>
-                        <ui:VisualElement class="icon" style="background-image: url('project://database/Assets/sprites/icon_knot.png');" />
-                        <ui:Label text="매듭" />
-                        <ui:Label name="knots" text="0" class="value" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
+            </ui:VisualElement>
+            <!-- 25차 3부: 주인공 발밑 털실 칸 + 실 가닥 수 (GameUI.Minimap.cs 가 매 프레임 자리를 옮김) -->
+            <ui:VisualElement name="yarn-foot" class="yarn-foot" picking-mode="Ignore">
+                <ui:VisualElement name="yarn-pips" class="yarn-pips" picking-mode="Ignore" />
+                <ui:Label name="thread-count" text="실 0" class="yarn-foot-thread" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <!-- 25차 3부: 경험치 바 바로 위 가운데 매듭 줄 -->
+            <ui:VisualElement class="knot-line" picking-mode="Ignore">
+                <ui:VisualElement class="knot-icon" picking-mode="Ignore" />
+                <ui:Label name="knot-ready" text="매듭까지 5발" picking-mode="Ignore" />
+                <ui:Label text="매듭" class="knot-sep" picking-mode="Ignore" />
+                <ui:Label name="knots" text="0" class="knot-count" picking-mode="Ignore" />
             </ui:VisualElement>
 
             <ui:VisualElement class="panel route" picking-mode="Ignore">
@@ -92,9 +68,12 @@
                 <ui:Label name="route-info" text="층마다 세 라운드를 돌파하세요." class="route-info" />
             </ui:VisualElement>
 
-            <ui:Button name="pause" text="Ⅱ" class="icon-button pause-button" tooltip="일시 정지 (Esc)" />
-            <!-- 23차: 일시정지 버튼 아래 기억의 파편 보유 수 (흡수될 때 bump 로 튀어 오름) -->
-            <ui:VisualElement name="hud-shards" class="shards hud-shards" tooltip="기억의 파편" picking-mode="Ignore"><ui:VisualElement picking-mode="Ignore" /><ui:Label name="hud-shards-count" text="0" picking-mode="Ignore" /></ui:VisualElement>
+            <!-- 25차: 오른쪽 위 한 줄 = 골드 · 기억의 파편(흡수될 때 bump 로 튀어 오름) · 일시정지. 등반 기록(.route)은 그 밑 -->
+            <ui:VisualElement class="hud-corner" picking-mode="Ignore">
+                <ui:VisualElement class="hud-chip hud-gold" tooltip="골드" picking-mode="Ignore"><ui:VisualElement class="hud-chip-icon" picking-mode="Ignore" /><ui:Label name="gold" text="0" picking-mode="Ignore" /></ui:VisualElement>
+                <ui:VisualElement name="hud-shards" class="hud-chip hud-shards" tooltip="기억의 파편" picking-mode="Ignore"><ui:VisualElement class="hud-chip-icon" picking-mode="Ignore" /><ui:Label name="hud-shards-count" text="0" picking-mode="Ignore" /></ui:VisualElement>
+                <ui:Button name="pause" text="Ⅱ" class="icon-button pause-button" tooltip="일시 정지 (Esc)" />
+            </ui:VisualElement>
             <ui:VisualElement name="banner" class="banner hidden" picking-mode="Ignore"><ui:Label name="banner-text" /></ui:VisualElement>
             <ui:VisualElement name="timer" class="round-timer hidden" picking-mode="Ignore"><ui:Label name="timer-text" /><ui:Label name="floor-round" class="floor-round" picking-mode="Ignore" /></ui:VisualElement>
             <ui:VisualElement name="hint" class="hint-bar hidden" picking-mode="Ignore"><ui:Label name="hint-text" /></ui:VisualElement>
@@ -112,6 +91,8 @@
             </ui:VisualElement>
             <!-- 23차 포션 칸 (숫자키 1~5로 마심): Slots.uxml potion-slot 복제 (GameUI.Potions.cs, Potion.uss) -->
             <ui:VisualElement name="potion-bar" class="potion-bar" picking-mode="Ignore" />
+            <!-- 25차: 대시 칸은 주인공 머리 위 (Slots.uxml dash-head-pip 복제, GameUI.Minimap.cs 가 매 프레임 자리를 옮김) -->
+            <ui:VisualElement name="dash-head" class="dash-head" picking-mode="Ignore" />
             <!-- 메이플식 하단 경험치 바 -->
             <ui:VisualElement name="exp" class="exp-bar" picking-mode="Ignore">
                 <ui:Label name="exp-level" text="LV. 1" class="exp-level" />
@@ -166,6 +147,12 @@
                 <ui:Button name="start" text="Enter  등반 시작" class="primary start-button hub-start" />
                 <ui:Button name="open-attic" text="예견의 다락" class="hidden" />
             </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 25차 미니맵 (전투·재봉실, 왼쪽 아래): 주인공이 가운데, 맵이 움직인다. minimap-draw 가 점을 그린다 (GameUI.Minimap.cs) -->
+        <ui:VisualElement name="minimap" class="minimap hidden" picking-mode="Ignore">
+            <ui:VisualElement name="minimap-draw" class="minimap-draw" picking-mode="Ignore" />
+            <ui:VisualElement class="minimap-frame" picking-mode="Ignore" />
         </ui:VisualElement>
 
         <!-- 재봉 상자: 등반 중(I), 19차부터 아웃게임에서는 단추의 '시작 조각 챙기기'와 모이라의 줄 고르기 판으로만 연다 -->

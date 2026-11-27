@@ -24,7 +24,6 @@ namespace TOD
         readonly List<Label> labels = new();
         int labelsUsed;
         readonly List<VisualElement> pips = new();
-        readonly List<VisualElement> dashPips = new();
         float shownHp = -1;   // 회복 때 체력 게이지가 차오르는 표시값
         readonly List<(VisualElement card, VisualElement shine, float strength, float phase, Color color)> shines = new();
         VisualElement[] rounds;
@@ -258,19 +257,9 @@ namespace TOD
             Text(hud, "exp-text", string.Format(T.expText, r.xp, need, expRatio * 100));
             hud.Q("exp-fill").style.width = Length.Percent(expRatio * 100);
 
-            // 대쉬 칸: 찬 칸은 밝게, 차오르는 칸은 게이지로
-            Player player = r.player;
-            int dashMax = Mathf.Max(1, db.feel.dashCharges);
-            Text(hud, "dash-value", string.Format(T.dashValue, player.dashCharges, dashMax));
-            VisualElement dashRow = hud.Q("dash-pips");
-            while (dashPips.Count < dashMax) { VisualElement pip = Slot(slots, "dash-pip"); dashRow.Add(pip); dashPips.Add(pip); }
-            for (int i = 0; i < dashPips.Count; i++)
-            {
-                VisualElement pip = dashPips[i];
-                pip.style.display = i < dashMax ? DisplayStyle.Flex : DisplayStyle.None;
-                pip.EnableInClassList("full", i < player.dashCharges);
-                pip.Q("fill").style.width = Length.Percent(i == player.dashCharges ? player.dashCharge * 100 : 0);
-            }
+            // 25차: 대쉬 칸은 주인공 머리 위 (GameUI.Minimap.cs)
+            UpdateDashHead(r);
+            UpdateYarnFoot(r);   // 25차 3부: 털실 칸은 주인공 발밑
 
             VisualElement pipRow = hud.Q("yarn-pips");
             int pipCount = Mathf.Min(25, maxYarn);
@@ -314,6 +303,7 @@ namespace TOD
             Enemy boss = r.enemies.FirstOrDefault(e => e.IsBoss);
             Show(timer, boss == null);          // 23차: 타이머 줄은 층, 라운드 표시와 함께 늘 보인다 (보스 HUD 가 뜨면 그쪽 이름 옆으로)
             Show(timerText, timing);
+            timer.EnableInClassList("no-timer", !timing);   // 타이머 숫자가 없으면 층·라운드 꼬리표가 그 자리(가운데)로
             UpdateFloorRound(r, boss != null);   // GameUI.BossDev.cs
             if (timing)
             {
@@ -415,7 +405,7 @@ namespace TOD
             {
                 Color color = a.color.a > 0 ? a.color : new Color(.9f, .66f, .75f);
                 int owned = r.augmentsTaken.TryGetValue(a.id, out int n) ? n : 0;
-                PuzzleCard(container, color, a.icon, string.Format(T.augmentLevel, owned + 1), a.name, a.text, game.Combat.AugmentPreview(r, a), () => pick(a.id));
+                PuzzleCard(container, color, a.icon, string.Format(T.augmentLevel, owned + 1), a.name, a.text, null, () => pick(a.id));   // 25차: '100 → 115' 미리 보기 줄은 뺌 (효과는 개조식 문구로)
             }
             ShowDialog("augment");
         }

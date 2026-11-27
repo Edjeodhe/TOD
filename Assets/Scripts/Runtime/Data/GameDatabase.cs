@@ -677,6 +677,7 @@ namespace TOD
         public MerchantConfig merchant;       // 16차: 상인 단추 자세와 말풍선 (MerchantData.cs)
         public MessageConfig messages;
         public UiTextConfig ui;
+        public HudConfig hud;                 // 25차: 머리 위 대시 칸, 미니맵 (HudData.cs)
         public SynthSound[] sounds;
         public HitAudioConfig hitAudio;       // 24차-hit-audio: 이벤트마다 소리 겹 (AudioData.cs)
         public PotionConfig potions;          // 23차: 포션 칸 (PotionData.cs)

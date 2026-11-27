@@ -38748,8 +38748,8 @@ MonoBehaviour:
   augments:
     augments:
     - id: attack
-      name: "\uACF5\uACA9\uB825"
-      text: "\uC2E4 \uD53C\uD574\uAC00 3 \uB298\uC5B4\uB0A9\uB2C8\uB2E4."
+      name: "\uACF5\uACA9\uB825 \uC99D\uAC00"
+      text: "- \uC2E4 \uD53C\uD574 +3"
       rule: 0
       icon: {fileID: 21300000, guid: 35678aa6e173ee74c91dc0ce34a17fc2, type: 3}
       color: {r: 0.62, g: 0.6, b: 0.64, a: 1}
@@ -38758,8 +38758,8 @@ MonoBehaviour:
         op: 0
         value: 3
     - id: attackSpeed
-      name: "\uACF5\uACA9\uC18D\uB3C4"
-      text: "\uBC14\uB298\uC744 10% \uB354 \uC790\uC8FC \uB358\uC9D1\uB2C8\uB2E4."
+      name: "\uACF5\uACA9 \uC18D\uB3C4 \uC99D\uAC00"
+      text: "- \uBC14\uB298 \uB358\uC9C0\uB294 \uAC04\uACA9 10% \uB2E8\uCD95"
       rule: 0
       icon: {fileID: 21300000, guid: 9c35b465b1383a34aa84de58a1ea5bf1, type: 3}
       color: {r: 0.62, g: 0.6, b: 0.64, a: 1}
@@ -38768,8 +38768,8 @@ MonoBehaviour:
         op: 1
         value: 0.9
     - id: moveSpeed
-      name: "\uC774\uB3D9\uC18D\uB3C4"
-      text: "\uC774\uB3D9 \uC18D\uB3C4\uAC00 8% \uBE68\uB77C\uC9D1\uB2C8\uB2E4."
+      name: "\uC774\uB3D9 \uC18D\uB3C4 \uC99D\uAC00"
+      text: "- \uC774\uB3D9 \uC18D\uB3C4 +8%"
       rule: 0
       icon: {fileID: 21300000, guid: f28ec00e87e4ab84ca23105f8fdfbd6a, type: 3}
       color: {r: 0.62, g: 0.6, b: 0.64, a: 1}
@@ -38778,8 +38778,9 @@ MonoBehaviour:
         op: 1
         value: 1.08
     - id: maxHealth
-      name: "\uCD5C\uB300 \uCCB4\uB825"
-      text: "\uCD5C\uB300 \uCCB4\uB825 +15, \uB298\uC5B4\uB09C \uB9CC\uD07C \uD68C\uBCF5\uD569\uB2C8\uB2E4."
+      name: "\uCD5C\uB300 \uCCB4\uB825 \uC99D\uAC00"
+      text: "- \uCD5C\uB300 \uCCB4\uB825 +15\n- \uB298\uC5B4\uB09C \uB9CC\uD07C \uC989\uC2DC
+        \uD68C\uBCF5"
       rule: 0
       icon: {fileID: 21300000, guid: 478f91da2a9db8d4da77716b382b439d, type: 3}
       color: {r: 0.62, g: 0.6, b: 0.64, a: 1}
@@ -38788,8 +38789,8 @@ MonoBehaviour:
         op: 0
         value: 15
     - id: reach
-      name: "\uC0AC\uAC70\uB9AC"
-      text: "\uBC14\uB298\uC774 12% \uB354 \uBA40\uB9AC \uB0A0\uC544\uAC11\uB2C8\uB2E4."
+      name: "\uC0AC\uAC70\uB9AC \uC99D\uAC00"
+      text: "- \uBC14\uB298 \uC0AC\uAC70\uB9AC +12%"
       rule: 0
       icon: {fileID: 21300000, guid: cbc9dc8616957df48a79dca956653066, type: 3}
       color: {r: 0.62, g: 0.6, b: 0.64, a: 1}
@@ -38798,8 +38799,8 @@ MonoBehaviour:
         op: 1
         value: 1.12
     - id: needleSpeed
-      name: "\uBC14\uB298 \uC18D\uB3C4"
-      text: "\uBC14\uB298\uC774 15% \uB354 \uBE68\uB9AC \uB0A0\uC544\uAC11\uB2C8\uB2E4."
+      name: "\uBC14\uB298 \uC18D\uB3C4 \uC99D\uAC00"
+      text: "- \uBC14\uB298 \uBE44\uD589 \uC18D\uB3C4 +15%"
       rule: 0
       icon: {fileID: 21300000, guid: b6a4917402db8f840ba1978c669c3663, type: 3}
       color: {r: 0.62, g: 0.6, b: 0.64, a: 1}
@@ -38808,8 +38809,8 @@ MonoBehaviour:
         op: 1
         value: 1.15
     - id: yarn
-      name: "\uD138\uC2E4 \uCD5C\uB300"
-      text: "\uD138\uC2E4\uC744 \uD55C \uD0C0\uB798 \uB354 \uAC00\uC9D1\uB2C8\uB2E4."
+      name: "\uD138\uC2E4 \uCD5C\uB300\uCE58 \uC99D\uAC00"
+      text: "- \uD138\uC2E4 \uCD5C\uB300 +1\uD0C0\uB798"
       rule: 0
       icon: {fileID: 21300000, guid: 1ebc4d420957f4f42955b1b278b74db3, type: 3}
       color: {r: 0.62, g: 0.6, b: 0.64, a: 1}
@@ -38818,8 +38819,8 @@ MonoBehaviour:
         op: 0
         value: 1
     - id: dashRecharge
-      name: "\uB300\uC26C \uCDA9\uC804"
-      text: "\uB300\uC26C \uD55C \uCE78\uC774 13% \uBE68\uB9AC \uCC39\uB2C8\uB2E4."
+      name: "\uB300\uC26C \uCDA9\uC804 \uC18D\uB3C4 \uC99D\uAC00"
+      text: "- \uB300\uC26C \uCDA9\uC804 \uC2DC\uAC04 13% \uB2E8\uCD95"
       rule: 0
       icon: {fileID: 21300000, guid: 94b52d66fc0d3a34eafa9677537db38a, type: 3}
       color: {r: 0.62, g: 0.6, b: 0.64, a: 1}
@@ -44424,7 +44425,7 @@ MonoBehaviour:
   ui:
     level: LV. {0}
     ratio: '{0} / {1}'
-    threadCount: "\uC2E4 {0}\uAC00\uB2E5"
+    threadCount: "\uC2E4 {0}"
     knotReady: "\uB9E4\uB4ED\uAE4C\uC9C0 {0}\uBC1C"
     desireValue: '{0} / {1}{2}'
     frenzySuffix: " (\uD3ED\uC8FC)"
@@ -44506,7 +44507,7 @@ MonoBehaviour:
     pieceShape: "{0}\uCE78 \uC870\uAC01, {1} \uC138\uD2B8: {2}"
     reroll: "\uB2E4\uC2DC \uAD74\uB9AC\uAE30 (1\uD68C)"
     rerollUsed: "\uB2E4\uC2DC \uAD74\uB9AC\uAE30 (\uC0AC\uC6A9\uD568)"
-    threadBonus: "\uC2E4 {0}\uAC00\uB2E5, \uB2F9\uAE40 \uD53C\uD574 +{1}%"
+    threadBonus: "\uC2E4 {0}  \uD53C\uD574 +{1}%"
     inventoryHint: "I  \uC7AC\uBD09 \uC0C1\uC790 \uC5F4\uAE30"
     inventoryInRun: "\uB4F1\uBC18 \uC911 \u2014 \uBC14\uAFBC \uBC30\uCE58\uB294 \uB2EB\uC744
       \uB54C \uBC14\uB85C \uC801\uC6A9\uB429\uB2C8\uB2E4 (I / Esc \uB85C \uB2EB\uAE30)"
@@ -44543,6 +44544,50 @@ MonoBehaviour:
     hudFloorRound: "{0}\uCE35 {1}\uB77C\uC6B4\uB4DC"
     hudFloorRest: "{0}\uCE35 \uC26C\uC5B4\uAC00\uAE30"
     hudFloorBoss: "{0}\uCE35 \uBCF4\uC2A4"
+  hud:
+    dashHead:
+      fill:
+      - {fileID: -1070261725, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: -178645031, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: 1672154010, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: -915879228, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: 1669064428, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: -1770165788, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: 389148055, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: -14352995, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: 478676161, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: -1620320310, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: -742234608, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      use:
+      - {fileID: 1748100079, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: -734611722, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: 1035778578, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: -221357555, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      - {fileID: -1092084292, guid: bd3d028cfc698b24da3fa7aa5de3739b, type: 3}
+      useTime: 0.32
+      lift: 74
+      iconSize: 46
+      gap: -9
+    minimap:
+      size: {x: 260, y: 180}
+      runRange: 1800
+      hubRange: 1300
+      heroRadius: 6
+      npcRadius: 5
+      enemyRadius: 3.5
+      bossRadius: 8
+      bossRing: 3.5
+      dotOutline: 1.5
+      hero: {r: 0.45, g: 0.95, b: 0.45, a: 1}
+      npc: {r: 0.42, g: 0.7, b: 1, a: 1}
+      enemy: {r: 0.95, g: 0.3, b: 0.28, a: 1}
+      boss: {r: 1, g: 0.18, b: 0.16, a: 1}
+      dotEdge: {r: 0.05, g: 0.03, b: 0.04, a: 0.9}
+      background: {r: 0.26, g: 0.2, b: 0.26, a: 0.88}
+      outside: {r: 0.06, g: 0.04, b: 0.06, a: 0.92}
+      bounds: {r: 0.78, g: 0.64, b: 0.46, a: 0.9}
+      boundsWidth: 2
+    yarnFootDrop: 16
   sounds:
   - id: shoot
     from: 510

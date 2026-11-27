@@ -846,6 +846,7 @@ namespace TOD
                     ui.SetSaleLabel(SaleLabel());
                 }
             }
+            TickMinimap();   // 25차 미니맵 (GameController.Minimap.cs)
             ui.EndLabels();
         }
 

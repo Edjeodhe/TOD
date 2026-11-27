@@ -95,7 +95,11 @@ namespace TOD
             string text = w != null ? game.Combat.WeatherText(r) : null;
             weather.EnableInClassList("hidden", text == null);
             if (text == null) return;
-            weather.EnableInClassList("boss", r.roundKind == RoundKind.Boss);   // 타이머(위 ~100px)·보스 막대(~140px) 밑으로
+            // 타이머(위 ~100px)·보스 막대(~140px) 밑으로. 타이머 숫자가 없을 때(쉬어가기, 시간 끝, 보스 처치 뒤)는 '1층 쉬어가기' 꼬리표 바로 밑 (compact)
+            bool timing = r.phase == Phase.Combat && r.roundKind == RoundKind.Survival;
+            bool bossShown = r.enemies.Any(e => e.IsBoss);
+            weather.EnableInClassList("boss", bossShown);
+            weather.EnableInClassList("compact", !timing && !bossShown);
             ElementDef def = EC.Def(r.floorElement);
             Color c = def != null && def.hintColor.a > 0 ? def.hintColor : game.db.Tone(r.floorElement).color;
             weatherName.text = string.IsNullOrEmpty(w.name) ? def?.sinName ?? "" : w.name;

@@ -67,6 +67,8 @@
         <ui:Label name="effect" class="set-tip-effect" picking-mode="Ignore" />
     </ui:VisualElement>
     <ui:VisualElement name="dash-pip" class="dash-pip"><ui:VisualElement name="fill" class="dash-fill" /></ui:VisualElement>
+    <!-- 25차: 머리 위 대시 칸 하나 (그림 = db.hud.dashHead 의 fill / use 프레임. GameUI.Minimap.cs) -->
+    <ui:VisualElement name="dash-head-pip" class="dash-head-pip" picking-mode="Ignore" />
     <!-- 증강·아이템 선택 카드 (퍼즐 조각 모양: 위·오른쪽 돌기, 왼쪽 홈) -->
     <ui:Button name="puzzle" class="puzzle">
         <ui:VisualElement name="entrance-halo" class="entrance-halo hidden" picking-mode="Ignore" />

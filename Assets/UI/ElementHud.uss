@@ -41,6 +41,7 @@
     position: absolute; top: 112px; left: 0; right: 0; flex-direction: row; justify-content: center; align-items: center;
 }
 .floor-weather.boss { top: 148px; }   /* 보스 라운드: 타이머 대신 보스 이름 + 체력 막대가 더 길다 */
+.floor-weather.compact { top: 66px; } /* 타이머 숫자가 없을 때: '1층 쉬어가기' 꼬리표 바로 밑 */
 .floor-weather-name, .floor-weather-text {
     padding: 3px 10px 4px 10px; font-size: 17px; color: #f3e2c8;
     -unity-text-outline-width: 1px; -unity-text-outline-color: #120a0d;
