@@ -56,6 +56,8 @@ namespace TOD
             profile.hubStock ??= new List<int>();
             profile.hubTaken ??= new List<int>();
             profile.hubStock.RemoveAll(k => k < 0 || k >= db.gear.pieces.Length);
+            // 25차: 고른 기록은 지금 챙겨 둔 조각만 (등반에 들고 가서 사라진 조각의 기록이 남아 "2/2개"로 막힌 옛 프로필도 풀린다)
+            profile.hubTaken.RemoveAll(k => !profile.items.Any(i => i.kind == k));
             bool due = profile.hubStock.Count == 0 || (RefreshSeconds(db) > 0 && SecondsLeft(db, profile, now) <= 0) || profile.hubStockTime > now;
             if (!due) return false;
             Restock(db, profile, random, now);
@@ -100,11 +102,14 @@ namespace TOD
             return refund;
         }
 
-        // 등반 시작: 챙긴 조각은 등반 가방(Gear.RunBag)으로 넘어갔으니 영구 프로필에서 지운다. 고른 기록(hubTaken)은 진열이 바뀔 때까지 남는다.
+        // 등반 시작: 챙긴 조각은 등반 가방(Gear.RunBag)으로 넘어갔으니 영구 프로필에서 지운다.
+        // 25차: 고른 기록(hubTaken)도 비운다. 예전엔 진열이 바뀔 때까지 남아서, 죽고 돌아오면 "고른 조각 2/2개"로 막혀 다시 못 챙겼다.
+        //   진열(hubStock)은 그대로라 같은 카드를 다시 고를 수 있다.
         public static void ConsumePacked(Profile profile)
         {
             profile.items.Clear();
             profile.placements.Clear();
+            profile.hubTaken?.Clear();
         }
     }
 }

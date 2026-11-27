@@ -796,5 +796,28 @@ namespace TOD.Tests
             ActiveSet greed = combat.MainSet(r);
             Assert.AreEqual((int)(a.type.gold) + Mathf.RoundToInt(greed.def.extra * greed.tier), r.drops.Sum(d => d.gold), "처치 금화 + 저당 금화");
         }
-}
+
+        // 25차: 욕망 '집착'으로 옮겨붙은 실은 한 번만 옮겨간다. 예전엔 바늘 몇 발 꽂고 우클릭을 연타하면
+        // 옮겨붙은 실로 또 당기고 또 옮겨붙어 주변 적이 전부 죽었고, 당길 때마다 털실도 공짜로 돌려받았다.
+        [Test]
+        public void ObsessionStrandsMoveOnlyOnce()
+        {
+            RunState r = NewRun();
+            r.roundKind = RoundKind.Rest;
+            r.player.x = 500; r.player.y = 350;
+            r.desires.Add("obsession");
+            var enemies = new System.Collections.Generic.List<Enemy>();
+            for (int i = 0; i < 5; i++) { Enemy e = Add(r, "stalker", 650 + i * 30, 350); e.hp = 1; enemies.Add(e); }
+            for (int i = 0; i < 3; i++) r.strands.Add(new Strand { x = enemies[0].x, y = enemies[0].y, target = enemies[0], state = StrandState.Stuck, element = Element.Plain });
+            r.yarn = 0;
+            for (int k = 0; k < 20; k++)
+            {
+                r.freeze = 0; r.frameStop = false;
+                combat.Update(r, .0001f, new CombatInput { pull = true, aim = new Vector2(500, 0) });
+            }
+            Assert.AreEqual(2, r.kills, "첫 당기기로 1마리, 옮겨붙은 실로 1마리까지만");
+            Assert.AreEqual(0, r.strands.Count, "옮겨붙은 실은 다시 옮겨가지 않음");
+            Assert.LessOrEqual(r.yarn, Mathf.Ceil(3 / 2f) + .001f, "옮겨붙은 실은 털실을 다시 돌려주지 않음");
+        }
+    }
 }

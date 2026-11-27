@@ -684,10 +684,13 @@ namespace TOD
             if (kg != null && kg.Has(ItemEffect.Devour)) HealPlayer(r, kg.Effect(ItemEffect.Devour));
             if (r.desires.Contains("hunger")) HealPlayer(r, db.desire.hungerHeal);
             WeatherOnKill(r);   // 24차 식탐 허기: 처치하면 조금 채움
-            if (stuck.Count > 0 && r.desires.Contains("obsession"))
+            // 욕망 '집착': 처치된 적의 실이 가까운 적에게 옮겨붙는다. 25차: 한 번만 (옮겨붙은 실은 다시 안 옮겨감),
+            // 털실은 이미 처음 당길 때 돌려받았으므로 옮겨붙은 실은 extra (당겨도 털실을 안 돌려줌). 예전엔 우클릭 연타로 끝없이 연쇄 처치됐다.
+            List<Strand> movable = stuck.Where(s => !s.moved).ToList();
+            if (movable.Count > 0 && r.desires.Contains("obsession"))
             {
                 Enemy nearby = r.enemies.Where(o => o.hp > 0 && o != e).OrderBy(o => Distance(o, e)).FirstOrDefault();
-                if (nearby != null) r.strands.AddRange(stuck.Select(s => { Strand copy = s.Copy(); copy.target = nearby; return copy; }));
+                if (nearby != null) r.strands.AddRange(movable.Select(s => { Strand copy = s.Copy(); copy.target = nearby; copy.moved = true; copy.extra = true; return copy; }));
             }
             if (boss) { StartBossDeath(r, e); return; }
             if (e.cut != null)

@@ -132,6 +132,7 @@ namespace TOD.Tests
             Assert.AreEqual(5, db.hub.shopStock, "진열 = 5개 (데이터)");
             Assert.AreEqual(db.hub.shopStock, p.hubStock.Count);
             p.hubTaken.Add(p.hubStock[0]);
+            p.items.Add(new OwnedItem { id = p.nextId++, kind = p.hubStock[0] });   // 고른 기록은 챙겨 둔 조각과 같이 (25차: 사라진 조각의 기록은 Ensure 가 지움)
             Assert.IsFalse(HubShop.Ensure(db, p, () => .7f, 1000 + refresh - 1), "시간이 안 됐는데 바뀜");
             Assert.AreEqual(1, p.hubTaken.Count);
             Assert.IsTrue(HubShop.Ensure(db, p, () => .7f, 1000 + refresh), "2시간이 지났는데 그대로");

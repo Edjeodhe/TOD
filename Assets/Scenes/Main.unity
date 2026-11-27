@@ -21540,7 +21540,7 @@ MonoBehaviour:
     - {fileID: 2800000, guid: eb99a5c8fc191f64ea5fc15695ba9d04, type: 3}
     - {fileID: 2800000, guid: 36c36397e38134240984bb6764ca2ca5, type: 3}
     fps: 12
-    ticks: 2
+    ticks: 3
     ghost: 0.45
   - sin: 6
     intro:
@@ -21574,7 +21574,7 @@ MonoBehaviour:
     - {fileID: 2800000, guid: d894d68174d202545bdc31cbe1781cfd, type: 3}
     - {fileID: 2800000, guid: 8c06bf75884d09447b8e756a13942c24, type: 3}
     fps: 12
-    ticks: 2
+    ticks: 3
     ghost: 0.45
   - sin: 7
     intro:
@@ -21608,18 +21608,16 @@ MonoBehaviour:
     - {fileID: 2800000, guid: 9500befd731f61143a1d1a57e043427e, type: 3}
     - {fileID: 2800000, guid: e0a183c8ace303e4ba11d6c2e71bb2c1, type: 3}
     fps: 12
-    ticks: 2
+    ticks: 3
     ghost: 0.45
   - sin: 8
     intro:
     - {fileID: 2800000, guid: 436fef4da63769540b9dd6fc73cc2773, type: 3}
     - {fileID: 2800000, guid: bdb5de06dc3666b41925c330e09c82c4, type: 3}
-    - {fileID: 2800000, guid: 2d2a8e69f1117b04bae99349b43b7137, type: 3}
     - {fileID: 2800000, guid: e140e70b1d0eb774699bda6f857fdc85, type: 3}
     - {fileID: 2800000, guid: 71b4bf730e677a847ba7988112931ac8, type: 3}
     - {fileID: 2800000, guid: 0bf6064dd23d48047a1a3fddd72441a9, type: 3}
     - {fileID: 2800000, guid: 1090ea46f5bc8a54f91022e27ce0b81f, type: 3}
-    - {fileID: 2800000, guid: af785ff3bb1d74348beebb07d09be510, type: 3}
     - {fileID: 2800000, guid: 138543668fb6b224ea2b9b3f01a43d18, type: 3}
     - {fileID: 2800000, guid: a5dd5bf193c0c7c43931ea338130d49d, type: 3}
     - {fileID: 2800000, guid: fe34962471897af408ceea1abdd90b43, type: 3}
@@ -21642,7 +21640,7 @@ MonoBehaviour:
     - {fileID: 2800000, guid: 7938718916459a046b9e47bcb247b494, type: 3}
     - {fileID: 2800000, guid: 73cd6b20630318445ba07be700f0d32a, type: 3}
     fps: 12
-    ticks: 2
+    ticks: 3
     ghost: 0.45
   - sin: 9
     intro:
@@ -21676,7 +21674,7 @@ MonoBehaviour:
     - {fileID: 2800000, guid: 6c9e864ad5a554445bcf2a92316f93d1, type: 3}
     - {fileID: 2800000, guid: ecf2a54663262b4479692ad219e70123, type: 3}
     fps: 12
-    ticks: 2
+    ticks: 3
     ghost: 0.45
   - sin: 2
     intro:
@@ -21710,7 +21708,7 @@ MonoBehaviour:
     - {fileID: 2800000, guid: c1b9ce10e899ce14c86a50c25109954c, type: 3}
     - {fileID: 2800000, guid: 5ee77b2b429e02f4995c32a80703c16f, type: 3}
     fps: 12
-    ticks: 2
+    ticks: 3
     ghost: 0.45
 --- !u!328 &1102568613
 VideoPlayer:
