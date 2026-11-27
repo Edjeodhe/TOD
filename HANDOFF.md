@@ -85,6 +85,24 @@
   - 플레이(자동 조작 + 시간 건너뛰기)로 확인: 생존 R1 타이머 → 시간 종료 → 계단·"E 위로 올라가기" → R2(새 컨셉) → 쉬어가기(제단·상인·계단, 아티팩트 대화 상자) → 보스 → 정화 고리·줌아웃·바닥 회복 → 계단에서 E → 욕망 제안 → 2층. 바늘이 손 높이로 날다 수직으로 박히고 원이 보임. 욕망 95%에서 붉은 막.
   - 남은 것: 사람이 직접 한 플레이, 일렁임 움직임(정지 화면으로는 확인 불가), 당기기 잔상 수정의 눈 확인, 값 다듬기(정화된 바닥이 조금 밝고 평평함, 계단 바닥 빛이 단단한 원판으로 보임).
 
+## 26차 (2026-11-27) — 아래 대화창 (왼쪽 주인공 얼굴, 오른쪽 NPC 얼굴, 종이 상자) — 완료(커밋 전)
+
+> 사용자 요청: "참고 그림(메이플식)처럼 아래에 대화창. 왼쪽 캐릭터 얼굴, 오른쪽 대화하는 NPC 얼굴. 대화창 이미지는 GPT 웹으로, 캐릭터도. 대화 UI 배경은 게임 컨셉처럼 종이 느낌. 대화 이미지는 얼굴로."
+
+- [x] **얼굴 7장 (ChatGPT 웹, Claude in Chrome):** 앱 안 브라우저 창은 chatgpt.com 에 그림을 못 붙임(파일 입력 값 못 넣음, 붙여 넣기 키 안 먹음, CSP 가 localhost fetch·iframe·img 막음) → 사용자 Chrome(Claude in Chrome `file_upload`)으로. 참고 그림 = 전신 + 머리 확대를 나란히 붙인 1024x512(세션 스크래치에서 만듦, `art_src/raw/npc_*.png`, `ppt_hero.png`, `merchant_poses.png` 첫 자세, `moira.png`). 프롬프트(같은 틀, 캐릭터마다 한 줄 덧붙임): 얼굴 클로즈업 흉상, 가슴 위에서 잘림, 3/4 시점, 주인공은 오른쪽·NPC 는 왼쪽을 봄, 말하듯 입 살짝 벌림, 같은 화풍(굵은 갈색 잉크, 거친 고딕 동화, 자두·모브), 초록 #00FF00 배경, 1:1. 캐릭터마다 새 대화. 받은 그림 `art_src/portraits/tod_portrait_<id>_<a|b|c>.png`(1254²).
+  - 고른 것(`tools/bake_portraits.py` 의 PICK): hero a, nun a, ghost c, rat a, doll a, merchant a, moira a. 굽기 `python tools/bake_portraits.py [id…]` → 초록 빼기(`bake_hub_art.key_green`) + 작은 점 지우기 + 640² 칸에 아래 끝 맞춤 → `Assets/sprites/portraits/portrait_<id>.png`(Sprite, 밉맵 없음, CompressedHQ, 최대 1024, MCP 로 설정).
+- [x] **종이 (ChatGPT 웹, 참고 `Assets/UI/Paper/panel_light.png`):** 긴 양피지 대화 상자(안쪽 둘레에 검붉은 실 홈질, 왼쪽 위에 바늘) + 검붉은 천 이름표(베이지 실 홈질). `python tools/bake_talk_paper.py` → `Assets/UI/Paper/talk_box.png`(1527x417), `talk_tag.png`(1314x309). 가져오기 설정은 panel_light 복사, 스프라이트 테두리는 0(USS 9칸 값을 씀).
+- [x] **코드:** 새 `Data/TalkData.cs`(`TalkConfig`: heroPortrait, paper·nameTag(비우면 USS 그림), charTime(0 = npcs.charTime), portraitPop/Rise, listenerDim/Scale, talkBob/Speed, nextHint/skipHint) → `GameDatabase.talk`. `NpcDef.portrait`. 새 `UI/GameUI.Talk.cs`(`ShowTalk`, `TickTalk` 한 자씩 찍기 + 얼굴이 아래에서 올라옴 + 말하는 NPC 들썩임 + 주인공은 어둡고 작게, 상자를 눌러도 넘김). `GameController.Npc.cs`: `NpcTalk`(E 로 말 걸면 대화창, 얼굴이 없으면 예전 말풍선), `AdvanceTalk`(찍히는 중이면 다 찍기 → 닫기), 닫히면 말하기 자세 끝. `ReadKeys` 에서 대화창이 열려 있으면 E = AdvanceTalk. 다가갈 때 혼잣말은 그대로 머리 위 말풍선.
+  - UI: `Main.uxml` overlay 안 `dialog-talk`(talk-hero, talk-npc, talk-box > talk-text·talk-hint, talk-tag > talk-name), 새 `UI/Talk.uss`. 열리면 `ShowDialog` 가 overlay 에 `talking`(어둡게 덮지 않고 아래에 깔림), root 에 `talk-open`(미니맵, 재봉실 아래 줄·등반 단추·E 안내, 경험치 바, 포션 칸, 매듭 줄, 조작 안내를 숨기고 보상 알림을 상자 위 340px 로).
+  - Opened = "talk" 라 재봉실 걷기와 전투 시뮬레이션이 멈춤(쉬어가기에는 적이 없음). Esc 도 닫힘. 도박 인형은 제안 → (닫기) → E 한 번 더 = 받아들임.
+- [x] **데이터 (MCP, 씬 저장):** `talk` heroPortrait = portrait_hero, charTime 0, portraitPop .28, portraitRise 60, listenerDim .62, listenerScale .9, talkBob 6, talkBobSpeed 3.2, nextHint "E 닫기", skipHint "E 넘기기". NPC 4명 portrait(Blessing = nun, Gift = rat, Memory = ghost, Gamble = doll).
+- 확인: 재봉실 수녀 `Temp/Shots/talk26_warm.png`, 인형(아래 HUD 숨김) `talk26_doll.png`, 등반 중 쥐 `talk26_run_rat.png`. 넘기기·닫기·다시 열기 흐름 확인. EditMode 92개 통과, 콘솔 오류 없음. 프로필 `Temp/profile_backup_talk26.json` 에서 되돌림.
+- [x] **상인 단추·모이라에도 (사용자 "둘 다 붙여 줘"):** 대화창 공용 `OpenTalk(이름, 얼굴, 줄, after)` + `AdvanceTalk` 이 E 로 끝까지 읽고 닫을 때만 after 실행(Esc 로 닫으면 안 함).
+  - 상인(재봉실·쉬어가기): `GameController.Merchant.cs GreetMerchant` — 인사 줄(`MerchantTalk.Say(Greet)`, 자세는 인사, 머리 위 말풍선은 `Hush`)을 대화창으로 → 닫으면 `ShowHubShop`/`ShowShop`. 상점 창 안 말풍선 인사는 이제 안 나옴(작별 인사는 그대로). 데이터 `merchant.portrait` = portrait_merchant, `merchant.talkName` "단추".
+  - 모이라: `TalkToMoira` 가 고른 한 줄(읽은 운명이 있으면 그 암시)을 대화창으로 → 닫으면 `OpenMoiraCards("")`(카드 창 위 줄은 비움, `SayMoira` 가 빈 줄이면 말풍선을 안 띄움). 이름표 `hub.moiraTitle`("예견가 모이라"). 얼굴은 쓰이지 않던 `hub.moiraPortrait` 를 hub_attic_moira → portrait_moira 로 바꿔 씀. 얼굴이 비면 둘 다 예전 흐름.
+  - 확인: `Temp/Shots/talk26_merchant.png`(재봉실 상인 → 닫으니 hubshop), `talk26_moira2.png`, `talk26_moira_cards.png`(대화 뒤 카드 창). EditMode 92개 통과, 콘솔 오류·경고 없음. 프로필 `Temp/profile_backup_talk26b.json` 에서 되돌림.
+- 남은 것: 사람이 직접 E 로 말 걸어 본 느낌(얼굴 크기·위치, 글자 속도). 21:9·4:3 화면에서의 배치는 아직 안 봄.
+
 ## 25차 3부 (2026-11-27) — 미니맵, 머리 위 대시 칸, 증강 카드 문구, 날씨 줄 깨짐, HUD 재배치, 교만 돌진 망토 — 완료(커밋 전)
 
 - [x] **쉬어가기 날씨 줄 깨짐 (사용자 스크린샷):** 타이머 숫자가 없는 라운드(쉬어가기, 시간 끝, 보스 처치 뒤)에서 '1층 쉬어가기' 꼬리표가 안 보이는 타이머 옆(가운데 +112px)에 떠 있고, 날씨 줄은 타이머 높이(112px)에 따로 떨어져 있었음(23차 꼬리표 + 24차 날씨 줄). → `GameUI` 가 타이머에 `no-timer` 클래스 → 꼬리표가 타이머 자리 가운데로(`Main.uss`), `ElementHud` 가 날씨 줄에 `compact`(top 66px, 꼬리표 바로 밑, `ElementHud.uss`). 보스 막대가 있을 때만 `.boss`(예전엔 보스 라운드 전체). 확인 `Temp/Shots/hud_rest_after.png`.
@@ -97,6 +115,7 @@
 - [x] **교만 차저 돌진 꼬리 다시 뽑기 (사용자 "이펙트 구림, 블렌더로 자연스럽게, 톤 너무 밝아"):** 23차 2D 리본 망토(밝은 보라 + 흰 별)를 Blender 3D 벨벳 망토로. `tools/render_mob_pride_cape.py`(Eevee, 직교 카메라, 어깨에 좁게 모인 사다리꼴 천 64x28 + Subsurf, 길이 방향 주름 결 + 꼬리로 커지는 진행파 + 가운데가 긴 둥근 밑단, 8칸 끊김 없는 반복, 어두운 자두색 벨벳 Sheen + 낮은 금테, 노출 −.35) → `art_src/vfx/24/pride_cape/frame_00~07.png` → `python tools/bake_mob_pride_cape.py`(얇은 잉크 외곽 1.8px, 빛은 어두운 보랏빛 번짐 상한 .32) → `Assets/Art/VFX/16/mob_pride_dash(_glow).png`(같은 이름·칸 수라 연결 그대로). 옛 판은 `art_src/vfx/24/pride_cape/old_*`. 주의: `render_element_vfx.py mob` 을 다시 돌리면 옛 2D 판으로 덮어씀 → 그 뒤 `bake_mob_pride_cape.py` 다시. 비교 `Temp/Shots/mob_pride_dash_compare.png`, 게임 `pride_cape_play.png`.
 - 확인: `Temp/Shots/hud_after4.png`(전투), `hud_rest_after.png`(쉬어가기), `augment_after.png`, `hub_minimap.png`. EditMode 92개 통과, 컴파일 오류 없음. 프로필 `Temp/profile_backup_hud.json` 에서 되돌림.
 - [x] **왼쪽 위 상태 판 재배치 (사용자가 제안 수락 "제안대로 진행"):** 판 제목·LV 꼬리표·털실 줄·매듭 줄을 빼고 체력(굵은 막대 36px) + 욕망(얇은 띠 22px)만, 폭 330. 레벨은 아래 경험치 바에만. 털실 칸 + 실 가닥 수는 주인공 발밑(`yarn-foot`, `UpdateYarnFoot`, 데이터 `hud.yarnFootDrop` 16), 문구를 짧게(`ui.threadCount` "실 {0}", `threadBonus` "실 {0}  피해 +{1}%"). 매듭까지 N발 / 매듭 수는 경험치 바 바로 위 가운데 한 줄(`knot-line`, 가운뎃점 없이 띄어 씀). 확인 `Temp/Shots/hud3_layout2.png`, 확대 `hud3_zoom.png`.
+- [x] **발밑 '실 N  피해 +N%' 글씨 뺌 (2026-11-27, 사용자 "글씨 제거해"):** 털실 칸만 남김. `Main.uxml` `thread-count` 라벨, `Main.uss` `.yarn-foot-thread`, `GameUI.UpdateHud` 의 글씨 줄 지움. 데이터 `ui.threadCount/threadBonus` 는 씬에 남아 있지만 이제 안 씀. 플레이 중 UI 트리에서 `yarn-foot` 자식이 털실 칸 하나뿐인 것 확인(전투 화면 캡처는 아직).
 - 남은 것: 대시 칸 터짐 프레임은 정지 화면으로만 봄(실제 속도 손맛), 보스 고리는 보스 라운드에서 아직 안 봄. 털실이 25칸까지 늘면 발밑 칸이 아주 가늘어짐(줄 폭 120px 고정). 처음 시작 프레임 화면 캡처에 UI 가 빠지는 건 동기 캡처 탓(두 번째부터 나옴).
 
 ## 25차 2부 (2026-11-26 밤) — 죽은 뒤 시작 조각 다시 챙기기, 탐욕 몬스터 팔 떨어짐 — 완료(커밋 전)

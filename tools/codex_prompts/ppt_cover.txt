@@ -1,0 +1,9 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/ppt_cover.png
+Size: landscape 1536x1024.
+Key art for the cover of a game concept presentation. The first attached image is the main character's parts sheet (a small pink mouse girl seamstress). The second attached image is the game's sewing room, for the art style and colors.
+Scene: night. A gigantic dark gothic tower rises from the ground and pierces through the clouds into the sky, so tall its top is lost above the frame. The tower is made of stacked crooked stone floors, patched with cloth, stitched seams, hanging threads, buttons and pins; faint warm windows glow on it, and a thin crimson glow of desire seeps from its cracks. Around its base lies a small sleepy village of crooked houses of animal folk.
+In the lower left foreground, small in the frame and seen from behind in 3/4 view, the mouse girl from the parts sheet (big round pink patched ears, curly pink hair, ragged wine-red coat, cream skirt, pink tail) stands on a hill looking up at the tower, holding a long silver sewing needle with a pink thread trailing in the wind.
+Keep the right third and the upper area calm and dark (sky and clouds) so a title can be placed there later; the tower sits slightly right of center.
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D, cut-out paper look, rough consistent-weight thick black outlines, paper-grain texture. Low saturation, low brightness: plum and dusty grey-violet night (#16131B, #2A2230, #4A3D50, #6B5A70), a pale moon, dim honey candle highlights (#C9A46A), a little crimson (#C62E2E) only in the tower cracks.
+No text, no letters, no title, no labels, no numbers, no UI. Full bleed, fully opaque, no border.

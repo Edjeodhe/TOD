@@ -131,6 +131,7 @@ namespace TOD
             if (label == null) return;
             label.text = line ?? "";
             label.RemoveFromClassList("show");
+            if (string.IsNullOrEmpty(line)) return;   // 26차: 대화창으로 이미 말했으면 카드 창 위 줄은 비운다
             label.schedule.Execute(() => label.AddToClassList("show")).StartingIn(30);
         }
 

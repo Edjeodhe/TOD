@@ -241,7 +241,7 @@ namespace TOD
                     else Ascend();
                     break;
                 case Interactable.Altar: ui.ShowArtifacts(Run.floor, Run.artifactOffer, PickArtifact, !Run.artifactRerolled); break;
-                case Interactable.Merchant: ShowShop(); MerchantSay(MerchantCue.Greet); break;   // 16차 상인 대사
+                case Interactable.Merchant: GreetMerchant(ShowShop); break;   // 16차 상인 대사, 26차 대화창 → 상점 (GameController.Merchant.cs)
                 case Interactable.Npc: TalkNpcRun(); break;   // 23차 쉬어가기 NPC (GameController.Npc.cs)
             }
         }
@@ -521,7 +521,7 @@ namespace TOD
             });
             bool deal = dealCards;
             dealCards = false;
-            ui.ShowMoiraCards(cards, deal ? moiraLine : null, Profile.shards, MoiraHand, deal);
+            ui.ShowMoiraCards(cards, deal ? moiraCardLine : null, Profile.shards, MoiraHand, deal);
         }
 
         // 카드가 날아 나가는 자리 = 모이라가 든 카드 부채 (패널 px)
@@ -533,6 +533,16 @@ namespace TOD
             string[] lines = db.hub.moiraLines;
             moiraLine = lines != null && lines.Length > 0 ? lines[Random.Range(0, lines.Length)] : null;
             if (Moira.FateRead(Profile)) moiraLine = FateSpeech() ?? moiraLine;   // 읽어 둔 운명이 있으면 그 암시를 다시
+            // 26차: 얼굴이 있으면 그 한 줄을 아래 대화창으로 → E 로 닫으면 카드 창 (카드 창 위 한 줄은 비움)
+            if (OpenTalk(db.hub.moiraTitle, db.hub.moiraPortrait, moiraLine, () => OpenMoiraCards(""))) return;
+            OpenMoiraCards(moiraLine);
+        }
+
+        string moiraCardLine;   // 카드 창 위에 띄울 한 줄 (대화창으로 이미 말했으면 "")
+
+        void OpenMoiraCards(string line)
+        {
+            moiraCardLine = line;
             dealCards = true;
             ShowScreen(UiScreen.Attic);
         }
@@ -740,7 +750,8 @@ namespace TOD
             if (IsCombat && Settings.Pressed(KeyAction.Dash)) dashRequested = true;
             if (IsCombat && Run.freeze <= 0) DrinkPotion();   // 23차 포션: 숫자키 1~5
             bool interact = Settings.Pressed(KeyAction.Interact);
-            if (interact && ui.FateShowing) ui.AdvanceFate();   // 22차 미래 보기: 자세히 살펴보기, 돌아가기
+            if (interact && ui.TalkOpen) AdvanceTalk();            // 26차 아래 대화창: 다 찍기 → 닫기 (GameController.Npc.cs)
+            else if (interact && ui.FateShowing) ui.AdvanceFate();   // 22차 미래 보기: 자세히 살펴보기, 돌아가기
             else if (interact && !runInventory) Interact();
             if (Settings.Pressed(KeyAction.Inventory)) { if (Run != null) ToggleRunInventory(); else ToggleOutgameInventory(); }   // 20차: 아웃게임에서도 언제든 I
         }

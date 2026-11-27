@@ -103,7 +103,7 @@ namespace TOD
                 case HubStation.Attic: MoveRoom(true); break;            // 17차: 다락 방으로 올라간다
                 case HubStation.AtticExit: MoveRoom(false); break;
                 case HubStation.Moira: TalkToMoira(); sound.Play("loot"); break;   // 19차: 모이라 = 강화 4종 창
-                case HubStation.Merchant: ShowHubShop(); MerchantSay(MerchantCue.Greet); break;
+                case HubStation.Merchant: GreetMerchant(ShowHubShop); break;   // 26차: 대화창 인사 → 닫으면 상점
                 case HubStation.Tower: StartRun(); break;
                 case HubStation.Diary: ui.ShowDiary(); break;
                 case HubStation.NpcBlessing: case HubStation.NpcGift: case HubStation.NpcMemory: case HubStation.NpcGamble:

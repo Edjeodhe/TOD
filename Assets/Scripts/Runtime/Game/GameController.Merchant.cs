@@ -30,6 +30,25 @@ namespace TOD
             if (voiced && !string.IsNullOrEmpty(db.merchant.talkSound)) sound.Play(db.merchant.talkSound);
         }
 
+        // 26차: E 로 말 걸기. 얼굴이 있으면 인사를 아래 대화창으로(자세는 인사, 머리 위 말풍선은 안 띄움) → E 로 닫으면 상점.
+        // 얼굴이 없으면 예전처럼 바로 상점 + 상점 창 안 말풍선 인사
+        void GreetMerchant(System.Action openShop)
+        {
+            MerchantConfig c = db.merchant;
+            if (c != null && c.portrait != null && merchantTalk != null && db.talk != null)
+            {
+                string line = merchantTalk.Say(MerchantCue.Greet, Clock);
+                merchantTalk.Hush();
+                if (line != null && OpenTalk(c.talkName, c.portrait, line, openShop))
+                {
+                    if (!string.IsNullOrEmpty(c.talkSound)) sound.Play(c.talkSound);
+                    return;
+                }
+            }
+            openShop();
+            MerchantSay(MerchantCue.Greet);
+        }
+
         // 매 프레임: 다가오면 혼잣말, 글자 찍힘 소리, 말풍선 위치
         void TickMerchant()
         {

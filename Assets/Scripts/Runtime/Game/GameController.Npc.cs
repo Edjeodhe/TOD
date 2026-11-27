@@ -1,6 +1,8 @@
 // 23차 쉬어가기 NPC 4종과 재봉실 NPC (GameController 의 나머지 부분). 판정은 Sim/CombatNpc.cs, 그리기는 ArenaRenderer.Npc.cs 와 HubView,
 // 말풍선은 GameUI.Npc.cs. 데이터는 db.npcs (NpcData.cs).
+using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace TOD
 {
@@ -15,6 +17,7 @@ namespace TOD
 
         void InitNpcs()
         {
+            ui.DialogClosed += id => { if (id == "talk") { npcTalkUntil = Clock; talkAfter = null; } };   // 26차 대화창을 닫으면 말하기 자세도 끝
             if (hub == null) return;
             hub.stationVisible = s => !HubView.IsNpc(s) || (Profile.npcMet != null && Profile.npcMet.Contains((int)HubView.NpcOf(s)));
             // 개발자 모드 'NPC 불러오기' (DevTools 의 id: blessing, gift, xp, gamble)
@@ -37,6 +40,40 @@ namespace TOD
             if (!string.IsNullOrEmpty(NpcCfg?.talkSound)) sound.Play(NpcCfg.talkSound, .8f);
         }
 
+        // 26차: E 로 말을 걸면 아래 대화창 (얼굴이 없으면 예전처럼 머리 위 말풍선). 창이 열린 동안 NPC 는 말하기 자세
+        void NpcTalk(NpcKind kind, string line)
+        {
+            if (string.IsNullOrEmpty(line)) return;
+            NpcDef def = NpcCfg?.Get(kind);
+            if (def == null || db.talk == null || def.portrait == null) { NpcSay(kind, line); return; }
+            npcLine = null;
+            npcLineKind = kind;
+            npcTalkUntil = float.MaxValue;
+            if (!string.IsNullOrEmpty(NpcCfg.talkSound)) sound.Play(NpcCfg.talkSound, .8f);
+            OpenTalk(def.name, def.portrait, line, null);
+        }
+
+        // 26차 대화창 공용. after = E 로 끝까지 읽고 닫았을 때 이어서 할 일 (상인 = 상점, 모이라 = 카드 창). Esc 로 닫으면 안 한다
+        Action talkAfter;
+
+        bool OpenTalk(string speaker, Sprite face, string line, Action after)
+        {
+            if (db.talk == null || face == null || string.IsNullOrEmpty(line)) return false;
+            talkAfter = after;
+            ui.ShowTalk(db.talk, NpcCfg != null && NpcCfg.charTime > 0 ? NpcCfg.charTime : .04f, speaker, face, line);
+            return true;
+        }
+
+        // 대화창에서 E (또는 상자 누르기): 찍히는 중이면 다 찍고, 다 찍혔으면 닫고 이어서 할 일
+        public void AdvanceTalk()
+        {
+            if (!ui.TalkOpen) return;
+            if (ui.TalkTyping) { ui.FinishTalkTyping(); return; }
+            Action after = talkAfter;
+            ui.CloseDialog();   // DialogClosed 가 talkAfter 를 비운다
+            after?.Invoke();
+        }
+
         void NpcNotice(NpcTalkResult result)
         {
             NpcConfig c = NpcCfg;
@@ -55,7 +92,7 @@ namespace TOD
             NpcDef def = Combat.NpcHere(Run);
             if (def == null) return;
             NpcTalkResult result = Combat.TalkNpc(Run);
-            NpcSay(def.kind, result.line);
+            NpcTalk(def.kind, result.line);
             NpcNotice(result);
             if (result.first) { Gear.Save(db, Profile); if (!string.IsNullOrEmpty(NpcCfg.metNotice)) ui.Say(string.Format(NpcCfg.metNotice, def.name)); }
         }
@@ -64,7 +101,7 @@ namespace TOD
         void TalkNpcHub(NpcKind kind)
         {
             NpcTalkResult result = Combat.HubGift(Profile, kind, () => Random.value);
-            NpcSay(kind, result.line);
+            NpcTalk(kind, result.line);
             NpcNotice(result);
             if (result.rewarded) { Gear.Save(db, Profile); ui.UpdateMeta(Profile); }
         }
@@ -81,6 +118,7 @@ namespace TOD
         // 매 프레임: 다가오면 혼잣말, 말하기 자세, 말풍선 자리
         void TickNpcs(float dt)
         {
+            ui.TickTalk();   // 26차 아래 대화창 글자 찍기, 얼굴 움직임
             NpcConfig c = NpcCfg;
             if (c == null) return;
             bool talking = Clock < npcTalkUntil;

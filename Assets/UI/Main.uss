@@ -709,10 +709,6 @@ Button:disabled { opacity: 0.5; }
 .yarn-foot { position: absolute; flex-direction: row; align-items: center; translate: -50% 0; }
 .yarn-foot .yarn-pips { width: 120px; height: 9px; margin: 0; }
 .yarn-foot .yarn-pip { margin-right: 3px; border-width: 1.5px; border-radius: 2px; }
-.yarn-foot-thread {
-    margin-left: 6px; font-size: 15px; color: #e6d6c0; -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
-    -unity-text-outline-width: 1px; -unity-text-outline-color: #120a0d;
-}
 
 /* 25차 3부: 경험치 바 바로 위 가운데 매듭 줄 */
 .knot-line {

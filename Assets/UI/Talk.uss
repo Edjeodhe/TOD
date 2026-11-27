@@ -1,0 +1,57 @@
+/* 26차 아래 대화창 (Main.uxml dialog-talk, GameUI.Talk.cs). 논리 화면 1920x1080 기준(PanelSettings Expand). */
+
+/* 대화 중에는 화면을 어둡게 덮지 않고, 대화창을 아래에 깐다 */
+.overlay.talking { background-color: rgba(14, 8, 11, 0); justify-content: flex-end; }
+
+/* 대화 중에는 아래쪽 HUD (미니맵, 재봉실 아래 줄·등반 단추, 경험치 바, 포션 칸, 매듭 줄, 조작 안내) 를 숨긴다. root 의 talk-open 은 GameUI.ShowDialog */
+.talk-open .minimap, .talk-open .hub-bottom, .talk-open .hub-menu, .talk-open .hub-prompt,
+.talk-open .exp-bar, .talk-open .potion-bar, .talk-open .knot-line, .talk-open .controls-hint, .talk-open .yarn-foot { display: none; }
+
+/* 보상 알림은 상자 위로 */
+.talk-open .notice { bottom: 340px; }
+
+.talk-dialog {
+    position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+}
+
+/* 얼굴: 상자 뒤에서 위로 솟음 (아랫부분은 상자가 가림) */
+.talk-face {
+    position: absolute; bottom: 150px; width: 470px; height: 470px;
+    -unity-background-scale-mode: scale-to-fit;
+    transform-origin: 50% 100%;
+}
+.talk-face.hero { left: 150px; }
+.talk-face.npc { right: 150px; }
+
+/* 종이 상자: 바느질 테두리 + 왼쪽 위 바늘 (Paper/talk_box.png 1527x417, tools/bake_talk_paper.py). 가운데만 늘어나게 9칸 */
+.talk-box {
+    position: absolute; left: 230px; right: 230px; bottom: 30px; height: 260px;
+    padding: 70px 130px 50px 130px;
+    background-image: url("project://database/Assets/UI/Paper/talk_box.png");
+    -unity-slice-left: 180; -unity-slice-right: 110; -unity-slice-top: 100; -unity-slice-bottom: 100;
+    -unity-slice-scale: 0.62px;
+}
+.talk-text {
+    font-size: 30px; color: #2e2120; white-space: normal; -unity-text-align: upper-left;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+.talk-hint {
+    position: absolute; right: 96px; bottom: 34px;
+    font-size: 19px; color: #7d2f3e;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+}
+
+/* 이름표: 상자 오른쪽 위 모서리, NPC 얼굴 아래에 걸친 종이 쪽지 */
+.talk-tag {
+    position: absolute; right: 300px; bottom: 256px; min-width: 260px; height: 74px;
+    padding: 0 46px 4px 46px; align-items: center; justify-content: center;
+    background-image: url("project://database/Assets/UI/Paper/talk_tag.png");   /* 1314x309, tools/bake_talk_paper.py */
+    -unity-slice-left: 130; -unity-slice-right: 130; -unity-slice-top: 90; -unity-slice-bottom: 90;
+    -unity-slice-scale: 0.26px;
+    rotate: 2deg;
+}
+.talk-name {
+    font-size: 27px; color: #f1e2c4;
+    -unity-font-definition: url("project://database/Assets/Fonts/Jua/Jua_SDF.asset");
+    -unity-text-outline-width: 1px; -unity-text-outline-color: #120a0d;
+}

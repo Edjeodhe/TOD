@@ -1,0 +1,12 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/ppt_hero.png
+Size: portrait 1024x1536.
+The first attached image is the loose paper-cut parts sheet of the game's main character. The second attached image shows the style of the other characters in the game. Draw the SAME character assembled as ONE full-body character illustration for a concept presentation:
+- A small young mouse girl seamstress, about 2.5 heads tall, standing in a 3/4 view facing right, both eyes visible.
+- Exactly the design from the parts sheet: big round pink patched mouse ears with stitches, fluffy curly pink hair, big round honey-brown eyes with tiny highlights, small round pink nose, whiskers, mouthless smooth muzzle (no mouth line at all), stitched patches on the face.
+- Ragged dark wine-red coat with stitched seams and brass button rivets, grey vest underneath, cream pleated skirt, wine-red boots, pink tail with brass joint rivets, a red pincushion with pins on her wrist.
+- She holds a long silver sewing needle like a lance in one hand, with a pink thread trailing from its eye in a loose curl.
+- Visible brass split-pin joints at shoulders, elbows, knees like a paper doll puppet.
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D, thick rough dark brown-black ink outlines of consistent weight, cloth and paper grain texture, small stitch marks, muted dusty colors, low saturation. Cute character, slightly eerie mood.
+Background: perfectly flat solid chroma key green #00FF00, no shadow on the background, no gradient, no floor.
+No text, no letters, no labels, no numbers, no UI, no border.

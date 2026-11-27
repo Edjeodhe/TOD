@@ -1,0 +1,7 @@
+Use your built-in image generation tool to create the image (do not write code to draw it). Then copy the final generated PNG file into the current working directory at the path given below (create folders if needed). Do not modify anything else. Reply with only the saved path.
+Save path: art_src/raw/ppt_diary.png
+Size: landscape 1536x1024.
+Prop illustration for a game concept presentation. The attached image is the game's sewing room, for the art style and colors.
+A dark wooden cork pin board hangs on a gothic wallpapered wall, lit by a single candle. Seven torn old diary pages are pinned to it in a loose row with sewing pins and brass tacks, connected by a red thread. From left to right the pages degrade: the first pages are clean cream parchment with neat faint handwriting scribbles and a tiny drawing of a mouse child; the middle pages are crumpled, stained, the scribbles get larger and wilder; the last pages are soaked with dark crimson blood stains, torn edges, frantic scratched scribbles. On the margin of each page a small separate line of neat pencil scribble (the daughter's note). The scribbles must be abstract squiggle lines only, not readable letters.
+Art style: Tim Burton-like gothic, Don't Starve Together-like hand-drawn 2D, cut-out paper look, rough consistent-weight thick black outlines, paper-grain texture. Low saturation, low brightness, plum and grey-violet shadows, honey candle highlights (#C9A46A), crimson (#C62E2E) blood.
+No readable text, no letters, no numbers, no UI. Full bleed, fully opaque, no border.

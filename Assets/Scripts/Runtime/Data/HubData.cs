@@ -229,7 +229,7 @@ namespace TOD
         public string packBoardButton;        // 카드 창의 '재봉 상자에 놓기 (I)' 버튼
 
         [Header("19차 모이라 (다락)")]
-        public Sprite moiraPortrait;          // 모이라 창 왼쪽 그림
+        public Sprite moiraPortrait;          // 26차: 아래 대화창 오른쪽 얼굴 (E → 한 줄 → 닫으면 카드 창). 비우면 예전처럼 바로 카드 창. 이름표는 moiraTitle
         public string moiraEyebrow, moiraTitle;
         public string[] moiraLines;           // 말을 걸 때마다 무작위 한 줄
         public string moiraEmpty;             // 강화가 모두 끝났을 때

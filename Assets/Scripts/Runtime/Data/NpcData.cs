@@ -37,6 +37,7 @@ namespace TOD
         public TextAsset rig;                 // 리깅 페이지 JSON (Assets/Rig/npc_<id>.json)
         public float height;                  // 그림 높이 (캔버스 px). 리그 height 에 맞춰 배율을 정한다
         public float bubbleLift;              // 말풍선을 머리 위로 띄우는 높이 (캔버스 px)
+        public Sprite portrait;               // 26차: 아래 대화창 오른쪽 얼굴 (TalkData.cs)
 
         [Header("쉬어가기")]
         public string[] approachLines;        // 가까이 오면 혼잣말 (처음 한 번)

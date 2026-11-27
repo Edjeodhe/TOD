@@ -231,8 +231,6 @@ namespace TOD
             int yarn = Mathf.FloorToInt(r.yarn);
             Text(hud, "level", string.Format(T.level, r.level));
             Text(hud, "yarn-value", string.Format(T.ratio, yarn, maxYarn));
-            float bonus = combat.StrandBonus(r.strands.Count);
-            Text(hud, "thread-count", bonus > 0 ? string.Format(T.threadBonus, r.strands.Count, Mathf.RoundToInt(bonus * 100)) : string.Format(T.threadCount, r.strands.Count));
             Text(hud, "knot-ready", string.Format(T.knotReady, Mathf.Max(1, combat.KnotInterval(r) - r.shotCount)));
             string mood = r.mood == Mood.Frenzy ? T.frenzySuffix : r.mood == Mood.Awakened ? T.awakenSuffix : "";
             Text(hud, "desire-value", string.Format(T.desireValue, Mathf.FloorToInt(r.desire), r.maxDesire, mood));
@@ -330,6 +328,8 @@ namespace TOD
         {
             Opened = id;
             Show(overlay, true);
+            overlay.EnableInClassList("talking", id == "talk");   // 26차 대화창은 화면을 덮지 않는다 (Talk.uss)
+            root.EnableInClassList("talk-open", id == "talk");   // 26차 대화 중에는 아래쪽 HUD 를 숨긴다 (Talk.uss)
             foreach (VisualElement dialog in overlay.Children()) Show(dialog, dialog.name == $"dialog-{id}");
         }
 
@@ -338,6 +338,7 @@ namespace TOD
             string was = Opened;
             Opened = "";
             Show(overlay, false);
+            root.RemoveFromClassList("talk-open");
             if (was != "") DialogClosed?.Invoke(was);   // 16차 상인 작별 인사 (GameUI.Merchant.cs)
         }
 

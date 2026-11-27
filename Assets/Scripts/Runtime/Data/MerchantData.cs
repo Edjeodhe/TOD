@@ -44,5 +44,9 @@ namespace TOD
         public float approachCooldown;        // 다가옴 혼잣말 사이 최소 간격 (초)
         public string talkSound, blipSound;   // 새 대사, 글자 찍힘(두 자마다) 효과음 id
         public int blipEvery;                 // 몇 자마다 찍힘 소리
+
+        [Header("26차 아래 대화창 (E 로 말 걸면 인사 → 닫으면 상점)")]
+        public Sprite portrait;               // 오른쪽 얼굴. 비우면 예전처럼 바로 상점 + 말풍선
+        public string talkName;               // 이름표 (예: "단추")
     }
 }
