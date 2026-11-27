@@ -22,7 +22,7 @@ foreach (var f in h.facilities)
         case "Diary": f.position = new Vector2(1275, 207); break;
         case "Merchant": f.position = new Vector2(1315, 590); break;
         case "NpcGift": f.position = new Vector2(710, 625); break;
-        case "NpcGamble": f.position = new Vector2(1560, 790); break;   // 상인과 붙어 있어 오른쪽 빈 바닥으로 (장난감 상자 1665)
+        case "NpcGamble": f.position = new Vector2(1760, 790); break;   // 상인과 붙어 있어 오른쪽 끝 바닥으로 (장난감 상자 1865)
         case "NpcBlessing":   // 왼쪽 끝 기도 감실: 기도대는 감실 안(발밑 200, 200), 수녀는 그 앞 오른쪽 러너 위
             f.position = new Vector2(300, 345);
             if (f.props != null && f.props.Length > 0) f.props[0].offset = new Vector2(-100, -145);

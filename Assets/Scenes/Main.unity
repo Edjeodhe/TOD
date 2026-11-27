@@ -43992,7 +43992,7 @@ MonoBehaviour:
     - station: 10
       name: "\uB2E8\uCD94 \uB208 \uC778\uD615"
       prompt: "\uB2E8\uCD94 \uB208 \uC778\uD615\uACFC \uC774\uC57C\uAE30\uD558\uAE30"
-      position: {x: 1560, y: 790}
+      position: {x: 1760, y: 790}
       sprite: {fileID: 0}
       height: 112
       flip: 0
